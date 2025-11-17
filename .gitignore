@@ -41,3 +41,7 @@ env/
 .DS_Store
 Thumbs.db
 
+# ChatDO memory (thread history)
+# Uncomment the next line if you want to exclude memory from git
+# memory/
+

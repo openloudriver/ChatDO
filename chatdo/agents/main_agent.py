@@ -1,20 +1,18 @@
 from deepagents import create_deep_agent
-from langchain_openai import ChatOpenAI  # or ChatOllama
+from langchain_openai import ChatOpenAI
 from pathlib import Path
-from typing import Callable
+from typing import Callable, List, Dict, Any, Optional
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
+from ..memory import store as memory_store
 
 def build_model():
-    # For now, assume OpenAI. You can swap to ChatOllama if you want local later.
-    # Requires OPENAI_API_KEY in env.
+    # Default: fast, cheap reasoning for day-to-day work.
     return ChatOpenAI(model="gpt-5.1-mini", temperature=0.2)
 
-def build_agent(target: TargetConfig):
-    model = build_model()
-    
-    # Create wrapper functions for our repo tools
+def build_tools(target: TargetConfig):
+    # Wrap repo tools so deepagents can call them
     def list_files_wrapper(glob: str) -> list:
         """List files matching the glob pattern in the target repo.
         
@@ -37,12 +35,15 @@ def build_agent(target: TargetConfig):
         repo_tools.write_file(target.path, rel_path, content)
         return f"Wrote {rel_path}"
     
-    tools = [
+    return [
         list_files_wrapper,
         read_file_wrapper,
         write_file_wrapper,
     ]
-    
+
+def build_agent(target: TargetConfig):
+    model = build_model()
+    tools = build_tools(target)
     agent = create_deep_agent(
         model=model,
         tools=tools,
@@ -50,14 +51,53 @@ def build_agent(target: TargetConfig):
     )
     return agent
 
-def run_agent(target: TargetConfig, task: str) -> str:
+def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> str:
+    """
+    Run ChatDO on a given task. If thread_id is provided, load/save conversation history
+    so the agent has long-term context.
+    """
     agent = build_agent(target)
-    # create_deep_agent returns a CompiledStateGraph which can be invoked
-    result = agent.invoke({"messages": [("user", task)]})
-    # Extract the final message from the result
+    
+    # Build message history
+    messages: List[Dict[str, Any]] = []
+    
+    # System message is always first
+    messages.append({"role": "system", "content": CHATDO_SYSTEM_PROMPT})
+    
+    if thread_id:
+        prior = memory_store.load_thread_history(target.name, thread_id)
+        # Prior history should not include system message; only user/assistant.
+        # We append after the system message.
+        messages.extend(prior)
+    
+    # Current user turn
+    messages.append({"role": "user", "content": task})
+    
+    # deepagents expects a structure like {"messages": [...]}
+    result = agent.invoke({"messages": messages})
+    
+    # Extract final assistant message
+    final_content = ""
     if isinstance(result, dict) and "messages" in result:
-        messages = result["messages"]
-        if messages:
-            return str(messages[-1].content if hasattr(messages[-1], "content") else messages[-1])
-    return str(result)
+        # result["messages"] is usually a list of LangChain messages
+        msgs = result["messages"]
+        if msgs:
+            last = msgs[-1]
+            # handle both LC messages and plain dict-like
+            if hasattr(last, "content"):
+                final_content = last.content
+            else:
+                final_content = str(last)
+    else:
+        final_content = str(result)
+    
+    # Update memory if thread_id is provided
+    if thread_id:
+        # We store only user/assistant messages, not system
+        history = memory_store.load_thread_history(target.name, thread_id)
+        history.append({"role": "user", "content": task})
+        history.append({"role": "assistant", "content": final_content})
+        memory_store.save_thread_history(target.name, thread_id, history)
+    
+    return final_content
 
