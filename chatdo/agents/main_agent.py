@@ -7,9 +7,69 @@ from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
 from ..memory import store as memory_store
 
-def build_model():
-    # Default: fast, cheap reasoning for day-to-day work.
-    return ChatOpenAI(model="gpt-5.1-codex-mini", temperature=0.2)
+def choose_model(task: str) -> str:
+    """Choose which OpenAI model to use based on the task description.
+
+    Routing rules (heuristic, cheap-first where possible):
+
+    - gpt-5.1-2025-11-13
+      Heavy, long-form reasoning where you care about reproducibility
+      (whitepapers, long specs, governance docs, threat models).
+
+    - gpt-5.1-chat-latest
+      High-level architecture / strategy / product design / planning.
+
+    - gpt-5.1-codex
+      Non-trivial coding, refactors, tests, debugging.
+
+    - gpt-5.1-codex-mini
+      Fast, cheap, day-to-day repo work and small edits.
+
+    - gpt-5.1
+      Fallback general model if nothing else matches.
+    """
+    tl = task.lower()
+
+    # Long-form, reproducible design / governance / threat-model work
+    if any(word in tl for word in [
+        "whitepaper", "white paper", "spec", "specification", "design doc",
+        "requirements", "threat model", "governance", "constitution",
+        "bylaws", "policy", "architecture doc", "roadmap"
+    ]):
+        return "gpt-5.1-2025-11-13"
+
+    # High-level architecture / strategy / planning / product thinking
+    if any(word in tl for word in [
+        "architecture", "architect", "system design", "strategy",
+        "roadmap", "plan", "planning", "high level", "overview",
+        "meta", "vision"
+    ]):
+        return "gpt-5.1-chat-latest"
+
+    # Code-heavy tasks, refactors, testing, debugging
+    if any(word in tl for word in [
+        "refactor", "rewrite", "migrate", "unit test", "tests", "test suite",
+        "bug", "error", "traceback", "stack trace", "lint", "type error",
+        "implement", "function", "class", "typescript", "python", "javascript",
+        "react", "terraform", "dockerfile", "cursor", "monorepo"
+    ]):
+        return "gpt-5.1-codex"
+
+    # Default: fast/cheap mini model for small tasks and light edits
+    # (most day-to-day repo work should fall back here)
+    if len(task) < 400 and "design" not in tl and "architecture" not in tl:
+        return "gpt-5.1-codex-mini"
+
+    # Fallback general model
+    return "gpt-5.1"
+
+def build_model(task: str):
+    """
+    Build the ChatOpenAI model for this run, using the model router to
+    pick an appropriate model based on the task description.
+    """
+    model_name = choose_model(task)
+    return ChatOpenAI(model=model_name, temperature=0.2)
 
 def build_tools(target: TargetConfig):
     # Wrap repo tools so deepagents can call them
@@ -41,8 +101,8 @@ def build_tools(target: TargetConfig):
         write_file_wrapper,
     ]
 
-def build_agent(target: TargetConfig):
-    model = build_model()
+def build_agent(target: TargetConfig, task: str):
+    model = build_model(task)
     tools = build_tools(target)
     agent = create_deep_agent(
         model=model,
@@ -56,7 +116,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     Run ChatDO on a given task. If thread_id is provided, load/save conversation history
     so the agent has long-term context.
     """
-    agent = build_agent(target)
+    agent = build_agent(target, task)
     
     # Build message history
     messages: List[Dict[str, Any]] = []
@@ -100,4 +160,3 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
         memory_store.save_thread_history(target.name, thread_id, history)
     
     return final_content
-
