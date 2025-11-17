@@ -1,0 +1,15 @@
+[project]
+name = "chatdo"
+version = "0.1.0"
+description = "Northstead / PrivacyPay Director of Operations (dev-time deep agent)"
+requires-python = ">=3.10"
+dependencies = [
+  "deepagents",
+  "langchain",
+  "langchain-community",
+  "pyyaml",
+]
+
+[project.scripts]
+chatdo = "chatdo.__main__:main"
+

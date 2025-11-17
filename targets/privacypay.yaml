@@ -1,0 +1,11 @@
+name: privacypay
+path: /Users/christopher.peck/privacypay
+type: monorepo
+core_paths:
+  - packages/core
+  - packages/apps
+notes: >
+  Primary PrivacyPay monorepo. ChatDO is allowed to read and edit files
+  under packages/core, packages/apps, and config, but must NEVER commit
+  or push – only create patches and suggestions.
+
