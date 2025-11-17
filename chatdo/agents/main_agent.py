@@ -9,7 +9,7 @@ from ..memory import store as memory_store
 
 def build_model():
     # Default: fast, cheap reasoning for day-to-day work.
-    return ChatOpenAI(model="gpt-5.1-mini", temperature=0.2)
+    return ChatOpenAI(model="gpt-5.1-codex-mini", temperature=0.2)
 
 def build_tools(target: TargetConfig):
     # Wrap repo tools so deepagents can call them
