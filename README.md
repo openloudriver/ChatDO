@@ -1,6 +1,6 @@
-# ChatDO — Northstead Director of Operations
+# ChatDO — Director of Operations
 
-Local dev-time AI that helps maintain Northstead repos
+Local dev-time AI that helps maintain repos
 (PrivacyPay, DRR, etc.) using deep agents, planning, and filesystem tools.
 
 - Lives in `/Users/christopher.peck/ChatDO`
@@ -45,4 +45,3 @@ You still stay in control in Cursor:
 - Let Cursor's agent review it
 - Run tests / linters
 - Commit when you are comfortable
-
