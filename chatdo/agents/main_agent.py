@@ -9,7 +9,7 @@ from ..tools import repo_tools
 def build_model():
     # For now, assume OpenAI. You can swap to ChatOllama if you want local later.
     # Requires OPENAI_API_KEY in env.
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+    return ChatOpenAI(model="gpt-5.1-mini", temperature=0.2)
 
 def build_agent(target: TargetConfig):
     model = build_model()
