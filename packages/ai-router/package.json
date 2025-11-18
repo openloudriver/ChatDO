@@ -1,0 +1,24 @@
+{
+  "name": "@privacypay/ai-router",
+  "version": "0.1.0",
+  "description": "Single entrypoint for all external and local AI models used by ChatDO, Keeper, and Mesh",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "ai",
+    "router",
+    "llm",
+    "chatdo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
+
