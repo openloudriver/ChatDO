@@ -1,6 +1,6 @@
 import React from 'react';
-import { useChatStore, Project, Conversation } from '../store/chat';
-import { v4 as uuidv4 } from 'uuid';
+import { useChatStore } from '../store/chat';
+import type { Conversation } from '../store/chat';
 
 const Sidebar: React.FC = () => {
   const {

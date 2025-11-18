@@ -6,7 +6,7 @@ import ChatComposer from './components/ChatComposer';
 import axios from 'axios';
 
 const App: React.FC = () => {
-  const { setProjects, setCurrentProject, projects } = useChatStore();
+  const { setProjects, setCurrentProject } = useChatStore();
 
   useEffect(() => {
     // Load projects on mount

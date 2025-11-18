@@ -28,9 +28,9 @@ const ChatMessages: React.FC = () => {
             }`}
           >
             {message.role === 'assistant' ? (
-              <ReactMarkdown className="prose prose-invert max-w-none">
-                {message.content}
-              </ReactMarkdown>
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
             ) : (
               <p className="whitespace-pre-wrap">{message.content}</p>
             )}
@@ -50,9 +50,9 @@ const ChatMessages: React.FC = () => {
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="max-w-3xl rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
-            <ReactMarkdown className="prose prose-invert max-w-none">
-              {streamingContent}
-            </ReactMarkdown>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown>{streamingContent}</ReactMarkdown>
+            </div>
             <span className="animate-pulse">▊</span>
           </div>
         </div>
