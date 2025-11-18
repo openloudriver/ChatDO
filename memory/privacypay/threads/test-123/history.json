@@ -1,0 +1,30 @@
+[
+  {
+    "role": "user",
+    "content": "Hello, can you hear me?"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "id": "rs_015a6bc2f192eeb600691bea91ab9081a39c5a6e668147e8d2",
+        "summary": [],
+        "type": "reasoning"
+      },
+      {
+        "type": "text",
+        "text": "Yes, I can hear you. How would you like to proceed with the repository?",
+        "annotations": [],
+        "id": "msg_015a6bc2f192eeb600691bea91b28081a39cdb8a6a4435a750"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "Hello, can you hear me?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, I can hear you. What would you like me to work on in the repository?"
+  }
+]

@@ -65,11 +65,20 @@ def choose_model(task: str) -> str:
 
 def build_model(task: str):
     """
-    Build the ChatOpenAI model for this run, using the model router to
+    Build the chat model for this run, using the model router to
     pick an appropriate model based on the task description.
+    
+    Uses ChatOpenAI with use_responses_api=True for gpt-5.1 models that require
+    the v1/responses endpoint instead of v1/chat/completions.
     """
     model_name = choose_model(task)
-    return ChatOpenAI(model=model_name, temperature=0.2)
+    
+    # Check if this is a gpt-5.1 model that needs the responses endpoint
+    if model_name.startswith("gpt-5.1"):
+        return ChatOpenAI(model=model_name, temperature=0.2, use_responses_api=True)
+    else:
+        # Use standard ChatOpenAI for other models
+        return ChatOpenAI(model=model_name, temperature=0.2)
 
 def build_tools(target: TargetConfig):
     # Wrap repo tools so deepagents can call them
@@ -145,7 +154,22 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
             last = msgs[-1]
             # handle both LC messages and plain dict-like
             if hasattr(last, "content"):
-                final_content = last.content
+                content = last.content
+                # Handle responses API format which returns a list
+                if isinstance(content, list):
+                    # Extract text from the list of response objects
+                    text_parts = []
+                    for item in content:
+                        if isinstance(item, dict):
+                            if item.get("type") == "text" and "text" in item:
+                                text_parts.append(item["text"])
+                            elif "text" in item:
+                                text_parts.append(item["text"])
+                        elif isinstance(item, str):
+                            text_parts.append(item)
+                    final_content = " ".join(text_parts) if text_parts else str(content)
+                else:
+                    final_content = content
             else:
                 final_content = str(last)
     else:
