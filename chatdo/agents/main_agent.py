@@ -2,10 +2,43 @@ from deepagents import create_deep_agent
 from langchain_openai import ChatOpenAI
 from pathlib import Path
 from typing import Callable, List, Dict, Any, Optional
+import os
+import requests
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
 from ..memory import store as memory_store
+
+# AI-Router HTTP client
+AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+
+def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> List[Dict[str, str]]:
+    """
+    Call the AI-Router HTTP service to get AI responses.
+    
+    Args:
+        messages: List of message dicts with 'role' and 'content' keys
+        intent: AI intent type (e.g., "general_chat", "long_planning", "code_edit")
+    
+    Returns:
+        List of assistant messages from the router
+    """
+    payload = {
+        "role": "chatdo",
+        "intent": intent,
+        "priority": "high",
+        "privacyLevel": "normal",
+        "costTier": "standard",
+        "input": {
+            "messages": messages,
+        },
+    }
+    resp = requests.post(AI_ROUTER_URL, json=payload, timeout=60)
+    resp.raise_for_status()
+    data = resp.json()
+    if not data.get("ok"):
+        raise RuntimeError(f"AI-Router error: {data.get('error')}")
+    return data["output"]["messages"]
 
 def choose_model(task: str) -> str:
     """Choose which OpenAI model to use based on the task description.

@@ -1,4 +1,16 @@
-import { AiProvider, AiRouterInput, AiRouterResult } from "../types";
+import OpenAI from "openai";
+import {
+  AiProvider,
+  AiRouterInput,
+  AiRouterResult,
+} from "../types";
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+});
+
+const MODEL_ID = process.env.OPENAI_MODEL_GPT5 || "gpt-5.1";
 
 export const openAiGpt5Provider: AiProvider = {
   id: "openai-gpt5",
@@ -12,22 +24,34 @@ export const openAiGpt5Provider: AiProvider = {
     "tool_orchestration",
     "code_edit",
   ],
+
   supportsPrivacyLevel(level) {
-    // for now: allow both, later you can block strict if needed
+    // later you can make strict do something special, like extra redaction
     return level === "normal" || level === "strict";
   },
+
   async invoke(input: AiRouterInput): Promise<AiRouterResult> {
-    // TODO: wire to actual OpenAI client
-    // This is where you'd map AiRouterInput -> OpenAI chat.completions.create
-    const modelId = "gpt-5.1";
-    // placeholder stub so Cursor has a structure
-    const fakeContent = `[openai-gpt5 stub] intent=${input.intent}`;
+    const messages = input.input.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    const response = await client.chat.completions.create({
+      model: MODEL_ID,
+      messages,
+      // TODO: map tools if/when you're ready
+      temperature: 0.4,
+    });
+
+    const content =
+      response.choices[0]?.message?.content ?? "[openai-gpt5] empty response";
+
     return {
       providerId: this.id,
-      modelId,
+      modelId: MODEL_ID,
       output: {
-        messages: [{ role: "assistant", content: fakeContent }],
-        raw: null,
+        messages: [{ role: "assistant", content }],
+        raw: response,
       },
     };
   },
