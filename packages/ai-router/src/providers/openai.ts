@@ -46,9 +46,18 @@ export const openAiGpt5Provider: AiProvider = {
     const content =
       response.choices[0]?.message?.content ?? "[openai-gpt5] empty response";
 
+    // Extract usage information
+    const usage = response.usage
+      ? {
+          inputTokens: response.usage.prompt_tokens || 0,
+          outputTokens: response.usage.completion_tokens || 0,
+        }
+      : undefined;
+
     return {
       providerId: this.id,
       modelId: MODEL_ID,
+      usage,
       output: {
         messages: [{ role: "assistant", content }],
         raw: response,

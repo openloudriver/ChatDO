@@ -1,5 +1,7 @@
 import { AiRouterInput, AiRouterResult, AiProvider } from "./types";
 import { routingRules } from "./config";
+import { findPricing } from "./pricing";
+import { recordUsage } from "./spendTracker";
 import { openAiGpt5Provider } from "./providers/openai";
 import { claudeSonnetProvider } from "./providers/anthropic";
 import { grokCodeProvider } from "./providers/grok";
@@ -51,6 +53,27 @@ function selectProvider(input: AiRouterInput): AiProvider {
 
 export async function runTask(input: AiRouterInput): Promise<AiRouterResult> {
   const provider = selectProvider(input);
-  return provider.invoke(input);
+  const start = Date.now();
+  const result = await provider.invoke(input);
+  const ms = Date.now() - start;
+
+  console.log(
+    `[AI-Router] intent=${input.intent} provider=${result.providerId} model=${result.modelId} ms=${ms}`,
+  );
+
+  // Cost tracking
+  if (result.usage) {
+    const pricing = findPricing(result.providerId);
+    if (pricing) {
+      const { inputTokens, outputTokens } = result.usage;
+      const costUsd =
+        (inputTokens / 1_000_000) * pricing.inputPerMillion +
+        (outputTokens / 1_000_000) * pricing.outputPerMillion;
+
+      await recordUsage(result.providerId, result.modelId, costUsd);
+    }
+  }
+
+  return result;
 }
 

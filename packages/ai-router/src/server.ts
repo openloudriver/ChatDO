@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { runTask, AiRouterInput } from "./index";
+import { getCurrentMonthSpend, getMonthlyHistory } from "./spendTracker";
 
 const app = express();
 app.use(bodyParser.json());
@@ -23,6 +24,38 @@ app.post("/v1/ai/run", async (req, res) => {
       ok: false,
       error: err?.message ?? "Unknown error",
     });
+  }
+});
+
+app.get("/v1/ai/spend/monthly", async (_req, res) => {
+  try {
+    const current = await getCurrentMonthSpend();
+    res.json({
+      ok: true,
+      month: current.monthId,
+      totalUsd: current.totalUsd,
+      providers: Object.entries(current.providers).map(([id, usd]) => ({
+        id,
+        label: id, // you can make this nicer later
+        usd,
+      })),
+    });
+  } catch (err: any) {
+    console.error("[AI-Router] /v1/ai/spend/monthly error:", err);
+    res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
+  }
+});
+
+app.get("/v1/ai/spend/history", async (_req, res) => {
+  try {
+    const history = await getMonthlyHistory();
+    res.json({
+      ok: true,
+      months: Object.values(history),
+    });
+  } catch (err: any) {
+    console.error("[AI-Router] /v1/ai/spend/history error:", err);
+    res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
   }
 });
 

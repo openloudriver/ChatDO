@@ -28,9 +28,15 @@ export interface AiRouterInput {
   };
 }
 
+export interface AiUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export interface AiRouterResult {
   providerId: string;
   modelId: string;
+  usage?: AiUsage; // optional: some providers may not return usage yet
   output: {
     messages: Array<{ role: "assistant"; content: string }>;
     raw?: any; // raw provider response if you want it

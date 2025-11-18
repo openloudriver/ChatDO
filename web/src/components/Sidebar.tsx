@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
+import { AiSpendIndicator } from './AiSpendIndicator';
 
 const PlusIcon = () => (
   <span className="inline-flex h-4 w-4 items-center justify-center text-xs font-bold">
@@ -509,6 +510,11 @@ const Sidebar: React.FC = () => {
               ))}
           </div>
         )}
+      </div>
+
+      {/* AI Spend Indicator - Bottom of sidebar */}
+      <div className="px-2 py-2 border-t border-[#565869]">
+        <AiSpendIndicator />
       </div>
     </div>
   );

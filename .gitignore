@@ -55,6 +55,9 @@ build/
 # Uploads
 uploads/
 
+# AI-Router data (spend tracking)
+packages/ai-router/data/
+
 # TypeScript
 *.tsbuildinfo
 
