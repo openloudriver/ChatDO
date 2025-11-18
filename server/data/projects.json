@@ -1,0 +1,18 @@
+[
+  {
+    "id": "privacypay",
+    "name": "PrivacyPay",
+    "default_target": "privacypay"
+  },
+  {
+    "id": "drr",
+    "name": "Douay-Rheims Renewed",
+    "default_target": "drr"
+  },
+  {
+    "id": "scratch",
+    "name": "General",
+    "default_target": "privacypay"
+  }
+]
+

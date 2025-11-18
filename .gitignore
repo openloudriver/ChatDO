@@ -45,3 +45,16 @@ Thumbs.db
 # Uncomment the next line if you want to exclude memory from git
 # memory/
 
+# Node.js / React
+node_modules/
+.pnpm-store/
+dist/
+build/
+*.log
+
+# Uploads
+uploads/
+
+# TypeScript
+*.tsbuildinfo
+
