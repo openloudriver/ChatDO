@@ -3,30 +3,14 @@ import { useChatStore } from './store/chat';
 import Sidebar from './components/Sidebar';
 import ChatMessages from './components/ChatMessages';
 import ChatComposer from './components/ChatComposer';
-import axios from 'axios';
 
 const App: React.FC = () => {
-  const { setProjects, setCurrentProject } = useChatStore();
+  const { loadProjects } = useChatStore();
 
   useEffect(() => {
     // Load projects on mount
-    const loadProjects = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/projects');
-        const loadedProjects = response.data;
-        setProjects(loadedProjects);
-        
-        // Set first project as default
-        if (loadedProjects.length > 0) {
-          setCurrentProject(loadedProjects[0]);
-        }
-      } catch (error) {
-        console.error('Failed to load projects:', error);
-      }
-    };
-    
     loadProjects();
-  }, [setProjects, setCurrentProject]);
+  }, [loadProjects]);
 
   return (
     <div className="flex h-screen bg-[#343541] text-[#ececf1]">

@@ -43,3 +43,13 @@ def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[st
     path = thread_history_path(target_name, thread_id)
     path.write_text(json.dumps(messages, indent=2, ensure_ascii=False))
 
+def delete_thread_history(target_name: str, thread_id: str) -> None:
+    """
+    Permanently delete thread history from disk.
+    Removes the entire thread directory.
+    """
+    thread_path = thread_dir(target_name, thread_id)
+    if thread_path.exists():
+        import shutil
+        shutil.rmtree(thread_path)
+

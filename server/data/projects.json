@@ -1,18 +1,32 @@
 [
   {
+    "id": "scratch",
+    "name": "General",
+    "default_target": "privacypay",
+    "sort_index": 0
+  },
+  {
     "id": "privacypay",
     "name": "PrivacyPay",
-    "default_target": "privacypay"
+    "default_target": "privacypay",
+    "sort_index": 1
   },
   {
     "id": "drr",
     "name": "Douay-Rheims Renewed",
-    "default_target": "drr"
+    "default_target": "drr",
+    "sort_index": 2
   },
   {
-    "id": "scratch",
-    "name": "General",
-    "default_target": "privacypay"
+    "id": "5585082f-f02f-4da3-9894-661513a6eb9c",
+    "name": "Flywheel",
+    "default_target": "general",
+    "sort_index": 3
+  },
+  {
+    "id": "0eb7031c-765d-4547-8cd8-7f497af91952",
+    "name": "Retirement",
+    "default_target": "general",
+    "sort_index": 4
   }
 ]
-
