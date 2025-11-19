@@ -71,13 +71,8 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
     except Exception as e:
         raise RuntimeError(f"AI-Router request failed: {str(e)}")
 
-# OLD MODEL ROUTING CODE - Now using AI-Router instead
-# Keeping for reference but not used
 def choose_model(task: str) -> str:
-    """Choose which OpenAI model to use based on the task description.
-
-    Routing rules (OLD - Now using AI-Router with gpt-5 only):
-
+    """
     - gpt-5
       All tasks: architecture, strategy, planning, coding, refactoring, 
       documentation, and general chat. Single model for everything.

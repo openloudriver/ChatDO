@@ -23,9 +23,9 @@ from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
 from chatdo.memory.store import delete_thread_history
 from chatdo.executor import parse_tasks_block, apply_tasks
-from .uploads import handle_file_upload
-from .scraper import scrape_url
-from .ws import websocket_endpoint
+from server.uploads import handle_file_upload
+from server.scraper import scrape_url
+from server.ws import websocket_endpoint
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
