@@ -40,56 +40,19 @@ export const openAiGpt5Provider: AiProvider = {
     // Default to gpt-5 if not specified
     const modelId = (input.input.systemHint as string) || "gpt-5";
 
-    // gpt-5-codex requires v1/responses endpoint, not v1/chat/completions
-    if (modelId.includes("codex")) {
-      // Use responses API for codex models
-      const response = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/responses`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: modelId,
-          input: messages,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
-        throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.output?.[0]?.content?.[0]?.text || data.output?.[0]?.text || "[openai-gpt5-codex] empty response";
-      
-      return {
-        providerId: this.id,
-        modelId: data.model || modelId,
-        usage: data.usage ? {
-          inputTokens: data.usage.input_tokens || 0,
-          outputTokens: data.usage.output_tokens || 0,
-        } : undefined,
-        output: {
-          messages: [{ role: "assistant", content }],
-          raw: data,
-        },
-      };
+    // Sanity check: only gpt-5 is allowed
+    if (modelId !== "gpt-5") {
+      throw new Error(
+        `Invalid model: ${modelId}. ChatDO only supports gpt-5. Codex models are not supported.`
+      );
     }
 
-    // Regular chat completions for gpt-5
+    // gpt-5 uses v1/chat/completions endpoint
     // gpt-5 models don't support custom temperature - only default (1)
-    const requestParams: any = {
+    const response = await client.chat.completions.create({
       model: modelId,
       messages,
-    };
-    
-    // Only add temperature for models that support it (not gpt-5 models)
-    if (!modelId.startsWith("gpt-5")) {
-      requestParams.temperature = 0.4;
-    }
-
-    const response = await client.chat.completions.create(requestParams);
+    });
 
     const content =
       response.choices[0]?.message?.content ?? "[openai-gpt5] empty response";

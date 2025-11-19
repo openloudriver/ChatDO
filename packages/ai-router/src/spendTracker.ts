@@ -83,7 +83,7 @@ export async function saveHistory(history: MonthlyHistory): Promise<void> {
 /**
  * Record usage for a single AI call.
  * - providerId: e.g. "openai-gpt5"
- * - modelId:    e.g. "gpt-5" or "gpt-5-codex" (not needed for spend display, but useful for history if you want to extend later)
+ * - modelId:    e.g. "gpt-5" (not needed for spend display, but useful for history if you want to extend later)
  * - costUsd:    calculated cost of this call
  *
  * This function should:

@@ -12,6 +12,9 @@ from ..memory import store as memory_store
 # AI-Router HTTP client
 AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
 
+# Cache the model ID to avoid making a preliminary call on every request
+_cached_model_id: Optional[str] = None
+
 def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
     t = text.lower()
@@ -29,7 +32,7 @@ def classify_intent(text: str) -> str:
     
     return "general_chat"
 
-def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> List[Dict[str, str]]:
+def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> tuple[List[Dict[str, str]], str]:
     """
     Call the AI-Router HTTP service to get AI responses.
     
@@ -38,7 +41,7 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         intent: AI intent type (e.g., "general_chat", "long_planning", "code_edit")
     
     Returns:
-        List of assistant messages from the router
+        Tuple of (list of assistant messages from the router, model_id)
     """
     payload = {
         "role": "chatdo",
@@ -56,7 +59,8 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         data = resp.json()
         if not data.get("ok"):
             raise RuntimeError(f"AI-Router error: {data.get('error')}")
-        return data["output"]["messages"]
+        model_id = data.get("modelId", "gpt-5")
+        return data["output"]["messages"], model_id
     except requests.exceptions.ConnectionError as e:
         raise RuntimeError(
             f"Failed to connect to AI-Router at {AI_ROUTER_URL}. "
@@ -72,15 +76,11 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
 def choose_model(task: str) -> str:
     """Choose which OpenAI model to use based on the task description.
 
-    Routing rules (OLD - Now using AI-Router with gpt-5 and gpt-5-codex):
+    Routing rules (OLD - Now using AI-Router with gpt-5 only):
 
     - gpt-5
-      High-level architecture / strategy / product design / planning.
-      Also used for heavy, long-form reasoning (whitepapers, long specs, 
-      governance docs, threat models). General-purpose default model.
-
-    - gpt-5-codex
-      Non-trivial coding, refactors, tests, debugging.
+      All tasks: architecture, strategy, planning, coding, refactoring, 
+      documentation, and general chat. Single model for everything.
     """
     tl = task.lower()
 
@@ -101,15 +101,7 @@ def choose_model(task: str) -> str:
     ]):
         return "gpt-5"
 
-    # Code-heavy tasks, refactors, testing, debugging
-    if any(word in tl for word in [
-        "refactor", "rewrite", "migrate", "unit test", "tests", "test suite",
-        "bug", "error", "traceback", "stack trace", "lint", "type error",
-        "implement", "function", "class", "typescript", "python", "javascript",
-        "react", "terraform", "dockerfile", "cursor", "monorepo"
-    ]):
-        return "gpt-5-codex"
-
+    # All tasks use gpt-5 (code tasks included)
     # Fallback general model
     return "gpt-5"
 
@@ -180,8 +172,29 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Build message history
     messages: List[Dict[str, str]] = []
     
+    # Get the actual model ID (cached to avoid extra API calls)
+    # This allows us to include it in the system prompt so the model knows its exact identifier
+    global _cached_model_id
+    if _cached_model_id is None:
+        try:
+            _, _cached_model_id = call_ai_router(
+                [{"role": "system", "content": "test"}, {"role": "user", "content": "ping"}],
+                intent="general_chat"
+            )
+        except Exception:
+            # Fallback if we can't get model ID
+            _cached_model_id = "gpt-5"
+    
+    model_id = _cached_model_id
+    
+    # Include model ID in system prompt so model can see it
+    system_prompt = f"""{CHATDO_SYSTEM_PROMPT}
+
+IMPORTANT: Your exact backend model identifier is: {model_id}
+When asked about your specific model, you should state this exact identifier: {model_id}"""
+    
     # System message is always first
-    messages.append({"role": "system", "content": CHATDO_SYSTEM_PROMPT})
+    messages.append({"role": "system", "content": system_prompt})
     
     if thread_id:
         prior = memory_store.load_thread_history(target.name, thread_id)
@@ -193,7 +206,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     messages.append({"role": "user", "content": task})
     
     # Call AI-Router instead of direct model
-    assistant_messages = call_ai_router(messages, intent=intent)
+    assistant_messages, _ = call_ai_router(messages, intent=intent)
     
     # Extract content from the last assistant message
     if assistant_messages and len(assistant_messages) > 0:

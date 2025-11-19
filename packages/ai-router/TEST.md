@@ -17,13 +17,12 @@ curl -X POST http://localhost:8081/v1/ai/run \
   -d '{
     "role": "chatdo",
     "intent": "general_chat",
-    "priority": "medium",
+    "priority": "high",
     "privacyLevel": "normal",
     "costTier": "standard",
     "input": {
       "messages": [
-        { "role": "system", "content": "You are the AI Router test." },
-        { "role": "user", "content": "Say hello from GPT-5." }
+        { "role": "user", "content": "Hello" }
       ]
     }
   }'
@@ -57,5 +56,5 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 AI_ROUTER_PORT=8081
 ```
 
-Note: Model selection (gpt-5 or gpt-5-codex) is now handled automatically by routing rules based on intent.
+Note: All intents use gpt-5. Model selection is handled automatically by routing rules.
 
