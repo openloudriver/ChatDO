@@ -28,5 +28,15 @@
     "updated_at": "2025-11-18T23:22:06.659585+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "9dd44673-77d5-4313-b0e1-b5897c135214",
+    "project_id": "scratch",
+    "title": "New Chat",
+    "thread_id": "9dd44673-77d5-4313-b0e1-b5897c135214",
+    "created_at": "2025-11-19T02:08:30.992987+00:00",
+    "updated_at": "2025-11-19T02:08:36.051946+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:08:36.051926+00:00"
   }
 ]

@@ -71,12 +71,11 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
     except Exception as e:
         raise RuntimeError(f"AI-Router request failed: {str(e)}")
 
+# OLD MODEL ROUTING CODE - Now using AI-Router instead
+# Keeping for reference but not used
+# LEGACY MODEL ROUTING CODE (unused) — AI-Router now handles all routing
 def choose_model(task: str) -> str:
-    """
-    - gpt-5
-      All tasks: architecture, strategy, planning, coding, refactoring, 
-      documentation, and general chat. Single model for everything.
-    """
+    """Legacy model router (deprecated — AI-Router handles all routing)."""
     tl = task.lower()
 
     # Long-form, reproducible design / governance / threat-model work
