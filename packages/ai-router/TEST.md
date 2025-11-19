@@ -35,7 +35,7 @@ curl -X POST http://localhost:8081/v1/ai/run \
 {
   "ok": true,
   "providerId": "openai-gpt5",
-  "modelId": "gpt-5.1",
+  "modelId": "gpt-5",
   "output": {
     "messages": [
       {
@@ -54,7 +54,8 @@ Make sure you have a `.env` file (or export env vars) with:
 ```bash
 OPENAI_API_KEY=your-actual-key-here
 OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL_GPT5=gpt-5.1
 AI_ROUTER_PORT=8081
 ```
+
+Note: Model selection (gpt-5 or gpt-5-codex) is now handled automatically by routing rules based on intent.
 

@@ -18,43 +18,49 @@ const providers: Record<string, AiProvider> = {
   [llamaLocalProvider.id]: llamaLocalProvider,
 };
 
-function selectProvider(input: AiRouterInput): AiProvider {
-  const rule = routingRules.find((r) => r.intent === input.intent);
-  // Default: fallback to GPT-5 if no specific rule
-  const defaultId = rule?.defaultProviderId ?? "openai-gpt5";
-  let candidate = providers[defaultId];
-
-  // Adjust for cost-tier
-  if (input.costTier === "cheap" && rule?.cheapFallbackId) {
-    candidate = providers[rule.cheapFallbackId] ?? candidate;
-  }
-
-  // Adjust for strict privacy (e.g. local only)
+function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {
+  // Handle strict privacy - use local model
   if (input.privacyLevel === "strict") {
-    // Simple version: prefer local model if available
     const local = providers["llama-local"];
     if (local && local.supportsPrivacyLevel("strict")) {
-      candidate = local;
+      return { provider: local, model: "llama-local" };
     }
   }
 
-  if (!candidate) {
-    throw new Error("No suitable provider found for AI-Router.");
+  // Get routing rule for this intent
+  const rule = routingRules[input.intent];
+  if (!rule) {
+    throw new Error(`No routing rule found for intent: ${input.intent}`);
   }
 
-  if (!candidate.supportsPrivacyLevel(input.privacyLevel)) {
+  const provider = providers[rule.providerId];
+  if (!provider) {
+    throw new Error(`Provider not found: ${rule.providerId}`);
+  }
+
+  if (!provider.supportsPrivacyLevel(input.privacyLevel)) {
     throw new Error(
-      `Selected provider ${candidate.id} does not support privacy level ${input.privacyLevel}`,
+      `Provider ${provider.id} does not support privacy level ${input.privacyLevel}`,
     );
   }
 
-  return candidate;
+  return { provider, model: rule.model };
 }
 
 export async function runTask(input: AiRouterInput): Promise<AiRouterResult> {
-  const provider = selectProvider(input);
+  const { provider, model } = selectProvider(input);
+  
+  // Pass model selection to provider via systemHint
+  const inputWithModel = {
+    ...input,
+    input: {
+      ...input.input,
+      systemHint: model,
+    },
+  };
+
   const start = Date.now();
-  const result = await provider.invoke(input);
+  const result = await provider.invoke(inputWithModel);
   const ms = Date.now() - start;
 
   console.log(
@@ -76,4 +82,5 @@ export async function runTask(input: AiRouterInput): Promise<AiRouterResult> {
 
   return result;
 }
+
 

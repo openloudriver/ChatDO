@@ -1,52 +1,14 @@
-import { AiIntent, CostTier } from "./types";
+import { AiIntent } from "./types";
 
-export interface RoutingRule {
-  intent: AiIntent;
-  defaultProviderId: string;
-  cheapFallbackId?: string;
-  strictPrivacyOnlyIds?: string[]; // e.g. local-only
-}
-
-export const routingRules: RoutingRule[] = [
-  {
-    intent: "long_planning",
-    defaultProviderId: "openai-gpt5",
-    cheapFallbackId: "mistral-large",
-  },
-  {
-    intent: "code_gen",
-    defaultProviderId: "grok-code",
-    cheapFallbackId: "deepseek-coder",
-  },
-  {
-    intent: "code_edit",
-    defaultProviderId: "grok-code",
-    cheapFallbackId: "deepseek-coder",
-  },
-  {
-    intent: "doc_draft",
-    defaultProviderId: "anthropic-claude-sonnet",
-    cheapFallbackId: "mistral-large",
-  },
-  {
-    intent: "general_chat",
-    defaultProviderId: "openai-gpt5",
-    cheapFallbackId: "mistral-large",
-  },
-  {
-    intent: "review",
-    defaultProviderId: "anthropic-claude-sonnet",
-    cheapFallbackId: "mistral-large",
-  },
-  {
-    intent: "summarize",
-    defaultProviderId: "anthropic-claude-sonnet",
-    cheapFallbackId: "mistral-large",
-  },
-  {
-    intent: "tool_orchestration",
-    defaultProviderId: "openai-gpt5",
-    cheapFallbackId: "mistral-large",
-  },
-];
+// Model routing: map intents to OpenAI models (gpt-5 or gpt-5-codex)
+export const routingRules: Record<AiIntent, { model: string; providerId: string }> = {
+  long_planning: { model: "gpt-5", providerId: "openai-gpt5" },
+  general_chat: { model: "gpt-5", providerId: "openai-gpt5" },
+  summarize: { model: "gpt-5", providerId: "openai-gpt5" },
+  doc_draft: { model: "gpt-5", providerId: "openai-gpt5" },
+  code_gen: { model: "gpt-5-codex", providerId: "openai-gpt5" },
+  code_edit: { model: "gpt-5-codex", providerId: "openai-gpt5" },
+  review: { model: "gpt-5", providerId: "openai-gpt5" },
+  tool_orchestration: { model: "gpt-5", providerId: "openai-gpt5" },
+};
 

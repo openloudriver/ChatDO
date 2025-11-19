@@ -72,32 +72,26 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
 def choose_model(task: str) -> str:
     """Choose which OpenAI model to use based on the task description.
 
-    Routing rules (heuristic, cheap-first where possible):
+    Routing rules (OLD - Now using AI-Router with gpt-5 and gpt-5-codex):
 
-    - gpt-5.1-chat-latest
+    - gpt-5
       High-level architecture / strategy / product design / planning.
       Also used for heavy, long-form reasoning (whitepapers, long specs, 
-      governance docs, threat models).
+      governance docs, threat models). General-purpose default model.
 
-    - gpt-5.1-codex
+    - gpt-5-codex
       Non-trivial coding, refactors, tests, debugging.
-
-    - gpt-5.1-codex-mini
-      Fast, cheap, day-to-day repo work and small edits.
-
-    - gpt-5.1
-      Fallback general model if nothing else matches.
     """
     tl = task.lower()
 
     # Long-form, reproducible design / governance / threat-model work
-    # (Now uses gpt-5.1-chat-latest instead of deprecated gpt-5.1-2025-11-13)
+    # Uses gpt-5 for these tasks
     if any(word in tl for word in [
         "whitepaper", "white paper", "spec", "specification", "design doc",
         "requirements", "threat model", "governance", "constitution",
         "bylaws", "policy", "architecture doc", "roadmap"
     ]):
-        return "gpt-5.1-chat-latest"
+        return "gpt-5"
 
     # High-level architecture / strategy / planning / product thinking
     if any(word in tl for word in [
@@ -105,7 +99,7 @@ def choose_model(task: str) -> str:
         "roadmap", "plan", "planning", "high level", "overview",
         "meta", "vision"
     ]):
-        return "gpt-5.1-chat-latest"
+        return "gpt-5"
 
     # Code-heavy tasks, refactors, testing, debugging
     if any(word in tl for word in [
@@ -114,15 +108,10 @@ def choose_model(task: str) -> str:
         "implement", "function", "class", "typescript", "python", "javascript",
         "react", "terraform", "dockerfile", "cursor", "monorepo"
     ]):
-        return "gpt-5.1-codex"
-
-    # Default: fast/cheap mini model for small tasks and light edits
-    # (most day-to-day repo work should fall back here)
-    if len(task) < 400 and "design" not in tl and "architecture" not in tl:
-        return "gpt-5.1-codex-mini"
+        return "gpt-5-codex"
 
     # Fallback general model
-    return "gpt-5.1"
+    return "gpt-5"
 
 # OLD MODEL BUILDING CODE - Now using AI-Router instead
 # Keeping for reference but not used
@@ -131,17 +120,11 @@ def build_model(task: str):
     Build the chat model for this run, using the model router to
     pick an appropriate model based on the task description.
     
-    Uses ChatOpenAI with use_responses_api=True for gpt-5.1 models that require
-    the v1/responses endpoint instead of v1/chat/completions.
+    OLD: Used ChatOpenAI with use_responses_api=True for older model versions.
+    NOW: All models use standard chat completions API.
     """
     model_name = choose_model(task)
-    
-    # Check if this is a gpt-5.1 model that needs the responses endpoint
-    if model_name.startswith("gpt-5.1"):
-        return ChatOpenAI(model=model_name, temperature=0.2, use_responses_api=True)
-    else:
-        # Use standard ChatOpenAI for other models
-        return ChatOpenAI(model=model_name, temperature=0.2)
+    return ChatOpenAI(model=model_name, temperature=0.2)
 
 def build_tools(target: TargetConfig):
     # Wrap repo tools so deepagents can call them
