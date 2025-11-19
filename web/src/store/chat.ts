@@ -85,11 +85,13 @@ export const useChatStore = create<ChatStore>((set) => ({
   setProjects: (projects) => set({ projects }),
   
   setCurrentProject: (project) => {
-    set({ 
+    set((state) => ({
       currentProject: project,
-      viewMode: project ? 'projectList' : 'projectList',
+      // Only set viewMode to projectList if a project is selected
+      // If project is null, keep the current viewMode (could be trashList, etc.)
+      viewMode: project ? 'projectList' : state.viewMode,
       currentConversation: null
-    });
+    }));
   },
   
   setViewMode: (mode) => set({ viewMode: mode }),
@@ -411,7 +413,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       
       // Reload chats to ensure we have the latest state
       // Small delay to ensure backend has saved the change
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       if (deletedChat.project_id) {
         await useChatStore.getState().loadChats(deletedChat.project_id);

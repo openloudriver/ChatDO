@@ -34,6 +34,7 @@ interface SortableProjectItemProps {
   setOpenMenuId: (id: string | null) => void;
   handleEditProject: (id: string, name: string) => void;
   handleDeleteProject: (id: string, name: string) => void;
+  setViewMode: (mode: 'projectList' | 'chat' | 'trashList') => void;
 }
 
 const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
@@ -44,6 +45,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
   setOpenMenuId,
   handleEditProject,
   handleDeleteProject,
+  setViewMode,
 }) => {
   const {
     attributes,
@@ -351,6 +353,7 @@ const Sidebar: React.FC = () => {
                 setOpenMenuId={setOpenMenuId}
                 handleEditProject={handleEditProject}
                 handleDeleteProject={handleDeleteProject}
+                setViewMode={setViewMode}
               />
             ))}
           </SortableContext>
