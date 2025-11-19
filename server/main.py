@@ -408,7 +408,10 @@ async def chat(request: ChatRequest):
         return ChatResponse(reply=reply)
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_detail = str(e)
+        traceback.print_exc()  # Print full traceback to server logs
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 @app.post("/api/upload")

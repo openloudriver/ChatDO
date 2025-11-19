@@ -200,6 +200,13 @@ export const useChatStore = create<ChatStore>((set) => ({
       const response = await axios.get(url);
       const allChats = response.data;
       
+      // Get the project to find default_target
+      const state = useChatStore.getState();
+      const project = projectId 
+        ? state.projects.find(p => p.id === projectId) || state.currentProject
+        : state.currentProject;
+      const defaultTarget = project?.default_target || 'general';
+      
       // Convert to Conversation format and split active/trashed
       const activeChats: Conversation[] = [];
       const trashedChats: Conversation[] = [];
@@ -210,7 +217,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           title: chat.title,
           messages: [], // Messages loaded separately if needed
           projectId: chat.project_id,
-          targetName: '', // Will be set from project if needed
+          targetName: defaultTarget,
           createdAt: new Date(chat.created_at),
           trashed: chat.trashed || false,
           trashed_at: chat.trashed_at,
@@ -317,12 +324,15 @@ export const useChatStore = create<ChatStore>((set) => ({
       set((state) => {
         const chat = state.trashedChats.find(c => c.id === id);
         const updatedTrashedChats = state.trashedChats.filter(c => c.id !== id);
+        // Get default_target from the project
+        const project = state.projects.find(p => p.id === restoredChat.project_id) || state.currentProject;
+        const defaultTarget = project?.default_target || 'general';
         const restoredConversation: Conversation = {
           id: restoredChat.id,
           title: restoredChat.title,
           messages: chat?.messages || [],
           projectId: restoredChat.project_id,
-          targetName: chat?.targetName || '',
+          targetName: chat?.targetName || defaultTarget,
           createdAt: new Date(restoredChat.created_at),
           trashed: false,
           trashed_at: undefined,

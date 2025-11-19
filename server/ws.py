@@ -56,9 +56,12 @@ async def stream_chat_response(
         })
     
     except Exception as e:
+        import traceback
+        error_detail = str(e)
+        traceback.print_exc()  # Print full traceback to server logs
         await websocket.send_json({
             "type": "error",
-            "content": str(e),
+            "content": error_detail,
             "done": True
         })
 
@@ -100,9 +103,15 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        await websocket.send_json({
-            "type": "error",
-            "content": str(e),
-            "done": True
-        })
+        import traceback
+        error_detail = str(e)
+        traceback.print_exc()  # Print full traceback to server logs
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "content": error_detail,
+                "done": True
+            })
+        except:
+            pass  # WebSocket may already be closed
 

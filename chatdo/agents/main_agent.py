@@ -12,6 +12,23 @@ from ..memory import store as memory_store
 # AI-Router HTTP client
 AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
 
+def classify_intent(text: str) -> str:
+    """Classify user message intent for AI-Router routing."""
+    t = text.lower()
+    
+    if "refactor" in t or "fix" in t or "edit code" in t:
+        return "code_edit"
+    if "generate code" in t or "write a function" in t:
+        return "code_gen"
+    if "plan" in t or "architecture" in t or "roadmap" in t:
+        return "long_planning"
+    if "summarize" in t:
+        return "summarize"
+    if "draft" in t or "write" in t or "readme" in t or "policy" in t:
+        return "doc_draft"
+    
+    return "general_chat"
+
 def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> List[Dict[str, str]]:
     """
     Call the AI-Router HTTP service to get AI responses.
@@ -33,24 +50,34 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
             "messages": messages,
         },
     }
-    resp = requests.post(AI_ROUTER_URL, json=payload, timeout=60)
-    resp.raise_for_status()
-    data = resp.json()
-    if not data.get("ok"):
-        raise RuntimeError(f"AI-Router error: {data.get('error')}")
-    return data["output"]["messages"]
+    try:
+        resp = requests.post(AI_ROUTER_URL, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        if not data.get("ok"):
+            raise RuntimeError(f"AI-Router error: {data.get('error')}")
+        return data["output"]["messages"]
+    except requests.exceptions.ConnectionError as e:
+        raise RuntimeError(
+            f"Failed to connect to AI-Router at {AI_ROUTER_URL}. "
+            f"Is the AI-Router server running? Error: {str(e)}"
+        )
+    except requests.exceptions.Timeout as e:
+        raise RuntimeError(f"AI-Router request timed out: {str(e)}")
+    except Exception as e:
+        raise RuntimeError(f"AI-Router request failed: {str(e)}")
 
+# OLD MODEL ROUTING CODE - Now using AI-Router instead
+# Keeping for reference but not used
 def choose_model(task: str) -> str:
     """Choose which OpenAI model to use based on the task description.
 
     Routing rules (heuristic, cheap-first where possible):
 
-    - gpt-5.1-2025-11-13
-      Heavy, long-form reasoning where you care about reproducibility
-      (whitepapers, long specs, governance docs, threat models).
-
     - gpt-5.1-chat-latest
       High-level architecture / strategy / product design / planning.
+      Also used for heavy, long-form reasoning (whitepapers, long specs, 
+      governance docs, threat models).
 
     - gpt-5.1-codex
       Non-trivial coding, refactors, tests, debugging.
@@ -64,12 +91,13 @@ def choose_model(task: str) -> str:
     tl = task.lower()
 
     # Long-form, reproducible design / governance / threat-model work
+    # (Now uses gpt-5.1-chat-latest instead of deprecated gpt-5.1-2025-11-13)
     if any(word in tl for word in [
         "whitepaper", "white paper", "spec", "specification", "design doc",
         "requirements", "threat model", "governance", "constitution",
         "bylaws", "policy", "architecture doc", "roadmap"
     ]):
-        return "gpt-5.1-2025-11-13"
+        return "gpt-5.1-chat-latest"
 
     # High-level architecture / strategy / planning / product thinking
     if any(word in tl for word in [
@@ -96,6 +124,8 @@ def choose_model(task: str) -> str:
     # Fallback general model
     return "gpt-5.1"
 
+# OLD MODEL BUILDING CODE - Now using AI-Router instead
+# Keeping for reference but not used
 def build_model(task: str):
     """
     Build the chat model for this run, using the model router to
@@ -143,6 +173,9 @@ def build_tools(target: TargetConfig):
         write_file_wrapper,
     ]
 
+# OLD AGENT BUILDING CODE - Now using AI-Router instead
+# Keeping for reference but not used
+# Note: Tools functionality would need to be added to AI-Router if needed
 def build_agent(target: TargetConfig, task: str):
     model = build_model(task)
     tools = build_tools(target)
@@ -155,13 +188,14 @@ def build_agent(target: TargetConfig, task: str):
 
 def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> str:
     """
-    Run ChatDO on a given task. If thread_id is provided, load/save conversation history
-    so the agent has long-term context.
+    Run ChatDO on a given task using AI-Router.
+    If thread_id is provided, load/save conversation history so the agent has long-term context.
     """
-    agent = build_agent(target, task)
+    # Classify intent from user message
+    intent = classify_intent(task)
     
     # Build message history
-    messages: List[Dict[str, Any]] = []
+    messages: List[Dict[str, str]] = []
     
     # System message is always first
     messages.append({"role": "system", "content": CHATDO_SYSTEM_PROMPT})
@@ -175,38 +209,14 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Current user turn
     messages.append({"role": "user", "content": task})
     
-    # deepagents expects a structure like {"messages": [...]}
-    result = agent.invoke({"messages": messages})
+    # Call AI-Router instead of direct model
+    assistant_messages = call_ai_router(messages, intent=intent)
     
-    # Extract final assistant message
-    final_content = ""
-    if isinstance(result, dict) and "messages" in result:
-        # result["messages"] is usually a list of LangChain messages
-        msgs = result["messages"]
-        if msgs:
-            last = msgs[-1]
-            # handle both LC messages and plain dict-like
-            if hasattr(last, "content"):
-                content = last.content
-                # Handle responses API format which returns a list
-                if isinstance(content, list):
-                    # Extract text from the list of response objects
-                    text_parts = []
-                    for item in content:
-                        if isinstance(item, dict):
-                            if item.get("type") == "text" and "text" in item:
-                                text_parts.append(item["text"])
-                            elif "text" in item:
-                                text_parts.append(item["text"])
-                        elif isinstance(item, str):
-                            text_parts.append(item)
-                    final_content = " ".join(text_parts) if text_parts else str(content)
-                else:
-                    final_content = content
-            else:
-                final_content = str(last)
+    # Extract content from the last assistant message
+    if assistant_messages and len(assistant_messages) > 0:
+        final_content = assistant_messages[-1].get("content", "")
     else:
-        final_content = str(result)
+        final_content = ""
     
     # Update memory if thread_id is provided
     if thread_id:

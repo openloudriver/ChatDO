@@ -58,8 +58,12 @@ const ChatComposer: React.FC = () => {
           console.error('WebSocket error:', data.content);
           clearStreaming();
           ws.close();
-          // Fallback to REST API
-          fallbackToRest(userMessage);
+          // Show the actual error message
+          addMessage({ 
+            role: 'assistant', 
+            content: `Error: ${data.content}` 
+          });
+          setLoading(false);
         }
       };
       
@@ -88,11 +92,12 @@ const ChatComposer: React.FC = () => {
       });
       
       addMessage({ role: 'assistant', content: response.data.reply });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Sorry, I encountered an error. Please try again.';
       addMessage({ 
         role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please try again.' 
+        content: `Error: ${errorMessage}` 
       });
     } finally {
       setLoading(false);

@@ -16,18 +16,31 @@ interface MonthlySpendResponse {
 export const AiSpendIndicator: React.FC = () => {
   const [data, setData] = useState<MonthlySpendResponse | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const amountRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchSpend() {
       try {
         const res = await fetch("http://localhost:8081/v1/ai/spend/monthly");
+        if (!res.ok) {
+          console.error(`Failed to fetch spend: ${res.status} ${res.statusText}`);
+          return;
+        }
         const json = await res.json();
         if (json.ok) {
           setData(json);
+        } else {
+          console.error('Spend API returned error:', json.error);
         }
       } catch (e) {
-        // fail silently; just don't update
+        console.error('Error fetching spend data:', e);
+        // Set empty data on error so menu can still show
+        setData({
+          ok: true,
+          month: new Date().toISOString().slice(0, 7),
+          totalUsd: 0,
+          providers: []
+        });
       }
     }
 
@@ -38,7 +51,7 @@ export const AiSpendIndicator: React.FC = () => {
 
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
-    setMenuPos({ x: e.clientX, y: e.clientY });
+    e.stopPropagation();
     setMenuOpen(true);
   }
 
@@ -46,51 +59,76 @@ export const AiSpendIndicator: React.FC = () => {
     setMenuOpen(false);
   }
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (menuOpen) {
+      const handleClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.spend-menu')) {
+          closeMenu();
+        }
+      };
+      document.addEventListener('click', handleClick);
+      return () => document.removeEventListener('click', handleClick);
+    }
+  }, [menuOpen]);
+
   const total = data?.totalUsd ?? 0;
 
   return (
-    <>
+    <div className="relative">
       <div
+        ref={amountRef}
         onContextMenu={handleContextMenu}
+        onClick={(e) => e.stopPropagation()}
         className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1"
       >
         {`$${total.toFixed(2)}`}
       </div>
-      {menuOpen && menuPos && data && (
+      {menuOpen && amountRef.current && (
         <div
-          className="fixed bg-[#202123] border border-[#565869] rounded-lg p-2 z-[9999] min-w-[200px] shadow-lg"
+          className="spend-menu absolute bg-[#202123] border border-[#565869] rounded-lg p-2 z-[9999] min-w-[200px] max-w-[250px] shadow-lg"
           style={{
-            top: menuPos.y,
-            left: menuPos.x,
+            bottom: '100%', // Position above
+            right: 0, // Align to right edge
+            marginBottom: '8px', // Small gap
           }}
-          onMouseLeave={closeMenu}
+          onClick={(e) => e.stopPropagation()}
         >
-          {data.providers.map((p) => (
-            <div
-              key={p.id}
-              className="flex justify-between px-2 py-1 text-sm text-[#ececf1]"
-            >
-              <span>{p.label}</span>
-              <span>${p.usd.toFixed(2)}</span>
-            </div>
-          ))}
-          {data.providers.length > 0 && (
+          {data ? (
             <>
-              <hr className="border-[#565869] my-2" />
-              <div className="flex justify-between px-2 py-1 text-sm font-semibold text-[#ececf1]">
-                <span>Total</span>
-                <span>${data.totalUsd.toFixed(2)}</span>
-              </div>
+              {data.providers.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex justify-between px-2 py-1 text-sm text-[#ececf1]"
+                >
+                  <span>{p.label}</span>
+                  <span>${p.usd.toFixed(2)}</span>
+                </div>
+              ))}
+              {data.providers.length > 0 && (
+                <>
+                  <hr className="border-[#565869] my-2" />
+                  <div className="flex justify-between px-2 py-1 text-sm font-semibold text-[#ececf1]">
+                    <span>Total</span>
+                    <span>${data.totalUsd.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              {data.providers.length === 0 && (
+                <div className="text-sm text-[#8e8ea0] px-2 py-1">
+                  No spend recorded yet
+                </div>
+              )}
             </>
-          )}
-          {data.providers.length === 0 && (
+          ) : (
             <div className="text-sm text-[#8e8ea0] px-2 py-1">
-              No spend recorded yet
+              Loading...
             </div>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };
 

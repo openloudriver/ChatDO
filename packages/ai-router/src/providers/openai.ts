@@ -10,7 +10,9 @@ const client = new OpenAI({
   baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
 });
 
-const MODEL_ID = process.env.OPENAI_MODEL_GPT5 || "gpt-5.1";
+// Default to chat-optimized latest version for best conversational experience
+// Can override with OPENAI_MODEL_GPT5 env var (e.g., "gpt-5.1" or "gpt-5.1-codex")
+const MODEL_ID = process.env.OPENAI_MODEL_GPT5 || "gpt-5.1-chat-latest";
 
 export const openAiGpt5Provider: AiProvider = {
   id: "openai-gpt5",
@@ -36,12 +38,20 @@ export const openAiGpt5Provider: AiProvider = {
       content: m.content,
     }));
 
-    const response = await client.chat.completions.create({
+    // Some models (like gpt-5.1-chat-latest) only support default temperature (1)
+    // Only set temperature if the model supports it
+    const requestParams: any = {
       model: MODEL_ID,
       messages,
       // TODO: map tools if/when you're ready
-      temperature: 0.4,
-    });
+    };
+    
+    // Only add temperature for models that support it (not chat-latest variants)
+    if (!MODEL_ID.includes('chat-latest')) {
+      requestParams.temperature = 0.4;
+    }
+
+    const response = await client.chat.completions.create(requestParams);
 
     const content =
       response.choices[0]?.message?.content ?? "[openai-gpt5] empty response";
