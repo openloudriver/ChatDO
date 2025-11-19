@@ -28,6 +28,8 @@ export interface Project {
   sort_index?: number;
 }
 
+export type ViewMode = 'projectList' | 'chat' | 'trashList';
+
 interface ChatStore {
   // State
   projects: Project[];
@@ -39,16 +41,19 @@ interface ChatStore {
   isLoading: boolean;
   isStreaming: boolean;
   streamingContent: string;
+  viewMode: ViewMode;
   
   // Actions
   setProjects: (projects: Project[]) => void;
   setCurrentProject: (project: Project | null) => void;
+  setViewMode: (mode: ViewMode) => void;
   loadProjects: () => Promise<void>;
   createProject: (name: string) => Promise<void>;
   renameProject: (id: string, name: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   reorderProjects: (orderedIds: string[]) => Promise<void>;
   loadChats: (projectId?: string) => Promise<void>;
+  loadTrashedChats: () => Promise<void>;
   setConversations: (conversations: Conversation[]) => void;
   addConversation: (conversation: Conversation) => void;
   setCurrentConversation: (conversation: Conversation | null) => void;
@@ -74,11 +79,20 @@ export const useChatStore = create<ChatStore>((set) => ({
   isLoading: false,
   isStreaming: false,
   streamingContent: '',
+  viewMode: 'projectList',
   
   // Actions
   setProjects: (projects) => set({ projects }),
   
-  setCurrentProject: (project) => set({ currentProject: project }),
+  setCurrentProject: (project) => {
+    set({ 
+      currentProject: project,
+      viewMode: project ? 'projectList' : 'projectList',
+      currentConversation: null
+    });
+  },
+  
+  setViewMode: (mode) => set({ viewMode: mode }),
   
   loadProjects: async () => {
     try {
@@ -89,7 +103,11 @@ export const useChatStore = create<ChatStore>((set) => ({
         const newCurrentProject = !state.currentProject && projects.length > 0
           ? projects[0]
           : state.currentProject;
-        return { projects, currentProject: newCurrentProject };
+        return { 
+          projects, 
+          currentProject: newCurrentProject,
+          viewMode: newCurrentProject ? 'projectList' : state.viewMode
+        };
       });
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -231,6 +249,16 @@ export const useChatStore = create<ChatStore>((set) => ({
         }
       }
       
+      // Sort by updated_at (most recent first)
+      const sortByDate = (a: Conversation, b: Conversation) => {
+        const dateA = new Date(a.trashed_at || a.createdAt).getTime();
+        const dateB = new Date(b.trashed_at || b.createdAt).getTime();
+        return dateB - dateA;
+      };
+      
+      activeChats.sort(sortByDate);
+      trashedChats.sort(sortByDate);
+      
       set((state) => {
         // If current conversation was deleted, clear it or select another
         let newCurrentConversation = state.currentConversation;
@@ -241,14 +269,64 @@ export const useChatStore = create<ChatStore>((set) => ({
           }
         }
         
-        return {
+        // When loading chats for a specific project, don't overwrite the global trashedChats
+        // Only update trashedChats if we're loading all chats (no project filter)
+        const update: any = {
           conversations: activeChats,
-          trashedChats: trashedChats,
           currentConversation: newCurrentConversation
         };
+        
+        // Only update trashedChats if loading all chats (no project filter)
+        if (!projectId) {
+          update.trashedChats = trashedChats;
+        }
+        
+        return update;
       });
     } catch (error) {
       console.error('Failed to load chats:', error);
+    }
+  },
+  
+  loadTrashedChats: async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/chats?include_trashed=true');
+      const allChats = response.data;
+      
+      const state = useChatStore.getState();
+      const trashedChats: Conversation[] = [];
+      
+      for (const chat of allChats) {
+        if (chat.trashed) {
+          const project = state.projects.find(p => p.id === chat.project_id);
+          const defaultTarget = project?.default_target || 'general';
+          
+          const conversation: Conversation = {
+            id: chat.id,
+            title: chat.title,
+            messages: [],
+            projectId: chat.project_id,
+            targetName: defaultTarget,
+            createdAt: new Date(chat.created_at),
+            trashed: true,
+            trashed_at: chat.trashed_at,
+            thread_id: chat.thread_id
+          };
+          
+          trashedChats.push(conversation);
+        }
+      }
+      
+      // Sort by trashed_at (most recent first)
+      trashedChats.sort((a, b) => {
+        const dateA = new Date(a.trashed_at || a.createdAt).getTime();
+        const dateB = new Date(b.trashed_at || b.createdAt).getTime();
+        return dateB - dateA;
+      });
+      
+      set({ trashedChats });
+    } catch (error) {
+      console.error('Failed to load trashed chats:', error);
     }
   },
   
@@ -290,19 +368,39 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   deleteChat: async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/chats/${id}`);
+      const response = await axios.delete(`http://localhost:8000/api/chats/${id}`);
+      const deletedChat = response.data;
+      
+      // Get the project to find default_target
+      const state = useChatStore.getState();
+      const project = state.projects.find(p => p.id === deletedChat.project_id) || state.currentProject;
+      const defaultTarget = project?.default_target || 'general';
+      
+      // Convert backend response to Conversation format
+      const trashedConversation: Conversation = {
+        id: deletedChat.id,
+        title: deletedChat.title,
+        messages: state.currentConversation?.id === id ? state.currentConversation.messages : [],
+        projectId: deletedChat.project_id,
+        targetName: defaultTarget,
+        createdAt: new Date(deletedChat.created_at),
+        trashed: true,
+        trashed_at: deletedChat.trashed_at,
+        thread_id: deletedChat.thread_id
+      };
       
       set((state) => {
-        const chat = state.conversations.find(c => c.id === id);
         const updatedConversations = state.conversations.filter(c => c.id !== id);
-        const updatedTrashedChats = chat
-          ? [...state.trashedChats, { ...chat, trashed: true }]
-          : state.trashedChats;
         
         // If deleted chat was current, select another or clear
         const updatedCurrentConversation = state.currentConversation?.id === id
           ? (updatedConversations.length > 0 ? updatedConversations[0] : null)
           : state.currentConversation;
+        
+        // Add to trashed chats (avoid duplicates)
+        const updatedTrashedChats = state.trashedChats.some(c => c.id === id)
+          ? state.trashedChats
+          : [trashedConversation, ...state.trashedChats];
         
         return {
           conversations: updatedConversations,
@@ -310,6 +408,16 @@ export const useChatStore = create<ChatStore>((set) => ({
           currentConversation: updatedCurrentConversation
         };
       });
+      
+      // Reload chats to ensure we have the latest state
+      // Small delay to ensure backend has saved the change
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (deletedChat.project_id) {
+        await useChatStore.getState().loadChats(deletedChat.project_id);
+      }
+      // Also reload trashed chats so it appears in Trash view
+      await useChatStore.getState().loadTrashedChats();
     } catch (error) {
       console.error('Failed to delete chat:', error);
       throw error;
@@ -376,7 +484,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   setCurrentConversation: (conversation) => set({ 
     currentConversation: conversation,
-    messages: conversation?.messages || []
+    messages: conversation?.messages || [],
+    viewMode: conversation ? 'chat' : 'projectList'
   }),
   
   addMessage: (message) => set((state) => {

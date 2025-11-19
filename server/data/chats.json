@@ -5,9 +5,9 @@
     "title": "Testing this one",
     "thread_id": "1891ea1f-989e-48e5-8a2d-5e79de9a6dd1",
     "created_at": "2025-11-18T04:27:55.563714+00:00",
-    "updated_at": "2025-11-18T04:28:14.720266+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-11-19T02:53:05.494048+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:53:05.494031+00:00"
   },
   {
     "id": "7fcdd80c-d1b6-4cce-a058-e4775d2491db",
@@ -15,9 +15,9 @@
     "title": "New Chat",
     "thread_id": "7fcdd80c-d1b6-4cce-a058-e4775d2491db",
     "created_at": "2025-11-18T23:21:53.490852+00:00",
-    "updated_at": "2025-11-18T23:21:53.491173+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-11-19T02:42:07.574923+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:42:07.574901+00:00"
   },
   {
     "id": "8d345367-f47f-491a-8798-e02c34849f80",
@@ -25,9 +25,9 @@
     "title": "New Chat",
     "thread_id": "8d345367-f47f-491a-8798-e02c34849f80",
     "created_at": "2025-11-18T23:22:06.659545+00:00",
-    "updated_at": "2025-11-18T23:22:06.659585+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-11-19T02:45:33.958941+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:45:33.958923+00:00"
   },
   {
     "id": "9dd44673-77d5-4313-b0e1-b5897c135214",
@@ -38,5 +38,35 @@
     "updated_at": "2025-11-19T02:08:36.051946+00:00",
     "trashed": true,
     "trashed_at": "2025-11-19T02:08:36.051926+00:00"
+  },
+  {
+    "id": "3261486c-f5de-4d6d-9aa2-9f71e487e653",
+    "project_id": "drr",
+    "title": "New Chat",
+    "thread_id": "3261486c-f5de-4d6d-9aa2-9f71e487e653",
+    "created_at": "2025-11-19T02:42:30.198900+00:00",
+    "updated_at": "2025-11-19T02:43:02.789002+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:43:02.788980+00:00"
+  },
+  {
+    "id": "b7d78c9f-0123-4c04-9477-defed8b5db78",
+    "project_id": "drr",
+    "title": "New Chat",
+    "thread_id": "b7d78c9f-0123-4c04-9477-defed8b5db78",
+    "created_at": "2025-11-19T02:45:36.643927+00:00",
+    "updated_at": "2025-11-19T02:45:40.599289+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:45:40.599269+00:00"
+  },
+  {
+    "id": "5bef7000-35f6-4bce-8317-5c7afffbf767",
+    "project_id": "scratch",
+    "title": "Blue Jays",
+    "thread_id": "5bef7000-35f6-4bce-8317-5c7afffbf767",
+    "created_at": "2025-11-19T02:45:48.970078+00:00",
+    "updated_at": "2025-11-19T02:47:23.973982+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-19T02:47:23.973962+00:00"
   }
 ]

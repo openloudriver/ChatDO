@@ -3,10 +3,45 @@ import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 
 const ChatMessages: React.FC = () => {
-  const { messages, isStreaming, streamingContent } = useChatStore();
+  const { messages, isStreaming, streamingContent, currentConversation, currentProject, setViewMode, viewMode } = useChatStore();
+
+  const handleBack = () => {
+    if (currentConversation?.trashed) {
+      setViewMode('trashList');
+    } else if (currentProject) {
+      setViewMode('projectList');
+    }
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 flex flex-col h-full bg-[#343541]">
+      {/* Breadcrumb/Header */}
+      {viewMode === 'chat' && (
+        <div className="px-6 py-4 border-b border-[#565869] flex items-center gap-4">
+          <button
+            onClick={handleBack}
+            className="text-[#8e8ea0] hover:text-white transition-colors flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>
+              {currentConversation?.trashed 
+                ? 'Back to Trash' 
+                : `Back to ${currentProject?.name || 'Project'} chats`}
+            </span>
+          </button>
+          {currentConversation?.trashed && (
+            <span className="px-2 py-1 text-xs bg-[#ef4444] text-white rounded">In Trash</span>
+          )}
+          {currentConversation && !currentConversation.trashed && (
+            <h2 className="text-lg font-semibold text-[#ececf1]">{currentConversation.title}</h2>
+          )}
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message) => (
         <div
           key={message.id}
@@ -57,6 +92,7 @@ const ChatMessages: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

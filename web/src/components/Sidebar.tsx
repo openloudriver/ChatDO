@@ -73,6 +73,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
         onClick={(e) => {
           // Select project on click (drag won't activate if movement < 8px)
           setCurrentProject(project);
+          setViewMode('projectList');
         }}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -121,7 +122,6 @@ const Sidebar: React.FC = () => {
     projects,
     currentProject,
     conversations,
-    trashedChats,
     currentConversation,
     setCurrentProject,
     setCurrentConversation,
@@ -133,8 +133,8 @@ const Sidebar: React.FC = () => {
     loadChats,
     renameChat,
     deleteChat,
-    restoreChat,
-    purgeChat
+    setViewMode,
+    viewMode
   } = useChatStore();
   
   // DnD sensors - configure activation distance so clicks still work
@@ -205,21 +205,11 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  // Filter projects and conversations based on search query
+  // Filter projects based on search query
   const q = searchQuery.trim().toLowerCase();
   const filteredProjects = q
     ? projects.filter(p => p.name.toLowerCase().includes(q))
     : projects;
-  const filteredConversations = q
-    ? conversations.filter(c =>
-        (c.title ?? "").toLowerCase().includes(q)
-      )
-    : conversations;
-  const filteredTrashedChats = q
-    ? trashedChats.filter(c =>
-        (c.title ?? "").toLowerCase().includes(q)
-      )
-    : trashedChats;
 
   const handleNewProject = async () => {
     const name = window.prompt('New project name?');
@@ -282,29 +272,6 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  const handleRestoreChat = async (chatId: string) => {
-    setOpenChatMenuId(null);
-    try {
-      await restoreChat(chatId);
-    } catch (error) {
-      console.error('Failed to restore chat:', error);
-      alert('Failed to restore chat. Please try again.');
-    }
-  };
-
-  const handlePurgeChat = async (chatId: string, chatTitle: string) => {
-    setOpenChatMenuId(null);
-    const confirmed = window.confirm(
-      `Permanently delete "${chatTitle}" and its history? This cannot be undone.`
-    );
-    if (!confirmed) return;
-    try {
-      await purgeChat(chatId);
-    } catch (error) {
-      console.error('Failed to purge chat:', error);
-      alert('Failed to permanently delete chat. Please try again.');
-    }
-  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -325,9 +292,9 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-[#202123] h-screen flex flex-col text-white">
+    <div className="w-64 bg-[#202123] h-screen flex flex-col text-white overflow-hidden">
       {/* Search Field */}
-      <div className="p-2">
+      <div className="p-2 flex-shrink-0">
         <div className="relative">
           <svg
             className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#8e8ea0]"
@@ -353,7 +320,7 @@ const Sidebar: React.FC = () => {
       </div>
 
       {/* Projects List */}
-      <div className="px-2 mb-4">
+      <div className="px-2 mb-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="text-xs text-[#8e8ea0] uppercase">Projects</div>
           <button
@@ -390,131 +357,39 @@ const Sidebar: React.FC = () => {
         </DndContext>
       </div>
 
-      {/* Chats List */}
-      <div className="flex-1 overflow-y-auto px-2">
-        <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-xs text-[#8e8ea0] uppercase">Chats</div>
-          <button
-            type="button"
-            onClick={handleNewChat}
-            className="rounded-md p-1 text-[#8e8ea0] hover:bg-[#343541] hover:text-white transition-colors"
-            aria-label="New chat"
-          >
-            <PlusIcon />
-          </button>
-        </div>
-        {filteredConversations
-          .filter(c => c.projectId === currentProject?.id)
-          .map((conversation) => (
-            <div
-              key={conversation.id}
-              className="group relative mb-1"
-              onMouseLeave={() => setOpenChatMenuId(null)}
-            >
-              <button
-                onClick={() => setCurrentConversation(conversation)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setOpenChatMenuId(openChatMenuId === conversation.id ? null : conversation.id);
-                }}
-                className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                  currentConversation?.id === conversation.id
-                    ? 'bg-[#343541] text-white'
-                    : 'text-[#8e8ea0] hover:bg-[#343541]'
-                }`}
-              >
-                {conversation.title}
-              </button>
-              {openChatMenuId === conversation.id && (
-                <div 
-                  className="absolute right-0 mt-1 w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-10"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={() => {
-                      handleRenameChat(conversation.id, conversation.title);
-                      setOpenChatMenuId(null);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-t-lg"
-                  >
-                    Rename Chat
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleDeleteChat(conversation.id, conversation.title);
-                      setOpenChatMenuId(null);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-b-lg"
-                  >
-                    Delete Chat
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        
-        {/* Trash Section */}
-        {filteredTrashedChats.length > 0 && filteredTrashedChats.some(c => c.projectId === currentProject?.id) && (
-          <div className="mt-4">
-            <div className="text-xs text-[#8e8ea0] uppercase mb-2 px-2">Trash</div>
-            {filteredTrashedChats
-              .filter(c => c.projectId === currentProject?.id)
-              .map((chat) => (
-                <div
-                  key={chat.id}
-                  className="group relative mb-1"
-                  onMouseLeave={() => setOpenChatMenuId(null)}
-                >
-                  <button
-                    onClick={() => setCurrentConversation(chat)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setOpenChatMenuId(openChatMenuId === chat.id ? null : chat.id);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-[#6b7280] hover:bg-[#343541] ${
-                      currentConversation?.id === chat.id
-                        ? 'bg-[#343541] text-[#9ca3af]'
-                        : ''
-                    }`}
-                  >
-                    {chat.title}
-                  </button>
-                  {openChatMenuId === chat.id && (
-                    <div 
-                      className="absolute right-0 mt-1 w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-10"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        onClick={() => {
-                          handleRestoreChat(chat.id);
-                          setOpenChatMenuId(null);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-t-lg"
-                      >
-                        Restore Chat
-                      </button>
-                      <button
-                        onClick={() => {
-                          handlePurgeChat(chat.id, chat.title);
-                          setOpenChatMenuId(null);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-b-lg"
-                      >
-                        Delete Now
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
+      {/* Chats section removed - chats are now shown in main area via ProjectChatList */}
 
-      {/* AI Spend Indicator - Bottom of sidebar */}
-      <div className="px-2 py-2 border-t border-[#565869]">
-        <AiSpendIndicator />
+      {/* Bottom Status Bar - AI Spend Indicator and Trash Button */}
+      <div className="px-2 py-2 border-t border-[#565869] flex items-center justify-between flex-shrink-0 bg-[#202123]">
+        <div className="flex-1 min-w-0">
+          <AiSpendIndicator />
+        </div>
+        <button
+          onClick={() => {
+            setViewMode('trashList');
+            setCurrentProject(null);
+          }}
+          className={`p-2 rounded transition-colors flex-shrink-0 ${
+            viewMode === 'trashList'
+              ? 'bg-[#343541] text-white'
+              : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+          }`}
+          title="Trash"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );

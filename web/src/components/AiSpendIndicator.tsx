@@ -76,12 +76,12 @@ export const AiSpendIndicator: React.FC = () => {
   const total = data?.totalUsd ?? 0;
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div
         ref={amountRef}
         onContextMenu={handleContextMenu}
         onClick={(e) => e.stopPropagation()}
-        className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1"
+        className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis"
       >
         {`$${total.toFixed(2)}`}
       </div>

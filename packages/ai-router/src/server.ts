@@ -1,9 +1,14 @@
 import express from "express";
 import bodyParser from "body-parser";
+import cors from "cors";
 import { runTask, AiRouterInput } from "./index";
 import { getCurrentMonthSpend, getMonthlyHistory } from "./spendTracker";
 
 const app = express();
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 app.post("/v1/ai/run", async (req, res) => {

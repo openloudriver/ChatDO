@@ -20,6 +20,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/body-parser": "^1.19.6",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "openai": "^6.9.1"
   }
