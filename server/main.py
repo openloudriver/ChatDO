@@ -285,8 +285,24 @@ async def root():
 
 @app.get("/api/projects", response_model=List[Project])
 async def get_projects():
-    """Return list of available projects"""
+    """Return list of available projects, ensuring General exists"""
     projects = load_projects()
+    
+    # Ensure General project exists
+    general_project = next((p for p in projects if p.get("name") == "General"), None)
+    if not general_project:
+        # Create General project
+        general_project = {
+            "id": str(uuid.uuid4()),
+            "name": "General",
+            "default_target": "general",
+            "sort_index": 0,
+            "created_at": now_iso(),
+            "updated_at": now_iso()
+        }
+        projects.insert(0, general_project)
+        save_projects(projects)
+    
     return projects
 
 
@@ -510,6 +526,32 @@ async def get_chats(
 ):
     """Get chats, optionally filtered by project and including trashed"""
     chats = load_chats()
+    projects = load_projects()
+    
+    # Ensure General project exists
+    general_project = next((p for p in projects if p.get("name") == "General"), None)
+    if not general_project:
+        general_project = {
+            "id": str(uuid.uuid4()),
+            "name": "General",
+            "default_target": "general",
+            "sort_index": 0,
+            "created_at": now_iso(),
+            "updated_at": now_iso()
+        }
+        projects.insert(0, general_project)
+        save_projects(projects)
+    
+    # Assign orphaned chats (without project_id) to General
+    needs_save = False
+    for chat in chats:
+        if not chat.get("project_id"):
+            chat["project_id"] = general_project["id"]
+            chat["updated_at"] = now_iso()
+            needs_save = True
+    
+    if needs_save:
+        save_chats(chats)
     
     # Filter by project if specified
     if project_id:
@@ -682,6 +724,36 @@ async def purge_trashed_endpoint():
     """Manually trigger purge of old trashed chats"""
     purged_count = purge_trashed_chats()
     return {"success": True, "purged_count": purged_count}
+
+
+@app.post("/api/chats/purge_all_trashed")
+async def purge_all_trashed():
+    """Permanently delete ALL trashed chats (regardless of age)"""
+    chats = load_chats()
+    projects = load_projects()
+    
+    # Find all trashed chats
+    trashed_chat_ids = []
+    for chat in chats:
+        if chat.get("trashed", False):
+            trashed_chat_ids.append(chat.get("id"))
+            # Get project to find target_name for thread deletion
+            project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
+            target_name = project.get("default_target", "general") if project else "general"
+            thread_id = chat.get("thread_id")
+            
+            # Delete thread history if it exists
+            if thread_id:
+                try:
+                    delete_thread_history(target_name, thread_id)
+                except Exception as e:
+                    print(f"Warning: Failed to delete thread history for {thread_id}: {e}")
+    
+    # Remove all trashed chats from the list
+    chats = [c for c in chats if not c.get("trashed", False)]
+    save_chats(chats)
+    
+    return {"success": True, "purged_count": len(trashed_chat_ids)}
 
 
 @app.websocket("/api/chat/stream")

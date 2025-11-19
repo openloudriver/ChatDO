@@ -48,6 +48,8 @@ interface ChatStore {
   setCurrentProject: (project: Project | null) => void;
   setViewMode: (mode: ViewMode) => void;
   loadProjects: () => Promise<void>;
+  ensureGeneralProject: () => Promise<Project>;
+  createNewChatInProject: (projectId: string) => Promise<Conversation>;
   createProject: (name: string) => Promise<void>;
   renameProject: (id: string, name: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
@@ -61,6 +63,9 @@ interface ChatStore {
   deleteChat: (id: string) => Promise<void>;
   restoreChat: (id: string) => Promise<void>;
   purgeChat: (id: string) => Promise<void>;
+  purgeAllTrashedChats: () => Promise<void>;
+  ensureGeneralProject: () => Promise<Project>;
+  createNewChatInProject: (projectId: string) => Promise<Conversation>;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateStreamingContent: (content: string) => void;
   setLoading: (loading: boolean) => void;
@@ -101,14 +106,10 @@ export const useChatStore = create<ChatStore>((set) => ({
       const response = await axios.get('http://localhost:8000/api/projects');
       const projects = response.data;
       set((state) => {
-        // If no current project is set and we have projects, select the first one
-        const newCurrentProject = !state.currentProject && projects.length > 0
-          ? projects[0]
-          : state.currentProject;
+        // Don't auto-select project - let startup logic handle it
+        // This allows session restore to work properly
         return { 
-          projects, 
-          currentProject: newCurrentProject,
-          viewMode: newCurrentProject ? 'projectList' : state.viewMode
+          projects
         };
       });
     } catch (error) {
@@ -227,17 +228,33 @@ export const useChatStore = create<ChatStore>((set) => ({
         : state.currentProject;
       const defaultTarget = project?.default_target || 'general';
       
+      // Find General project for fallback
+      const generalProject = state.projects.find(p => p.name === 'General');
+      
       // Convert to Conversation format and split active/trashed
       const activeChats: Conversation[] = [];
       const trashedChats: Conversation[] = [];
       
       for (const chat of allChats) {
+        // Ensure every chat has a projectId (fallback to General if missing)
+        const chatProjectId = chat.project_id || generalProject?.id;
+        
+        if (!chatProjectId) {
+          // Skip chats without projectId if General doesn't exist (shouldn't happen, but be safe)
+          console.warn('Chat without projectId and General project not found:', chat.id);
+          continue;
+        }
+        
+        // Get the actual project for this chat to determine target
+        const chatProject = state.projects.find(p => p.id === chatProjectId);
+        const chatTarget = chatProject?.default_target || 'general';
+        
         const conversation: Conversation = {
           id: chat.id,
           title: chat.title,
           messages: [], // Will be populated with preview if available
-          projectId: chat.project_id,
-          targetName: defaultTarget,
+          projectId: chatProjectId,
+          targetName: chatTarget,
           createdAt: new Date(chat.created_at),
           trashed: chat.trashed || false,
           trashed_at: chat.trashed_at,
@@ -535,8 +552,34 @@ export const useChatStore = create<ChatStore>((set) => ({
     }
   },
   
+  purgeAllTrashedChats: async () => {
+    try {
+      const response = await axios.post('http://localhost:8000/api/chats/purge_all_trashed');
+      
+      // Clear all trashed chats and reload
+      set((state) => {
+        // If current conversation is trashed, clear it
+        const updatedCurrentConversation = state.currentConversation?.trashed
+          ? null
+          : state.currentConversation;
+        
+        return {
+          trashedChats: [],
+          currentConversation: updatedCurrentConversation
+        };
+      });
+      
+      // Reload trashed chats to ensure UI is in sync
+      await useChatStore.getState().loadTrashedChats();
+    } catch (error) {
+      console.error('Failed to purge all trashed chats:', error);
+      throw error;
+    }
+  },
+  
   setCurrentConversation: async (conversation) => {
     if (!conversation) {
+      localStorage.removeItem('chatdo:lastChatId');
       set({ 
         currentConversation: null,
         messages: [],
@@ -544,6 +587,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       });
       return;
     }
+    
+    // Persist last chat to localStorage
+    localStorage.setItem('chatdo:lastChatId', conversation.id);
     
     // Set conversation immediately
     set({ 
@@ -622,6 +668,56 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   
-  clearStreaming: () => set({ isStreaming: false, streamingContent: '' })
+  clearStreaming: () => set({ isStreaming: false, streamingContent: '' }),
+  
+  ensureGeneralProject: async () => {
+    const state = useChatStore.getState();
+    let generalProject = state.projects.find(p => p.name === 'General');
+    
+    if (!generalProject) {
+      // Create General project if it doesn't exist
+      try {
+        const response = await axios.post('http://localhost:8000/api/projects', {
+          name: 'General'
+        });
+        generalProject = response.data;
+        
+        set((state) => ({
+          projects: [generalProject, ...state.projects],
+          currentProject: state.currentProject || generalProject
+        }));
+      } catch (error) {
+        console.error('Failed to create General project:', error);
+        throw error;
+      }
+    }
+    
+    return generalProject;
+  },
+  
+  createNewChatInProject: async (projectId: string) => {
+    try {
+      const response = await axios.post('http://localhost:8000/api/new_conversation', {
+        project_id: projectId
+      });
+      const conversationId = response.data.conversation_id;
+      
+      // Reload chats to get the new one
+      await useChatStore.getState().loadChats(projectId);
+      
+      // Find and return the new conversation
+      const state = useChatStore.getState();
+      const newConversation = state.conversations.find(c => c.id === conversationId);
+      
+      if (!newConversation) {
+        throw new Error('Failed to find newly created conversation');
+      }
+      
+      return newConversation;
+    } catch (error) {
+      console.error('Failed to create new chat:', error);
+      throw error;
+    }
+  }
 }));
 

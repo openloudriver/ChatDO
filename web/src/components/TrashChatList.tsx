@@ -43,6 +43,7 @@ const TrashChatList: React.FC = () => {
     projects,
     restoreChat,
     purgeChat,
+    purgeAllTrashedChats,
     loadTrashedChats
   } = useChatStore();
 
@@ -67,7 +68,26 @@ const TrashChatList: React.FC = () => {
         await purgeChat(chatId);
       } catch (error) {
         console.error('Failed to purge chat:', error);
+        alert('Failed to delete chat. Please try again.');
       }
+    }
+  };
+
+  const handlePurgeAll = async () => {
+    const count = trashedChats.length;
+    if (count === 0) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete all ${count} chat${count > 1 ? 's' : ''} in Trash? This cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      await purgeAllTrashedChats();
+    } catch (error) {
+      console.error('Failed to purge all chats:', error);
+      alert('Failed to delete all chats. Please try again.');
     }
   };
 
@@ -75,8 +95,20 @@ const TrashChatList: React.FC = () => {
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[#565869]">
-        <h2 className="text-xl font-semibold text-[#ececf1]">Trash</h2>
-        <p className="text-sm text-[#8e8ea0] mt-1">Deleted chats are kept for 30 days</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-[#ececf1]">Trash</h2>
+            <p className="text-sm text-[#8e8ea0] mt-1">Deleted chats are kept for 30 days</p>
+          </div>
+          {trashedChats.length > 0 && (
+            <button
+              onClick={handlePurgeAll}
+              className="px-4 py-2 bg-[#ef4444] hover:bg-[#dc2626] text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Delete All
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chat List */}

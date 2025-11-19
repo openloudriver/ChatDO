@@ -58,7 +58,8 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     addConversation,
     loadChats,
     renameChat,
-    deleteChat
+    deleteChat,
+    createNewChatInProject
   } = useChatStore();
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -68,28 +69,11 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     if (!currentProject) return;
     
     try {
-      const response = await fetch('http://localhost:8000/api/new_conversation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project_id: currentProject.id })
-      });
-      
-      const data = await response.json();
-      const conversationId = data.conversation_id;
-      
-      // Reload chats to get the new one from backend
-      await loadChats(currentProject.id);
-      
-      // Find and select the new conversation
-      setTimeout(() => {
-        const state = useChatStore.getState();
-        const newConversation = state.conversations.find(c => c.id === conversationId);
-        if (newConversation) {
-          setCurrentConversation(newConversation).catch(err => console.error('Failed to load conversation:', err));
-        }
-      }, 100);
+      const newConversation = await createNewChatInProject(currentProject.id);
+      await setCurrentConversation(newConversation);
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      alert('Failed to create conversation. Please try again.');
     }
   };
 

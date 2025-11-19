@@ -136,7 +136,9 @@ const Sidebar: React.FC = () => {
     renameChat,
     deleteChat,
     setViewMode,
-    viewMode
+    viewMode,
+    ensureGeneralProject,
+    createNewChatInProject
   } = useChatStore();
   
   // DnD sensors - configure activation distance so clicks still work
@@ -178,32 +180,22 @@ const Sidebar: React.FC = () => {
   }, [openMenuId, openChatMenuId]);
 
   const handleNewChat = async () => {
-    if (!currentProject) return;
+    const { currentProject, ensureGeneralProject, createNewChatInProject, setCurrentProject, setCurrentConversation } = useChatStore.getState();
+    
+    // If no project selected, use General
+    const projectToUse = currentProject || await ensureGeneralProject();
+    
+    // If General was created/selected, update current project
+    if (!currentProject) {
+      setCurrentProject(projectToUse);
+    }
     
     try {
-      const response = await fetch('http://localhost:8000/api/new_conversation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project_id: currentProject.id })
-      });
-      
-      const data = await response.json();
-      const conversationId = data.conversation_id;
-      
-      // Reload chats to get the new one from backend
-      await loadChats(currentProject.id);
-      
-      // Find and select the new conversation
-      // Use a small delay to ensure state has updated
-      setTimeout(() => {
-        const state = useChatStore.getState();
-        const newConversation = state.conversations.find(c => c.id === conversationId);
-        if (newConversation) {
-          setCurrentConversation(newConversation).catch(err => console.error('Failed to load conversation:', err));
-        }
-      }, 100);
+      const newConversation = await createNewChatInProject(projectToUse.id);
+      await setCurrentConversation(newConversation);
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      alert('Failed to create conversation. Please try again.');
     }
   };
 

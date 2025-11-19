@@ -7,12 +7,67 @@ import ProjectChatList from './components/ProjectChatList';
 import TrashChatList from './components/TrashChatList';
 
 const App: React.FC = () => {
-  const { loadProjects, viewMode, currentProject, loadTrashedChats } = useChatStore();
+  const { 
+    loadProjects, 
+    viewMode, 
+    currentProject, 
+    loadTrashedChats,
+    ensureGeneralProject,
+    createNewChatInProject,
+    setCurrentProject,
+    setCurrentConversation,
+    loadChats
+  } = useChatStore();
 
   useEffect(() => {
-    // Load projects on mount
-    loadProjects();
-  }, [loadProjects]);
+    // Startup sequence: restore session or create new chat
+    const initializeApp = async () => {
+      // First, load projects (this ensures General exists)
+      await loadProjects();
+      
+      const state = useChatStore.getState();
+      
+      // Try to restore last session from localStorage
+      const lastProjectId = localStorage.getItem('chatdo:lastProjectId');
+      const lastChatId = localStorage.getItem('chatdo:lastChatId');
+      
+      // Case A: Both lastProjectId and lastChatId exist - try to restore both
+      if (lastProjectId && lastChatId) {
+        const lastProject = state.projects.find(p => p.id === lastProjectId);
+        if (lastProject) {
+          // Load chats for that project
+          await loadChats(lastProjectId);
+          const updatedState = useChatStore.getState();
+          const lastChat = updatedState.conversations.find(c => c.id === lastChatId);
+          
+          if (lastChat) {
+            // Both valid - restore session
+            setCurrentProject(lastProject);
+            await setCurrentConversation(lastChat);
+            return;
+          }
+        }
+      }
+      
+      // Case B: Only lastProjectId exists - restore project, show chat list
+      if (lastProjectId) {
+        const lastProject = state.projects.find(p => p.id === lastProjectId);
+        if (lastProject) {
+          setCurrentProject(lastProject);
+          await loadChats(lastProjectId);
+          return;
+        }
+      }
+      
+      // Case C: Neither exist (or invalid) - create new chat in General
+      const generalProject = await ensureGeneralProject();
+      setCurrentProject(generalProject);
+      const newConversation = await createNewChatInProject(generalProject.id);
+      await setCurrentConversation(newConversation);
+    };
+    
+    initializeApp();
+  }, [loadProjects, ensureGeneralProject, createNewChatInProject, setCurrentProject, setCurrentConversation, loadChats]);
 
   useEffect(() => {
     // Load trashed chats when entering trash view
