@@ -199,7 +199,7 @@ const Sidebar: React.FC = () => {
         const state = useChatStore.getState();
         const newConversation = state.conversations.find(c => c.id === conversationId);
         if (newConversation) {
-          setCurrentConversation(newConversation);
+          setCurrentConversation(newConversation).catch(err => console.error('Failed to load conversation:', err));
         }
       }, 100);
     } catch (error) {

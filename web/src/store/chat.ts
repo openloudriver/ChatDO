@@ -56,7 +56,7 @@ interface ChatStore {
   loadTrashedChats: () => Promise<void>;
   setConversations: (conversations: Conversation[]) => void;
   addConversation: (conversation: Conversation) => void;
-  setCurrentConversation: (conversation: Conversation | null) => void;
+  setCurrentConversation: (conversation: Conversation | null) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   restoreChat: (id: string) => Promise<void>;
@@ -235,7 +235,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         const conversation: Conversation = {
           id: chat.id,
           title: chat.title,
-          messages: [], // Messages loaded separately if needed
+          messages: [], // Will be populated with preview if available
           projectId: chat.project_id,
           targetName: defaultTarget,
           createdAt: new Date(chat.created_at),
@@ -261,6 +261,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       activeChats.sort(sortByDate);
       trashedChats.sort(sortByDate);
       
+      // Set conversations first (so UI can render immediately)
       set((state) => {
         // If current conversation was deleted, clear it or select another
         let newCurrentConversation = state.currentConversation;
@@ -285,6 +286,56 @@ export const useChatStore = create<ChatStore>((set) => ({
         
         return update;
       });
+      
+      // Then load preview messages for each active chat (non-blocking)
+      // Load more messages to find the last user message for preview
+      for (const chat of activeChats) {
+        if (chat.thread_id) {
+          axios.get(`http://localhost:8000/api/chats/${chat.id}/messages?limit=10`)
+            .then(response => {
+              const previewMessages = response.data.messages || [];
+              if (previewMessages.length > 0) {
+                // Find the last user message (go backwards)
+                let lastUserMsg = null;
+                for (let i = previewMessages.length - 1; i >= 0; i--) {
+                  if (previewMessages[i].role === 'user') {
+                    lastUserMsg = previewMessages[i];
+                    break;
+                  }
+                }
+                
+                // If no user message found, use the last message anyway
+                const msgToShow = lastUserMsg || previewMessages[previewMessages.length - 1];
+                
+                const previewMessage: Message = {
+                  id: `${chat.id}-preview`,
+                  role: msgToShow.role,
+                  content: msgToShow.content,
+                  timestamp: new Date()
+                };
+                
+                // Store all messages for preview (so getPreview can find user messages)
+                const allPreviewMessages: Message[] = previewMessages.map((msg: any, idx: number) => ({
+                  id: `${chat.id}-preview-${idx}`,
+                  role: msg.role,
+                  content: msg.content,
+                  timestamp: new Date()
+                }));
+                
+                // Update conversation with preview messages
+                set((state) => ({
+                  conversations: state.conversations.map(c =>
+                    c.id === chat.id ? { ...c, messages: allPreviewMessages } : c
+                  )
+                }));
+              }
+            })
+            .catch(err => {
+              // Silently fail - preview is optional
+              console.debug('Failed to load preview for chat:', chat.id, err);
+            });
+        }
+      }
     } catch (error) {
       console.error('Failed to load chats:', error);
     }
@@ -484,11 +535,55 @@ export const useChatStore = create<ChatStore>((set) => ({
     }
   },
   
-  setCurrentConversation: (conversation) => set({ 
-    currentConversation: conversation,
-    messages: conversation?.messages || [],
-    viewMode: conversation ? 'chat' : 'projectList'
-  }),
+  setCurrentConversation: async (conversation) => {
+    if (!conversation) {
+      set({ 
+        currentConversation: null,
+        messages: [],
+        viewMode: 'projectList'
+      });
+      return;
+    }
+    
+    // Set conversation immediately
+    set({ 
+      currentConversation: conversation,
+      viewMode: 'chat'
+    });
+    
+    // Load messages from backend
+    try {
+      const response = await axios.get(`http://localhost:8000/api/chats/${conversation.id}/messages`);
+      const backendMessages = response.data.messages || [];
+      
+      // Convert backend messages to frontend format
+      const messages: Message[] = backendMessages.map((msg: any, index: number) => ({
+        id: `${conversation.id}-${index}`,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date() // Backend doesn't provide timestamps, use current time
+      }));
+      
+      // Update conversation object with messages so preview works
+      const updatedConversation = {
+        ...conversation,
+        messages: messages
+      };
+      
+      set((state) => ({
+        messages,
+        currentConversation: updatedConversation,
+        // Update conversation in conversations list so preview shows
+        conversations: state.conversations.map(c =>
+          c.id === conversation.id ? updatedConversation : c
+        )
+      }));
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+      // If loading fails, use messages from conversation object (might be empty)
+      set({ messages: conversation.messages || [] });
+    }
+  },
   
   addMessage: (message) => set((state) => {
     const newMessage: Message = {
@@ -509,6 +604,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       return {
         messages: updatedMessages,
         conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        trashedChats: state.trashedChats.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
         currentConversation: updatedConversation

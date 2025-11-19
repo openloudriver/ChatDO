@@ -14,7 +14,8 @@ const ChatComposer: React.FC = () => {
     setLoading,
     setStreaming,
     updateStreamingContent,
-    clearStreaming
+    clearStreaming,
+    renameChat
   } = useChatStore();
 
   const handleSend = async () => {
@@ -22,6 +23,33 @@ const ChatComposer: React.FC = () => {
 
     const userMessage = input.trim();
     setInput('');
+    
+    // Auto-name chat based on first message if it's still "New Chat"
+    const isFirstMessage = currentConversation.title === 'New Chat' && 
+                          currentConversation.messages.length === 0;
+    
+    if (isFirstMessage) {
+      // Generate title from first message (truncate to 50 chars, clean up)
+      let autoTitle = userMessage
+        .replace(/[#*`_~\[\]()]/g, '') // Remove markdown
+        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .trim();
+      
+      // Truncate to 50 characters
+      if (autoTitle.length > 50) {
+        autoTitle = autoTitle.substring(0, 47) + '...';
+      }
+      
+      // Only auto-rename if we got a meaningful title
+      if (autoTitle.length > 0) {
+        try {
+          await renameChat(currentConversation.id, autoTitle);
+        } catch (error) {
+          console.error('Failed to auto-name chat:', error);
+          // Don't block sending the message if auto-naming fails
+        }
+      }
+    }
     
     // Add user message
     addMessage({ role: 'user', content: userMessage });

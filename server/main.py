@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
-from chatdo.memory.store import delete_thread_history
+from chatdo.memory.store import delete_thread_history, load_thread_history
 from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
@@ -520,6 +520,53 @@ async def get_chats(
         chats = get_active_chats(chats)
     
     return chats
+
+
+@app.get("/api/chats/{chat_id}/messages")
+async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
+    """Get messages for a specific chat conversation
+    
+    Args:
+        chat_id: The chat ID
+        limit: Optional limit on number of messages to return (for previews)
+    """
+    chats = load_chats()
+    chat = next((c for c in chats if c.get("id") == chat_id), None)
+    
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    # Get project to find target_name
+    projects = load_projects()
+    project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    target_name = project.get("default_target", "general")
+    thread_id = chat.get("thread_id")
+    
+    if not thread_id:
+        return {"messages": []}
+    
+    # Load messages from memory store
+    history = load_thread_history(target_name, thread_id)
+    
+    # Convert to frontend format
+    messages = []
+    for msg in history:
+        # Skip system messages for display
+        if msg.get("role") == "system":
+            continue
+        messages.append({
+            "role": msg.get("role"),
+            "content": msg.get("content", "")
+        })
+    
+    # If limit is specified, return only the last N messages (for previews)
+    if limit and limit > 0:
+        messages = messages[-limit:]
+    
+    return {"messages": messages}
 
 
 @app.patch("/api/chats/{chat_id}", response_model=Chat)

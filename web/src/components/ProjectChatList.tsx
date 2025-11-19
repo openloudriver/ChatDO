@@ -23,12 +23,22 @@ const formatDate = (date: Date | string): string => {
   return `${month} ${day}`;
 };
 
-// Get preview snippet from conversation
+// Get preview snippet from conversation (show last user message, not assistant)
 const getPreview = (conversation: Conversation): string => {
   if (conversation.messages && conversation.messages.length > 0) {
+    // Find the last user message (go backwards through messages)
+    for (let i = conversation.messages.length - 1; i >= 0; i--) {
+      const msg = conversation.messages[i];
+      if (msg.role === 'user') {
+        const content = msg.content;
+        // Strip markdown and get first 100 chars
+        const plainText = content.replace(/[#*`_~\[\]()]/g, '').trim();
+        return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+      }
+    }
+    // If no user message found, show last message anyway
     const lastMessage = conversation.messages[conversation.messages.length - 1];
     const content = lastMessage.content;
-    // Strip markdown and get first 100 chars
     const plainText = content.replace(/[#*`_~\[\]()]/g, '').trim();
     return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
   }
@@ -75,7 +85,7 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
         const state = useChatStore.getState();
         const newConversation = state.conversations.find(c => c.id === conversationId);
         if (newConversation) {
-          setCurrentConversation(newConversation);
+          setCurrentConversation(newConversation).catch(err => console.error('Failed to load conversation:', err));
         }
       }, 100);
     } catch (error) {
@@ -136,12 +146,12 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-[#565869]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-[#ececf1]">
-            {currentProject?.name || 'Project'} Chats
-          </h2>
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-[#565869]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-[#ececf1]">
+              {currentProject?.name || 'Project'}
+            </h2>
           <button
             onClick={handleNewChat}
             className="px-4 py-2 bg-[#19c37d] hover:bg-[#16a86b] text-white rounded-lg text-sm font-medium transition-colors"
@@ -166,7 +176,9 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
               return (
                 <div key={chat.id} className="relative group">
                   <button
-                    onClick={() => setCurrentConversation(chat)}
+                    onClick={() => {
+                      setCurrentConversation(chat).catch(err => console.error('Failed to load conversation:', err));
+                    }}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

@@ -102,7 +102,9 @@ const TrashChatList: React.FC = () => {
                   }`}
                 >
                   <button
-                    onClick={() => setCurrentConversation(chat)}
+                    onClick={() => {
+                      setCurrentConversation(chat).catch(err => console.error('Failed to load conversation:', err));
+                    }}
                     className="w-full text-left"
                   >
                     <div className="flex items-start justify-between mb-2">
