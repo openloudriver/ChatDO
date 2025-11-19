@@ -19,15 +19,41 @@ from contextlib import asynccontextmanager
 # Add parent directory to path to import chatdo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from chatdo.config import load_target
+from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
 from chatdo.memory.store import delete_thread_history
+from chatdo.executor import parse_tasks_block, apply_tasks
 from .uploads import handle_file_upload
 from .scraper import scrape_url
 from .ws import websocket_endpoint
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
+
+# Task execution constants
+TASKS_START = "<TASKS>"
+TASKS_END = "</TASKS>"
+
+
+def split_tasks_block(text: str) -> tuple[str, Optional[str]]:
+    """
+    Split a ChatDO response into (human_text, tasks_json_str | None).
+    
+    - human_text: original text with any <TASKS>...</TASKS> block removed.
+    - tasks_json_str: the raw JSON string inside the <TASKS> block, or None.
+    """
+    start = text.find(TASKS_START)
+    end = text.find(TASKS_END)
+    
+    if start == -1 or end == -1:
+        return text, None
+    
+    json_str = text[start + len(TASKS_START) : end].strip()
+    
+    # Remove the block from the human-facing text
+    human = (text[:start] + text[end + len(TASKS_END) :]).strip()
+    
+    return human, json_str
 
 
 # Chat metadata models
@@ -398,14 +424,43 @@ async def chat(request: ChatRequest):
         # Load target configuration
         target_cfg = load_target(request.target_name)
         
-        # Run ChatDO agent with thread_id for memory
-        reply = run_agent(
+        # 1) Get raw response from ChatDO (may include <TASKS> block)
+        raw_result = run_agent(
             target=target_cfg,
             task=request.message,
             thread_id=request.conversation_id
         )
         
-        return ChatResponse(reply=reply)
+        # 2) Split out any <TASKS> block
+        human_text, tasks_json = split_tasks_block(raw_result)
+        
+        # 3) If no tasks, behave exactly like before
+        if not tasks_json:
+            return ChatResponse(reply=human_text)
+        
+        # 4) Parse tasks from JSON
+        try:
+            tasks = parse_tasks_block(tasks_json)
+        except Exception as e:
+            # If parsing fails, show error but still return the human text
+            error_note = f"\n\n---\nExecutor error: could not parse tasks JSON ({e})."
+            return ChatResponse(reply=human_text + error_note)
+        
+        # 5) Execute tasks against the target repo
+        exec_result = apply_tasks(target_cfg, tasks)
+        
+        # 6) Build a human-readable summary
+        summary_lines = [exec_result.summary()]
+        for r in exec_result.results:
+            prefix = "✅" if r.status == "success" else "❌"
+            summary_lines.append(f"{prefix} {r.message}")
+        
+        summary_text = "\n".join(summary_lines)
+        
+        # 7) Append summary to what the user sees
+        final_message = human_text + "\n\n---\nExecutor summary:\n" + summary_text
+        
+        return ChatResponse(reply=final_message)
     
     except Exception as e:
         import traceback

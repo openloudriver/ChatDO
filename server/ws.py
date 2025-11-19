@@ -12,6 +12,32 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target
 from chatdo.agents.main_agent import run_agent
+from chatdo.executor import parse_tasks_block, apply_tasks
+
+# Task execution constants
+TASKS_START = "<TASKS>"
+TASKS_END = "</TASKS>"
+
+
+def split_tasks_block(text: str) -> tuple[str, Optional[str]]:
+    """
+    Split a ChatDO response into (human_text, tasks_json_str | None).
+    
+    - human_text: original text with any <TASKS>...</TASKS> block removed.
+    - tasks_json_str: the raw JSON string inside the <TASKS> block, or None.
+    """
+    start = text.find(TASKS_START)
+    end = text.find(TASKS_END)
+    
+    if start == -1 or end == -1:
+        return text, None
+    
+    json_str = text[start + len(TASKS_START) : end].strip()
+    
+    # Remove the block from the human-facing text
+    human = (text[:start] + text[end + len(TASKS_END) :]).strip()
+    
+    return human, json_str
 
 
 async def stream_chat_response(
@@ -32,21 +58,56 @@ async def stream_chat_response(
         
         # Run ChatDO agent (this is synchronous, so we'll chunk the result)
         # TODO: In the future, integrate with streaming LLM responses
-        reply = run_agent(
+        raw_result = run_agent(
             target=target_cfg,
             task=message,
             thread_id=conversation_id
         )
         
-        # Stream reply in chunks (simulate streaming for now)
+        # Split out any <TASKS> block
+        human_text, tasks_json = split_tasks_block(raw_result)
+        
+        # Stream human text in chunks (simulate streaming for now)
         chunk_size = 50  # characters per chunk
-        for i in range(0, len(reply), chunk_size):
-            chunk = reply[i:i + chunk_size]
+        for i in range(0, len(human_text), chunk_size):
+            chunk = human_text[i:i + chunk_size]
             await websocket.send_json({
                 "type": "chunk",
                 "content": chunk,
                 "done": False
             })
+        
+        # If there are tasks, execute them and send summary
+        if tasks_json:
+            try:
+                tasks = parse_tasks_block(tasks_json)
+                exec_result = apply_tasks(target_cfg, tasks)
+                
+                # Build summary
+                summary_lines = [exec_result.summary()]
+                for r in exec_result.results:
+                    prefix = "✅" if r.status == "success" else "❌"
+                    summary_lines.append(f"{prefix} {r.message}")
+                
+                summary_text = "\n".join(summary_lines)
+                executor_message = "\n\n---\nExecutor summary:\n" + summary_text
+                
+                # Stream executor summary
+                for i in range(0, len(executor_message), chunk_size):
+                    chunk = executor_message[i:i + chunk_size]
+                    await websocket.send_json({
+                        "type": "chunk",
+                        "content": chunk,
+                        "done": False
+                    })
+            except Exception as e:
+                # If task execution fails, send error message
+                error_note = f"\n\n---\nExecutor error: {e}"
+                await websocket.send_json({
+                    "type": "chunk",
+                    "content": error_note,
+                    "done": False
+                })
         
         # Send completion message
         await websocket.send_json({
