@@ -71,6 +71,9 @@ interface ChatStore {
   searchChats: (query: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  editMessage: (messageId: string, newContent: string) => void;
+  deleteMessage: (messageId: string) => void;
+  removeMessagesAfter: (messageId: string) => void;
   updateStreamingContent: (content: string) => void;
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
@@ -89,6 +92,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   isStreaming: false,
   streamingContent: '',
   viewMode: 'projectList',
+  searchQuery: '',
+  searchResults: [],
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -677,6 +682,88 @@ export const useChatStore = create<ChatStore>((set) => ({
     const updatedMessages = [...state.messages, newMessage];
     
     // Update conversation if it exists
+    if (state.currentConversation) {
+      const updatedConversation = {
+        ...state.currentConversation,
+        messages: updatedMessages
+      };
+      
+      return {
+        messages: updatedMessages,
+        conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        trashedChats: state.trashedChats.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        currentConversation: updatedConversation
+      };
+    }
+    
+    return { messages: updatedMessages };
+  }),
+  
+  editMessage: (messageId, newContent) => set((state) => {
+    const updatedMessages = state.messages.map(msg =>
+      msg.id === messageId ? { ...msg, content: newContent } : msg
+    );
+    
+    if (state.currentConversation) {
+      const updatedConversation = {
+        ...state.currentConversation,
+        messages: updatedMessages
+      };
+      
+      return {
+        messages: updatedMessages,
+        conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        trashedChats: state.trashedChats.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        currentConversation: updatedConversation
+      };
+    }
+    
+    return { messages: updatedMessages };
+  }),
+  
+  deleteMessage: (messageId) => set((state) => {
+    const messageIndex = state.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) return state;
+    
+    // Remove the message and all messages after it
+    const updatedMessages = state.messages.slice(0, messageIndex);
+    
+    if (state.currentConversation) {
+      const updatedConversation = {
+        ...state.currentConversation,
+        messages: updatedMessages
+      };
+      
+      return {
+        messages: updatedMessages,
+        conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        trashedChats: state.trashedChats.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        currentConversation: updatedConversation
+      };
+    }
+    
+    return { messages: updatedMessages };
+  }),
+  
+  removeMessagesAfter: (messageId) => set((state) => {
+    const messageIndex = state.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) return state;
+    
+    // Keep messages up to and including the specified message
+    const updatedMessages = state.messages.slice(0, messageIndex + 1);
+    
     if (state.currentConversation) {
       const updatedConversation = {
         ...state.currentConversation,

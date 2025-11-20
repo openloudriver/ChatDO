@@ -40,7 +40,8 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
         "path": str(file_path.relative_to(UPLOADS_BASE.parent)),
         "size": len(content),
         "mime_type": mime_type,
-        "text_extracted": False
+        "text_extracted": False,
+        "extracted_text": None
     }
     
     # Extract text based on file type
@@ -54,6 +55,7 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
                 await f.write(text_content)
             result["text_extracted"] = True
             result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
+            result["extracted_text"] = text_content
         
         elif mime_type == "application/pdf":
             # PDF extraction (requires PyPDF2 or pdfplumber)
@@ -65,6 +67,7 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
                         await f.write(text_content)
                     result["text_extracted"] = True
                     result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
+                    result["extracted_text"] = text_content
             except Exception as e:
                 result["extraction_error"] = str(e)
         
@@ -81,6 +84,24 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
                         await f.write(text_content)
                     result["text_extracted"] = True
                     result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
+                    result["extracted_text"] = text_content
+            except Exception as e:
+                result["extraction_error"] = str(e)
+        
+        elif mime_type in [
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        ]:
+            # PowerPoint extraction
+            try:
+                text_content = await extract_pptx_text(file_path)
+                if text_content:
+                    text_path = upload_dir / f"{uuid.uuid4()}.txt"
+                    async with aiofiles.open(text_path, 'w', encoding='utf-8') as f:
+                        await f.write(text_content)
+                    result["text_extracted"] = True
+                    result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
+                    result["extracted_text"] = text_content
             except Exception as e:
                 result["extraction_error"] = str(e)
         
@@ -124,4 +145,57 @@ async def extract_word_text(doc_path: Path) -> str:
         return "\n\n".join(paragraphs)
     except ImportError:
         return ""  # python-docx not available
+
+
+async def extract_pptx_text(pptx_path: Path) -> str:
+    """Extract text from PowerPoint presentation"""
+    try:
+        from pptx import Presentation
+        prs = Presentation(pptx_path)
+        text_parts = []
+        
+        for slide_num, slide in enumerate(prs.slides, 1):
+            slide_text = [f"Slide {slide_num}:"]
+            
+            # Extract title
+            if slide.shapes.title and slide.shapes.title.text:
+                slide_text.append(f"Title: {slide.shapes.title.text}")
+            
+            # Extract text from all shapes
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text and shape != slide.shapes.title:
+                    # Check if it's a text box or placeholder
+                    if shape.text.strip():
+                        slide_text.append(shape.text.strip())
+            
+            # Extract speaker notes if available
+            if slide.has_notes_slide and slide.notes_slide.notes_text_frame:
+                notes_text = slide.notes_slide.notes_text_frame.text.strip()
+                if notes_text:
+                    slide_text.append(f"Notes: {notes_text}")
+            
+            if len(slide_text) > 1:  # More than just "Slide X:"
+                text_parts.append("\n".join(slide_text))
+        
+        return "\n\n".join(text_parts)
+    except ImportError:
+        # Try alternative: python-pptx might not be installed
+        try:
+            import zipfile
+            # PPTX is a ZIP file - extract text from XML
+            text_parts = []
+            with zipfile.ZipFile(pptx_path, 'r') as zip_ref:
+                # Get slide files
+                slide_files = [f for f in zip_ref.namelist() if f.startswith('ppt/slides/slide') and f.endswith('.xml')]
+                for slide_file in sorted(slide_files):
+                    slide_num = slide_file.split('slide')[1].split('.')[0]
+                    content = zip_ref.read(slide_file).decode('utf-8')
+                    # Simple text extraction from XML (basic)
+                    import re
+                    text_matches = re.findall(r'<a:t[^>]*>([^<]+)</a:t>', content)
+                    if text_matches:
+                        text_parts.append(f"Slide {slide_num}:\n" + "\n".join(text_matches))
+            return "\n\n".join(text_parts) if text_parts else ""
+        except Exception:
+            return ""  # python-pptx not available and ZIP extraction failed
 

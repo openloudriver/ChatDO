@@ -130,8 +130,8 @@ const App: React.FC = () => {
     }
     
     if (viewMode === 'chat') {
-      return (
-        <>
+  return (
+    <>
           <div className="flex-1 overflow-hidden">
             <ChatMessages />
           </div>

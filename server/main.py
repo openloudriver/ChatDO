@@ -4,7 +4,8 @@ Provides REST API and WebSocket endpoints for the ChatGPT-style UI
 """
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, WebSocket, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 import sys
@@ -501,6 +502,192 @@ async def upload_file(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/uploads/{file_path:path}")
+async def serve_uploaded_file(file_path: str):
+    """
+    Serve uploaded files for preview
+    """
+    from fastapi.responses import FileResponse
+    
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    file_full_path = uploads_dir / file_path
+    
+    # Security: ensure file is within uploads directory
+    try:
+        file_full_path.resolve().relative_to(uploads_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not file_full_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(file_full_path)
+
+
+@app.get("/api/pptx-preview/{file_path:path}")
+async def preview_pptx(file_path: str):
+    """
+    Convert PPTX to PDF for browser preview (same beautiful experience as PDFs!)
+    Returns the PDF file for iframe display
+    """
+    from fastapi.responses import FileResponse
+    import subprocess
+    import tempfile
+    
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    file_full_path = uploads_dir / file_path
+    
+    # Security check
+    try:
+        file_full_path.resolve().relative_to(uploads_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not file_full_path.exists() or not file_full_path.suffix.lower() in ['.pptx', '.ppt']:
+        raise HTTPException(status_code=404, detail="File not found or not a PowerPoint file")
+    
+    # Check if we already have a converted PDF cached
+    pdf_path = file_full_path.with_suffix('.pdf')
+    if pdf_path.exists():
+        return FileResponse(pdf_path, media_type='application/pdf')
+    
+    # Try to convert PPTX to PDF using LibreOffice (best quality)
+    try:
+        # Try multiple possible LibreOffice command paths
+        libreoffice_commands = [
+            '/opt/homebrew/bin/soffice',  # Homebrew on Apple Silicon (most common)
+            '/usr/local/bin/soffice',  # Homebrew on Intel
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice',  # macOS app bundle
+            'soffice',  # If in PATH
+            'libreoffice',  # Alternative command name
+        ]
+        
+        libreoffice_cmd = None
+        for cmd in libreoffice_commands:
+            try:
+                # Check if command exists
+                if cmd.startswith('/'):
+                    # Absolute path - check if file exists
+                    import os
+                    if os.path.exists(cmd) and os.access(cmd, os.X_OK):
+                        libreoffice_cmd = cmd
+                        break
+                else:
+                    # Command name - use which
+                    result = subprocess.run(
+                        ['which', cmd],
+                        capture_output=True,
+                        timeout=2
+                    )
+                    if result.returncode == 0:
+                        libreoffice_cmd = result.stdout.decode().strip()
+                        break
+            except:
+                continue
+        
+        if libreoffice_cmd:
+            try:
+                # Use LibreOffice headless to convert
+                result = subprocess.run(
+                    [
+                        libreoffice_cmd,
+                        '--headless',
+                        '--convert-to', 'pdf',
+                        '--outdir', str(pdf_path.parent),
+                        str(file_full_path)
+                    ],
+                    capture_output=True,
+                    timeout=60,
+                    check=False
+                )
+                
+                if result.returncode == 0 and pdf_path.exists():
+                    return FileResponse(pdf_path, media_type='application/pdf')
+                else:
+                    # Conversion failed - log error but continue to fallback
+                    error_msg = result.stderr.decode() if result.stderr else result.stdout.decode() if result.stdout else 'Unknown error'
+                    print(f"LibreOffice conversion failed (code {result.returncode}): {error_msg}")
+            except Exception as e:
+                print(f"LibreOffice conversion error: {e}")
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+        # Fallback: Try python-pptx + reportlab (limited but works)
+        try:
+            from pptx import Presentation
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.units import inch
+            
+            prs = Presentation(file_full_path)
+            
+            # Create PDF
+            c = canvas.Canvas(str(pdf_path), pagesize=letter)
+            width, height = letter
+            
+            for slide_num, slide in enumerate(prs.slides, 1):
+                if slide_num > 1:
+                    c.showPage()
+                
+                y = height - 50
+                # Add slide number
+                c.setFont("Helvetica-Bold", 16)
+                c.drawString(50, y, f"Slide {slide_num}")
+                y -= 30
+                
+                # Extract and add title
+                if slide.shapes.title and slide.shapes.title.text:
+                    c.setFont("Helvetica-Bold", 14)
+                    title_lines = slide.shapes.title.text.split('\n')
+                    for line in title_lines[:3]:  # Limit to 3 lines
+                        if y < 100:
+                            break
+                        c.drawString(50, y, line[:80])  # Limit width
+                        y -= 20
+                    y -= 10
+                
+                # Add text content
+                c.setFont("Helvetica", 11)
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text and shape != slide.shapes.title:
+                        text = shape.text.strip()
+                        if text and y > 100:
+                            # Wrap text
+                            lines = text.split('\n')
+                            for line in lines[:10]:  # Limit lines per slide
+                                if y < 100:
+                                    break
+                                # Simple word wrap
+                                words = line.split()
+                                current_line = ""
+                                for word in words:
+                                    if len(current_line + word) < 80:
+                                        current_line += word + " "
+                                    else:
+                                        if current_line:
+                                            c.drawString(70, y, current_line.strip())
+                                            y -= 15
+                                        current_line = word + " "
+                                if current_line and y > 100:
+                                    c.drawString(70, y, current_line.strip())
+                                    y -= 15
+                                y -= 5
+                
+            c.save()
+            
+            if pdf_path.exists():
+                return FileResponse(pdf_path, media_type='application/pdf')
+            else:
+                raise Exception("PDF creation failed")
+                
+        except ImportError:
+            # No conversion libraries available
+            raise HTTPException(
+                status_code=501, 
+                detail="PPTX to PDF conversion not available. Install LibreOffice or python libraries (reportlab, python-pptx) for preview support."
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error converting PPTX to PDF: {str(e)}")
 
 
 @app.post("/api/url")
