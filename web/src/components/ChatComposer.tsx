@@ -56,8 +56,9 @@ const ChatComposer: React.FC = () => {
     if (filesToSend.length > 0) {
       const fileParts = filesToSend.map(file => {
         if (file.base64) {
-          // For images, include base64 data and path for preview
-          return `[Image: ${file.name}]\n${file.base64}\n[File path: ${file.path}]`;
+          // For images, just send the path - don't include base64 to avoid payload size issues
+          // The image is already uploaded, ChatDO can reference it by path if needed
+          return `[Image: ${file.name}]\n[File path: ${file.path}]`;
         } else {
           // For documents, include extracted text if available (like ChatGPT)
           // Also include path for preview functionality
@@ -518,6 +519,20 @@ const ChatComposer: React.FC = () => {
                         setPreviewFile({name: file.name, data: previewPath, type: 'pdf', mimeType: file.mimeType});
                       } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
                         setPreviewFile({name: file.name, data: previewPath, type: 'pptx', mimeType: file.mimeType});
+                      } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                        // Convert path for Excel preview API
+                        let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                        if (cleanPath.startsWith('uploads/')) {
+                          cleanPath = cleanPath.substring(8);
+                        }
+                        setPreviewFile({name: file.name, data: `http://localhost:8000/api/xlsx-preview/${cleanPath}`, type: 'xlsx', mimeType: file.mimeType});
+                      } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+                        // Convert path for Word preview API
+                        let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                        if (cleanPath.startsWith('uploads/')) {
+                          cleanPath = cleanPath.substring(8);
+                        }
+                        setPreviewFile({name: file.name, data: `http://localhost:8000/api/docx-preview/${cleanPath}`, type: 'docx', mimeType: file.mimeType});
                       } else {
                         setPreviewFile({name: file.name, data: previewPath, type: 'other', mimeType: file.mimeType});
                       }
@@ -683,6 +698,18 @@ const ChatComposer: React.FC = () => {
                   className="max-w-full max-h-full mx-auto object-contain"
                 />
               ) : previewFile.type === 'pdf' ? (
+                <iframe
+                  src={previewFile.data}
+                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  title={previewFile.name}
+                />
+              ) : previewFile.type === 'xlsx' ? (
+                <iframe
+                  src={previewFile.data}
+                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  title={previewFile.name}
+                />
+              ) : previewFile.type === 'docx' ? (
                 <iframe
                   src={previewFile.data}
                   className="w-full h-[80vh] border border-[#565869] rounded"

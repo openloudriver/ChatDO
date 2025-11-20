@@ -274,56 +274,104 @@ const ChatMessages: React.FC = () => {
             )}
             
             <div className="flex flex-col">
-              <div
-                className={`max-w-3xl rounded-lg px-4 py-3 ${
-                  message.role === 'user'
-                    ? 'bg-[#19c37d] text-white'
-                    : 'bg-[#444654] text-[#ececf1]'
-                }`}
-              >
-                {(() => {
-                  // Parse file attachments from message content
-                  // Support both old and new formats for backward compatibility
-                  // Old format: [File: name]\n[File path: ...]\n[MIME type: ...]\n\n--- File Content ---\n...
-                  // New format: [Image: name]\n{base64} or [File: name]\n\n{content}
+              <>
+                {/* Display images outside the message bubble for user messages */}
+                {message.role === 'user' && (() => {
                   const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
-                  const imagePatternNew = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)/g;
+                  const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
+                  const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
+                  const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
+                  
+                  if (imageMatchesOld.length > 0 || imageMatchesNew.length > 0) {
+                    return (
+                      <div className="mb-2 space-y-2 flex flex-col items-end">
+                        {imageMatchesOld.map((match, idx) => {
+                          const cleanPath = match[3].startsWith('uploads/') ? match[3].substring(8) : match[3];
+                          const imageSrc = match[2] || `http://localhost:8000/uploads/${cleanPath}`;
+                          return (
+                            <div 
+                              key={idx} 
+                              className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
+                              onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
+                              title="Click to view full size"
+                            >
+                              <img 
+                                src={imageSrc}
+                                alt={match[1]}
+                                className="w-full h-auto object-contain"
+                                loading="lazy"
+                              />
+                              <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
+                                {match[1]}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {imageMatchesNew.map((match, idx) => {
+                          const cleanPath = match[2].startsWith('uploads/') ? match[2].substring(8) : match[2];
+                          const imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
+                          return (
+                            <div 
+                              key={`new-${idx}`} 
+                              className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
+                              onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
+                              title="Click to view full size"
+                            >
+                              <img 
+                                src={imageSrc}
+                                alt={match[1]}
+                                className="w-full h-auto object-contain"
+                                loading="lazy"
+                              />
+                              <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
+                                {match[1]}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                {(() => {
+                  // Parse content first to determine if we should show the bubble
+                  const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
+                  const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
                   const docPatternOld = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\]/g;
-                  // New format: [File: name] followed by content (separated by \n\n)
                   const docPatternNew = /\[File: ([^\]]+)\]\n\n([\s\S]*?)(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
                   
                   let content = message.content;
                   const files: Array<{name: string, type: 'image' | 'doc', data?: string, path: string, mimeType?: string}> = [];
                   
-                  // Extract images (try new format first, then old)
-                  const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
-                  imageMatchesNew.forEach(match => {
-                    // Check if this was already matched by old pattern
-                    if (!content.includes(`[File path: ${match[1]}]`)) {
+                  // Extract images
+                  const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
+                  imageMatchesOld.forEach(match => {
+                    if (!files.some(f => f.name === match[1] && f.type === 'image')) {
                       files.push({
                         name: match[1],
                         type: 'image',
                         data: match[2],
-                        path: ''
+                        path: match[3]
                       });
                       content = content.replace(match[0], '');
                     }
                   });
                   
-                  // Try old image format
-                  const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
-                  imageMatchesOld.forEach(match => {
-                    files.push({
-                      name: match[1],
-                      type: 'image',
-                      data: match[2],
-                      path: match[3]
-                    });
-                    content = content.replace(match[0], '');
+                  const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
+                  imageMatchesNew.forEach(match => {
+                    if (!files.some(f => f.name === match[1] && f.type === 'image')) {
+                      files.push({
+                        name: match[1],
+                        type: 'image',
+                        data: undefined,
+                        path: match[2]
+                      });
+                      content = content.replace(match[0], '');
+                    }
                   });
                   
-                  // Extract documents (try new format first)
-                  // New format: [File: name]\n[File path: ...]\n[MIME type: ...]\n\n{content}
+                  // Extract documents
                   const docPatternNewWithPath = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\](?:\n\n([\s\S]*?))?(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
                   const docMatchesNewWithPath = [...message.content.matchAll(docPatternNewWithPath)];
                   docMatchesNewWithPath.forEach(match => {
@@ -333,7 +381,6 @@ const ChatMessages: React.FC = () => {
                       path: match[2],
                       mimeType: match[3]
                     });
-                    // Remove file section
                     const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const fileSectionPattern = new RegExp(
                       `\\[File: ${escapedName}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](?:\\n\\n[\\s\\S]*?)?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
@@ -342,12 +389,9 @@ const ChatMessages: React.FC = () => {
                     content = content.replace(fileSectionPattern, '');
                   });
                   
-                  // Also try format without path (fallback)
                   const docMatchesNew = [...message.content.matchAll(docPatternNew)];
                   docMatchesNew.forEach(match => {
-                    // Skip if already processed
                     if (!files.some(f => f.name === match[1])) {
-                      // Determine MIME type from filename extension
                       const fileName = match[1];
                       let mimeType = '';
                       if (fileName.toLowerCase().endsWith('.pdf')) {
@@ -364,7 +408,6 @@ const ChatMessages: React.FC = () => {
                         path: '',
                         mimeType: mimeType
                       });
-                      // Remove file section
                       const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                       const fileSectionPattern = new RegExp(
                         `\\[File: ${escapedName}\\]\\n\\n[\\s\\S]*?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
@@ -374,10 +417,8 @@ const ChatMessages: React.FC = () => {
                     }
                   });
                   
-                  // Try old document format (only if not already matched)
                   const docMatchesOld = [...message.content.matchAll(docPatternOld)];
                   docMatchesOld.forEach(match => {
-                    // Check if this filename was already processed
                     if (!files.some(f => f.name === match[1])) {
                       files.push({
                         name: match[1],
@@ -385,7 +426,6 @@ const ChatMessages: React.FC = () => {
                         path: match[2],
                         mimeType: match[3]
                       });
-                      // Remove old format sections
                       const fileSectionPattern = new RegExp(
                         `\\[File: ${match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](\\n\\n--- File Content ---[\\s\\S]*?--- End File Content ---)?`,
                         'g'
@@ -394,27 +434,62 @@ const ChatMessages: React.FC = () => {
                     }
                   });
                   
-                  // Clean up extra newlines and remove old "[File uploaded: ...]" messages
-                  content = content.replace(/\[File uploaded: [^\]]+\]/g, '').trim();
+                  content = content.replace(/\[File uploaded: [^\]]+\]/g, '');
+                  content = content.replace(/\[File path: [^\]]+\]/g, '');
+                  content = content.trim();
+                  
+                  const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0;
+                  
+                  if (!hasContent) {
+                    return null;
+                  }
                   
                   return (
-                    <>
-                      {/* Display files visually - clickable for preview */}
-                      {files.length > 0 && (
+                    <div
+                      className={`max-w-3xl rounded-lg px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-[#19c37d] text-white'
+                          : 'bg-[#444654] text-[#ececf1]'
+                      }`}
+                    >
+                      {/* Display files (documents, or all files for assistant) inside the message bubble */}
+                      {filesToShow.length > 0 && (
                         <div className={`mb-3 space-y-2 ${message.role === 'user' ? '' : ''}`}>
-                          {files.map((file, idx) => (
-                            file.type === 'image' && file.data ? (
+                          {filesToShow.map((file, idx) => (
+                            file.type === 'image' ? (
                               <div 
                                 key={idx} 
-                                className="rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors"
-                                onClick={() => setPreviewFile({name: file.name, data: file.data!, type: 'image', mimeType: file.mimeType || ''})}
+                                className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[25%] bg-transparent"
+                                onClick={() => {
+                                  // Use file path to load image if base64 not available
+                                  let imageSrc = file.data;
+                                  if (!imageSrc && file.path) {
+                                    const cleanPath = file.path.startsWith('uploads/') ? file.path.substring(8) : file.path;
+                                    imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
+                                  }
+                                  if (imageSrc) {
+                                    setPreviewFile({name: file.name, data: imageSrc, type: 'image', mimeType: file.mimeType || ''});
+                                  }
+                                }}
+                                title="Click to view full size"
                               >
-                                <img 
-                                  src={file.data} 
-                                  alt={file.name}
-                                  className="max-w-full max-h-[400px] object-contain"
-                                />
-                                <div className="px-2 py-1 bg-black/30 text-xs truncate">
+                                {file.data ? (
+                                  <img 
+                                    src={file.data} 
+                                    alt={file.name}
+                                    className="w-full h-auto object-contain"
+                                    loading="lazy"
+                                  />
+                                ) : file.path ? (
+                                  <img 
+                                    src={`http://localhost:8000/uploads/${file.path.startsWith('uploads/') ? file.path.substring(8) : file.path}`}
+                                    alt={file.name}
+                                    className="w-full h-auto object-contain"
+                                    loading="lazy"
+                                  />
+                                ) : null}
+                                <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
                                   {file.name}
                                 </div>
                               </div>
@@ -442,6 +517,22 @@ const ChatMessages: React.FC = () => {
                                     setPreviewFile({name: file.name, data: previewPath, type: 'pdf', mimeType: file.mimeType || 'application/pdf'});
                                   } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
                                     setPreviewFile({name: file.name, data: previewPath, type: 'pptx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+                                  } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                                    // Convert path for Excel preview API
+                                    // previewPath is already http://localhost:8000/uploads/... so strip that prefix
+                                    let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                                    // If it still has uploads/ prefix, strip it
+                                    if (cleanPath.startsWith('uploads/')) {
+                                      cleanPath = cleanPath.substring(8);
+                                    }
+                                    setPreviewFile({name: file.name, data: `http://localhost:8000/api/xlsx-preview/${cleanPath}`, type: 'xlsx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                                  } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+                                    // Convert path for Word preview API
+                                    let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                                    if (cleanPath.startsWith('uploads/')) {
+                                      cleanPath = cleanPath.substring(8);
+                                    }
+                                    setPreviewFile({name: file.name, data: `http://localhost:8000/api/docx-preview/${cleanPath}`, type: 'docx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
                                   } else {
                                     setPreviewFile({name: file.name, data: previewPath, type: 'other', mimeType: file.mimeType || ''});
                                   }
@@ -513,15 +604,13 @@ const ChatMessages: React.FC = () => {
                           <p className="whitespace-pre-wrap">{content}</p>
                         )
                       )}
-                    </>
+                    </div>
                   );
                 })()}
-              </div>
-              
-              {/* Action buttons - positioned below message */}
-              <div className={`flex gap-2 mt-1 ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              } opacity-0 group-hover:opacity-100 transition-opacity`}>
+                {/* Action buttons - positioned below message */}
+                <div className={`flex gap-2 mt-1 ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                } opacity-0 group-hover:opacity-100 transition-opacity`}>
                 {message.role === 'user' ? (
                   <>
                     <button
@@ -581,7 +670,8 @@ const ChatMessages: React.FC = () => {
                     )}
                   </button>
                 )}
-              </div>
+                </div>
+              </>
             </div>
             
             {message.role === 'user' && (
@@ -648,6 +738,18 @@ const ChatMessages: React.FC = () => {
                 />
               ) : previewFile.type === 'pptx' ? (
                 <PPTXPreview filePath={previewFile.data} fileName={previewFile.name} />
+              ) : previewFile.type === 'xlsx' ? (
+                <iframe
+                  src={previewFile.data}
+                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  title={previewFile.name}
+                />
+              ) : previewFile.type === 'docx' ? (
+                <iframe
+                  src={previewFile.data}
+                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  title={previewFile.name}
+                />
               ) : (
                 <div className="text-center text-[#8e8ea0] py-8">
                   <p>Preview not available for this file type.</p>

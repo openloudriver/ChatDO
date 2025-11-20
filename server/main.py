@@ -690,6 +690,188 @@ async def preview_pptx(file_path: str):
             raise HTTPException(status_code=500, detail=f"Error converting PPTX to PDF: {str(e)}")
 
 
+@app.get("/api/xlsx-preview/{file_path:path}")
+async def preview_xlsx(file_path: str):
+    """
+    Convert Excel (.xlsx, .xls) to PDF for browser preview (same beautiful experience as PDFs!)
+    Returns the PDF file for iframe display
+    """
+    from fastapi.responses import FileResponse
+    import subprocess
+    
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    file_full_path = uploads_dir / file_path
+    
+    # Security check
+    try:
+        file_full_path.resolve().relative_to(uploads_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not file_full_path.exists() or not file_full_path.suffix.lower() in ['.xlsx', '.xls']:
+        raise HTTPException(status_code=404, detail="File not found or not an Excel file")
+    
+    # Check if we already have a converted PDF cached
+    pdf_path = file_full_path.with_suffix('.pdf')
+    if pdf_path.exists():
+        return FileResponse(pdf_path, media_type='application/pdf')
+    
+    # Try to convert Excel to PDF using LibreOffice (best quality)
+    try:
+        # Try multiple possible LibreOffice command paths
+        libreoffice_commands = [
+            '/opt/homebrew/bin/soffice',  # Homebrew on Apple Silicon (most common)
+            '/usr/local/bin/soffice',  # Homebrew on Intel
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice',  # macOS app bundle
+            'soffice',  # If in PATH
+            'libreoffice',  # Alternative command name
+        ]
+        
+        libreoffice_cmd = None
+        for cmd in libreoffice_commands:
+            try:
+                # Check if command exists
+                if cmd.startswith('/'):
+                    # Absolute path - check if file exists
+                    import os
+                    if os.path.exists(cmd) and os.access(cmd, os.X_OK):
+                        libreoffice_cmd = cmd
+                        break
+                else:
+                    # Command name - use which
+                    result = subprocess.run(
+                        ['which', cmd],
+                        capture_output=True,
+                        timeout=2
+                    )
+                    if result.returncode == 0:
+                        libreoffice_cmd = result.stdout.decode().strip()
+                        break
+            except:
+                continue
+        
+        if libreoffice_cmd:
+            try:
+                # Use LibreOffice headless to convert
+                result = subprocess.run(
+                    [
+                        libreoffice_cmd,
+                        '--headless',
+                        '--convert-to', 'pdf',
+                        '--outdir', str(pdf_path.parent),
+                        str(file_full_path)
+                    ],
+                    capture_output=True,
+                    timeout=60,
+                    check=False
+                )
+                
+                if result.returncode == 0 and pdf_path.exists():
+                    return FileResponse(pdf_path, media_type='application/pdf')
+                else:
+                    # Conversion failed - log error but continue to fallback
+                    error_msg = result.stderr.decode() if result.stderr else result.stdout.decode() if result.stdout else 'Unknown error'
+                    print(f"LibreOffice Excel conversion failed (code {result.returncode}): {error_msg}")
+            except Exception as e:
+                print(f"LibreOffice Excel conversion error: {e}")
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+        pass
+    
+    # If all conversion attempts failed, return error
+    raise HTTPException(status_code=500, detail="Excel to PDF conversion not available. Install LibreOffice for preview support.")
+
+
+@app.get("/api/docx-preview/{file_path:path}")
+async def preview_docx(file_path: str):
+    """
+    Convert Word (.docx, .doc) to PDF for browser preview (same beautiful experience as PDFs!)
+    Returns the PDF file for iframe display
+    """
+    from fastapi.responses import FileResponse
+    import subprocess
+    
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    file_full_path = uploads_dir / file_path
+    
+    # Security check
+    try:
+        file_full_path.resolve().relative_to(uploads_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not file_full_path.exists() or not file_full_path.suffix.lower() in ['.docx', '.doc']:
+        raise HTTPException(status_code=404, detail="File not found or not a Word document")
+    
+    # Check if we already have a converted PDF cached
+    pdf_path = file_full_path.with_suffix('.pdf')
+    if pdf_path.exists():
+        return FileResponse(pdf_path, media_type='application/pdf')
+    
+    # Try to convert Word to PDF using LibreOffice (best quality)
+    try:
+        # Try multiple possible LibreOffice command paths
+        libreoffice_commands = [
+            '/opt/homebrew/bin/soffice',  # Homebrew on Apple Silicon (most common)
+            '/usr/local/bin/soffice',  # Homebrew on Intel
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice',  # macOS app bundle
+            'soffice',  # If in PATH
+            'libreoffice',  # Alternative command name
+        ]
+        
+        libreoffice_cmd = None
+        for cmd in libreoffice_commands:
+            try:
+                # Check if command exists
+                if cmd.startswith('/'):
+                    # Absolute path - check if file exists
+                    import os
+                    if os.path.exists(cmd) and os.access(cmd, os.X_OK):
+                        libreoffice_cmd = cmd
+                        break
+                else:
+                    # Command name - use which
+                    result = subprocess.run(
+                        ['which', cmd],
+                        capture_output=True,
+                        timeout=2
+                    )
+                    if result.returncode == 0:
+                        libreoffice_cmd = result.stdout.decode().strip()
+                        break
+            except:
+                continue
+        
+        if libreoffice_cmd:
+            try:
+                # Use LibreOffice headless to convert
+                result = subprocess.run(
+                    [
+                        libreoffice_cmd,
+                        '--headless',
+                        '--convert-to', 'pdf',
+                        '--outdir', str(pdf_path.parent),
+                        str(file_full_path)
+                    ],
+                    capture_output=True,
+                    timeout=60,
+                    check=False
+                )
+                
+                if result.returncode == 0 and pdf_path.exists():
+                    return FileResponse(pdf_path, media_type='application/pdf')
+                else:
+                    # Conversion failed - log error but continue to fallback
+                    error_msg = result.stderr.decode() if result.stderr else result.stdout.decode() if result.stdout else 'Unknown error'
+                    print(f"LibreOffice Word conversion failed (code {result.returncode}): {error_msg}")
+            except Exception as e:
+                print(f"LibreOffice Word conversion error: {e}")
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+        pass
+    
+    # If all conversion attempts failed, return error
+    raise HTTPException(status_code=500, detail="Word to PDF conversion not available. Install LibreOffice for preview support.")
+
+
 @app.post("/api/url")
 async def scrape_url_endpoint(
     project_id: str,
