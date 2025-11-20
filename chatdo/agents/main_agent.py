@@ -7,6 +7,7 @@ import requests
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
+from ..tools import web_search
 from ..memory import store as memory_store
 
 # AI-Router HTTP client
@@ -19,8 +20,10 @@ def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
     t = text.lower()
     
-    # Web scraping - route to Gab AI
-    if "scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t:
+    # Web scraping and web search - route to Gab AI
+    if ("scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t or
+        "search" in t or "find" in t or "look for" in t or "top headlines" in t or "latest" in t or 
+        "current" in t or "today" in t or "recent" in t or "discover" in t or "what are" in t):
         return "web_scraping"
     if "refactor" in t or "fix" in t or "edit code" in t:
         return "code_edit"
@@ -166,6 +169,33 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Classify intent from user message
     intent = classify_intent(task)
     
+    # If this is a web search query, perform the search first and include results in context
+    if intent == "web_scraping":
+        # Extract search query from task
+        # Remove common prefixes like "find", "search for", "look for", etc.
+        search_query = task
+        for prefix in ["find", "search for", "look for", "what are", "show me", "get me"]:
+            if task.lower().startswith(prefix):
+                search_query = task[len(prefix):].strip()
+                break
+        
+        # Perform web search
+        try:
+            search_results = web_search.search_web(search_query, max_results=10)
+            if search_results and len(search_results) > 0:
+                # Format search results for the AI
+                results_text = "Web Search Results:\n\n"
+                for i, result in enumerate(search_results, 1):
+                    results_text += f"{i}. **{result.get('title', 'No title')}**\n"
+                    results_text += f"   URL: {result.get('url', 'No URL')}\n"
+                    results_text += f"   {result.get('snippet', 'No description')}\n\n"
+                
+                # Prepend search results to the user's task
+                task = f"{results_text}\n\nBased on the above web search results, please answer: {task}"
+        except Exception as e:
+            # If search fails, continue without search results
+            pass
+    
     # Build message history
     messages: List[Dict[str, str]] = []
     
@@ -213,6 +243,12 @@ When the user is exploring ideas, asking questions, or designing a solution:
 - Propose clear, concrete plans.
 
 - Explain which files and components you intend to touch.
+
+Web Search & Information Discovery:
+- When the user asks you to search the web, find information, discover websites, or get current information, use your web search capabilities.
+- For queries like "find XYZ", "what are the top headlines", "search for zkSNARK websites", provide comprehensive, up-to-date information.
+- You can search for current events, recent developments, and discover relevant websites or resources.
+- When providing search results, cite sources and provide URLs when available.
 
 When the user clearly asks you to APPLY or IMPLEMENT changes (for example: "yes, do it", "apply this", "make those changes", "go ahead and implement that plan"):
 
