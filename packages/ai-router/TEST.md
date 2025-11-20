@@ -51,10 +51,15 @@ curl -X POST http://localhost:8081/v1/ai/run \
 Make sure you have a `.env` file (or export env vars) with:
 
 ```bash
-OPENAI_API_KEY=your-actual-key-here
+OPENAI_API_KEY=
 OPENAI_BASE_URL=https://api.openai.com/v1
+GAB_AI_API_KEY=your-gab-ai-api-key-here
+GAB_AI_BASE_URL=https://gab.ai/v1
 AI_ROUTER_PORT=8081
 ```
 
-Note: All intents use gpt-5. Model selection is handled automatically by routing rules.
+Note: 
+- Most intents use gpt-5. 
+- `web_scraping` intent uses Gab AI (arya model).
+- Model selection is handled automatically by routing rules.
 

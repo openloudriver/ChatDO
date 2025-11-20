@@ -16,8 +16,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useChatStore } from '../store/chat';
-import type { Conversation } from '../store/chat';
+import { useChatStore, type Project } from '../store/chat';
 import { AiSpendIndicator } from './AiSpendIndicator';
 
 const PlusIcon = () => (
@@ -72,7 +71,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
       <button
         {...attributes}
         {...listeners}
-        onClick={(e) => {
+        onClick={() => {
           // Select project on click (drag won't activate if movement < 8px)
           setCurrentProject(project);
           setViewMode('projectList');
@@ -123,22 +122,14 @@ const Sidebar: React.FC = () => {
   const {
     projects,
     currentProject,
-    conversations,
-    currentConversation,
     setCurrentProject,
-    setCurrentConversation,
-    addConversation,
     createProject,
     renameProject,
     deleteProject,
     reorderProjects,
     loadChats,
-    renameChat,
-    deleteChat,
     setViewMode,
     viewMode,
-    ensureGeneralProject,
-    createNewChatInProject,
     searchChats,
     setSearchQuery,
     searchQuery
@@ -181,25 +172,6 @@ const Sidebar: React.FC = () => {
     }
   }, [openMenuId, openChatMenuId]);
 
-  const handleNewChat = async () => {
-    const { currentProject, ensureGeneralProject, createNewChatInProject, setCurrentProject, setCurrentConversation } = useChatStore.getState();
-    
-    // If no project selected, use General
-    const projectToUse = currentProject || await ensureGeneralProject();
-    
-    // If General was created/selected, update current project
-    if (!currentProject) {
-      setCurrentProject(projectToUse);
-    }
-    
-    try {
-      const newConversation = await createNewChatInProject(projectToUse.id);
-      await setCurrentConversation(newConversation);
-    } catch (error) {
-      console.error('Failed to create conversation:', error);
-      alert('Failed to create conversation. Please try again.');
-    }
-  };
 
   // Handle search input with debounce
   useEffect(() => {
@@ -251,31 +223,6 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  const handleRenameChat = async (chatId: string, currentTitle: string) => {
-    setOpenChatMenuId(null);
-    const newTitle = window.prompt('Rename chat:', currentTitle);
-    if (!newTitle || newTitle.trim() === currentTitle) return;
-    try {
-      await renameChat(chatId, newTitle.trim());
-    } catch (error) {
-      console.error('Failed to rename chat:', error);
-      alert('Failed to rename chat. Please try again.');
-    }
-  };
-
-  const handleDeleteChat = async (chatId: string, chatTitle: string) => {
-    setOpenChatMenuId(null);
-    const confirmed = window.confirm(
-      `Delete "${chatTitle}"? It will move to Trash and be permanently removed after 30 days.`
-    );
-    if (!confirmed) return;
-    try {
-      await deleteChat(chatId);
-    } catch (error) {
-      console.error('Failed to delete chat:', error);
-      alert('Failed to delete chat. Please try again.');
-    }
-  };
 
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -286,12 +233,12 @@ const Sidebar: React.FC = () => {
     }
     
     // Use the full projects list (not filtered) for reordering
-    const oldIndex = projects.findIndex((p) => p.id === active.id);
-    const newIndex = projects.findIndex((p) => p.id === over.id);
+    const oldIndex = projects.findIndex((p: Project) => p.id === active.id);
+    const newIndex = projects.findIndex((p: Project) => p.id === over.id);
     
     if (oldIndex !== -1 && newIndex !== -1) {
-      const reordered = arrayMove(projects, oldIndex, newIndex);
-      const orderedIds = reordered.map((p) => p.id);
+      const reordered = arrayMove(projects, oldIndex, newIndex) as Project[];
+      const orderedIds = reordered.map((p: Project) => p.id);
       reorderProjects(orderedIds);
     }
   };
@@ -349,10 +296,10 @@ const Sidebar: React.FC = () => {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredProjects.map((p) => p.id)}
+            items={filteredProjects.map((p: Project) => p.id)}
             strategy={verticalListSortingStrategy}
           >
-            {filteredProjects.map((project) => (
+            {filteredProjects.map((project: Project) => (
               <SortableProjectItem
                 key={project.id}
                 project={project}

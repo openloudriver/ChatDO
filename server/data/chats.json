@@ -32,10 +32,30 @@
   {
     "id": "22e8536d-e74b-4c78-8c3e-e77c06768075",
     "project_id": "scratch",
-    "title": "New Chat",
+    "title": "Testing",
     "thread_id": "22e8536d-e74b-4c78-8c3e-e77c06768075",
     "created_at": "2025-11-20T03:24:22.024140+00:00",
-    "updated_at": "2025-11-20T03:24:22.024157+00:00",
+    "updated_at": "2025-11-20T04:43:24.776608+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
+    "project_id": "privacypay",
+    "title": "Provide a grade on a scale of 1-10 of the compl...",
+    "thread_id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
+    "created_at": "2025-11-20T13:12:03.927261+00:00",
+    "updated_at": "2025-11-20T13:12:32.008344+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "db935d93-df80-46fb-9d69-db7de636db77",
+    "project_id": "scratch",
+    "title": "Can you tell me the big USA political news head...",
+    "thread_id": "db935d93-df80-46fb-9d69-db7de636db77",
+    "created_at": "2025-11-20T23:03:52.137401+00:00",
+    "updated_at": "2025-11-20T23:04:00.118365+00:00",
     "trashed": false,
     "trashed_at": null
   }
