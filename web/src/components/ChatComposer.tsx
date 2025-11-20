@@ -12,6 +12,8 @@ const ChatComposer: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const previewModalRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Auto-resize textarea based on content
   const adjustTextareaHeight = () => {
@@ -678,52 +680,70 @@ const ChatComposer: React.FC = () => {
           onClick={() => setPreviewFile(null)}
         >
           <div 
-            className="bg-[#343541] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col"
+            ref={previewModalRef}
+            className={`bg-[#343541] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col ${isFullscreen ? '!max-w-none !max-h-none !rounded-none !h-screen !w-screen' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-[#565869]">
               <h3 className="text-lg font-semibold text-white truncate">{previewFile.name}</h3>
-              <button
-                onClick={() => setPreviewFile(null)}
-                className="p-2 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
-                title="Close preview"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleFullscreen}
+                  className="p-2 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12M4 8h4m-4 4h4m-4 4h4m8-8v4m0 4v4m0-8h4m-4 0h4" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  onClick={() => setPreviewFile(null)}
+                  className="p-2 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+                  title="Close preview"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="flex-1 overflow-auto p-4">
+            <div className={`flex-1 overflow-auto p-4 ${isFullscreen ? '!h-[calc(100vh-80px)]' : ''}`}>
               {previewFile.type === 'image' ? (
                 <img 
                   src={previewFile.data} 
                   alt={previewFile.name}
-                  className="max-w-full max-h-full mx-auto object-contain"
+                  className={`max-w-full mx-auto object-contain ${isFullscreen ? 'max-h-[calc(100vh-80px)]' : 'max-h-full'}`}
                 />
               ) : previewFile.type === 'pdf' ? (
                 <iframe
                   src={previewFile.data}
-                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'xlsx' ? (
                 <iframe
                   src={previewFile.data}
-                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'docx' ? (
                 <iframe
                   src={previewFile.data}
-                  className="w-full h-[80vh] border border-[#565869] rounded"
+                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'video' ? (
                 <video
                   src={previewFile.data}
                   controls
-                  className="w-full max-h-[80vh] mx-auto object-contain"
-                  style={{ maxHeight: '80vh' }}
+                  className={`w-full mx-auto object-contain ${isFullscreen ? 'max-h-[calc(100vh-80px)]' : 'max-h-[80vh]'}`}
+                  style={isFullscreen ? { maxHeight: 'calc(100vh - 80px)' } : { maxHeight: '80vh' }}
                 >
                   Your browser does not support the video tag.
                 </video>
