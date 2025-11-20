@@ -97,7 +97,7 @@ const ChatMessages: React.FC = () => {
     deleteMessage
   } = useChatStore();
   
-  const [previewFile, setPreviewFile] = useState<{name: string, data: string, type: 'image' | 'pdf' | 'pptx' | 'other', mimeType: string} | null>(null);
+  const [previewFile, setPreviewFile] = useState<{name: string, data: string, type: 'image' | 'pdf' | 'pptx' | 'xlsx' | 'docx' | 'video' | 'other', mimeType: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -533,6 +533,9 @@ const ChatMessages: React.FC = () => {
                                       cleanPath = cleanPath.substring(8);
                                     }
                                     setPreviewFile({name: file.name, data: `http://localhost:8000/api/docx-preview/${cleanPath}`, type: 'docx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+                                  } else if (fileName.endsWith('.mp4') || fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.webm') || fileName.endsWith('.mkv') || file.mimeType?.startsWith('video/')) {
+                                    // Video files - use HTML5 video player
+                                    setPreviewFile({name: file.name, data: previewPath, type: 'video', mimeType: file.mimeType || 'video/mp4'});
                                   } else {
                                     setPreviewFile({name: file.name, data: previewPath, type: 'other', mimeType: file.mimeType || ''});
                                   }
@@ -750,6 +753,15 @@ const ChatMessages: React.FC = () => {
                   className="w-full h-[80vh] border border-[#565869] rounded"
                   title={previewFile.name}
                 />
+              ) : previewFile.type === 'video' ? (
+                <video
+                  src={previewFile.data}
+                  controls
+                  className="w-full max-h-[80vh] mx-auto object-contain"
+                  style={{ maxHeight: '80vh' }}
+                >
+                  Your browser does not support the video tag.
+                </video>
               ) : (
                 <div className="text-center text-[#8e8ea0] py-8">
                   <p>Preview not available for this file type.</p>
