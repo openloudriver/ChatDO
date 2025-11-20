@@ -135,6 +135,29 @@ export CHATDO_TRASH_RETENTION_DAYS=30  # Default is 30 days
 
 The retention period applies to chats that have been in Trash longer than the specified number of days. Trashed chats and their thread history are permanently deleted during server startup and can also be manually purged via the API.
 
+## AI Router Configuration
+
+The AI Router requires API keys for the AI providers. Create a `.env` file in the `packages/ai-router/` directory:
+
+```bash
+cd packages/ai-router
+cat > .env << EOF
+OPENAI_API_KEY=your-openai-api-key-here
+GAB_AI_API_KEY=your-gab-ai-api-key-here
+AI_ROUTER_PORT=8081
+EOF
+```
+
+**Note**: The `.env` file is gitignored and will not be committed to the repository.
+
+### Gab AI Setup
+
+Gab AI is used for web scraping tasks. To use it:
+
+1. Get your Gab AI API key from [Gab AI](https://gab.ai)
+2. Add it to `packages/ai-router/.env` as `GAB_AI_API_KEY`
+3. Web scraping requests will automatically route to Gab AI
+
 ## Troubleshooting
 
 - **CORS errors**: Make sure the backend is running and CORS is configured for `http://localhost:5173`
@@ -142,6 +165,7 @@ The retention period applies to chats that have been in Trash longer than the sp
 - **File upload not working**: Check that the `uploads/` directory is writable
 - **Projects not loading**: Verify `server/data/projects.json` exists and is valid JSON
 - **Chats not loading**: Verify `server/data/chats.json` exists and is valid JSON
+- **AI Router errors**: Check that API keys are set in `packages/ai-router/.env` and the AI Router server is running
 
 ## Next Steps
 

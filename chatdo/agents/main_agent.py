@@ -19,6 +19,9 @@ def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
     t = text.lower()
     
+    # Web scraping - route to Gab AI
+    if "scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t:
+        return "web_scraping"
     if "refactor" in t or "fix" in t or "edit code" in t:
         return "code_edit"
     if "generate code" in t or "write a function" in t:

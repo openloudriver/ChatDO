@@ -35,6 +35,11 @@ export const PRICING: PricingEntry[] = [
     inputPerMillion: 0,
     outputPerMillion: 0,
   },
+  {
+    providerId: "gab-ai",
+    inputPerMillion: 1.0, // Placeholder - update with actual Gab AI pricing
+    outputPerMillion: 3.0, // Placeholder - update with actual Gab AI pricing
+  },
 ];
 
 export function findPricing(providerId: string): PricingEntry | null {
