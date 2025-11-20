@@ -49,37 +49,24 @@ export const AiSpendIndicator: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
-  function handleContextMenu(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  function handleMouseEnter() {
     setMenuOpen(true);
   }
 
-  function closeMenu() {
+  function handleMouseLeave() {
     setMenuOpen(false);
   }
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    if (menuOpen) {
-      const handleClick = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (!target.closest('.spend-menu')) {
-          closeMenu();
-        }
-      };
-      document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
-    }
-  }, [menuOpen]);
 
   const total = data?.totalUsd ?? 0;
 
   return (
-    <div className="relative w-full">
+    <div 
+      className="relative w-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div
         ref={amountRef}
-        onContextMenu={handleContextMenu}
         onClick={(e) => e.stopPropagation()}
         className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis"
       >

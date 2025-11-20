@@ -1,11 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 
 const ChatMessages: React.FC = () => {
-  const { messages, isStreaming, streamingContent, currentConversation, currentProject, setViewMode, viewMode } = useChatStore();
+  const { messages, isStreaming, streamingContent, currentConversation, currentProject, setViewMode, viewMode, renameChat } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when messages change or streaming updates
   useEffect(() => {
@@ -21,6 +24,51 @@ const ChatMessages: React.FC = () => {
       setViewMode('projectList');
     }
   };
+
+  const handleTitleClick = () => {
+    if (currentConversation && !currentConversation.trashed) {
+      setEditTitleValue(currentConversation.title);
+      setIsEditingTitle(true);
+    }
+  };
+
+  const handleTitleSave = async () => {
+    if (!currentConversation || currentConversation.trashed) return;
+    
+    const newTitle = editTitleValue.trim();
+    if (newTitle && newTitle !== currentConversation.title) {
+      try {
+        await renameChat(currentConversation.id, newTitle);
+      } catch (error) {
+        console.error('Failed to rename chat:', error);
+        alert('Failed to rename chat. Please try again.');
+      }
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditTitleValue('');
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleTitleCancel();
+    }
+  };
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
@@ -44,7 +92,28 @@ const ChatMessages: React.FC = () => {
             <span className="px-2 py-1 text-xs bg-[#ef4444] text-white rounded">In Trash</span>
           )}
           {currentConversation && !currentConversation.trashed && (
-            <h2 className="text-lg font-semibold text-[#ececf1]">{currentConversation.title}</h2>
+            <>
+              {isEditingTitle ? (
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={editTitleValue}
+                  onChange={(e) => setEditTitleValue(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={handleTitleKeyDown}
+                  className="text-lg font-semibold text-[#ececf1] bg-[#40414f] border border-[#565869] rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#19c37d] min-w-[200px] max-w-[400px]"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <h2 
+                  className="text-lg font-semibold text-[#ececf1] cursor-pointer hover:text-white transition-colors"
+                  onClick={handleTitleClick}
+                  title="Click to edit chat name"
+                >
+                  {currentConversation.title}
+                </h2>
+              )}
+            </>
           )}
         </div>
       )}

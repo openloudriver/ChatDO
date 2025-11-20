@@ -28,7 +28,7 @@ export interface Project {
   sort_index?: number;
 }
 
-export type ViewMode = 'projectList' | 'chat' | 'trashList';
+export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search';
 
 interface ChatStore {
   // State
@@ -42,6 +42,8 @@ interface ChatStore {
   isStreaming: boolean;
   streamingContent: string;
   viewMode: ViewMode;
+  searchResults: Conversation[];
+  searchQuery: string;
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -66,6 +68,8 @@ interface ChatStore {
   purgeAllTrashedChats: () => Promise<void>;
   ensureGeneralProject: () => Promise<Project>;
   createNewChatInProject: (projectId: string) => Promise<Conversation>;
+  searchChats: (query: string) => Promise<void>;
+  setSearchQuery: (query: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateStreamingContent: (content: string) => void;
   setLoading: (loading: boolean) => void;
@@ -90,6 +94,13 @@ export const useChatStore = create<ChatStore>((set) => ({
   setProjects: (projects) => set({ projects }),
   
   setCurrentProject: (project) => {
+    // Persist last project to localStorage
+    if (project) {
+      localStorage.setItem('chatdo:lastProjectId', project.id);
+    } else {
+      localStorage.removeItem('chatdo:lastProjectId');
+    }
+    
     set((state) => ({
       currentProject: project,
       // Only set viewMode to projectList if a project is selected
@@ -215,8 +226,10 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   loadChats: async (projectId) => {
     try {
+      // For project lists, only load active chats (not trashed)
+      // For loading all chats (no projectId), include trashed to populate trashedChats
       const url = projectId
-        ? `http://localhost:8000/api/chats?project_id=${projectId}&include_trashed=true`
+        ? `http://localhost:8000/api/chats?project_id=${projectId}&include_trashed=false`
         : `http://localhost:8000/api/chats?include_trashed=true`;
       const response = await axios.get(url);
       const allChats = response.data;
@@ -531,6 +544,11 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   purgeChat: async (id) => {
     try {
+      // Get the chat's project before purging so we can reload its chats
+      const state = useChatStore.getState();
+      const chatToPurge = state.trashedChats.find(c => c.id === id);
+      const projectId = chatToPurge?.projectId;
+      
       await axios.post(`http://localhost:8000/api/chats/${id}/purge`);
       
       set((state) => {
@@ -546,6 +564,11 @@ export const useChatStore = create<ChatStore>((set) => ({
           currentConversation: updatedCurrentConversation
         };
       });
+      
+      // Reload project chats to ensure the purged chat is gone
+      if (projectId) {
+        await useChatStore.getState().loadChats(projectId);
+      }
     } catch (error) {
       console.error('Failed to purge chat:', error);
       throw error;
@@ -554,6 +577,10 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   purgeAllTrashedChats: async () => {
     try {
+      // Get all project IDs that have trashed chats before purging
+      const state = useChatStore.getState();
+      const projectIds = new Set(state.trashedChats.map(c => c.projectId).filter(Boolean));
+      
       const response = await axios.post('http://localhost:8000/api/chats/purge_all_trashed');
       
       // Clear all trashed chats and reload
@@ -569,7 +596,12 @@ export const useChatStore = create<ChatStore>((set) => ({
         };
       });
       
-      // Reload trashed chats to ensure UI is in sync
+      // Reload all affected project chats to ensure purged chats are gone
+      for (const projectId of projectIds) {
+        await useChatStore.getState().loadChats(projectId);
+      }
+      
+      // Reload trashed chats to ensure UI is in sync (should be empty now)
       await useChatStore.getState().loadTrashedChats();
     } catch (error) {
       console.error('Failed to purge all trashed chats:', error);
@@ -588,8 +620,12 @@ export const useChatStore = create<ChatStore>((set) => ({
       return;
     }
     
-    // Persist last chat to localStorage
+    // Persist last chat and project to localStorage
     localStorage.setItem('chatdo:lastChatId', conversation.id);
+    // Also save the project ID if we have it
+    if (conversation.projectId) {
+      localStorage.setItem('chatdo:lastProjectId', conversation.projectId);
+    }
     
     // Set conversation immediately
     set({ 
@@ -717,6 +753,103 @@ export const useChatStore = create<ChatStore>((set) => ({
     } catch (error) {
       console.error('Failed to create new chat:', error);
       throw error;
+    }
+  },
+  
+  setSearchQuery: (query) => {
+    set({ searchQuery: query });
+    // If query is cleared, exit search mode
+    if (!query.trim()) {
+      set((state) => {
+        // Return to projectList if we were in search mode
+        const newViewMode = state.viewMode === 'search' ? 'projectList' : state.viewMode;
+        return { 
+          searchResults: [],
+          viewMode: newViewMode
+        };
+      });
+    }
+  },
+  
+  searchChats: async (query: string) => {
+    if (!query.trim()) {
+      set((state) => {
+        const newViewMode = state.viewMode === 'search' ? 'projectList' : state.viewMode;
+        return { 
+          searchResults: [],
+          viewMode: newViewMode
+        };
+      });
+      return;
+    }
+    
+    try {
+      // Load all chats (not filtered by project)
+      const response = await axios.get('http://localhost:8000/api/chats?include_trashed=false');
+      const allChats = response.data;
+      
+      const state = useChatStore.getState();
+      const queryLower = query.toLowerCase().trim();
+      const results: Conversation[] = [];
+      
+      // Search through all chats
+      for (const chat of allChats) {
+        // Search in title
+        const titleMatch = chat.title?.toLowerCase().includes(queryLower);
+        
+        // Search in messages (load preview messages)
+        let contentMatch = false;
+        if (chat.thread_id) {
+          try {
+            const msgResponse = await axios.get(`http://localhost:8000/api/chats/${chat.id}/messages?limit=10`);
+            const messages = msgResponse.data.messages || [];
+            for (const msg of messages) {
+              if (msg.content?.toLowerCase().includes(queryLower)) {
+                contentMatch = true;
+                break;
+              }
+            }
+          } catch (err) {
+            // If we can't load messages, just skip content search for this chat
+          }
+        }
+        
+        if (titleMatch || contentMatch) {
+          const project = state.projects.find(p => p.id === chat.project_id);
+          const defaultTarget = project?.default_target || 'general';
+          
+          const conversation: Conversation = {
+            id: chat.id,
+            title: chat.title,
+            messages: [], // Will be loaded when opened
+            projectId: chat.project_id,
+            targetName: defaultTarget,
+            createdAt: new Date(chat.created_at),
+            trashed: false,
+            trashed_at: undefined,
+            thread_id: chat.thread_id
+          };
+          
+          results.push(conversation);
+        }
+      }
+      
+      // Sort by relevance (title matches first, then by date)
+      results.sort((a, b) => {
+        const aTitleMatch = a.title.toLowerCase().includes(queryLower);
+        const bTitleMatch = b.title.toLowerCase().includes(queryLower);
+        if (aTitleMatch && !bTitleMatch) return -1;
+        if (!aTitleMatch && bTitleMatch) return 1;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      });
+      
+      set({ 
+        searchResults: results,
+        viewMode: 'search'
+      });
+    } catch (error) {
+      console.error('Failed to search chats:', error);
+      set({ searchResults: [] });
     }
   }
 }));

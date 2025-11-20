@@ -2,80 +2,30 @@
   {
     "id": "3dd0e578-c22f-4e99-96c0-f6bca4fea3f5",
     "project_id": "scratch",
-    "title": "Today",
+    "title": "Yesterday",
     "thread_id": "3dd0e578-c22f-4e99-96c0-f6bca4fea3f5",
     "created_at": "2025-11-19T12:50:03.623032+00:00",
-    "updated_at": "2025-11-19T12:52:11.030945+00:00",
+    "updated_at": "2025-11-20T01:44:21.257907+00:00",
     "trashed": false,
     "trashed_at": null
   },
   {
     "id": "2c2abf5d-87ed-49db-943b-024e58d577e2",
     "project_id": "scratch",
-    "title": "Day of week",
+    "title": "Solstice",
     "thread_id": "2c2abf5d-87ed-49db-943b-024e58d577e2",
     "created_at": "2025-11-19T12:50:13.154920+00:00",
-    "updated_at": "2025-11-19T12:52:07.696698+00:00",
+    "updated_at": "2025-11-20T01:44:52.341864+00:00",
     "trashed": false,
     "trashed_at": null
   },
   {
-    "id": "162961dc-2e23-4159-8aad-9928695f3a49",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "162961dc-2e23-4159-8aad-9928695f3a49",
-    "created_at": "2025-11-19T17:36:14.283210+00:00",
-    "updated_at": "2025-11-19T17:36:14.283254+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "46603ac1-0069-4800-9833-0d5e93cff486",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "46603ac1-0069-4800-9833-0d5e93cff486",
-    "created_at": "2025-11-19T17:36:36.279991+00:00",
-    "updated_at": "2025-11-19T17:36:36.280002+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "5e259804-291c-4be5-b3bb-a63cb0fa5f85",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "5e259804-291c-4be5-b3bb-a63cb0fa5f85",
-    "created_at": "2025-11-19T17:36:40.279678+00:00",
-    "updated_at": "2025-11-19T17:36:40.279688+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "c34e12d1-c290-49e8-8229-f6fbbe68e4d7",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "c34e12d1-c290-49e8-8229-f6fbbe68e4d7",
-    "created_at": "2025-11-19T17:36:57.297473+00:00",
-    "updated_at": "2025-11-19T17:36:57.297482+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "b8ac0f1d-8353-40a7-a453-dcbd3ce28976",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "b8ac0f1d-8353-40a7-a453-dcbd3ce28976",
-    "created_at": "2025-11-19T17:37:18.289676+00:00",
-    "updated_at": "2025-11-19T17:37:18.289697+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "56471afe-47a0-4546-87e0-492062993c8a",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "56471afe-47a0-4546-87e0-492062993c8a",
-    "created_at": "2025-11-19T18:10:12.292044+00:00",
-    "updated_at": "2025-11-19T18:10:12.292067+00:00",
+    "id": "5bb591cc-f18e-40bd-a3d2-5948cade1cc9",
+    "project_id": "privacypay",
+    "title": "Credit Vault",
+    "thread_id": "5bb591cc-f18e-40bd-a3d2-5948cade1cc9",
+    "created_at": "2025-11-20T01:40:44.188416+00:00",
+    "updated_at": "2025-11-20T01:45:50.164066+00:00",
     "trashed": false,
     "trashed_at": null
   }

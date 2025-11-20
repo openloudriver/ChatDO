@@ -138,7 +138,10 @@ const Sidebar: React.FC = () => {
     setViewMode,
     viewMode,
     ensureGeneralProject,
-    createNewChatInProject
+    createNewChatInProject,
+    searchChats,
+    setSearchQuery,
+    searchQuery
   } = useChatStore();
   
   // DnD sensors - configure activation distance so clicks still work
@@ -155,7 +158,6 @@ const Sidebar: React.FC = () => {
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Load chats when project changes
   useEffect(() => {
@@ -199,11 +201,20 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  // Filter projects based on search query
-  const q = searchQuery.trim().toLowerCase();
-  const filteredProjects = q
-    ? projects.filter(p => p.name.toLowerCase().includes(q))
-    : projects;
+  // Handle search input with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchChats(searchQuery);
+      }
+      // If search is cleared, setSearchQuery will handle clearing the view
+    }, 300); // 300ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, searchChats]);
+  
+  // Filter projects based on search query (only if not in search mode)
+  const filteredProjects = projects;
 
   const handleNewProject = async () => {
     const name = window.prompt('New project name?');
@@ -308,6 +319,12 @@ const Sidebar: React.FC = () => {
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => {
+              // If search is active, ensure we're in search mode
+              if (searchQuery.trim()) {
+                setViewMode('search');
+              }
+            }}
             className="w-full pl-8 pr-3 py-2 text-sm bg-[#343541] border border-[#565869] rounded-md text-[#ececf1] placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] transition-colors"
           />
         </div>

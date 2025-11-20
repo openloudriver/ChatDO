@@ -64,6 +64,7 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
 
   const handleNewChat = async () => {
     if (!currentProject) return;
@@ -125,6 +126,49 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     }
   };
 
+  const handleToggleSelect = (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedChats(prev => {
+      const next = new Set(prev);
+      if (next.has(chatId)) {
+        next.delete(chatId);
+      } else {
+        next.add(chatId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedChats.size === 0) return;
+    
+    const count = selectedChats.size;
+    const confirmed = window.confirm(
+      `Delete ${count} chat${count > 1 ? 's' : ''}? They will move to Trash and be permanently removed after 30 days.`
+    );
+    if (!confirmed) return;
+
+    try {
+      // Delete all selected chats
+      const deletePromises = Array.from(selectedChats).map(chatId => deleteChat(chatId));
+      await Promise.all(deletePromises);
+      setSelectedChats(new Set());
+    } catch (error) {
+      console.error('Failed to delete chats:', error);
+      alert('Failed to delete some chats. Please try again.');
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedChats.size === projectChats.length) {
+      // Deselect all
+      setSelectedChats(new Set());
+    } else {
+      // Select all
+      setSelectedChats(new Set(projectChats.map(c => c.id)));
+    }
+  };
+
   // Filter conversations for this project
   const projectChats = conversations.filter(c => c.projectId === projectId);
 
@@ -136,12 +180,30 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
             <h2 className="text-xl font-semibold text-[#ececf1]">
               {currentProject?.name || 'Project'}
             </h2>
-          <button
-            onClick={handleNewChat}
-            className="px-4 py-2 bg-[#19c37d] hover:bg-[#16a86b] text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            New Chat
-          </button>
+            <div className="flex items-center gap-2">
+              {selectedChats.size > 0 && (
+                <>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Delete ({selectedChats.size})
+                  </button>
+                  <button
+                    onClick={() => setSelectedChats(new Set())}
+                    className="px-4 py-2 bg-[#565869] hover:bg-[#6e6f7f] text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+              <button
+                onClick={handleNewChat}
+                className="px-4 py-2 bg-[#19c37d] hover:bg-[#16a86b] text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                New Chat
+              </button>
+            </div>
         </div>
       </div>
 
@@ -153,40 +215,67 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
           </div>
         ) : (
           <div className="space-y-2">
+            {projectChats.length > 0 && (
+              <div className="mb-2 pb-2 border-b border-[#565869]">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-sm text-[#8e8ea0] hover:text-[#ececf1] transition-colors"
+                >
+                  {selectedChats.size === projectChats.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+            )}
             {projectChats.map((chat) => {
               const isSelected = currentConversation?.id === chat.id;
+              const isChecked = selectedChats.has(chat.id);
               const updatedDate = chat.trashed_at ? new Date(chat.trashed_at) : chat.createdAt;
               
               return (
                 <div key={chat.id} className="relative group">
-                  <button
-                    onClick={() => {
-                      setCurrentConversation(chat).catch(err => console.error('Failed to load conversation:', err));
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setMenuPosition({ x: e.clientX, y: e.clientY });
-                      setOpenMenuId(openMenuId === chat.id ? null : chat.id);
-                    }}
-                    className={`w-full text-left p-4 rounded-lg transition-colors ${
+                  <div
+                    className={`flex items-center gap-3 p-4 rounded-lg transition-colors ${
                       isSelected
                         ? 'bg-[#444654] border border-[#565869]'
                         : 'bg-[#40414f] hover:bg-[#444654] border border-transparent'
-                    }`}
+                    } ${isChecked ? 'ring-2 ring-[#19c37d]' : ''}`}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-[#ececf1]'}`}>
-                        {chat.title}
-                      </h3>
-                      <span className="text-xs text-[#8e8ea0] ml-4 flex-shrink-0">
-                        {formatDate(updatedDate)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-[#8e8ea0] line-clamp-2">
-                      {getPreview(chat)}
-                    </p>
-                  </button>
+                    {/* Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {}}
+                      onClick={(e) => handleToggleSelect(chat.id, e)}
+                      className="w-4 h-4 text-[#19c37d] bg-[#343541] border-[#565869] rounded focus:ring-[#19c37d] focus:ring-2 cursor-pointer flex-shrink-0"
+                    />
+                    
+                    {/* Chat content */}
+                    <button
+                      onClick={() => {
+                        if (!isChecked) {
+                          setCurrentConversation(chat).catch(err => console.error('Failed to load conversation:', err));
+                        }
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMenuPosition({ x: e.clientX, y: e.clientY });
+                        setOpenMenuId(openMenuId === chat.id ? null : chat.id);
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-[#ececf1]'}`}>
+                          {chat.title}
+                        </h3>
+                        <span className="text-xs text-[#8e8ea0] ml-4 flex-shrink-0">
+                          {formatDate(updatedDate)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-[#8e8ea0] line-clamp-2">
+                        {getPreview(chat)}
+                      </p>
+                    </button>
+                  </div>
                   {openMenuId === chat.id && menuPosition && (
                     <div 
                       className="fixed w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-50"
