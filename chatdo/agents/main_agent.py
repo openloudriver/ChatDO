@@ -456,8 +456,8 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                             "messages": messages,
                         },
                     }
-                    # Use 30s timeout for faster failure detection (reduced from 45s)
-                    resp = requests.post(ai_router_url, json=payload, timeout=30)
+                    # Use 90s timeout for Gab AI scraping (can take longer for complex articles)
+                    resp = requests.post(ai_router_url, json=payload, timeout=90)
                     resp.raise_for_status()
                     data = resp.json()
                     if not data.get("ok"):

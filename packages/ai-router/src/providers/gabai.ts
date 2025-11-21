@@ -8,6 +8,7 @@ import {
 const client = new OpenAI({
   apiKey: process.env.GAB_AI_API_KEY,
   baseURL: process.env.GAB_AI_BASE_URL || "https://gab.ai/v1",
+  timeout: 60000, // 60 seconds timeout for Gab AI (scraping can take longer)
 });
 
 export const gabAiProvider: AiProvider = {
