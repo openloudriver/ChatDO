@@ -1,7 +1,7 @@
 from deepagents import create_deep_agent
 from langchain_openai import ChatOpenAI
 from pathlib import Path
-from typing import Callable, List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional, Union
 import os
 import re
 import requests
@@ -23,11 +23,14 @@ def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
     t = text.lower()
     
-    # Web scraping and web search - route to Gab AI
-    if ("scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t or
-        "search" in t or "find" in t or "look for" in t or "top headlines" in t or "latest" in t or 
-        "current" in t or "today" in t or "recent" in t or "discover" in t or "what are" in t):
+    # Web scraping - user provides URLs to scrape, use Gab AI
+    if ("scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t):
         return "web_scraping"
+    
+    # Web search - user wants to search for information, use Brave Search + GPT-5
+    if ("search" in t or "find" in t or "look for" in t or "top headlines" in t or "latest" in t or 
+        "current" in t or "today" in t or "recent" in t or "discover" in t or "what are" in t):
+        return "web_search"
     if "refactor" in t or "fix" in t or "edit code" in t:
         return "code_edit"
     if "generate code" in t or "write a function" in t:
@@ -164,7 +167,7 @@ def build_agent(target: TargetConfig, task: str):
     )
     return agent
 
-def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> str:
+def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> Union[str, Dict[str, Any]]:
     """
     Run ChatDO on a given task using AI-Router.
     If thread_id is provided, load/save conversation history so the agent has long-term context.
@@ -172,7 +175,70 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Classify intent from user message
     intent = classify_intent(task)
     
-    # If this is a web scraping/search query, perform search and scrape content
+    # Handle web search - use Brave Search API, return structured results (no LLM by default)
+    if intent == "web_search":
+        # Extract search query from task
+        search_query = task
+        for prefix in ["find", "search for", "look for", "what are", "show me", "get me"]:
+            if task.lower().startswith(prefix):
+                search_query = task[len(prefix):].strip()
+                break
+        
+        # Check if user wants a summary
+        wants_summary = any(word in task.lower() for word in ["summarize", "summary", "bullet points", "in a few points"])
+        
+        # Perform web search using Brave Search API
+        try:
+            search_results = web_search.search_web(search_query, max_results=10)
+            if search_results and len(search_results) > 0:
+                # Return structured results (no LLM call)
+                structured_result = {
+                    "type": "web_search_results",
+                    "query": search_query,
+                    "provider": "brave",
+                    "results": search_results,
+                    "wants_summary": wants_summary
+                }
+                
+                # If user wants a summary, call Ollama via AI Router
+                if wants_summary:
+                    try:
+                        # Build prompt for Ollama
+                        results_text = "\n".join([
+                            f"{i+1}. {r.get('title', 'No title')}\n   {r.get('snippet', 'No description')}"
+                            for i, r in enumerate(search_results[:5])  # Use top 5 for summary
+                        ])
+                        system_prompt = "You are a neutral summarizer. Using only the provided headlines and snippets from Brave Search, summarize the main themes in 3 bullet points. Do not hallucinate or add external facts."
+                        user_prompt = f"Summarize these search results:\n\n{results_text}"
+                        
+                        # Call Ollama via AI Router
+                        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081")
+                        ollama_url = f"{ai_router_url}/v1/ai/ollama/summarize"
+                        ollama_response = requests.post(
+                            ollama_url,
+                            json={"systemPrompt": system_prompt, "userPrompt": user_prompt},
+                            timeout=30
+                        )
+                        ollama_response.raise_for_status()
+                        ollama_data = ollama_response.json()
+                        
+                        if ollama_data.get("ok") and ollama_data.get("summary"):
+                            structured_result["summary"] = ollama_data["summary"]
+                    except Exception as e:
+                        # If Ollama fails, just return results without summary
+                        print(f"Ollama summary failed: {e}")
+                
+                return structured_result
+            else:
+                return "No search results found. Please try a different query."
+        except ValueError as e:
+            # If API key is missing or invalid, return helpful error message
+            return f"Web search is not configured. {str(e)}"
+        except Exception as e:
+            # If search fails for other reasons, return error
+            return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
+    
+    # Handle web scraping - user provides URLs, scrape them, send to Gab AI
     if intent == "web_scraping":
         # Check if user provided a direct URL to scrape
         url_pattern = re.compile(r'https?://[^\s]+')
@@ -217,7 +283,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     
                     # Only use scraped content if it's substantial
                     if len(clean_text) > 100:
-                        scraped_content.append(f"=== Source: {url} ===\n{clean_text[:5000]}\n")
+                        scraped_content.append(f"=== Source: {url} ===\n{clean_text[:2000]}\n")  # Limit to 2000 chars per URL to avoid payload size issues
                     else:
                         raise Exception("Scraped content too short (likely redirect/block page)")
                 except Exception as e:
@@ -225,79 +291,8 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
             
             if scraped_content:
                 task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
-        else:
-            # No direct URLs - perform web search, then scrape top results
-            search_query = task
-            for prefix in ["find", "search for", "look for", "what are", "show me", "get me", "scrape"]:
-                if task.lower().startswith(prefix):
-                    search_query = task[len(prefix):].strip()
-                    break
-            
-            # Perform web search using Brave Search API
-            try:
-                search_results = web_search.search_web(search_query, max_results=5)  # Limit to 5 for scraping
-                if search_results and len(search_results) > 0:
-                    scraped_content = []
-                    for result in search_results:
-                        url = result.get('url', '')
-                        if not url:
-                            continue
-                        
-                        # Skip Canva URLs and other unwanted domains
-                        if 'canva.com' in url.lower():
-                            continue  # Skip Canva URLs entirely
-                        
-                        try:
-                            # Actually scrape the URL content
-                            with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-                                response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
-                                response.raise_for_status()
-                                
-                                # Check if we got redirected to an unwanted domain (like Canva)
-                                final_url = str(response.url)
-                                if 'canva.com' in final_url.lower():
-                                    # Skip Canva redirects - use search snippet instead
-                                    raise Exception(f"URL redirected to Canva: {final_url}")
-                                
-                                # Check for blocking/access denied
-                                if response.status_code == 403 or response.status_code == 401:
-                                    raise Exception(f"Access denied (HTTP {response.status_code})")
-                                
-                                html = response.text
-                            
-                            # Extract main content
-                            soup = BeautifulSoup(html, 'html.parser')
-                            
-                            # Check if the page content looks like a login/landing page (common with blocked access)
-                            page_text = soup.get_text()[:500].lower()
-                            if any(indicator in page_text for indicator in ['please enable', 'access denied', 'blocked', 'login required', 'sign in', 'create account']):
-                                raise Exception("Page appears to be blocked or requires login")
-                            
-                            for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
-                                script.decompose()
-                            text = soup.get_text()
-                            # Clean up whitespace
-                            lines = (line.strip() for line in text.splitlines())
-                            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                            clean_text = '\n'.join(chunk for chunk in chunks if chunk)
-                            
-                            # Only use scraped content if it's substantial (not just a redirect page)
-                            if len(clean_text) > 100:  # At least 100 characters of actual content
-                                scraped_content.append(f"=== Source: {url}\nTitle: {result.get('title', 'No title')} ===\n{clean_text[:5000]}\n")
-                            else:
-                                raise Exception("Scraped content too short (likely redirect/block page)")
-                        except Exception as e:
-                            # If scraping fails, fall back to search snippet (but note the issue)
-                            scraped_content.append(f"=== Source: {url}\nTitle: {result.get('title', 'No title')}\nNote: Could not scrape full content ({str(e)}), using search snippet ===\n{result.get('snippet', 'No snippet available')}\n")
-                    
-                    if scraped_content:
-                        task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
-            except ValueError as e:
-                # If API key is missing or invalid, return helpful error message
-                return f"Web search is not configured. {str(e)}"
-            except Exception as e:
-                # If search fails for other reasons, return error
-                return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
+            else:
+                return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com')."
     
     # Build message history
     messages: List[Dict[str, str]] = []

@@ -153,6 +153,16 @@ const ChatComposer: React.FC = () => {
           if (data.type === 'chunk') {
             streamedContent += data.content;
             updateStreamingContent(streamedContent);
+          } else if (data.type === 'web_search_results') {
+            // Handle structured web search results
+            addMessage({ 
+              role: 'assistant', 
+              content: '',
+              type: 'web_search_results',
+              data: data.data
+            });
+            clearStreaming();
+            ws.close();
           } else if (data.type === 'done') {
             // Add final message
             addMessage({ role: 'assistant', content: streamedContent });
@@ -207,7 +217,17 @@ const ChatComposer: React.FC = () => {
         message: messageToSend
       });
       
-      addMessage({ role: 'assistant', content: response.data.reply });
+      // Check if response is structured (web_search_results)
+      if (response.data.message_type === 'web_search_results' && response.data.message_data) {
+        addMessage({ 
+          role: 'assistant', 
+          content: '',
+          type: 'web_search_results',
+          data: response.data.message_data
+        });
+      } else {
+        addMessage({ role: 'assistant', content: response.data.reply });
+      }
     } catch (error: any) {
       console.error('Failed to send message:', error);
       const errorMessage = error?.response?.data?.detail || error?.message || 'Sorry, I encountered an error. Please try again.';

@@ -7,6 +7,13 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  type?: 'text' | 'web_search_results';  // Message type: 'text' (default) or 'web_search_results'
+  data?: {
+    query?: string;
+    provider?: string;
+    results?: Array<{ title: string; url: string; snippet: string }>;
+    summary?: string;
+  };  // Structured data for special message types
 }
 
 export interface Conversation {

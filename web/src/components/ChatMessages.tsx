@@ -641,8 +641,42 @@ const ChatMessages: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Display text content if any */}
-                      {content && (
+                      {/* Display web_search_results if message type is web_search_results */}
+                      {message.type === 'web_search_results' && message.data && (
+                        <div className="space-y-4">
+                          <div className="font-semibold text-lg mb-3">
+                            Top results from Brave Search for &ldquo;{message.data.query}&rdquo;
+                          </div>
+                          <ol className="list-decimal ml-6 space-y-3">
+                            {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => (
+                              <li key={index} className="space-y-1">
+                                <a
+                                  href={result.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 underline font-medium block"
+                                >
+                                  {result.title}
+                                </a>
+                                <div className="text-sm text-[#8e8ea0] ml-0">
+                                  {result.snippet}
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                          {message.data.summary && (
+                            <div className="mt-4 pt-4 border-t border-[#565869]">
+                              <div className="font-semibold mb-2">Summary:</div>
+                              <div className="prose prose-invert max-w-none text-sm">
+                                <ReactMarkdown>{message.data.summary}</ReactMarkdown>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Display text content if any (and not web_search_results) */}
+                      {content && message.type !== 'web_search_results' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>

@@ -9,6 +9,7 @@ import { geminiProProvider } from "./providers/gemini";
 import { mistralLargeProvider } from "./providers/mistral";
 import { llamaLocalProvider } from "./providers/llamaLocal";
 import { gabAiProvider } from "./providers/gabai";
+import { ollamaProvider } from "./providers/ollama";
 
 const providers: Record<string, AiProvider> = {
   [openAiGpt5Provider.id]: openAiGpt5Provider,
@@ -18,6 +19,7 @@ const providers: Record<string, AiProvider> = {
   [mistralLargeProvider.id]: mistralLargeProvider,
   [llamaLocalProvider.id]: llamaLocalProvider,
   [gabAiProvider.id]: gabAiProvider,
+  [ollamaProvider.id]: ollamaProvider,
 };
 
 function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {
@@ -79,7 +81,12 @@ export async function runTask(input: AiRouterInput): Promise<AiRouterResult> {
         (outputTokens / 1_000_000) * pricing.outputPerMillion;
 
       await recordUsage(result.providerId, result.modelId, costUsd);
+      console.log(`[AI-Router] Recorded usage: provider=${result.providerId} cost=$${costUsd.toFixed(6)}`);
+    } else {
+      console.warn(`[AI-Router] No pricing found for provider: ${result.providerId}`);
     }
+  } else {
+    console.warn(`[AI-Router] No usage data returned from provider: ${result.providerId}`);
   }
 
   return result;

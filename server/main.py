@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import sys
 import json
 import uuid
@@ -205,6 +205,8 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     model_used: Optional[str] = None
+    message_type: Optional[str] = None  # 'text' (default) or 'web_search_results'
+    message_data: Optional[Dict[str, Any]] = None  # Structured data for special message types
 
 
 class NewConversationRequest(BaseModel):
@@ -446,21 +448,30 @@ async def chat(request: ChatRequest):
         # Load target configuration
         target_cfg = load_target(request.target_name)
         
-        # 1) Get raw response from ChatDO (may include <TASKS> block)
+        # 1) Get raw response from ChatDO (may include <TASKS> block or structured results)
         raw_result = run_agent(
             target=target_cfg,
             task=request.message,
             thread_id=request.conversation_id
         )
         
-        # 2) Split out any <TASKS> block
+        # 2) Check if result is structured (web_search_results)
+        if isinstance(raw_result, dict) and raw_result.get("type") == "web_search_results":
+            # Return structured web search results
+            return ChatResponse(
+                reply="",  # Empty reply for structured messages
+                message_type="web_search_results",
+                message_data=raw_result
+            )
+        
+        # 3) Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)
         
-        # 3) If no tasks, behave exactly like before
+        # 4) If no tasks, behave exactly like before
         if not tasks_json:
             return ChatResponse(reply=human_text)
         
-        # 4) Parse tasks from JSON
+        # 5) Parse tasks from JSON
         try:
             tasks = parse_tasks_block(tasks_json)
         except Exception as e:
@@ -468,10 +479,10 @@ async def chat(request: ChatRequest):
             error_note = f"\n\n---\nExecutor error: could not parse tasks JSON ({e})."
             return ChatResponse(reply=human_text + error_note)
         
-        # 5) Execute tasks against the target repo
+        # 6) Execute tasks against the target repo
         exec_result = apply_tasks(target_cfg, tasks)
         
-        # 6) Build a human-readable summary
+        # 7) Build a human-readable summary
         summary_lines = [exec_result.summary()]
         for r in exec_result.results:
             prefix = "✅" if r.status == "success" else "❌"
@@ -479,7 +490,7 @@ async def chat(request: ChatRequest):
         
         summary_text = "\n".join(summary_lines)
         
-        # 7) Append summary to what the user sees
+        # 8) Append summary to what the user sees
         final_message = human_text + "\n\n---\nExecutor summary:\n" + summary_text
         
         return ChatResponse(reply=final_message)
