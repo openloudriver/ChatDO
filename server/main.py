@@ -475,6 +475,56 @@ async def chat(request: ChatRequest):
     Main chat endpoint - calls ChatDO's run_agent()
     """
     try:
+        # Check for multiple URLs in the message - route to multi-article summary
+        urls = extract_urls(request.message)
+        if len(urls) >= 2:
+            # Get project_id from conversation if not in request
+            project_id = getattr(request, 'project_id', None)
+            if not project_id and request.conversation_id:
+                chats = load_chats()
+                chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
+                if chat:
+                    project_id = chat.get("project_id")
+            
+            # User provided multiple URLs - route to multi-article summary
+            multi_request = MultiArticleSummaryRequest(
+                urls=urls,
+                conversation_id=request.conversation_id,
+                project_id=project_id
+            )
+            result = await multi_article_summary(multi_request)
+            return ChatResponse(
+                reply=result.get("message_data", {}).get("jointSummary", ""),
+                message_type=result.get("message_type", "text"),
+                message_data=result.get("message_data", {}),
+                model_used=result.get("model", "Trafilatura + GPT-5"),
+                provider=result.get("provider", "trafilatura-gpt5")
+            )
+        
+        # Check for single URL with "summarize" keyword - route to article summary
+        if len(urls) == 1 and ("summarize" in request.message.lower() or "summary" in request.message.lower()):
+            # Get project_id from conversation if not in request
+            project_id = getattr(request, 'project_id', None)
+            if not project_id and request.conversation_id:
+                chats = load_chats()
+                chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
+                if chat:
+                    project_id = chat.get("project_id")
+            
+            article_request = ArticleSummaryRequest(
+                url=urls[0],
+                conversation_id=request.conversation_id,
+                project_id=project_id
+            )
+            result = await summarize_article(article_request)
+            return ChatResponse(
+                reply=result.message_data.get("summary", ""),
+                message_type=result.message_type,
+                message_data=result.message_data,
+                model_used=result.model,
+                provider=result.provider
+            )
+        
         # Load target configuration
         target_cfg = load_target(request.target_name)
         
