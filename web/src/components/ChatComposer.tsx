@@ -179,6 +179,19 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
+          } else if (data.type === 'multi_article_card') {
+            // Handle structured multi-article card results
+            addMessage({ 
+              role: 'assistant', 
+              content: '',
+              type: 'multi_article_card',
+              data: data.data,
+              model: data.model || 'Trafilatura + GPT-5',
+              provider: data.provider || 'trafilatura-gpt5'
+            });
+            clearStreaming();
+            setLoading(false);
+            ws.close();
           } else if (data.type === 'done') {
             // Add final message with model/provider info
             addMessage({ 
