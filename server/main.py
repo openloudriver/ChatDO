@@ -16,6 +16,11 @@ import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+# Load environment variables from .env file in project root
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 # Add parent directory to path to import chatdo
 sys.path.insert(0, str(Path(__file__).parent.parent))

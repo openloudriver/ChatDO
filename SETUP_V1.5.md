@@ -18,7 +18,20 @@ source .venv/bin/activate  # if not already activated
 pip install fastapi uvicorn[standard] python-multipart aiofiles httpx
 pip install PyPDF2 pdfplumber python-docx  # Optional: for file extraction
 pip install trafilatura readability-lxml beautifulsoup4  # Optional: for URL scraping
+pip install ddgs  # For web search (DuckDuckGo fallback)
 ```
+
+2. **Configure Brave Search API (Required for Web Search)**
+
+ChatDO uses Brave Search API exclusively for web search (same search engine as Brave Browser). Get your API key from [Brave Search API](https://brave.com/search/api/) and add it to your environment:
+
+```bash
+export BRAVE_SEARCH_API_KEY=your-api-key-here
+```
+
+Or add it to a `.env` file in the ChatDO root directory. See `BRAVE_SEARCH_SETUP.md` for detailed instructions.
+
+**Note**: Web search will not work without a valid BRAVE_SEARCH_API_KEY.
 
 2. **Start the FastAPI server:**
 

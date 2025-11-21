@@ -187,10 +187,26 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     with httpx.Client(timeout=30.0, follow_redirects=True) as client:
                         response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
                         response.raise_for_status()
+                        
+                        # Check if we got redirected to an unwanted domain (like Canva)
+                        final_url = str(response.url)
+                        if 'canva.com' in final_url.lower():
+                            raise Exception(f"URL redirected to Canva: {final_url}")
+                        
+                        # Check for blocking/access denied
+                        if response.status_code == 403 or response.status_code == 401:
+                            raise Exception(f"Access denied (HTTP {response.status_code})")
+                        
                         html = response.text
                     
                     # Extract main content
                     soup = BeautifulSoup(html, 'html.parser')
+                    
+                    # Check if the page content looks like a login/landing page
+                    page_text = soup.get_text()[:500].lower()
+                    if any(indicator in page_text for indicator in ['please enable', 'access denied', 'blocked', 'login required', 'sign in', 'create account']):
+                        raise Exception("Page appears to be blocked or requires login")
+                    
                     for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
                         script.decompose()
                     text = soup.get_text()
@@ -199,12 +215,16 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                     clean_text = '\n'.join(chunk for chunk in chunks if chunk)
                     
-                    scraped_content.append(f"=== Content from {url} ===\n{clean_text[:5000]}\n")  # Limit to 5000 chars per URL
+                    # Only use scraped content if it's substantial
+                    if len(clean_text) > 100:
+                        scraped_content.append(f"=== Source: {url} ===\n{clean_text[:5000]}\n")
+                    else:
+                        raise Exception("Scraped content too short (likely redirect/block page)")
                 except Exception as e:
                     scraped_content.append(f"=== Error scraping {url}: {str(e)} ===\n")
             
             if scraped_content:
-                task = f"Scraped Web Content:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please answer: {task}"
+                task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
         else:
             # No direct URLs - perform web search, then scrape top results
             search_query = task
@@ -213,7 +233,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     search_query = task[len(prefix):].strip()
                     break
             
-            # Perform web search
+            # Perform web search using Brave Search API
             try:
                 search_results = web_search.search_web(search_query, max_results=5)  # Limit to 5 for scraping
                 if search_results and len(search_results) > 0:
@@ -223,15 +243,36 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                         if not url:
                             continue
                         
+                        # Skip Canva URLs and other unwanted domains
+                        if 'canva.com' in url.lower():
+                            continue  # Skip Canva URLs entirely
+                        
                         try:
                             # Actually scrape the URL content
                             with httpx.Client(timeout=30.0, follow_redirects=True) as client:
                                 response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
                                 response.raise_for_status()
+                                
+                                # Check if we got redirected to an unwanted domain (like Canva)
+                                final_url = str(response.url)
+                                if 'canva.com' in final_url.lower():
+                                    # Skip Canva redirects - use search snippet instead
+                                    raise Exception(f"URL redirected to Canva: {final_url}")
+                                
+                                # Check for blocking/access denied
+                                if response.status_code == 403 or response.status_code == 401:
+                                    raise Exception(f"Access denied (HTTP {response.status_code})")
+                                
                                 html = response.text
                             
                             # Extract main content
                             soup = BeautifulSoup(html, 'html.parser')
+                            
+                            # Check if the page content looks like a login/landing page (common with blocked access)
+                            page_text = soup.get_text()[:500].lower()
+                            if any(indicator in page_text for indicator in ['please enable', 'access denied', 'blocked', 'login required', 'sign in', 'create account']):
+                                raise Exception("Page appears to be blocked or requires login")
+                            
                             for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
                                 script.decompose()
                             text = soup.get_text()
@@ -240,16 +281,23 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                             clean_text = '\n'.join(chunk for chunk in chunks if chunk)
                             
-                            scraped_content.append(f"=== {result.get('title', 'No title')} ({url}) ===\n{clean_text[:5000]}\n")  # Limit to 5000 chars per page
+                            # Only use scraped content if it's substantial (not just a redirect page)
+                            if len(clean_text) > 100:  # At least 100 characters of actual content
+                                scraped_content.append(f"=== Source: {url}\nTitle: {result.get('title', 'No title')} ===\n{clean_text[:5000]}\n")
+                            else:
+                                raise Exception("Scraped content too short (likely redirect/block page)")
                         except Exception as e:
-                            # If scraping fails, fall back to search snippet
-                            scraped_content.append(f"=== {result.get('title', 'No title')} ({url}) ===\n{result.get('snippet', 'Could not scrape content')}\n")
+                            # If scraping fails, fall back to search snippet (but note the issue)
+                            scraped_content.append(f"=== Source: {url}\nTitle: {result.get('title', 'No title')}\nNote: Could not scrape full content ({str(e)}), using search snippet ===\n{result.get('snippet', 'No snippet available')}\n")
                     
                     if scraped_content:
-                        task = f"Scraped Web Content:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please answer: {task}"
+                        task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
+            except ValueError as e:
+                # If API key is missing or invalid, return helpful error message
+                return f"Web search is not configured. {str(e)}"
             except Exception as e:
-                # If search fails, continue without search results
-                pass
+                # If search fails for other reasons, return error
+                return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
     
     # Build message history
     messages: List[Dict[str, str]] = []
@@ -303,7 +351,10 @@ Web Search & Information Discovery:
 - When the user asks you to search the web, find information, discover websites, or get current information, use your web search capabilities.
 - For queries like "find XYZ", "what are the top headlines", "search for zkSNARK websites", provide comprehensive, up-to-date information.
 - You can search for current events, recent developments, and discover relevant websites or resources.
-- When providing search results, cite sources and provide URLs when available.
+- **CRITICAL: When providing information from scraped web content, you MUST cite the source URL for every fact, claim, or piece of information you mention.**
+- Format citations clearly: use [Source: URL] or (Source: URL) after each relevant statement.
+- If information comes from multiple sources, cite each source separately.
+- Always include the full URL so users can verify the information themselves.
 
 When the user clearly asks you to APPLY or IMPLEMENT changes (for example: "yes, do it", "apply this", "make those changes", "go ahead and implement that plan"):
 
