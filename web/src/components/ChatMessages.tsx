@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
+import MultiArticleCard from './MultiArticleCard';
 import SourcesPanel from './SourcesPanel';
 import type { Source } from '../types/sources';
 import { v4 as uuidv4 } from 'uuid';
@@ -547,7 +548,7 @@ const ChatMessages: React.FC = () => {
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
                   // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card';
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'multi_article_card';
                   
                   if (!hasContent) {
                     return null;
@@ -886,8 +887,8 @@ const ChatMessages: React.FC = () => {
                         />
                       )}
                       
-                      {/* Display text content if any (and not web_search_results or article_card) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && (
+                      {/* Display text content if any (and not structured message types) */}
+                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'multi_article_card' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>

@@ -8,7 +8,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'web_search_results' | 'article_card';  // Message type: 'text' (default), 'web_search_results', or 'article_card'
+  type?: 'text' | 'web_search_results' | 'article_card' | 'multi_article_card' | 'compare_articles_card' | 'timeline_card';  // Message types
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
   data?: {

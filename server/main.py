@@ -219,6 +219,12 @@ class ArticleSummaryRequest(BaseModel):
     project_id: Optional[str] = None  # Optional project_id to determine target_name
 
 
+class MultiArticleSummaryRequest(BaseModel):
+    urls: List[str]  # List of URLs to summarize together
+    conversation_id: Optional[str] = None
+    project_id: Optional[str] = None
+
+
 class ArticleSummaryResponse(BaseModel):
     message_type: str = "article_card"
     message_data: Dict[str, Any]
