@@ -2,6 +2,12 @@
 from typing import List, Dict
 import os
 import requests
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from project root
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
 
 def search_web(query: str, max_results: int = 10) -> List[Dict[str, str]]:
     """

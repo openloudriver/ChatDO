@@ -12,6 +12,12 @@ from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
 from ..tools import web_search
 from ..memory import store as memory_store
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from project root (in case it's not loaded by the server)
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
 
 # AI-Router HTTP client
 AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")

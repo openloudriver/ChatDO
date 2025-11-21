@@ -1,0 +1,9 @@
+name: general
+path: /Users/christopher.peck/ChatDO
+type: monorepo
+core_paths:
+  - .
+notes: >
+  General ChatDO target for web search and general queries.
+  No file editing restrictions - this is for general use.
+
