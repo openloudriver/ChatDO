@@ -7,6 +7,7 @@ export interface PricingEntry {
 export const PRICING: PricingEntry[] = [
   {
     providerId: "openai-gpt5",
+    // Verified pricing as of November 2025: $1.25 per million input tokens, $10.00 per million output tokens
     inputPerMillion: 1.25,
     outputPerMillion: 10.0,
   },
