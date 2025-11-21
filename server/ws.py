@@ -5,6 +5,7 @@ Streams ChatDO replies chunk-by-chunk
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import Optional
 import sys
+import re
 from pathlib import Path
 
 # Add parent directory to path
@@ -17,6 +18,13 @@ from chatdo.executor import parse_tasks_block, apply_tasks
 # Task execution constants
 TASKS_START = "<TASKS>"
 TASKS_END = "</TASKS>"
+
+
+def extract_urls(text: str) -> list[str]:
+    """Extract all URLs from text."""
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+    urls = re.findall(url_pattern, text)
+    return urls
 
 
 def split_tasks_block(text: str) -> tuple[str, Optional[str]]:
@@ -53,6 +61,52 @@ async def stream_chat_response(
     In the future, we can integrate with actual streaming from the LLM
     """
     try:
+        # Check for multiple URLs in the message - route to multi-article summary
+        urls = extract_urls(message)
+        if len(urls) >= 2:
+            # Import here to avoid circular imports
+            from server.main import multi_article_summary, MultiArticleSummaryRequest
+            
+            # User provided multiple URLs - route to multi-article summary
+            multi_request = MultiArticleSummaryRequest(
+                urls=urls,
+                conversation_id=conversation_id,
+                project_id=project_id
+            )
+            result = await multi_article_summary(multi_request)
+            
+            # Send multi-article card via WebSocket
+            await websocket.send_json({
+                "type": "multi_article_card",
+                "data": result.get("message_data", {}),
+                "model": result.get("model", "Trafilatura + GPT-5"),
+                "provider": result.get("provider", "trafilatura-gpt5"),
+                "done": True
+            })
+            return
+        
+        # Check for single URL with "summarize" keyword - route to article summary
+        if len(urls) == 1 and ("summarize" in message.lower() or "summary" in message.lower()):
+            # Import here to avoid circular imports
+            from server.main import summarize_article, ArticleSummaryRequest
+            
+            article_request = ArticleSummaryRequest(
+                url=urls[0],
+                conversation_id=conversation_id,
+                project_id=project_id
+            )
+            result = await summarize_article(article_request)
+            
+            # Send article card via WebSocket
+            await websocket.send_json({
+                "type": "article_card",
+                "data": result.message_data,
+                "model": result.model,
+                "provider": result.provider,
+                "done": True
+            })
+            return
+        
         # Load target configuration
         target_cfg = load_target(target_name)
         
