@@ -1,6 +1,6 @@
 export type SourceKind = 'url' | 'file' | 'text' | 'note';
 
-export interface Source {
+export type Source = {
   id: string;
   kind: SourceKind;
   title: string;
@@ -9,5 +9,5 @@ export interface Source {
   fileName?: string;     // for uploaded files
   createdAt: string;
   meta?: Record<string, any>;
-}
+};
 
