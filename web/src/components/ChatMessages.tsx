@@ -645,7 +645,7 @@ const ChatMessages: React.FC = () => {
                       {/* Display web_search_results if message type is web_search_results */}
                       {message.type === 'web_search_results' && message.data && (
                         <div className="space-y-4">
-                          <div className="font-semibold text-lg mb-3">
+                          <div className="font-semibold text-lg mb-3 text-center">
                             Top Results
                           </div>
                           <ol className="list-decimal ml-6 space-y-3">
