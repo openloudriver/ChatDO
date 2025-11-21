@@ -259,11 +259,21 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                         
                         if ollama_data.get("ok") and ollama_data.get("summary"):
                             structured_result["summary"] = ollama_data["summary"]
+                            # Update model display to include Ollama
+                            model_display = "Brave Search + Ollama llama3.1:8b"
+                            provider = "brave_search+ollama"
                     except Exception as e:
                         # If Ollama fails, just return results without summary
                         print(f"Ollama summary failed: {e}")
                 
-                return structured_result
+                # Set model/provider for web search (default, may be updated above if summary added)
+                if wants_summary and "summary" in structured_result:
+                    pass  # Already set above
+                else:
+                    model_display = "Brave Search"
+                    provider = "brave_search"
+                
+                return structured_result, model_display, provider
             else:
                 return "No search results found. Please try a different query.", "Brave Search", "brave_search"
         except ValueError as e:
