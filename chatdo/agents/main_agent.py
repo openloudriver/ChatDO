@@ -333,15 +333,49 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 model_display = "Brave Search"
                 provider = "brave_search"
                 
+                # Save to memory store if thread_id is provided
+                if thread_id:
+                    history = memory_store.load_thread_history(target.name, thread_id)
+                    # Format structured result as a readable string for storage
+                    result_text = f"Web search results for '{search_query}':\n"
+                    for i, r in enumerate(search_results[:5], 1):  # Store top 5 results
+                        result_text += f"{i}. {r.get('title', 'No title')} - {r.get('url', 'No URL')}\n"
+                        if r.get('snippet'):
+                            result_text += f"   {r.get('snippet', '')}\n"
+                    history.append({"role": "user", "content": task})
+                    history.append({"role": "assistant", "content": result_text})
+                    memory_store.save_thread_history(target.name, thread_id, history)
+                
                 return structured_result, model_display, provider
             else:
-                return "No search results found. Please try a different query.", "Brave Search", "brave_search"
+                error_msg = "No search results found. Please try a different query."
+                # Save to memory store if thread_id is provided
+                if thread_id:
+                    history = memory_store.load_thread_history(target.name, thread_id)
+                    history.append({"role": "user", "content": task})
+                    history.append({"role": "assistant", "content": error_msg})
+                    memory_store.save_thread_history(target.name, thread_id, history)
+                return error_msg, "Brave Search", "brave_search"
         except ValueError as e:
             # If API key is missing or invalid, return helpful error message
-            return f"Web search is not configured. {str(e)}", "Brave Search", "brave_search"
+            error_msg = f"Web search is not configured. {str(e)}"
+            # Save to memory store if thread_id is provided
+            if thread_id:
+                history = memory_store.load_thread_history(target.name, thread_id)
+                history.append({"role": "user", "content": task})
+                history.append({"role": "assistant", "content": error_msg})
+                memory_store.save_thread_history(target.name, thread_id, history)
+            return error_msg, "Brave Search", "brave_search"
         except Exception as e:
             # If search fails for other reasons, return error
-            return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration.", "Brave Search", "brave_search"
+            error_msg = f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
+            # Save to memory store if thread_id is provided
+            if thread_id:
+                history = memory_store.load_thread_history(target.name, thread_id)
+                history.append({"role": "user", "content": task})
+                history.append({"role": "assistant", "content": error_msg})
+                memory_store.save_thread_history(target.name, thread_id, history)
+            return error_msg, "Brave Search", "brave_search"
     
     # Handle web scraping - user provides URLs, scrape them, send to Gab AI
     if intent == "web_scraping":
@@ -471,6 +505,13 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     if assistant_messages and len(assistant_messages) > 0:
                         formatted_content = assistant_messages[0].get("content", "")
                         
+                        # Save to memory store if thread_id is provided
+                        if thread_id:
+                            history = memory_store.load_thread_history(target.name, thread_id)
+                            history.append({"role": "user", "content": task})
+                            history.append({"role": "assistant", "content": formatted_content})
+                            memory_store.save_thread_history(target.name, thread_id, history)
+                        
                         # Return structured web_scrape response
                         return {
                             "type": "web_scrape",
@@ -479,22 +520,60 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                             "content": formatted_content
                         }, model_display, provider_id
                     else:
-                        return "Failed to generate formatted response from scraped content.", "Gab AI", "gab-ai"
+                        error_msg = "Failed to generate formatted response from scraped content."
+                        # Save to memory store if thread_id is provided
+                        if thread_id:
+                            history = memory_store.load_thread_history(target.name, thread_id)
+                            history.append({"role": "user", "content": task})
+                            history.append({"role": "assistant", "content": error_msg})
+                            memory_store.save_thread_history(target.name, thread_id, history)
+                        return error_msg, "Gab AI", "gab-ai"
                 except requests.exceptions.Timeout as e:
                     # Ensure timeout errors are immediately returned
                     error_msg = f"Error: AI Router request timed out after 30 seconds. The scraped content may be too large or Gab AI is slow. Try scraping a shorter article or a different URL."
+                    # Save to memory store if thread_id is provided
+                    if thread_id:
+                        history = memory_store.load_thread_history(target.name, thread_id)
+                        history.append({"role": "user", "content": task})
+                        history.append({"role": "assistant", "content": error_msg})
+                        memory_store.save_thread_history(target.name, thread_id, history)
                     return error_msg, "Gab AI", "gab-ai"
                 except requests.exceptions.ConnectionError as e:
                     error_msg = f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}"
+                    # Save to memory store if thread_id is provided
+                    if thread_id:
+                        history = memory_store.load_thread_history(target.name, thread_id)
+                        history.append({"role": "user", "content": task})
+                        history.append({"role": "assistant", "content": error_msg})
+                        memory_store.save_thread_history(target.name, thread_id, history)
                     return error_msg, "Gab AI", "gab-ai"
                 except requests.exceptions.RequestException as e:
                     error_msg = f"Error: Network error communicating with AI Router: {str(e)}"
+                    # Save to memory store if thread_id is provided
+                    if thread_id:
+                        history = memory_store.load_thread_history(target.name, thread_id)
+                        history.append({"role": "user", "content": task})
+                        history.append({"role": "assistant", "content": error_msg})
+                        memory_store.save_thread_history(target.name, thread_id, history)
                     return error_msg, "Gab AI", "gab-ai"
                 except Exception as e:
                     error_msg = f"Error processing scraped content: {type(e).__name__}: {str(e)}"
+                    # Save to memory store if thread_id is provided
+                    if thread_id:
+                        history = memory_store.load_thread_history(target.name, thread_id)
+                        history.append({"role": "user", "content": task})
+                        history.append({"role": "assistant", "content": error_msg})
+                        memory_store.save_thread_history(target.name, thread_id, history)
                     return error_msg, "Gab AI", "gab-ai"
             else:
-                return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com').", "Gab AI", "gab-ai"
+                error_msg = "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com')."
+                # Save to memory store if thread_id is provided
+                if thread_id:
+                    history = memory_store.load_thread_history(target.name, thread_id)
+                    history.append({"role": "user", "content": task})
+                    history.append({"role": "assistant", "content": error_msg})
+                    memory_store.save_thread_history(target.name, thread_id, history)
+                return error_msg, "Gab AI", "gab-ai"
     
     # Build message history
     messages: List[Dict[str, str]] = []
