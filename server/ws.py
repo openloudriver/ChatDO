@@ -64,7 +64,7 @@ async def stream_chat_response(
             thread_id=conversation_id
         )
         
-        # Check if result is structured (web_search_results or web_scrape)
+        # Check if result is structured (web_search_results or article_card)
         if isinstance(raw_result, dict):
             if raw_result.get("type") == "web_search_results":
                 # Send structured web search results
@@ -76,10 +76,10 @@ async def stream_chat_response(
                     "done": True
                 })
                 return
-            elif raw_result.get("type") == "web_scrape":
-                # Send structured web scrape results
+            elif raw_result.get("type") == "article_card":
+                # Send structured article card results
                 await websocket.send_json({
-                    "type": "web_scrape",
+                    "type": "article_card",
                     "data": raw_result,
                     "model": model_display,
                     "provider": provider,

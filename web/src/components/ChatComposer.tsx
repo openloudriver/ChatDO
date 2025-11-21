@@ -166,15 +166,15 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
-          } else if (data.type === 'web_scrape') {
-            // Handle structured web scrape results
+          } else if (data.type === 'article_card') {
+            // Handle structured article card results
             addMessage({ 
               role: 'assistant', 
               content: '',
-              type: 'web_scrape',
+              type: 'article_card',
               data: data.data,
-              model: data.model,
-              provider: data.provider
+              model: data.model || 'Trafilatura + GPT-5',
+              provider: data.provider || 'trafilatura-gpt5'
             });
             clearStreaming();
             setLoading(false);
@@ -238,7 +238,7 @@ const ChatComposer: React.FC = () => {
         message: messageToSend
       });
       
-      // Check if response is structured (web_search_results or web_scrape)
+      // Check if response is structured (web_search_results or article_card)
       if (response.data.message_type === 'web_search_results' && response.data.message_data) {
         addMessage({ 
           role: 'assistant', 
@@ -248,14 +248,14 @@ const ChatComposer: React.FC = () => {
           model: response.data.model_used,
           provider: response.data.provider
         });
-      } else if (response.data.message_type === 'web_scrape' && response.data.message_data) {
+      } else if (response.data.message_type === 'article_card' && response.data.message_data) {
         addMessage({ 
           role: 'assistant', 
           content: '',
-          type: 'web_scrape',
+          type: 'article_card',
           data: response.data.message_data,
-          model: response.data.model_used,
-          provider: response.data.provider
+          model: response.data.model || 'Trafilatura + GPT-5',
+          provider: response.data.provider || 'trafilatura-gpt5'
         });
       } else {
         addMessage({ 
@@ -359,85 +359,43 @@ const ChatComposer: React.FC = () => {
     }
   };
 
-  const handleUrlScrape = async () => {
-    const url = prompt('Enter URL to scrape:');
+  const handleArticleSummary = async () => {
+    const url = prompt('Enter article URL to summarize:');
     if (!url || !currentProject || !currentConversation) return;
-
+    
     try {
-      // Set input and trigger send to scrape the URL
-      const message = `scrape ${url}`;
-      setInput(message);
-      // Use a small delay to ensure state is updated, then send
-      setTimeout(async () => {
-        // Manually trigger the send flow
-        const messageWithFiles = message;
-        addMessage({ role: 'user', content: messageWithFiles });
-        setInput('');
-        setLoading(true);
-        
-        // Try WebSocket first
-        try {
-          const ws = new WebSocket('ws://localhost:8000/api/chat/stream');
-          let streamedContent = '';
-          
-          ws.onopen = () => {
-            setStreaming(true);
-            ws.send(JSON.stringify({
-              project_id: currentProject.id,
-              conversation_id: currentConversation.id,
-              target_name: currentConversation.targetName,
-              message: messageWithFiles
-            }));
-          };
-          
-          ws.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              
-              if (data.type === 'chunk') {
-                streamedContent += data.content;
-                updateStreamingContent(streamedContent);
-              } else if (data.type === 'done') {
-                addMessage({ 
-                  role: 'assistant', 
-                  content: streamedContent,
-                  model: data.model,
-                  provider: data.provider
-                });
-                clearStreaming();
-                setLoading(false);
-                ws.close();
-              } else if (data.type === 'error') {
-                if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
-                  console.error('WebSocket error:', data.content);
-                }
-                clearStreaming();
-                ws.close();
-                addMessage({ 
-                  role: 'assistant', 
-                  content: `Error: ${data.content}` 
-                });
-                setLoading(false);
-              }
-            } catch (e) {
-              clearStreaming();
-              ws.close();
-              // Fallback to REST
-              fallbackToRest(messageWithFiles);
-            }
-          };
-          
-          ws.onerror = () => {
-            clearStreaming();
-            ws.close();
-            fallbackToRest(messageWithFiles);
-          };
-        } catch (error) {
-          fallbackToRest(messageWithFiles);
-        }
-      }, 50);
-    } catch (error) {
-      console.error('URL scraping failed:', error);
+      setLoading(true);
+      
+      // Call the article summary endpoint
+      const response = await axios.post('http://localhost:8000/api/article/summary', {
+        url: url.trim(),
+      });
+      
+      if (response.data.message_type === 'article_card' && response.data.message_data) {
+        addMessage({
+          role: 'assistant',
+          content: '',
+          type: 'article_card',
+          data: response.data.message_data,
+          model: response.data.model || 'Trafilatura + GPT-5',
+          provider: response.data.provider || 'trafilatura-gpt5',
+        });
+      } else {
+        // Fallback to error message
+        addMessage({
+          role: 'assistant',
+          content: 'Error: Could not summarize article. Please try again.',
+        });
+      }
+      
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Error summarizing article:', error);
+      addMessage({
+        role: 'assistant',
+        content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article. Please try again.'}`,
+      });
+      setLoading(false);
     }
   };
 
@@ -774,9 +732,9 @@ const ChatComposer: React.FC = () => {
               </svg>
             </button>
             <button
-              onClick={handleUrlScrape}
+              onClick={handleArticleSummary}
               className="p-2 hover:bg-[#565869] rounded transition-colors"
-              title="Scrape URL"
+              title="Summarize article (by URL)"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />

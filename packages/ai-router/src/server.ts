@@ -43,7 +43,6 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     // Map provider IDs to nicer labels (model names only, no company names)
     const labelMap: Record<string, string> = {
       "openai-gpt5": "GPT-5",
-      "gab-ai": "Gab AI",
       "anthropic-claude-sonnet": "Claude Sonnet",
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",
@@ -52,7 +51,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     };
     
     // Always include GPT-5, even if it has $0 spend
-    // Only show providers that have been used (exclude Gab AI from display)
+    // Only show providers that have been used
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
     // Add GPT-5 (always show)
@@ -62,9 +61,9 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       usd: current.providers["openai-gpt5"] || 0,
     });
     
-    // Add any other providers that have been used (excluding Gab AI)
+    // Add any other providers that have been used
     for (const [id, usd] of Object.entries(current.providers)) {
-      if (id !== "openai-gpt5" && id !== "gab-ai") {
+      if (id !== "openai-gpt5") {
         providers.push({
           id,
           label: labelMap[id] || id,

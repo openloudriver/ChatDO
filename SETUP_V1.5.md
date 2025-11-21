@@ -156,20 +156,11 @@ The AI Router requires API keys for the AI providers. Create a `.env` file in th
 cd packages/ai-router
 cat > .env << EOF
 OPENAI_API_KEY=your-openai-api-key-here
-GAB_AI_API_KEY=your-gab-ai-api-key-here
 AI_ROUTER_PORT=8081
 EOF
 ```
 
 **Note**: The `.env` file is gitignored and will not be committed to the repository.
-
-### Gab AI Setup
-
-Gab AI is used for web scraping tasks. To use it:
-
-1. Get your Gab AI API key from [Gab AI](https://gab.ai)
-2. Add it to `packages/ai-router/.env` as `GAB_AI_API_KEY`
-3. Web scraping requests will automatically route to Gab AI
 
 ## Troubleshooting
 

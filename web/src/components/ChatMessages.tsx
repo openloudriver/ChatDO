@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
-import ScrapedArticleCard from './ScrapedArticleCard';
+import ArticleCard from './ArticleCard';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -84,46 +84,6 @@ const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath,
   );
 };
 
-// Helper to parse scraped markdown into metadata and body
-const parseScrapedMarkdown = (raw: string) => {
-  const lines = raw.split("\n");
-  let title = "";
-  let sourceUrl: string | undefined;
-  let outlet: string | undefined;
-  let published: string | undefined;
-  const bodyLines: string[] = [];
-  let inHeader = true;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (inHeader && trimmed.startsWith("## ")) {
-      title = trimmed.replace(/^## /, "").trim();
-      continue;
-    }
-    if (inHeader && trimmed.startsWith("**Source:**")) {
-      sourceUrl = trimmed.replace(/\*\*Source:\*\*/, "").trim();
-      continue;
-    }
-    if (inHeader && trimmed.startsWith("**Outlet:**")) {
-      outlet = trimmed.replace(/\*\*Outlet:\*\*/, "").trim();
-      continue;
-    }
-    if (inHeader && trimmed.startsWith("**Published:**")) {
-      published = trimmed.replace(/\*\*Published:\*\*/, "").trim();
-      continue;
-    }
-    if (inHeader && trimmed.startsWith("---")) {
-      inHeader = false;
-      continue;
-    }
-    if (!inHeader) {
-      bodyLines.push(line);
-    }
-  }
-
-  const bodyMarkdown = bodyLines.join("\n").trim() || raw.trim();
-  return { title, sourceUrl, outlet, published, bodyMarkdown };
-};
 
 const ChatMessages: React.FC = () => {
   const { 
@@ -526,7 +486,7 @@ const ChatMessages: React.FC = () => {
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
                   // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'web_scrape';
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card';
                   
                   if (!hasContent) {
                     return null;
@@ -693,14 +653,53 @@ const ChatMessages: React.FC = () => {
                           <ol className="list-decimal ml-6 space-y-3">
                             {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => (
                               <li key={index} className="space-y-1">
-                                <a
-                                  href={result.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 underline font-medium block"
-                                >
-                                  {result.title}
-                                </a>
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={result.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 underline font-medium flex-1"
+                                  >
+                                    {result.title}
+                                  </a>
+                                  <button
+                                    onClick={async () => {
+                                      if (!currentProject || !currentConversation) return;
+                                      try {
+                                        const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
+                                        setStoreLoading(true);
+                                        const response = await axios.post('http://localhost:8000/api/article/summary', {
+                                          url: result.url,
+                                        });
+                                        if (response.data.message_type === 'article_card' && response.data.message_data) {
+                                          addStoreMessage({
+                                            role: 'assistant',
+                                            content: '',
+                                            type: 'article_card',
+                                            data: response.data.message_data,
+                                            model: response.data.model || 'Trafilatura + GPT-5',
+                                            provider: response.data.provider || 'trafilatura-gpt5',
+                                          });
+                                        }
+                                        setStoreLoading(false);
+                                      } catch (error: any) {
+                                        console.error('Error summarizing article:', error);
+                                        const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
+                                        addStoreMessage({
+                                          role: 'assistant',
+                                          content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article.'}`,
+                                        });
+                                        setStoreLoading(false);
+                                      }
+                                    }}
+                                    className="p-1.5 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+                                    title="Summarize this article"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
                                 <div className="text-sm text-[#8e8ea0] ml-0">
                                   {result.snippet}
                                 </div>
@@ -729,28 +728,21 @@ const ChatMessages: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Display web_scrape if message type is web_scrape */}
-                      {message.type === 'web_scrape' && message.data && (() => {
-                        const content = message.data.content || '';
-                        const { title, sourceUrl, outlet, published, bodyMarkdown } = parseScrapedMarkdown(content);
-                        
-                        // Fallback to message.data.url if sourceUrl not parsed from markdown
-                        const finalSourceUrl = sourceUrl || message.data.url;
-                        const finalOutlet = outlet || message.data.domain;
-                        
-                        return (
-                          <ScrapedArticleCard
-                            title={title || 'Untitled Article'}
-                            sourceUrl={finalSourceUrl}
-                            outlet={finalOutlet}
-                            published={published}
-                            bodyMarkdown={bodyMarkdown}
-                          />
-                        );
-                      })()}
+                      {/* Display article_card if message type is article_card */}
+                      {message.type === 'article_card' && message.data && (
+                        <ArticleCard
+                          url={message.data.url}
+                          title={message.data.title || 'Untitled'}
+                          siteName={message.data.siteName}
+                          published={message.data.published}
+                          summary={message.data.summary || ''}
+                          keyPoints={message.data.keyPoints || []}
+                          whyMatters={message.data.whyMatters}
+                        />
+                      )}
                       
-                      {/* Display text content if any (and not web_search_results or web_scrape) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'web_scrape' && (
+                      {/* Display text content if any (and not web_search_results or article_card) */}
+                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>

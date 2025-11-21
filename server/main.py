@@ -32,6 +32,8 @@ from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
 from server.ws import websocket_endpoint
+from server.article_summary import extract_article
+from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -206,8 +208,20 @@ class ChatResponse(BaseModel):
     reply: str
     model_used: Optional[str] = None
     provider: Optional[str] = None
-    message_type: Optional[str] = None  # 'text' (default), 'web_search_results', or 'web_scrape'
+    message_type: Optional[str] = None  # 'text' (default), 'web_search_results', or 'article_card'
     message_data: Optional[Dict[str, Any]] = None  # Structured data for special message types
+
+
+class ArticleSummaryRequest(BaseModel):
+    url: str
+    title: Optional[str] = None  # Optional title from UI
+
+
+class ArticleSummaryResponse(BaseModel):
+    message_type: str = "article_card"
+    message_data: Dict[str, Any]
+    model: str = "Trafilatura + GPT-5"
+    provider: str = "trafilatura-gpt5"
 
 
 class NewConversationRequest(BaseModel):
@@ -456,7 +470,7 @@ async def chat(request: ChatRequest):
             thread_id=request.conversation_id
         )
         
-        # 2) Check if result is structured (web_search_results or web_scrape)
+        # 2) Check if result is structured (web_search_results or article_card)
         if isinstance(raw_result, dict):
             result_type = raw_result.get("type")
             if result_type == "web_search_results":
@@ -468,11 +482,11 @@ async def chat(request: ChatRequest):
                     model_used=model_display,
                     provider=provider
                 )
-            elif result_type == "web_scrape":
-                # Return structured web scrape results
+            elif result_type == "article_card":
+                # Return structured article card results
                 return ChatResponse(
                     reply="",  # Empty reply for structured messages
-                    message_type="web_scrape",
+                    message_type="article_card",
                     message_data=raw_result,
                     model_used=model_display,
                     provider=provider
@@ -514,6 +528,131 @@ async def chat(request: ChatRequest):
         error_detail = str(e)
         traceback.print_exc()  # Print full traceback to server logs
         raise HTTPException(status_code=500, detail=error_detail)
+
+
+@app.post("/api/article/summary", response_model=ArticleSummaryResponse)
+async def summarize_article(request: ArticleSummaryRequest):
+    """
+    Summarize an article from a URL using Trafilatura + GPT-5.
+    Returns a structured article_card message.
+    """
+    try:
+        # Validate URL
+        if not request.url.startswith(("http://", "https://")):
+            raise HTTPException(status_code=400, detail="Invalid URL. Must start with http:// or https://")
+        
+        # Extract article using Trafilatura
+        article_data = extract_article(request.url)
+        
+        if article_data.get("error"):
+            raise HTTPException(status_code=400, detail=article_data["error"])
+        
+        if not article_data.get("text"):
+            raise HTTPException(status_code=400, detail="Could not extract article text from URL")
+        
+        # Truncate text to safe length for GPT-5 (first 10k chars)
+        article_text = article_data["text"][:10000]
+        
+        # Build prompt for GPT-5
+        user_prompt = f"""Please summarize the following article:
+
+{article_text}
+
+Provide:
+1. A 2–4 sentence summary paragraph
+2. 3–5 key bullet points
+3. (Optional) 1–2 sentences on why this matters or context
+
+Keep it concise, neutral, and factual."""
+        
+        # Call AI Router with summarize_article intent
+        messages = [
+            {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+        payload = {
+            "role": "chatdo",
+            "intent": "summarize_article",
+            "priority": "high",
+            "privacyLevel": "normal",
+            "costTier": "standard",
+            "input": {
+                "messages": messages,
+            },
+        }
+        
+        import requests
+        resp = requests.post(ai_router_url, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if not data.get("ok"):
+            raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
+        
+        assistant_messages = data["output"]["messages"]
+        if not assistant_messages or len(assistant_messages) == 0:
+            raise HTTPException(status_code=500, detail="No response from AI Router")
+        
+        summary_text = assistant_messages[0].get("content", "")
+        
+        # Parse summary into summary paragraph and bullet points
+        # Simple parsing: look for bullet points (lines starting with - or •)
+        lines = summary_text.split("\n")
+        summary_paragraph = ""
+        key_points = []
+        why_matters = ""
+        
+        current_section = "summary"
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Detect bullet points
+            if line.startswith("-") or line.startswith("•") or (line.startswith("*") and len(line) > 1):
+                bullet_text = line.lstrip("-•* ").strip()
+                if bullet_text:
+                    key_points.append(bullet_text)
+            # Detect "why this matters" section
+            elif "why" in line.lower() and ("matter" in line.lower() or "context" in line.lower()):
+                current_section = "why_matters"
+            elif current_section == "summary" and not summary_paragraph:
+                summary_paragraph = line
+            elif current_section == "summary" and summary_paragraph:
+                summary_paragraph += " " + line
+            elif current_section == "why_matters":
+                if why_matters:
+                    why_matters += " " + line
+                else:
+                    why_matters = line
+        
+        # If no structured parsing worked, use the whole text as summary
+        if not summary_paragraph:
+            summary_paragraph = summary_text[:500]  # First 500 chars as summary
+        
+        # Build response
+        message_data = {
+            "url": article_data["url"],
+            "title": request.title or article_data.get("title") or "Article",
+            "siteName": article_data.get("site_name") or "",
+            "published": article_data.get("published") or None,
+            "summary": summary_paragraph,
+            "keyPoints": key_points if key_points else [],
+            "whyMatters": why_matters if why_matters else None,
+        }
+        
+        return ArticleSummaryResponse(
+            message_data=message_data
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error summarizing article: {str(e)}")
 
 
 @app.post("/api/upload")

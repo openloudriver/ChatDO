@@ -24,88 +24,16 @@ load_dotenv(env_path)
 # AI-Router HTTP client
 AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
 
-# Web Scraping System Prompt - Intel-brief style formatting
-WEB_SCRAPE_SYSTEM_PROMPT = """You are ChatDO's Web Scrape Analyst.
+# Article Summary System Prompt - Clean summary format
+ARTICLE_SUMMARY_SYSTEM_PROMPT = """You are ChatDO's Article Summarizer.
 
-When scraping a URL, your job is to take the extracted text and produce a clean, well-structured, intelligence-style brief with perfect formatting.
+When summarizing an article, produce a clean, concise summary with:
 
-Follow this EXACT output format:
+1. A 2–4 sentence summary paragraph
+2. 3–5 key bullet points
+3. (Optional) 1–2 sentences on why this matters or context
 
-## {Article Title}
-
-**Source:** {URL}  
-
-**Outlet:** {Domain name if known}  
-
-**Published:** {Extracted date if present, otherwise omit}
-
----
-
-### TL;DR (3–5 bullet points)
-
-- Short bullets summarizing the core findings
-
-- Use plain English
-
-- Include only the most important facts
-
-- NEVER include full sentences from the article
-
----
-
-### Key Details
-
-Organize information into structured sections (only include sections that exist):
-
-**Context**  
-
-- Bullet
-
-**Events / Timeline**  
-
-- Bullet
-
-**Actors / Parties Involved**  
-
-- Bullet
-
-**Capabilities / Assets**  
-
-- Bullet
-
-**Statements / Claims**  
-
-- Bullet
-
-**Risks / Implications**  
-
-- Bullet
-
----
-
-### Confidence
-
-A short 1–2 sentence note about:
-
-- How complete the scraped article seemed  
-
-- Whether important context might be missing
-
-DO NOT:
-
-- Repeat the source URL multiple times  
-
-- Put [Source: ...] after every bullet  
-
-- Output raw HTML tags  
-
-- Output `<strong>` or `<span>` tags  
-
-- Hallucinate details not present in the text  
-
-If the scraped text is incomplete OR the article is behind a paywall, state so clearly.
-
-Always return clean, beautiful markdown."""
+Keep it concise, neutral, and factual. Do not include the source URL in the summary text (it's already displayed separately)."""
 
 # Cache the model ID to avoid making a preliminary call on every request
 _cached_model_id: Optional[str] = None
@@ -114,7 +42,6 @@ def _format_model_name(provider_id: str, model_id: str) -> str:
     """Format provider and model ID into a display-friendly name."""
     provider_labels = {
         "openai-gpt5": "GPT-5",
-        "gab-ai": "Gab AI",
         "anthropic-claude-sonnet": "Claude",
         "grok-code": "Grok",
         "gemini-pro": "Gemini",
@@ -134,9 +61,8 @@ def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
     t = text.lower()
     
-    # Web scraping - user provides URLs to scrape, use Gab AI
-    if ("scrape" in t or "web scraping" in t or "scrape website" in t or "scrape url" in t or "scrape page" in t):
-        return "web_scraping"
+    # Article summarization - user provides URLs to summarize (handled by separate endpoint)
+    # No intent classification needed - handled by /api/article/summary endpoint
     
     # Web search - user wants to search for information, use Brave Search + GPT-5
     if ("search" in t or "find" in t or "look for" in t or "top headlines" in t or "latest" in t or 
@@ -377,204 +303,6 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 memory_store.save_thread_history(target.name, thread_id, history)
             return error_msg, "Brave Search", "brave_search"
     
-    # Handle web scraping - user provides URLs, scrape them, send to Gab AI
-    if intent == "web_scraping":
-        # Check if user provided a direct URL to scrape
-        # Handle both plain URLs and [URL scraped: ...] format from frontend
-        url_pattern = re.compile(r'https?://[^\s\]]+')
-        urls_in_task = url_pattern.findall(task)
-        
-        # Also check for [URL scraped: ...] format (from frontend link button)
-        url_scraped_pattern = re.compile(r'\[URL scraped:\s*(https?://[^\]]+)\]')
-        scraped_urls = url_scraped_pattern.findall(task)
-        if scraped_urls:
-            # Add scraped URLs, avoiding duplicates
-            for url in scraped_urls:
-                if url not in urls_in_task:
-                    urls_in_task.append(url)
-        
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_urls = []
-        for url in urls_in_task:
-            if url not in seen:
-                seen.add(url)
-                unique_urls.append(url)
-        urls_in_task = unique_urls
-        
-        if urls_in_task:
-            # User provided URLs directly - scrape them
-            scraped_content = []
-            for url in urls_in_task[:5]:  # Limit to 5 URLs
-                try:
-                    # Fetch and scrape URL content (10s timeout - reduced for faster failure)
-                    with httpx.Client(timeout=10.0, follow_redirects=True) as client:
-                        try:
-                            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=10.0)
-                            response.raise_for_status()
-                        except httpx.TimeoutException:
-                            raise Exception(f"Request timed out after 10 seconds. The website may be slow or blocking requests.")
-                        except httpx.HTTPStatusError as e:
-                            raise Exception(f"HTTP {e.response.status_code}: {e.response.reason_phrase}")
-                        except httpx.RequestError as e:
-                            raise Exception(f"Network error: {str(e)}")
-                        
-                        # Check if we got redirected to an unwanted domain (like Canva)
-                        final_url = str(response.url)
-                        if 'canva.com' in final_url.lower():
-                            raise Exception(f"URL redirected to Canva: {final_url}")
-                        
-                        # Check for blocking/access denied
-                        if response.status_code == 403 or response.status_code == 401:
-                            raise Exception(f"Access denied (HTTP {response.status_code})")
-                        
-                        html = response.text
-                    
-                    # Extract main content
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
-                    # Check if the page content looks like a login/landing page
-                    page_text = soup.get_text()[:500].lower()
-                    if any(indicator in page_text for indicator in ['please enable', 'access denied', 'blocked', 'login required', 'sign in', 'create account']):
-                        raise Exception("Page appears to be blocked or requires login")
-                    
-                    for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
-                        script.decompose()
-                    text = soup.get_text()
-                    # Clean up whitespace
-                    lines = (line.strip() for line in text.splitlines())
-                    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                    clean_text = '\n'.join(chunk for chunk in chunks if chunk)
-                    
-                    # Only use scraped content if it's substantial
-                    if len(clean_text) > 100:
-                        # Clean HTML tags and entities from scraped text
-                        final_text = strip_tags(clean_text[:2000])  # Limit to 2000 chars per URL
-                        scraped_content.append(f"=== Source: {url} ===\n{final_text}\n")
-                    else:
-                        raise Exception("Scraped content too short (likely redirect/block page)")
-                except Exception as e:
-                    scraped_content.append(f"=== Error scraping {url}: {str(e)} ===\n")
-            
-            if scraped_content:
-                # Extract the first URL for metadata
-                first_url = unique_urls[0] if unique_urls else ""
-                domain = urlparse(first_url).netloc.replace("www.", "") if first_url else ""
-                
-                # Build user prompt with scraped content
-                # Limit total content size to avoid huge payloads
-                total_content = ''.join(scraped_content)
-                if len(total_content) > 8000:  # Limit to 8000 chars total
-                    total_content = total_content[:8000] + "\n\n[Content truncated due to size...]"
-                
-                user_prompt = f"Scraped Web Content from the following sources:\n\n{total_content}\n\nBased on the above scraped content, please analyze and format it according to the instructions in your system prompt."
-                
-                # Build message history for web scraping
-                messages = [
-                    {"role": "system", "content": WEB_SCRAPE_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
-                ]
-                
-                # Call AI Router with web_scraping intent and custom system prompt
-                # Use shorter timeout for web scraping (45s instead of 60s for faster failure)
-                try:
-                    # Temporarily override AI_ROUTER_URL timeout by making direct request
-                    ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
-                    payload = {
-                        "role": "chatdo",
-                        "intent": "web_scraping",
-                        "priority": "high",
-                        "privacyLevel": "normal",
-                        "costTier": "standard",
-                        "input": {
-                            "messages": messages,
-                        },
-                    }
-                    # Use 90s timeout for Gab AI scraping (can take longer for complex articles)
-                    resp = requests.post(ai_router_url, json=payload, timeout=90)
-                    resp.raise_for_status()
-                    data = resp.json()
-                    if not data.get("ok"):
-                        raise RuntimeError(f"AI-Router error: {data.get('error')}")
-                    model_id = data.get("modelId", "arya")
-                    provider_id = data.get("providerId", "gab-ai")
-                    model_display = _format_model_name(provider_id, model_id)
-                    assistant_messages = data["output"]["messages"]
-                    
-                    # Extract the formatted response
-                    if assistant_messages and len(assistant_messages) > 0:
-                        formatted_content = assistant_messages[0].get("content", "")
-                        
-                        # Save to memory store if thread_id is provided
-                        if thread_id:
-                            history = memory_store.load_thread_history(target.name, thread_id)
-                            history.append({"role": "user", "content": task})
-                            history.append({"role": "assistant", "content": formatted_content})
-                            memory_store.save_thread_history(target.name, thread_id, history)
-                        
-                        # Return structured web_scrape response
-                        return {
-                            "type": "web_scrape",
-                            "url": first_url,
-                            "domain": domain,
-                            "content": formatted_content
-                        }, model_display, provider_id
-                    else:
-                        error_msg = "Failed to generate formatted response from scraped content."
-                        # Save to memory store if thread_id is provided
-                        if thread_id:
-                            history = memory_store.load_thread_history(target.name, thread_id)
-                            history.append({"role": "user", "content": task})
-                            history.append({"role": "assistant", "content": error_msg})
-                            memory_store.save_thread_history(target.name, thread_id, history)
-                        return error_msg, "Gab AI", "gab-ai"
-                except requests.exceptions.Timeout as e:
-                    # Ensure timeout errors are immediately returned
-                    error_msg = f"Error: AI Router request timed out after 30 seconds. The scraped content may be too large or Gab AI is slow. Try scraping a shorter article or a different URL."
-                    # Save to memory store if thread_id is provided
-                    if thread_id:
-                        history = memory_store.load_thread_history(target.name, thread_id)
-                        history.append({"role": "user", "content": task})
-                        history.append({"role": "assistant", "content": error_msg})
-                        memory_store.save_thread_history(target.name, thread_id, history)
-                    return error_msg, "Gab AI", "gab-ai"
-                except requests.exceptions.ConnectionError as e:
-                    error_msg = f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}"
-                    # Save to memory store if thread_id is provided
-                    if thread_id:
-                        history = memory_store.load_thread_history(target.name, thread_id)
-                        history.append({"role": "user", "content": task})
-                        history.append({"role": "assistant", "content": error_msg})
-                        memory_store.save_thread_history(target.name, thread_id, history)
-                    return error_msg, "Gab AI", "gab-ai"
-                except requests.exceptions.RequestException as e:
-                    error_msg = f"Error: Network error communicating with AI Router: {str(e)}"
-                    # Save to memory store if thread_id is provided
-                    if thread_id:
-                        history = memory_store.load_thread_history(target.name, thread_id)
-                        history.append({"role": "user", "content": task})
-                        history.append({"role": "assistant", "content": error_msg})
-                        memory_store.save_thread_history(target.name, thread_id, history)
-                    return error_msg, "Gab AI", "gab-ai"
-                except Exception as e:
-                    error_msg = f"Error processing scraped content: {type(e).__name__}: {str(e)}"
-                    # Save to memory store if thread_id is provided
-                    if thread_id:
-                        history = memory_store.load_thread_history(target.name, thread_id)
-                        history.append({"role": "user", "content": task})
-                        history.append({"role": "assistant", "content": error_msg})
-                        memory_store.save_thread_history(target.name, thread_id, history)
-                    return error_msg, "Gab AI", "gab-ai"
-            else:
-                error_msg = "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com')."
-                # Save to memory store if thread_id is provided
-                if thread_id:
-                    history = memory_store.load_thread_history(target.name, thread_id)
-                    history.append({"role": "user", "content": task})
-                    history.append({"role": "assistant", "content": error_msg})
-                    memory_store.save_thread_history(target.name, thread_id, history)
-                return error_msg, "Gab AI", "gab-ai"
-    
     # Build message history
     messages: List[Dict[str, str]] = []
     
@@ -627,7 +355,7 @@ Web Search & Information Discovery:
 - When the user asks you to search the web, find information, discover websites, or get current information, use your web search capabilities.
 - For queries like "find XYZ", "what are the top headlines", "search for zkSNARK websites", provide comprehensive, up-to-date information.
 - You can search for current events, recent developments, and discover relevant websites or resources.
-- **CRITICAL: When providing information from scraped web content, you MUST cite the source URL for every fact, claim, or piece of information you mention.**
+- **CRITICAL: When providing information from web search or article summaries, you MUST cite the source URL for every fact, claim, or piece of information you mention.**
 - Format citations clearly: use [Source: URL] or (Source: URL) after each relevant statement.
 - If information comes from multiple sources, cite each source separately.
 - Always include the full URL so users can verify the information themselves.
