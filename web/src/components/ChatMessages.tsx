@@ -666,10 +666,21 @@ const ChatMessages: React.FC = () => {
                             ))}
                           </ol>
                           {message.data.summary && (
-                            <div className="mt-4 pt-4 border-t border-[#565869]">
-                              <div className="font-semibold mb-2">Summary:</div>
-                              <div className="prose prose-invert max-w-none text-sm">
-                                <ReactMarkdown>{message.data.summary}</ReactMarkdown>
+                            <div className="mt-6 pt-6 border-t border-[#565869]">
+                              <div className="font-semibold text-lg mb-4 text-center">Summary</div>
+                              <div className="prose prose-invert prose-sm max-w-none">
+                                <ReactMarkdown
+                                  components={{
+                                    p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
+                                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ol>,
+                                    li: ({ children }) => <li className="ml-4 text-[#ececf1]">{children}</li>,
+                                    strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
+                                    em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+                                  }}
+                                >
+                                  {message.data.summary}
+                                </ReactMarkdown>
                               </div>
                             </div>
                           )}
