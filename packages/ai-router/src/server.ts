@@ -41,11 +41,11 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
   try {
     const current = await getCurrentMonthSpend();
     
-    // Map provider IDs to nicer labels
+    // Map provider IDs to nicer labels (model names only, no company names)
     const labelMap: Record<string, string> = {
-      "openai-gpt5": "OpenAI GPT-5",
+      "openai-gpt5": "GPT-5",
       "gab-ai": "Gab AI",
-      "anthropic-claude-sonnet": "Anthropic Claude",
+      "anthropic-claude-sonnet": "Claude Sonnet",
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",
       "mistral-large": "Mistral Large",
@@ -56,10 +56,10 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     // Always include OpenAI and Gab AI, even if they have $0 spend
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
-    // Add OpenAI GPT-5 (always show)
+    // Add GPT-5 (always show)
     providers.push({
       id: "openai-gpt5",
-      label: labelMap["openai-gpt5"] || "OpenAI GPT-5",
+      label: labelMap["openai-gpt5"] || "GPT-5",
       usd: current.providers["openai-gpt5"] || 0,
     });
     
