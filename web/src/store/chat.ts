@@ -824,11 +824,14 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   loadSources: async (conversationId: string) => {
     try {
-      // Load sources from backend (will be implemented in backend)
+      // Load sources from backend
       const response = await axios.get(`http://localhost:8000/api/chats/${conversationId}/sources`);
       set({ sources: response.data.sources || [] });
-    } catch (error) {
-      console.error('Failed to load sources:', error);
+    } catch (error: any) {
+      // 404 is expected if no sources exist yet, don't log as error
+      if (error.response?.status !== 404) {
+        console.error('Failed to load sources:', error);
+      }
       set({ sources: [] });
     }
   },
