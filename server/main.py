@@ -462,6 +462,13 @@ async def new_conversation(request: NewConversationRequest):
     return NewConversationResponse(conversation_id=conversation_id)
 
 
+def extract_urls(text: str) -> List[str]:
+    """Extract all URLs from text."""
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+    urls = re.findall(url_pattern, text)
+    return urls
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
