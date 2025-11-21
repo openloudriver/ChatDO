@@ -3,6 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
+import SourcesPanel from './SourcesPanel';
+import { Source } from '../types/sources';
+import { v4 as uuidv4 } from 'uuid';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -96,11 +99,15 @@ const ChatMessages: React.FC = () => {
     setViewMode, 
     viewMode, 
     renameChat,
-    deleteMessage
+    deleteMessage,
+    sources,
+    addSource,
+    loadSources
   } = useChatStore();
   
   // Track which articles are being summarized or have been summarized
   const [articleStates, setArticleStates] = useState<Record<string, 'idle' | 'summarizing' | 'summarized'>>({});
+  const [showSourcesPanel, setShowSourcesPanel] = useState(false);
   
   const [previewFile, setPreviewFile] = useState<{name: string, data: string, type: 'image' | 'pdf' | 'pptx' | 'xlsx' | 'docx' | 'video' | 'other', mimeType: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -112,6 +119,38 @@ const ChatMessages: React.FC = () => {
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Load sources when conversation changes
+  useEffect(() => {
+    if (currentConversation?.id) {
+      loadSources(currentConversation.id);
+    }
+  }, [currentConversation?.id, loadSources]);
+  
+  // Auto-generate source when article_card message is added
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.type === 'article_card' && lastMessage.data) {
+      const articleData = lastMessage.data;
+      // Check if source already exists for this URL
+      const existingSource = sources.find(s => s.url === articleData.url);
+      if (!existingSource && articleData.url) {
+        const newSource: Source = {
+          id: uuidv4(),
+          kind: 'url',
+          title: articleData.title || 'Untitled Article',
+          description: articleData.summary || undefined,
+          url: articleData.url,
+          createdAt: new Date().toISOString(),
+          meta: {
+            siteName: articleData.siteName,
+            published: articleData.published,
+          }
+        };
+        addSource(newSource);
+      }
+    }
+  }, [messages, sources, addSource]);
+  
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current && !isStreaming) {
@@ -256,6 +295,13 @@ const ChatMessages: React.FC = () => {
     }
   };
 
+  const handleInsertReference = (source: Source) => {
+    // Dispatch event to ChatComposer to insert reference
+    window.dispatchEvent(new CustomEvent('insert-reference', { 
+      detail: { source } 
+    }));
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
       {/* Breadcrumb/Header */}
@@ -301,11 +347,23 @@ const ChatMessages: React.FC = () => {
               )}
             </>
           )}
+          {/* Sources Panel Toggle */}
+          <button
+            onClick={() => setShowSourcesPanel(!showSourcesPanel)}
+            className="ml-auto p-2 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+            title={showSourcesPanel ? "Hide sources" : "Show sources"}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </button>
         </div>
       )}
 
-      {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Messages */}
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message) => {
         const isCopied = copiedMessageId === message.id;
         
@@ -653,20 +711,58 @@ const ChatMessages: React.FC = () => {
                           <div className="font-semibold text-lg mb-3 text-center">
                             Top Results
                           </div>
-                          <ol className="list-decimal ml-6 space-y-3">
+                          <div className="space-y-3">
                             {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
                               const articleState = articleStates[result.url] || 'idle';
                               const isSummarizing = articleState === 'summarizing';
                               const isSummarized = articleState === 'summarized';
                               
+                              // Extract domain from URL
+                              const getDomain = (url: string) => {
+                                try {
+                                  const u = new URL(url);
+                                  return u.hostname.replace(/^www\./, "");
+                                } catch {
+                                  return url;
+                                }
+                              };
+                              
+                              const getFaviconUrl = (url: string) => {
+                                try {
+                                  const u = new URL(url);
+                                  return `${u.protocol}//${u.hostname}/favicon.ico`;
+                                } catch {
+                                  return undefined;
+                                }
+                              };
+                              
+                              const domain = getDomain(result.url);
+                              const faviconUrl = getFaviconUrl(result.url);
+                              
                               return (
-                                <li key={index} className="space-y-1">
-                                  <div className="flex items-center gap-2">
+                                <div key={index} className={index > 0 ? "pt-3 border-t border-[#565869]/30" : ""}>
+                                  {/* Domain + Favicon */}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {faviconUrl && (
+                                      <img
+                                        src={faviconUrl}
+                                        alt={domain}
+                                        className="h-4 w-4 rounded-sm"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <span className="text-xs text-[#8e8ea0]">{domain}</span>
+                                  </div>
+                                  
+                                  {/* Title + Summarize Button */}
+                                  <div className="flex items-center gap-2 mb-1">
                                     <a
                                       href={result.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-blue-400 hover:text-blue-300 underline font-medium flex-1"
+                                      className="text-blue-400 hover:text-blue-300 font-semibold flex-1"
                                     >
                                       {result.title}
                                     </a>
@@ -713,14 +809,14 @@ const ChatMessages: React.FC = () => {
                                         }
                                       }}
                                       disabled={isSummarizing || isSummarized}
-                                      className={`p-1.5 rounded transition-colors ${
+                                      className={`p-1.5 rounded transition-colors flex-shrink-0 ${
                                         isSummarized 
                                           ? 'text-green-400 cursor-default' 
                                           : isSummarizing
                                           ? 'text-blue-400 cursor-wait'
                                           : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
                                       }`}
-                                      title={isSummarized ? "Article summarized" : isSummarizing ? "Summarizing..." : "Summarize this article"}
+                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this article"}
                                     >
                                       {isSummarizing ? (
                                         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -738,13 +834,23 @@ const ChatMessages: React.FC = () => {
                                       )}
                                     </button>
                                   </div>
-                                  <div className="text-sm text-[#8e8ea0] ml-0">
+                                  
+                                  {/* Snippet */}
+                                  <div className="text-sm text-[#8e8ea0] line-clamp-2">
                                     {result.snippet}
                                   </div>
-                                </li>
+                                </div>
                               );
                             })}
-                          </ol>
+                          </div>
+                          
+                          {/* Footer */}
+                          <div className="border-t border-[#565869] pt-3 mt-4">
+                            <div className="text-xs text-[#8e8ea0] text-right">
+                              Model: Brave Search
+                            </div>
+                          </div>
+                          
                           {message.data.summary && (
                             <div className="mt-6 pt-6 border-t border-[#565869]">
                               <div className="font-semibold text-lg mb-4 text-center">Summary</div>
@@ -892,6 +998,31 @@ const ChatMessages: React.FC = () => {
       )}
       {/* Invisible element at the bottom to scroll to */}
       <div ref={messagesEndRef} />
+        </div>
+        
+        {/* Sources Panel */}
+        {showSourcesPanel && (
+          <div className="w-80 border-l border-[#565869] bg-[#1a1a1a] flex flex-col">
+            <div className="px-4 py-3 border-b border-[#565869] flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#ececf1]">Sources</h3>
+              <button
+                onClick={() => setShowSourcesPanel(false)}
+                className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+                title="Close sources panel"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <SourcesPanel
+                sources={sources}
+                onInsertReference={handleInsertReference}
+              />
+            </div>
+          </div>
+        )}
       </div>
       
       {/* File Preview Modal */}

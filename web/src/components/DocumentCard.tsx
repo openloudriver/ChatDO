@@ -1,64 +1,70 @@
 import React, { useState } from "react";
 
-interface ArticleCardProps {
-  url: string;
-  title: string;
-  siteName?: string;
-  published?: string;
-  lastUpdated?: string;
+interface DocumentCardProps {
+  fileName: string;
+  fileType?: string;
+  filePath?: string;
   summary: string;
   keyPoints: string[];
   whyMatters?: string;
   estimatedReadTimeMinutes?: number;
   wordCount?: number;
+  pageCount?: number;
 }
 
-const getDomain = (url: string) => {
-  try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./, "");
-  } catch {
-    return undefined;
-  }
-};
-
-const getFaviconUrl = (url: string) => {
-  try {
-    const u = new URL(url);
-    return `${u.protocol}//${u.hostname}/favicon.ico`;
-  } catch {
-    return undefined;
+const getFileIcon = (fileName: string) => {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return (
+        <svg className="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+        </svg>
+      );
+    case 'doc':
+    case 'docx':
+      return (
+        <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+        </svg>
+      );
+    case 'txt':
+    case 'md':
+      return (
+        <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+        </svg>
+      );
   }
 };
 
 const estimateReadTime = (summary: string, keyPoints: string[], whyMatters?: string, wordCount?: number): number => {
   if (wordCount) {
-    // Average reading speed: 200 words per minute
     return Math.max(1, Math.ceil(wordCount / 200));
   }
-  
-  // Estimate from content
   const allText = `${summary} ${keyPoints.join(' ')} ${whyMatters || ''}`;
   const words = allText.split(/\s+/).filter(w => w.length > 0).length;
   return Math.max(1, Math.ceil(words / 200));
 };
 
-export const ArticleCard: React.FC<ArticleCardProps> = ({
-  url,
-  title,
-  siteName,
-  published,
-  lastUpdated,
+export const DocumentCard: React.FC<DocumentCardProps> = ({
+  fileName,
+  fileType,
+  filePath,
   summary,
   keyPoints,
   whyMatters,
   estimatedReadTimeMinutes,
   wordCount,
+  pageCount,
 }) => {
   const [copied, setCopied] = useState(false);
-  const domain = getDomain(url);
-  const faviconUrl = getFaviconUrl(url);
-  const displaySiteName = (siteName || domain || "Article").toUpperCase();
   const readTime = estimatedReadTimeMinutes || estimateReadTime(summary, keyPoints, whyMatters, wordCount);
 
   const handleCopySummary = async () => {
@@ -82,18 +88,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       {/* Header Row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {faviconUrl && (
-            <img
-              src={faviconUrl}
-              alt={displaySiteName}
-              className="h-5 w-5 rounded-sm flex-shrink-0"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          )}
+          {getFileIcon(fileName)}
           <div className="text-xs uppercase tracking-wide text-[#8e8ea0] font-medium">
-            {displaySiteName}
+            Document
           </div>
         </div>
         {/* Copy Summary Button */}
@@ -114,31 +111,31 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         </button>
       </div>
 
-      {/* Article Title */}
+      {/* Document Title */}
       <div>
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          className="text-base font-semibold text-blue-400 hover:text-blue-300 underline block"
-        >
-          {title}
-        </a>
+        <div className="text-base font-semibold text-[#ececf1]">
+          {fileName}
+        </div>
+        {fileType && (
+          <div className="text-xs text-[#8e8ea0] mt-0.5">
+            {fileType.toUpperCase()}
+          </div>
+        )}
       </div>
 
-      {/* Subheader: Read time and last updated */}
+      {/* Subheader: Read time and metadata */}
       <div className="text-xs text-[#8e8ea0] flex items-center gap-2">
         <span>{readTime} min read</span>
-        {lastUpdated && (
+        {pageCount && (
           <>
             <span>•</span>
-            <span>Last updated: {lastUpdated}</span>
+            <span>{pageCount} page{pageCount !== 1 ? 's' : ''}</span>
           </>
         )}
-        {published && !lastUpdated && (
+        {wordCount && (
           <>
             <span>•</span>
-            <span>Published: {published}</span>
+            <span>{wordCount.toLocaleString()} words</span>
           </>
         )}
       </div>
@@ -183,11 +180,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       {/* Footer: Model attribution */}
       <div className="border-t border-[#565869] pt-3">
         <div className="text-xs text-[#8e8ea0] text-right">
-          Model: Trafilatura + GPT-5
+          Model: GPT-5
         </div>
       </div>
     </div>
   );
 };
 
-export default ArticleCard;
+export default DocumentCard;
+

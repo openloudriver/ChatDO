@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { Source } from '../types/sources';
 
 export interface Message {
   id: string;
@@ -56,6 +57,7 @@ interface ChatStore {
   viewMode: ViewMode;
   searchResults: Conversation[];
   searchQuery: string;
+  sources: Source[];  // Sources for current conversation
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -90,6 +92,9 @@ interface ChatStore {
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
   clearStreaming: () => void;
+  addSource: (source: Source) => void;
+  setSources: (sources: Source[]) => void;
+  loadSources: (conversationId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -106,6 +111,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   viewMode: 'projectList',
   searchQuery: '',
   searchResults: [],
+  sources: [],
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -808,6 +814,24 @@ export const useChatStore = create<ChatStore>((set) => ({
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   
   clearStreaming: () => set({ isStreaming: false, streamingContent: '' }),
+  
+  // Sources management
+  addSource: (source: Source) => set((state) => ({
+    sources: [...state.sources, source]
+  })),
+  
+  setSources: (sources: Source[]) => set({ sources }),
+  
+  loadSources: async (conversationId: string) => {
+    try {
+      // Load sources from backend (will be implemented in backend)
+      const response = await axios.get(`http://localhost:8000/api/chats/${conversationId}/sources`);
+      set({ sources: response.data.sources || [] });
+    } catch (error) {
+      console.error('Failed to load sources:', error);
+      set({ sources: [] });
+    }
+  },
   
   ensureGeneralProject: async () => {
     const state = useChatStore.getState();
