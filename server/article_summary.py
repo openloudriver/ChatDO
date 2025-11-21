@@ -32,7 +32,7 @@ def extract_article(url: str) -> Dict[str, Optional[str]]:
                 "error": "Could not fetch URL. The page may be blocked or require authentication."
             }
         
-        # Extract with metadata
+        # Extract with metadata - include formatting to get better title extraction
         extracted = trafilatura.extract(
             downloaded,
             url=url,
@@ -41,6 +41,7 @@ def extract_article(url: str) -> Dict[str, Optional[str]]:
             include_links=False,
             include_images=False,
             include_tables=False,
+            include_formatting=True,  # Helps with title extraction
         )
         
         if not extracted:
