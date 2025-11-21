@@ -51,24 +51,18 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "llama-local": "Llama Local",
     };
     
-    // Always include Gab AI and GPT-5, even if they have $0 spend
+    // Always include GPT-5, even if it has $0 spend
+    // Only show providers that have been used (exclude Gab AI from display)
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
-    // Add Gab AI first (always show)
-    providers.push({
-      id: "gab-ai",
-      label: labelMap["gab-ai"] || "Gab AI",
-      usd: current.providers["gab-ai"] || 0,
-    });
-    
-    // Add GPT-5 second (always show)
+    // Add GPT-5 (always show)
     providers.push({
       id: "openai-gpt5",
       label: labelMap["openai-gpt5"] || "GPT-5",
       usd: current.providers["openai-gpt5"] || 0,
     });
     
-    // Add any other providers that have been used
+    // Add any other providers that have been used (excluding Gab AI)
     for (const [id, usd] of Object.entries(current.providers)) {
       if (id !== "openai-gpt5" && id !== "gab-ai") {
         providers.push({
