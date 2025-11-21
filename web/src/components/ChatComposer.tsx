@@ -342,18 +342,13 @@ const ChatComposer: React.FC = () => {
     if (!url || !currentProject || !currentConversation) return;
 
     try {
-      const response = await axios.post('http://localhost:8000/api/url', null, {
-        params: {
-          project_id: currentProject.id,
-          conversation_id: currentConversation.id,
-          url: url
-        }
-      });
-      console.log('URL scraped:', response.data);
-      addMessage({
-        role: 'user',
-        content: `[URL scraped: ${url}]`
-      });
+      // Add user message with scrape command to trigger web_scraping intent
+      const message = `scrape ${url}`;
+      setInput(message);
+      // Trigger send automatically
+      setTimeout(() => {
+        handleSend();
+      }, 100);
     } catch (error) {
       console.error('URL scraping failed:', error);
     }

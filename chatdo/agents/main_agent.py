@@ -286,8 +286,18 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Handle web scraping - user provides URLs, scrape them, send to Gab AI
     if intent == "web_scraping":
         # Check if user provided a direct URL to scrape
-        url_pattern = re.compile(r'https?://[^\s]+')
+        # Handle both plain URLs and [URL scraped: ...] format from frontend
+        url_pattern = re.compile(r'https?://[^\s\]]+')
         urls_in_task = url_pattern.findall(task)
+        
+        # Also check for [URL scraped: ...] format (from frontend link button)
+        url_scraped_pattern = re.compile(r'\[URL scraped:\s*(https?://[^\]]+)\]')
+        scraped_urls = url_scraped_pattern.findall(task)
+        if scraped_urls:
+            # Add scraped URLs, avoiding duplicates
+            for url in scraped_urls:
+                if url not in urls_in_task:
+                    urls_in_task.append(url)
         
         if urls_in_task:
             # User provided URLs directly - scrape them
