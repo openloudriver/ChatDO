@@ -646,7 +646,7 @@ const ChatMessages: React.FC = () => {
                       {message.type === 'web_search_results' && message.data && (
                         <div className="space-y-4">
                           <div className="font-semibold text-lg mb-3">
-                            Top results from Brave Search for &ldquo;{message.data.query}&rdquo;
+                            Top Results
                           </div>
                           <ol className="list-decimal ml-6 space-y-3">
                             {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => (
