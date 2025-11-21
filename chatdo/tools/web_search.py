@@ -4,6 +4,7 @@ import os
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
+from ..utils.html_clean import strip_tags
 
 # Load .env file from project root
 env_path = Path(__file__).parent.parent.parent / ".env"
@@ -55,10 +56,14 @@ def search_web(query: str, max_results: int = 10) -> List[Dict[str, str]]:
         results = []
         if "web" in data and "results" in data["web"]:
             for r in data["web"]["results"][:max_results]:
+                # Clean HTML tags and entities from title and snippet
+                clean_title = strip_tags(r.get("title", ""))
+                clean_snippet = strip_tags(r.get("description", ""))
+                
                 results.append({
-                    "title": r.get("title", ""),
+                    "title": clean_title,
                     "url": r.get("url", ""),
-                    "snippet": r.get("description", "")
+                    "snippet": clean_snippet
                 })
         
         return results

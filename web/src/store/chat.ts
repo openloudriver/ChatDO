@@ -8,6 +8,8 @@ export interface Message {
   content: string;
   timestamp: Date;
   type?: 'text' | 'web_search_results';  // Message type: 'text' (default) or 'web_search_results'
+  model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Gab AI")
+  provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "gab-ai")
   data?: {
     query?: string;
     provider?: string;

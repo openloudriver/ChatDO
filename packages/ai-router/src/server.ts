@@ -23,6 +23,8 @@ app.post("/v1/ai/run", async (req, res) => {
       ok: true,
       providerId: result.providerId,
       modelId: result.modelId,
+      provider: result.providerId, // For backward compatibility and clarity
+      model: result.modelId, // For backward compatibility and clarity
       output: result.output,
     });
   } catch (err: any) {

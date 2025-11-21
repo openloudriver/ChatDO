@@ -673,6 +673,12 @@ const ChatMessages: React.FC = () => {
                               </div>
                             </div>
                           )}
+                          {/* Model attribution for web_search_results */}
+                          {message.model && (
+                            <div className="text-xs text-[#8e8ea0] mt-2 text-right">
+                              Model: {message.model}
+                            </div>
+                          )}
                         </div>
                       )}
                       
@@ -685,6 +691,13 @@ const ChatMessages: React.FC = () => {
                         ) : (
                           <p className="whitespace-pre-wrap">{content}</p>
                         )
+                      )}
+                      
+                      {/* Display model attribution for assistant messages */}
+                      {message.role === 'assistant' && message.model && (
+                        <div className="text-xs text-[#8e8ea0] mt-2 text-right">
+                          Model: {message.model}
+                        </div>
                       )}
                     </div>
                   );

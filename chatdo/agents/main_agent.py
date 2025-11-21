@@ -12,6 +12,7 @@ from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
 from ..tools import web_search
 from ..memory import store as memory_store
+from ..utils.html_clean import strip_tags
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -24,6 +25,30 @@ AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
 
 # Cache the model ID to avoid making a preliminary call on every request
 _cached_model_id: Optional[str] = None
+
+def _format_model_name(provider_id: str, model_id: str) -> str:
+    """Format provider and model ID into a display-friendly name."""
+    provider_labels = {
+        "openai-gpt5": "GPT-5",
+        "gab-ai": "Gab AI",
+        "ollama-local": "Ollama",
+        "anthropic-claude-sonnet": "Claude",
+        "grok-code": "Grok",
+        "gemini-pro": "Gemini",
+        "mistral-large": "Mistral",
+        "llama-local": "Llama",
+    }
+    provider_label = provider_labels.get(provider_id, provider_id)
+    
+    # For Ollama, include the model name
+    if provider_id == "ollama-local":
+        return f"{provider_label} {model_id}"
+    
+    # For others, just use the provider label or model ID if it's more descriptive
+    if provider_id == "openai-gpt5":
+        return model_id  # e.g., "gpt-5" or "gpt-5.1"
+    
+    return provider_label
 
 def classify_intent(text: str) -> str:
     """Classify user message intent for AI-Router routing."""
@@ -50,7 +75,7 @@ def classify_intent(text: str) -> str:
     
     return "general_chat"
 
-def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> tuple[List[Dict[str, str]], str]:
+def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> tuple[List[Dict[str, str]], str, str, str]:
     """
     Call the AI-Router HTTP service to get AI responses.
     
@@ -59,7 +84,7 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         intent: AI intent type (e.g., "general_chat", "long_planning", "code_edit")
     
     Returns:
-        Tuple of (list of assistant messages from the router, model_id)
+        Tuple of (list of assistant messages from the router, model_id, provider_id, model_display_name)
     """
     payload = {
         "role": "chatdo",
@@ -79,7 +104,10 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         if not data.get("ok"):
             raise RuntimeError(f"AI-Router error: {data.get('error')}")
         model_id = data.get("modelId", "gpt-5")
-        return data["output"]["messages"], model_id
+        provider_id = data.get("providerId", "openai-gpt5")
+        # Create a display-friendly model name
+        model_display = _format_model_name(provider_id, model_id)
+        return data["output"]["messages"], model_id, provider_id, model_display
     except requests.exceptions.ConnectionError as e:
         raise RuntimeError(
             f"Failed to connect to AI-Router at {AI_ROUTER_URL}. "
@@ -174,7 +202,7 @@ def build_agent(target: TargetConfig, task: str):
     )
     return agent
 
-def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> Union[str, Dict[str, Any]]:
+def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> tuple[Union[str, Dict[str, Any]], str, str]:
     """
     Run ChatDO on a given task using AI-Router.
     If thread_id is provided, load/save conversation history so the agent has long-term context.
@@ -237,13 +265,13 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 
                 return structured_result
             else:
-                return "No search results found. Please try a different query."
+                return "No search results found. Please try a different query.", "Brave Search", "brave_search"
         except ValueError as e:
             # If API key is missing or invalid, return helpful error message
-            return f"Web search is not configured. {str(e)}"
+            return f"Web search is not configured. {str(e)}", "Brave Search", "brave_search"
         except Exception as e:
             # If search fails for other reasons, return error
-            return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
+            return f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration.", "Brave Search", "brave_search"
     
     # Handle web scraping - user provides URLs, scrape them, send to Gab AI
     if intent == "web_scraping":
@@ -290,7 +318,9 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     
                     # Only use scraped content if it's substantial
                     if len(clean_text) > 100:
-                        scraped_content.append(f"=== Source: {url} ===\n{clean_text[:2000]}\n")  # Limit to 2000 chars per URL to avoid payload size issues
+                        # Clean HTML tags and entities from scraped text
+                        final_text = strip_tags(clean_text[:2000])  # Limit to 2000 chars per URL
+                        scraped_content.append(f"=== Source: {url} ===\n{final_text}\n")
                     else:
                         raise Exception("Scraped content too short (likely redirect/block page)")
                 except Exception as e:
@@ -299,7 +329,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
             if scraped_content:
                 task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
             else:
-                return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com')."
+                return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com').", "Gab AI", "gab-ai"
     
     # Build message history
     messages: List[Dict[str, str]] = []
@@ -426,7 +456,7 @@ Notes:
     messages.append({"role": "user", "content": task})
     
     # Call AI-Router instead of direct model
-    assistant_messages, _ = call_ai_router(messages, intent=intent)
+    assistant_messages, model_id, provider_id, model_display = call_ai_router(messages, intent=intent)
     
     # Extract content from the last assistant message
     if assistant_messages and len(assistant_messages) > 0:
@@ -442,4 +472,4 @@ Notes:
         history.append({"role": "assistant", "content": final_content})
         memory_store.save_thread_history(target.name, thread_id, history)
     
-    return final_content
+    return final_content, model_display, provider_id

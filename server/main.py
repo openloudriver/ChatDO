@@ -205,6 +205,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     model_used: Optional[str] = None
+    provider: Optional[str] = None
     message_type: Optional[str] = None  # 'text' (default) or 'web_search_results'
     message_data: Optional[Dict[str, Any]] = None  # Structured data for special message types
 
@@ -449,7 +450,7 @@ async def chat(request: ChatRequest):
         target_cfg = load_target(request.target_name)
         
         # 1) Get raw response from ChatDO (may include <TASKS> block or structured results)
-        raw_result = run_agent(
+        raw_result, model_display, provider = run_agent(
             target=target_cfg,
             task=request.message,
             thread_id=request.conversation_id
@@ -461,7 +462,9 @@ async def chat(request: ChatRequest):
             return ChatResponse(
                 reply="",  # Empty reply for structured messages
                 message_type="web_search_results",
-                message_data=raw_result
+                message_data=raw_result,
+                model_used=model_display,
+                provider=provider
             )
         
         # 3) Split out any <TASKS> block
@@ -469,7 +472,7 @@ async def chat(request: ChatRequest):
         
         # 4) If no tasks, behave exactly like before
         if not tasks_json:
-            return ChatResponse(reply=human_text)
+            return ChatResponse(reply=human_text, model_used=model_display, provider=provider)
         
         # 5) Parse tasks from JSON
         try:
@@ -493,7 +496,7 @@ async def chat(request: ChatRequest):
         # 8) Append summary to what the user sees
         final_message = human_text + "\n\n---\nExecutor summary:\n" + summary_text
         
-        return ChatResponse(reply=final_message)
+        return ChatResponse(reply=final_message, model_used=model_display, provider=provider)
     
     except Exception as e:
         import traceback

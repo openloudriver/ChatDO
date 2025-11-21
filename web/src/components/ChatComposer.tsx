@@ -159,14 +159,21 @@ const ChatComposer: React.FC = () => {
               role: 'assistant', 
               content: '',
               type: 'web_search_results',
-              data: data.data
+              data: data.data,
+              model: data.model,
+              provider: data.provider
             });
             clearStreaming();
             setLoading(false);
             ws.close();
           } else if (data.type === 'done') {
-            // Add final message
-            addMessage({ role: 'assistant', content: streamedContent });
+            // Add final message with model/provider info
+            addMessage({ 
+              role: 'assistant', 
+              content: streamedContent,
+              model: data.model,
+              provider: data.provider
+            });
             clearStreaming();
             ws.close();
           } else if (data.type === 'error') {
@@ -224,10 +231,17 @@ const ChatComposer: React.FC = () => {
           role: 'assistant', 
           content: '',
           type: 'web_search_results',
-          data: response.data.message_data
+          data: response.data.message_data,
+          model: response.data.model_used,
+          provider: response.data.provider
         });
       } else {
-        addMessage({ role: 'assistant', content: response.data.reply });
+        addMessage({ 
+          role: 'assistant', 
+          content: response.data.reply,
+          model: response.data.model_used,
+          provider: response.data.provider
+        });
       }
     } catch (error: any) {
       console.error('Failed to send message:', error);

@@ -58,7 +58,7 @@ async def stream_chat_response(
         
         # Run ChatDO agent (this is synchronous, so we'll chunk the result)
         # TODO: In the future, integrate with streaming LLM responses
-        raw_result = run_agent(
+        raw_result, model_display, provider = run_agent(
             target=target_cfg,
             task=message,
             thread_id=conversation_id
@@ -70,6 +70,8 @@ async def stream_chat_response(
             await websocket.send_json({
                 "type": "web_search_results",
                 "data": raw_result,
+                "model": model_display,
+                "provider": provider,
                 "done": True
             })
             return
@@ -119,10 +121,12 @@ async def stream_chat_response(
                     "done": False
                 })
         
-        # Send completion message
+        # Send completion message with model/provider info
         await websocket.send_json({
             "type": "done",
             "content": "",
+            "model": model_display,
+            "provider": provider,
             "done": True
         })
     
