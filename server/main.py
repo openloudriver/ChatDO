@@ -206,7 +206,7 @@ class ChatResponse(BaseModel):
     reply: str
     model_used: Optional[str] = None
     provider: Optional[str] = None
-    message_type: Optional[str] = None  # 'text' (default) or 'web_search_results'
+    message_type: Optional[str] = None  # 'text' (default), 'web_search_results', or 'web_scrape'
     message_data: Optional[Dict[str, Any]] = None  # Structured data for special message types
 
 
@@ -456,16 +456,27 @@ async def chat(request: ChatRequest):
             thread_id=request.conversation_id
         )
         
-        # 2) Check if result is structured (web_search_results)
-        if isinstance(raw_result, dict) and raw_result.get("type") == "web_search_results":
-            # Return structured web search results
-            return ChatResponse(
-                reply="",  # Empty reply for structured messages
-                message_type="web_search_results",
-                message_data=raw_result,
-                model_used=model_display,
-                provider=provider
-            )
+        # 2) Check if result is structured (web_search_results or web_scrape)
+        if isinstance(raw_result, dict):
+            result_type = raw_result.get("type")
+            if result_type == "web_search_results":
+                # Return structured web search results
+                return ChatResponse(
+                    reply="",  # Empty reply for structured messages
+                    message_type="web_search_results",
+                    message_data=raw_result,
+                    model_used=model_display,
+                    provider=provider
+                )
+            elif result_type == "web_scrape":
+                # Return structured web scrape results
+                return ChatResponse(
+                    reply="",  # Empty reply for structured messages
+                    message_type="web_scrape",
+                    message_data=raw_result,
+                    model_used=model_display,
+                    provider=provider
+                )
         
         # 3) Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)

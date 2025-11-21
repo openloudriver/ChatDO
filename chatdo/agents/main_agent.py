@@ -7,6 +7,7 @@ import re
 import requests
 import httpx
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
@@ -22,6 +23,89 @@ load_dotenv(env_path)
 
 # AI-Router HTTP client
 AI_ROUTER_URL = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+
+# Web Scraping System Prompt - Intel-brief style formatting
+WEB_SCRAPE_SYSTEM_PROMPT = """You are ChatDO's Web Scrape Analyst.
+
+When scraping a URL, your job is to take the extracted text and produce a clean, well-structured, intelligence-style brief with perfect formatting.
+
+Follow this EXACT output format:
+
+## {Article Title}
+
+**Source:** {URL}  
+
+**Outlet:** {Domain name if known}  
+
+**Published:** {Extracted date if present, otherwise omit}
+
+---
+
+### TL;DR (3–5 bullet points)
+
+- Short bullets summarizing the core findings
+
+- Use plain English
+
+- Include only the most important facts
+
+- NEVER include full sentences from the article
+
+---
+
+### Key Details
+
+Organize information into structured sections (only include sections that exist):
+
+**Context**  
+
+- Bullet
+
+**Events / Timeline**  
+
+- Bullet
+
+**Actors / Parties Involved**  
+
+- Bullet
+
+**Capabilities / Assets**  
+
+- Bullet
+
+**Statements / Claims**  
+
+- Bullet
+
+**Risks / Implications**  
+
+- Bullet
+
+---
+
+### Confidence
+
+A short 1–2 sentence note about:
+
+- How complete the scraped article seemed  
+
+- Whether important context might be missing
+
+DO NOT:
+
+- Repeat the source URL multiple times  
+
+- Put [Source: ...] after every bullet  
+
+- Output raw HTML tags  
+
+- Output `<strong>` or `<span>` tags  
+
+- Hallucinate details not present in the text  
+
+If the scraped text is incomplete OR the article is behind a paywall, state so clearly.
+
+Always return clean, beautiful markdown."""
 
 # Cache the model ID to avoid making a preliminary call on every request
 _cached_model_id: Optional[str] = None
@@ -78,17 +162,31 @@ def classify_intent(text: str) -> str:
     
     return "general_chat"
 
-def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat") -> tuple[List[Dict[str, str]], str, str, str]:
+def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat", system_prompt_override: Optional[str] = None) -> tuple[List[Dict[str, str]], str, str, str]:
     """
     Call the AI-Router HTTP service to get AI responses.
     
     Args:
         messages: List of message dicts with 'role' and 'content' keys
         intent: AI intent type (e.g., "general_chat", "long_planning", "code_edit")
+        system_prompt_override: Optional system prompt to override the default
     
     Returns:
         Tuple of (list of assistant messages from the router, model_id, provider_id, model_display_name)
     """
+    # If system_prompt_override is provided, replace the system message
+    router_messages = messages.copy()
+    if system_prompt_override:
+        # Find and replace system message, or add it if not present
+        system_found = False
+        for i, msg in enumerate(router_messages):
+            if msg.get("role") == "system":
+                router_messages[i] = {"role": "system", "content": system_prompt_override}
+                system_found = True
+                break
+        if not system_found:
+            router_messages.insert(0, {"role": "system", "content": system_prompt_override})
+    
     payload = {
         "role": "chatdo",
         "intent": intent,
@@ -96,7 +194,7 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         "privacyLevel": "normal",
         "costTier": "standard",
         "input": {
-            "messages": messages,
+            "messages": router_messages,
         },
     }
     try:
@@ -372,7 +470,42 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     scraped_content.append(f"=== Error scraping {url}: {str(e)} ===\n")
             
             if scraped_content:
-                task = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nIMPORTANT: When answering the user's question, you MUST cite the specific source URL for each piece of information you provide. Format citations as: [Source: URL] or (Source: URL). Based on the above scraped content, please answer: {task}"
+                # Extract the first URL for metadata
+                first_url = unique_urls[0] if unique_urls else ""
+                domain = urlparse(first_url).netloc.replace("www.", "") if first_url else ""
+                
+                # Build user prompt with scraped content
+                user_prompt = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please analyze and format it according to the instructions in your system prompt."
+                
+                # Build message history for web scraping
+                messages = [
+                    {"role": "system", "content": WEB_SCRAPE_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ]
+                
+                # Call AI Router with web_scraping intent and custom system prompt
+                try:
+                    assistant_messages, model_id, provider_id, model_display = call_ai_router(
+                        messages,
+                        intent="web_scraping",
+                        system_prompt_override=WEB_SCRAPE_SYSTEM_PROMPT
+                    )
+                    
+                    # Extract the formatted response
+                    if assistant_messages and len(assistant_messages) > 0:
+                        formatted_content = assistant_messages[0].get("content", "")
+                        
+                        # Return structured web_scrape response
+                        return {
+                            "type": "web_scrape",
+                            "url": first_url,
+                            "domain": domain,
+                            "content": formatted_content
+                        }, model_display, provider_id
+                    else:
+                        return "Failed to generate formatted response from scraped content.", "Gab AI", "gab-ai"
+                except Exception as e:
+                    return f"Error processing scraped content: {str(e)}", "Gab AI", "gab-ai"
             else:
                 return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com').", "Gab AI", "gab-ai"
     

@@ -7,7 +7,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'web_search_results';  // Message type: 'text' (default) or 'web_search_results'
+  type?: 'text' | 'web_search_results' | 'web_scrape';  // Message type: 'text' (default), 'web_search_results', or 'web_scrape'
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Gab AI")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "gab-ai")
   data?: {
@@ -15,6 +15,9 @@ export interface Message {
     provider?: string;
     results?: Array<{ title: string; url: string; snippet: string }>;
     summary?: string;
+    url?: string;
+    domain?: string;
+    content?: string;
   };  // Structured data for special message types
 }
 

@@ -484,7 +484,7 @@ const ChatMessages: React.FC = () => {
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
                   // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results';
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'web_scrape';
                   
                   if (!hasContent) {
                     return null;
@@ -687,8 +687,36 @@ const ChatMessages: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Display text content if any (and not web_search_results) */}
-                      {content && message.type !== 'web_search_results' && (
+                      {/* Display web_scrape if message type is web_scrape */}
+                      {message.type === 'web_scrape' && message.data && (
+                        <div className="rounded-xl bg-[#1a1a1a] p-6 border border-[#565869]">
+                          <div className="prose prose-invert max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                h2: ({ children }) => <h2 className="text-2xl font-bold mb-4 text-[#ececf1] border-b border-[#565869] pb-2">{children}</h2>,
+                                h3: ({ children }) => <h3 className="text-xl font-semibold mt-6 mb-3 text-[#ececf1]">{children}</h3>,
+                                p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
+                                ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1] ml-4">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1] ml-4">{children}</ol>,
+                                li: ({ children }) => <li className="text-[#ececf1] mb-1">{children}</li>,
+                                strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
+                                em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+                                hr: () => <hr className="my-6 border-[#565869]" />,
+                                a: ({ href, children }) => (
+                                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {message.data.content || ''}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display text content if any (and not web_search_results or web_scrape) */}
+                      {content && message.type !== 'web_search_results' && message.type !== 'web_scrape' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>

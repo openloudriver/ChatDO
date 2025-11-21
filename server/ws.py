@@ -64,17 +64,28 @@ async def stream_chat_response(
             thread_id=conversation_id
         )
         
-        # Check if result is structured (web_search_results)
-        if isinstance(raw_result, dict) and raw_result.get("type") == "web_search_results":
-            # Send structured web search results
-            await websocket.send_json({
-                "type": "web_search_results",
-                "data": raw_result,
-                "model": model_display,
-                "provider": provider,
-                "done": True
-            })
-            return
+        # Check if result is structured (web_search_results or web_scrape)
+        if isinstance(raw_result, dict):
+            if raw_result.get("type") == "web_search_results":
+                # Send structured web search results
+                await websocket.send_json({
+                    "type": "web_search_results",
+                    "data": raw_result,
+                    "model": model_display,
+                    "provider": provider,
+                    "done": True
+                })
+                return
+            elif raw_result.get("type") == "web_scrape":
+                # Send structured web scrape results
+                await websocket.send_json({
+                    "type": "web_scrape",
+                    "data": raw_result,
+                    "model": model_display,
+                    "provider": provider,
+                    "done": True
+                })
+                return
         
         # Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)

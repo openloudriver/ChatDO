@@ -166,6 +166,19 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
+          } else if (data.type === 'web_scrape') {
+            // Handle structured web scrape results
+            addMessage({ 
+              role: 'assistant', 
+              content: '',
+              type: 'web_scrape',
+              data: data.data,
+              model: data.model,
+              provider: data.provider
+            });
+            clearStreaming();
+            setLoading(false);
+            ws.close();
           } else if (data.type === 'done') {
             // Add final message with model/provider info
             addMessage({ 
@@ -225,12 +238,21 @@ const ChatComposer: React.FC = () => {
         message: messageToSend
       });
       
-      // Check if response is structured (web_search_results)
+      // Check if response is structured (web_search_results or web_scrape)
       if (response.data.message_type === 'web_search_results' && response.data.message_data) {
         addMessage({ 
           role: 'assistant', 
           content: '',
           type: 'web_search_results',
+          data: response.data.message_data,
+          model: response.data.model_used,
+          provider: response.data.provider
+        });
+      } else if (response.data.message_type === 'web_scrape' && response.data.message_data) {
+        addMessage({ 
+          role: 'assistant', 
+          content: '',
+          type: 'web_scrape',
           data: response.data.message_data,
           model: response.data.model_used,
           provider: response.data.provider
