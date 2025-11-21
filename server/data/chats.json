@@ -85,7 +85,17 @@
     "title": "What are the top headlines in the mounting conf...",
     "thread_id": "bd33f99e-f56b-4823-9577-7dd30e0c686a",
     "created_at": "2025-11-21T03:03:24.407735+00:00",
-    "updated_at": "2025-11-21T03:03:47.376382+00:00",
+    "updated_at": "2025-11-21T03:17:17.883156+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T03:17:17.883124+00:00"
+  },
+  {
+    "id": "130f5493-14ff-45a0-a35c-d5adc44fe81a",
+    "project_id": "scratch",
+    "title": "What's going on with the US military buildup in...",
+    "thread_id": "130f5493-14ff-45a0-a35c-d5adc44fe81a",
+    "created_at": "2025-11-21T03:17:49.726515+00:00",
+    "updated_at": "2025-11-21T03:18:24.291207+00:00",
     "trashed": false,
     "trashed_at": null
   }

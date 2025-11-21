@@ -60,7 +60,10 @@ def classify_intent(text: str) -> str:
     
     # Web search - user wants to search for information, use Brave Search + GPT-5
     if ("search" in t or "find" in t or "look for" in t or "top headlines" in t or "latest" in t or 
-        "current" in t or "today" in t or "recent" in t or "discover" in t or "what are" in t):
+        "current" in t or "today" in t or "recent" in t or "discover" in t or "what are" in t or
+        "what's going on" in t or "what is going on" in t or "what's happening" in t or "what is happening" in t or
+        "news" in t or "news articles" in t or "news article" in t or "headlines" in t or
+        "tell me about" in t or "what about" in t or "update" in t or "updates" in t):
         return "web_search"
     if "refactor" in t or "fix" in t or "edit code" in t:
         return "code_edit"
