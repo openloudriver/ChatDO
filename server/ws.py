@@ -145,11 +145,17 @@ async def stream_chat_response(
         import traceback
         error_detail = str(e)
         traceback.print_exc()  # Print full traceback to server logs
-        await websocket.send_json({
-            "type": "error",
-            "content": error_detail,
-            "done": True
-        })
+        
+        # Ensure error is sent even if it's a timeout or network issue
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "content": error_detail,
+                "done": True
+            })
+        except Exception:
+            # WebSocket may be closed, but we tried
+            pass
 
 
 async def websocket_endpoint(websocket: WebSocket):

@@ -427,15 +427,17 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
             scraped_content = []
             for url in urls_in_task[:5]:  # Limit to 5 URLs
                 try:
-                    # Fetch and scrape URL content (15s timeout)
-                    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+                    # Fetch and scrape URL content (10s timeout - reduced for faster failure)
+                    with httpx.Client(timeout=10.0, follow_redirects=True) as client:
                         try:
-                            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=15.0)
+                            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=10.0)
                             response.raise_for_status()
                         except httpx.TimeoutException:
-                            raise Exception(f"Request timed out after 15 seconds. The website may be slow or blocking requests.")
+                            raise Exception(f"Request timed out after 10 seconds. The website may be slow or blocking requests.")
                         except httpx.HTTPStatusError as e:
                             raise Exception(f"HTTP {e.response.status_code}: {e.response.reason_phrase}")
+                        except httpx.RequestError as e:
+                            raise Exception(f"Network error: {str(e)}")
                         
                         # Check if we got redirected to an unwanted domain (like Canva)
                         final_url = str(response.url)
@@ -508,8 +510,8 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                             "messages": messages,
                         },
                     }
-                    # Use 45s timeout for faster failure detection
-                    resp = requests.post(ai_router_url, json=payload, timeout=45)
+                    # Use 30s timeout for faster failure detection (reduced from 45s)
+                    resp = requests.post(ai_router_url, json=payload, timeout=30)
                     resp.raise_for_status()
                     data = resp.json()
                     if not data.get("ok"):
@@ -532,12 +534,19 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                         }, model_display, provider_id
                     else:
                         return "Failed to generate formatted response from scraped content.", "Gab AI", "gab-ai"
-                except requests.exceptions.Timeout:
-                    return f"Error: AI Router request timed out after 45 seconds. The scraped content may be too large or the AI service (Gab AI) is slow. Try scraping a shorter article or a different URL.", "Gab AI", "gab-ai"
+                except requests.exceptions.Timeout as e:
+                    # Ensure timeout errors are immediately returned
+                    error_msg = f"Error: AI Router request timed out after 30 seconds. The scraped content may be too large or Gab AI is slow. Try scraping a shorter article or a different URL."
+                    return error_msg, "Gab AI", "gab-ai"
                 except requests.exceptions.ConnectionError as e:
-                    return f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}", "Gab AI", "gab-ai"
+                    error_msg = f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}"
+                    return error_msg, "Gab AI", "gab-ai"
+                except requests.exceptions.RequestException as e:
+                    error_msg = f"Error: Network error communicating with AI Router: {str(e)}"
+                    return error_msg, "Gab AI", "gab-ai"
                 except Exception as e:
-                    return f"Error processing scraped content: {str(e)}", "Gab AI", "gab-ai"
+                    error_msg = f"Error processing scraped content: {type(e).__name__}: {str(e)}"
+                    return error_msg, "Gab AI", "gab-ai"
             else:
                 return "No URLs found to scrape. Please provide URLs in your message (e.g., 'scrape https://example.com').", "Gab AI", "gab-ai"
     
