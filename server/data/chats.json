@@ -105,8 +105,18 @@
     "title": "What's going on with the US military buildup in...",
     "thread_id": "3439dcf5-4c39-48e8-92b7-6b0015b3458b",
     "created_at": "2025-11-21T03:45:40.141254+00:00",
-    "updated_at": "2025-11-21T03:45:45.095719+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-11-21T04:02:02.592291+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T04:02:02.592271+00:00"
+  },
+  {
+    "id": "b75087df-9582-402d-b475-f95df2cc36ec",
+    "project_id": "scratch",
+    "title": "Give me some articles on why the sun is yellow",
+    "thread_id": "b75087df-9582-402d-b475-f95df2cc36ec",
+    "created_at": "2025-11-21T04:02:03.870399+00:00",
+    "updated_at": "2025-11-21T04:06:46.098823+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T04:06:46.098803+00:00"
   }
 ]

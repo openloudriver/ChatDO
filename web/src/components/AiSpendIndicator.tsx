@@ -58,6 +58,25 @@ export const AiSpendIndicator: React.FC = () => {
 
   const total = data?.totalUsd ?? 0;
 
+  // Sort providers: OpenAI first, then Gab AI, then others
+  const sortedProviders = data?.providers ? [...data.providers].sort((a, b) => {
+    // Define priority order
+    const priority: Record<string, number> = {
+      'openai-gpt5': 1,
+      'gab-ai': 2,
+    };
+    
+    const aPriority = priority[a.id] ?? 999;
+    const bPriority = priority[b.id] ?? 999;
+    
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    
+    // If same priority, sort alphabetically by label
+    return a.label.localeCompare(b.label);
+  }) : [];
+
   return (
     <div 
       className="relative w-full"
@@ -83,7 +102,7 @@ export const AiSpendIndicator: React.FC = () => {
         >
           {data ? (
             <>
-              {data.providers.map((p) => (
+              {sortedProviders.map((p) => (
                 <div
                   key={p.id}
                   className="flex justify-between px-2 py-1 text-sm text-[#ececf1]"
@@ -92,7 +111,7 @@ export const AiSpendIndicator: React.FC = () => {
                   <span>${p.usd.toFixed(2)}</span>
                 </div>
               ))}
-              {data.providers.length > 0 && (
+              {sortedProviders.length > 0 && (
                 <>
                   <hr className="border-[#565869] my-2" />
                   <div className="flex justify-between px-2 py-1 text-sm font-semibold text-[#ececf1]">
@@ -101,7 +120,7 @@ export const AiSpendIndicator: React.FC = () => {
                   </div>
                 </>
               )}
-              {data.providers.length === 0 && (
+              {sortedProviders.length === 0 && (
                 <div className="text-sm text-[#8e8ea0] px-2 py-1">
                   No spend recorded yet
                 </div>
