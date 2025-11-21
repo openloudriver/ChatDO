@@ -64,45 +64,380 @@ async def stream_chat_response(
         # Check for multiple URLs in the message - route to multi-article summary
         urls = extract_urls(message)
         if len(urls) >= 2:
-            # Import here to avoid circular imports
-            from server.main import multi_article_summary, MultiArticleSummaryRequest
+            # Call the multi-article summary logic directly to avoid circular imports
+            import sys
+            import os
+            from pathlib import Path
             
-            # User provided multiple URLs - route to multi-article summary
-            multi_request = MultiArticleSummaryRequest(
-                urls=urls,
-                conversation_id=conversation_id,
-                project_id=project_id
-            )
-            result = await multi_article_summary(multi_request)
+            # Import article extraction and AI router functions
+            from server.article_summary import extract_article
+            import requests
+            from datetime import datetime, timezone
+            from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
+            from server.main import load_projects, ARTICLE_SUMMARY_SYSTEM_PROMPT
+            
+            # Extract articles
+            articles_data = []
+            article_texts = []
+            
+            for url in urls:
+                if not url.startswith(("http://", "https://")):
+                    continue
+                
+                article_data = extract_article(url)
+                if article_data.get("error") or not article_data.get("text"):
+                    continue
+                
+                from urllib.parse import urlparse
+                domain = urlparse(url).netloc.replace("www.", "")
+                articles_data.append({
+                    "url": url,
+                    "title": article_data.get("title") or "Untitled",
+                    "domain": domain,
+                })
+                
+                article_texts.append(f"Article from {domain}:\n{article_data['text'][:5000]}")
+            
+            if len(articles_data) < 2:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": "Could not extract content from at least 2 URLs",
+                    "done": True
+                })
+                return
+            
+            # Combine all article texts
+            combined_text = "\n\n---\n\n".join(article_texts)
+            
+            # Build prompt for GPT-5
+            user_prompt = f"""Please analyze and summarize the following {len(articles_data)} articles together:
+
+{combined_text}
+
+Provide:
+1. A 3-5 sentence joint summary that captures the main themes across all articles
+2. 3-5 key points where the articles agree or align
+3. 3-5 key differences or contrasting perspectives between the articles
+4. (Optional) 1-2 sentences on why this comparison matters or what insights emerge
+
+Keep it concise, neutral, and factual. Focus on synthesis and comparison."""
+            
+            # Call AI Router
+            messages = [
+                {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ]
+            
+            ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+            payload = {
+                "role": "chatdo",
+                "intent": "summarize_article",
+                "priority": "high",
+                "privacyLevel": "normal",
+                "costTier": "standard",
+                "input": {
+                    "messages": messages,
+                },
+            }
+            
+            resp = requests.post(ai_router_url, json=payload, timeout=180)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            if not data.get("ok"):
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"AI Router error: {data.get('error')}",
+                    "done": True
+                })
+                return
+            
+            assistant_messages = data["output"]["messages"]
+            if not assistant_messages or len(assistant_messages) == 0:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": "No response from AI Router",
+                    "done": True
+                })
+                return
+            
+            summary_text = assistant_messages[0].get("content", "")
+            
+            # Parse summary into sections
+            lines = summary_text.split("\n")
+            joint_summary = ""
+            key_agreements = []
+            key_differences = []
+            why_matters = ""
+            
+            current_section = "summary"
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if "agreement" in line.lower() or "align" in line.lower() or "agree" in line.lower():
+                    current_section = "agreements"
+                    continue
+                elif "difference" in line.lower() or "contrast" in line.lower() or "differ" in line.lower():
+                    current_section = "differences"
+                    continue
+                elif "why" in line.lower() and ("matter" in line.lower() or "insight" in line.lower()):
+                    current_section = "why_matters"
+                    continue
+                
+                if line.startswith("-") or line.startswith("•") or (line.startswith("*") and len(line) > 1):
+                    bullet_text = line.lstrip("-•* ").strip()
+                    if bullet_text:
+                        if current_section == "agreements":
+                            key_agreements.append(bullet_text)
+                        elif current_section == "differences":
+                            key_differences.append(bullet_text)
+                elif current_section == "summary" and not joint_summary:
+                    joint_summary = line
+                elif current_section == "summary" and joint_summary:
+                    joint_summary += " " + line
+                elif current_section == "why_matters":
+                    if why_matters:
+                        why_matters += " " + line
+                    else:
+                        why_matters = line
+            
+            if not joint_summary:
+                joint_summary = summary_text[:500]
+            
+            # Build message data
+            message_data = {
+                "articles": articles_data,
+                "jointSummary": joint_summary,
+                "keyAgreements": key_agreements if key_agreements else [],
+                "keyDifferences": key_differences if key_differences else [],
+                "whyMatters": why_matters if why_matters else None,
+            }
+            
+            # Save to memory store if conversation_id is provided
+            if conversation_id and project_id:
+                try:
+                    projects = load_projects()
+                    project = next((p for p in projects if p.get("id") == project_id), None)
+                    if project:
+                        target_name = project.get("default_target", "general")
+                        thread_id = conversation_id
+                        
+                        history = load_thread_history(target_name, thread_id)
+                        user_message = f"Summarize these {len(articles_data)} articles together: {', '.join([a['url'] for a in articles_data])}"
+                        history.append({"role": "user", "content": user_message})
+                        
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": "",
+                            "type": "multi_article_card",
+                            "data": message_data,
+                            "model": "Trafilatura + GPT-5",
+                            "provider": "trafilatura-gpt5"
+                        }
+                        history.append(assistant_message)
+                        save_thread_history(target_name, thread_id, history)
+                        
+                        # Add sources
+                        import uuid as uuid_lib
+                        for article in articles_data:
+                            source = {
+                                "id": str(uuid_lib.uuid4()),
+                                "kind": "url",
+                                "title": article["title"],
+                                "url": article["url"],
+                                "createdAt": datetime.now(timezone.utc).isoformat(),
+                                "meta": {"domain": article["domain"]}
+                            }
+                            add_thread_source(target_name, thread_id, source)
+                except Exception as e:
+                    print(f"Warning: Failed to save multi-article summary to memory store: {e}")
             
             # Send multi-article card via WebSocket
             await websocket.send_json({
                 "type": "multi_article_card",
-                "data": result.get("message_data", {}),
-                "model": result.get("model", "Trafilatura + GPT-5"),
-                "provider": result.get("provider", "trafilatura-gpt5"),
+                "data": message_data,
+                "model": "Trafilatura + GPT-5",
+                "provider": "trafilatura-gpt5",
                 "done": True
             })
             return
         
         # Check for single URL with "summarize" keyword - route to article summary
         if len(urls) == 1 and ("summarize" in message.lower() or "summary" in message.lower()):
-            # Import here to avoid circular imports
-            from server.main import summarize_article, ArticleSummaryRequest
+            # Call article summary logic directly to avoid circular imports
+            from server.article_summary import extract_article
+            import requests
+            import os
+            from datetime import datetime, timezone
+            from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
+            from server.main import load_projects, ARTICLE_SUMMARY_SYSTEM_PROMPT
             
-            article_request = ArticleSummaryRequest(
-                url=urls[0],
-                conversation_id=conversation_id,
-                project_id=project_id
-            )
-            result = await summarize_article(article_request)
+            url = urls[0]
+            article_data = extract_article(url)
+            
+            if article_data.get("error"):
+                await websocket.send_json({
+                    "type": "error",
+                    "content": article_data["error"],
+                    "done": True
+                })
+                return
+            
+            if not article_data.get("text"):
+                await websocket.send_json({
+                    "type": "error",
+                    "content": "Could not extract article text from URL",
+                    "done": True
+                })
+                return
+            
+            # Truncate text
+            article_text = article_data["text"][:10000]
+            
+            # Build prompt
+            user_prompt = f"""Please summarize the following article:
+
+{article_text}
+
+Provide:
+1. A 2–4 sentence summary paragraph
+2. 3–5 key bullet points
+3. (Optional) 1–2 sentences on why this matters or context
+
+Keep it concise, neutral, and factual."""
+            
+            # Call AI Router
+            messages = [
+                {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ]
+            
+            ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+            payload = {
+                "role": "chatdo",
+                "intent": "summarize_article",
+                "priority": "high",
+                "privacyLevel": "normal",
+                "costTier": "standard",
+                "input": {
+                    "messages": messages,
+                },
+            }
+            
+            resp = requests.post(ai_router_url, json=payload, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            if not data.get("ok"):
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"AI Router error: {data.get('error')}",
+                    "done": True
+                })
+                return
+            
+            assistant_messages = data["output"]["messages"]
+            if not assistant_messages or len(assistant_messages) == 0:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": "No response from AI Router",
+                    "done": True
+                })
+                return
+            
+            summary_text = assistant_messages[0].get("content", "")
+            
+            # Parse summary
+            lines = summary_text.split("\n")
+            summary_paragraph = ""
+            key_points = []
+            why_matters = ""
+            
+            current_section = "summary"
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line.startswith("-") or line.startswith("•") or (line.startswith("*") and len(line) > 1):
+                    bullet_text = line.lstrip("-•* ").strip()
+                    if bullet_text:
+                        key_points.append(bullet_text)
+                elif "why" in line.lower() and ("matter" in line.lower() or "context" in line.lower()):
+                    current_section = "why_matters"
+                elif current_section == "summary" and not summary_paragraph:
+                    summary_paragraph = line
+                elif current_section == "summary" and summary_paragraph:
+                    summary_paragraph += " " + line
+                elif current_section == "why_matters":
+                    if why_matters:
+                        why_matters += " " + line
+                    else:
+                        why_matters = line
+            
+            if not summary_paragraph:
+                summary_paragraph = summary_text[:500]
+            
+            # Build message data
+            message_data = {
+                "url": article_data["url"],
+                "title": article_data.get("title") or "Article",
+                "siteName": article_data.get("site_name") or "",
+                "published": article_data.get("published") or None,
+                "summary": summary_paragraph,
+                "keyPoints": key_points if key_points else [],
+                "whyMatters": why_matters if why_matters else None,
+            }
+            
+            # Save to memory store
+            if conversation_id and project_id:
+                try:
+                    projects = load_projects()
+                    project = next((p for p in projects if p.get("id") == project_id), None)
+                    if project:
+                        target_name = project.get("default_target", "general")
+                        thread_id = conversation_id
+                        
+                        history = load_thread_history(target_name, thread_id)
+                        history.append({"role": "user", "content": f"Summarize: {url}"})
+                        
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": "",
+                            "type": "article_card",
+                            "data": message_data,
+                            "model": "Trafilatura + GPT-5",
+                            "provider": "trafilatura-gpt5"
+                        }
+                        history.append(assistant_message)
+                        save_thread_history(target_name, thread_id, history)
+                        
+                        # Add source
+                        import uuid as uuid_lib
+                        source = {
+                            "id": str(uuid_lib.uuid4()),
+                            "kind": "url",
+                            "title": message_data.get("title") or "Article",
+                            "description": summary_paragraph[:200] if summary_paragraph else None,
+                            "url": article_data["url"],
+                            "createdAt": datetime.now(timezone.utc).isoformat(),
+                            "meta": {
+                                "siteName": article_data.get("site_name"),
+                                "published": article_data.get("published"),
+                            }
+                        }
+                        add_thread_source(target_name, thread_id, source)
+                except Exception as e:
+                    print(f"Warning: Failed to save article summary to memory store: {e}")
             
             # Send article card via WebSocket
             await websocket.send_json({
                 "type": "article_card",
-                "data": result.message_data,
-                "model": result.model,
-                "provider": result.provider,
+                "data": message_data,
+                "model": "Trafilatura + GPT-5",
+                "provider": "trafilatura-gpt5",
                 "done": True
             })
             return
