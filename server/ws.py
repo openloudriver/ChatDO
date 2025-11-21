@@ -91,9 +91,14 @@ async def stream_chat_response(
                 
                 from urllib.parse import urlparse
                 domain = urlparse(url).netloc.replace("www.", "")
+                # Get title, with better fallback
+                title = article_data.get("title")
+                if not title or title.strip() == "":
+                    title = f"Article from {domain}"
+                
                 articles_data.append({
                     "url": url,
-                    "title": article_data.get("title") or "Untitled",
+                    "title": title,
                     "domain": domain,
                 })
                 
