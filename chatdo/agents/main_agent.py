@@ -480,7 +480,12 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 domain = urlparse(first_url).netloc.replace("www.", "") if first_url else ""
                 
                 # Build user prompt with scraped content
-                user_prompt = f"Scraped Web Content from the following sources:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please analyze and format it according to the instructions in your system prompt."
+                # Limit total content size to avoid huge payloads
+                total_content = ''.join(scraped_content)
+                if len(total_content) > 8000:  # Limit to 8000 chars total
+                    total_content = total_content[:8000] + "\n\n[Content truncated due to size...]"
+                
+                user_prompt = f"Scraped Web Content from the following sources:\n\n{total_content}\n\nBased on the above scraped content, please analyze and format it according to the instructions in your system prompt."
                 
                 # Build message history for web scraping
                 messages = [
@@ -489,7 +494,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 ]
                 
                 # Call AI Router with web_scraping intent and custom system prompt
-                # Use shorter timeout for web scraping (60s instead of 120s)
+                # Use shorter timeout for web scraping (45s instead of 60s for faster failure)
                 try:
                     # Temporarily override AI_ROUTER_URL timeout by making direct request
                     ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
@@ -503,7 +508,8 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                             "messages": messages,
                         },
                     }
-                    resp = requests.post(ai_router_url, json=payload, timeout=60)  # 60s timeout for scraping
+                    # Use 45s timeout for faster failure detection
+                    resp = requests.post(ai_router_url, json=payload, timeout=45)
                     resp.raise_for_status()
                     data = resp.json()
                     if not data.get("ok"):
@@ -527,7 +533,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                     else:
                         return "Failed to generate formatted response from scraped content.", "Gab AI", "gab-ai"
                 except requests.exceptions.Timeout:
-                    return f"Error: AI Router request timed out after 60 seconds. The scraped content may be too large or the AI service is slow. Try scraping a shorter article.", "Gab AI", "gab-ai"
+                    return f"Error: AI Router request timed out after 45 seconds. The scraped content may be too large or the AI service (Gab AI) is slow. Try scraping a shorter article or a different URL.", "Gab AI", "gab-ai"
                 except requests.exceptions.ConnectionError as e:
                     return f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}", "Gab AI", "gab-ai"
                 except Exception as e:

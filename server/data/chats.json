@@ -95,7 +95,17 @@
     "title": "What's going on with the US military buildup in...",
     "thread_id": "130f5493-14ff-45a0-a35c-d5adc44fe81a",
     "created_at": "2025-11-21T03:17:49.726515+00:00",
-    "updated_at": "2025-11-21T03:18:24.291207+00:00",
+    "updated_at": "2025-11-21T03:45:38.475044+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T03:45:38.475020+00:00"
+  },
+  {
+    "id": "3439dcf5-4c39-48e8-92b7-6b0015b3458b",
+    "project_id": "scratch",
+    "title": "What's going on with the US military buildup in...",
+    "thread_id": "3439dcf5-4c39-48e8-92b7-6b0015b3458b",
+    "created_at": "2025-11-21T03:45:40.141254+00:00",
+    "updated_at": "2025-11-21T03:45:45.095719+00:00",
     "trashed": false,
     "trashed_at": null
   }
