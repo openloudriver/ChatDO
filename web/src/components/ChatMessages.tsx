@@ -887,6 +887,17 @@ const ChatMessages: React.FC = () => {
                         />
                       )}
                       
+                      {/* Display multi_article_card if message type is multi_article_card */}
+                      {message.type === 'multi_article_card' && message.data && (
+                        <MultiArticleCard
+                          articles={message.data.articles || []}
+                          jointSummary={message.data.jointSummary || ''}
+                          keyAgreements={message.data.keyAgreements || []}
+                          keyDifferences={message.data.keyDifferences || []}
+                          whyMatters={message.data.whyMatters}
+                        />
+                      )}
+                      
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'multi_article_card' && (
                         message.role === 'assistant' ? (
