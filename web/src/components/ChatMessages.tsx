@@ -99,6 +99,9 @@ const ChatMessages: React.FC = () => {
     deleteMessage
   } = useChatStore();
   
+  // Track which articles are being summarized or have been summarized
+  const [articleStates, setArticleStates] = useState<Record<string, 'idle' | 'summarizing' | 'summarized'>>({});
+  
   const [previewFile, setPreviewFile] = useState<{name: string, data: string, type: 'image' | 'pdf' | 'pptx' | 'xlsx' | 'docx' | 'video' | 'other', mimeType: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -651,60 +654,87 @@ const ChatMessages: React.FC = () => {
                             Top Results
                           </div>
                           <ol className="list-decimal ml-6 space-y-3">
-                            {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => (
-                              <li key={index} className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <a
-                                    href={result.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 hover:text-blue-300 underline font-medium flex-1"
-                                  >
-                                    {result.title}
-                                  </a>
-                                  <button
-                                    onClick={async () => {
-                                      if (!currentProject || !currentConversation) return;
-                                      try {
-                                        const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
-                                        setStoreLoading(true);
-                                        const response = await axios.post('http://localhost:8000/api/article/summary', {
-                                          url: result.url,
-                                        });
-                                        if (response.data.message_type === 'article_card' && response.data.message_data) {
+                            {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
+                              const articleState = articleStates[result.url] || 'idle';
+                              const isSummarizing = articleState === 'summarizing';
+                              const isSummarized = articleState === 'summarized';
+                              
+                              return (
+                                <li key={index} className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={result.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300 underline font-medium flex-1"
+                                    >
+                                      {result.title}
+                                    </a>
+                                    <button
+                                      onClick={async () => {
+                                        if (!currentProject || !currentConversation || isSummarizing || isSummarized) return;
+                                        setArticleStates(prev => ({ ...prev, [result.url]: 'summarizing' }));
+                                        try {
+                                          const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
+                                          setStoreLoading(true);
+                                          const response = await axios.post('http://localhost:8000/api/article/summary', {
+                                            url: result.url,
+                                          });
+                                          if (response.data.message_type === 'article_card' && response.data.message_data) {
+                                            addStoreMessage({
+                                              role: 'assistant',
+                                              content: '',
+                                              type: 'article_card',
+                                              data: response.data.message_data,
+                                              model: response.data.model || 'Trafilatura + GPT-5',
+                                              provider: response.data.provider || 'trafilatura-gpt5',
+                                            });
+                                            setArticleStates(prev => ({ ...prev, [result.url]: 'summarized' }));
+                                          }
+                                          setStoreLoading(false);
+                                        } catch (error: any) {
+                                          console.error('Error summarizing article:', error);
+                                          const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
                                           addStoreMessage({
                                             role: 'assistant',
-                                            content: '',
-                                            type: 'article_card',
-                                            data: response.data.message_data,
-                                            model: response.data.model || 'Trafilatura + GPT-5',
-                                            provider: response.data.provider || 'trafilatura-gpt5',
+                                            content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article.'}`,
                                           });
+                                          setStoreLoading(false);
+                                          setArticleStates(prev => ({ ...prev, [result.url]: 'idle' }));
                                         }
-                                        setStoreLoading(false);
-                                      } catch (error: any) {
-                                        console.error('Error summarizing article:', error);
-                                        const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
-                                        addStoreMessage({
-                                          role: 'assistant',
-                                          content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article.'}`,
-                                        });
-                                        setStoreLoading(false);
-                                      }
-                                    }}
-                                    className="p-1.5 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
-                                    title="Summarize this article"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                                <div className="text-sm text-[#8e8ea0] ml-0">
-                                  {result.snippet}
-                                </div>
-                              </li>
-                            ))}
+                                      }}
+                                      disabled={isSummarizing || isSummarized}
+                                      className={`p-1.5 rounded transition-colors ${
+                                        isSummarized 
+                                          ? 'text-green-400 cursor-default' 
+                                          : isSummarizing
+                                          ? 'text-blue-400 cursor-wait'
+                                          : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                                      }`}
+                                      title={isSummarized ? "Article summarized" : isSummarizing ? "Summarizing..." : "Summarize this article"}
+                                    >
+                                      {isSummarizing ? (
+                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                      ) : isSummarized ? (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                      )}
+                                    </button>
+                                  </div>
+                                  <div className="text-sm text-[#8e8ea0] ml-0">
+                                    {result.snippet}
+                                  </div>
+                                </li>
+                              );
+                            })}
                           </ol>
                           {message.data.summary && (
                             <div className="mt-6 pt-6 border-t border-[#565869]">
