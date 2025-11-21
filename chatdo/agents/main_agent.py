@@ -262,14 +262,18 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 # Save to memory store if thread_id is provided
                 if thread_id:
                     history = memory_store.load_thread_history(target.name, thread_id)
-                    # Format structured result as a readable string for storage
-                    result_text = f"Web search results for '{search_query}':\n"
-                    for i, r in enumerate(search_results[:5], 1):  # Store top 5 results
-                        result_text += f"{i}. {r.get('title', 'No title')} - {r.get('url', 'No URL')}\n"
-                        if r.get('snippet'):
-                            result_text += f"   {r.get('snippet', '')}\n"
+                    # Add user message
                     history.append({"role": "user", "content": task})
-                    history.append({"role": "assistant", "content": result_text})
+                    # Add assistant message with structured data
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": "",  # Empty content for structured messages
+                        "type": "web_search_results",
+                        "data": structured_result,
+                        "model": model_display,
+                        "provider": provider
+                    }
+                    history.append(assistant_message)
                     memory_store.save_thread_history(target.name, thread_id, history)
                 
                 return structured_result, model_display, provider

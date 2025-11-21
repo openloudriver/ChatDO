@@ -375,9 +375,11 @@ const ChatComposer: React.FC = () => {
         content: `Summarize: ${url}`,
       });
       
-      // Call the article summary endpoint
+      // Call the article summary endpoint with conversation_id and project_id for persistence
       const response = await axios.post('http://localhost:8000/api/article/summary', {
         url: url.trim(),
+        conversation_id: currentConversation.id,
+        project_id: currentProject.id,
       });
       
       if (response.data.message_type === 'article_card' && response.data.message_data) {

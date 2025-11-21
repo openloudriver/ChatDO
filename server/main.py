@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
-from chatdo.memory.store import delete_thread_history, load_thread_history
+from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history
 from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
@@ -215,6 +215,8 @@ class ChatResponse(BaseModel):
 class ArticleSummaryRequest(BaseModel):
     url: str
     title: Optional[str] = None  # Optional title from UI
+    conversation_id: Optional[str] = None  # Optional conversation_id to save to memory store
+    project_id: Optional[str] = None  # Optional project_id to determine target_name
 
 
 class ArticleSummaryResponse(BaseModel):
@@ -642,6 +644,39 @@ Keep it concise, neutral, and factual."""
             "keyPoints": key_points if key_points else [],
             "whyMatters": why_matters if why_matters else None,
         }
+        
+        # Save to memory store if conversation_id is provided
+        if request.conversation_id and request.project_id:
+            try:
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == request.project_id), None)
+                if project:
+                    target_name = project.get("default_target", "general")
+                    thread_id = request.conversation_id
+                    
+                    # Load existing history
+                    history = load_thread_history(target_name, thread_id)
+                    
+                    # Add user message (if URL was provided by user)
+                    user_message = f"Summarize: {request.url}"
+                    history.append({"role": "user", "content": user_message})
+                    
+                    # Add assistant message with structured data
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": "",  # Empty content for structured messages
+                        "type": "article_card",
+                        "data": message_data,
+                        "model": "Trafilatura + GPT-5",
+                        "provider": "trafilatura-gpt5"
+                    }
+                    history.append(assistant_message)
+                    
+                    # Save back to memory store
+                    save_thread_history(target_name, thread_id, history)
+            except Exception as e:
+                # Don't fail the request if saving to memory store fails
+                print(f"Warning: Failed to save article summary to memory store: {e}")
         
         return ArticleSummaryResponse(
             message_data=message_data
@@ -1137,10 +1172,24 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         # Skip system messages for display
         if msg.get("role") == "system":
             continue
-        messages.append({
+        
+        # Preserve structured message types if they exist
+        message_obj = {
             "role": msg.get("role"),
             "content": msg.get("content", "")
-        })
+        }
+        
+        # If message has structured type/data, preserve it
+        if msg.get("type"):
+            message_obj["type"] = msg.get("type")
+        if msg.get("data"):
+            message_obj["data"] = msg.get("data")
+        if msg.get("model"):
+            message_obj["model"] = msg.get("model")
+        if msg.get("provider"):
+            message_obj["provider"] = msg.get("provider")
+        
+        messages.append(message_obj)
     
     # If limit is specified, return only the last N messages (for previews)
     if limit and limit > 0:

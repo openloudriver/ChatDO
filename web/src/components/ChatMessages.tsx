@@ -677,8 +677,17 @@ const ChatMessages: React.FC = () => {
                                         try {
                                           const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
                                           setStoreLoading(true);
+                                          
+                                          // Add user message
+                                          addStoreMessage({
+                                            role: 'user',
+                                            content: `Summarize: ${result.url}`,
+                                          });
+                                          
                                           const response = await axios.post('http://localhost:8000/api/article/summary', {
                                             url: result.url,
+                                            conversation_id: currentConversation.id,
+                                            project_id: currentProject.id,
                                           });
                                           if (response.data.message_type === 'article_card' && response.data.message_data) {
                                             addStoreMessage({

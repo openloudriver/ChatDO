@@ -659,7 +659,11 @@ export const useChatStore = create<ChatStore>((set) => ({
       const messages: Message[] = backendMessages.map((msg: any, index: number) => ({
         id: `${conversation.id}-${index}`,
         role: msg.role,
-        content: msg.content,
+        content: msg.content || '',
+        type: msg.type, // Preserve structured message types (article_card, web_search_results)
+        data: msg.data, // Preserve structured message data
+        model: msg.model, // Preserve model attribution
+        provider: msg.provider, // Preserve provider attribution
         timestamp: new Date() // Backend doesn't provide timestamps, use current time
       }));
       
