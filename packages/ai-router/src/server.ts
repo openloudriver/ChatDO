@@ -40,28 +40,52 @@ app.post("/v1/ai/run", async (req, res) => {
 app.get("/v1/ai/spend/monthly", async (_req, res) => {
   try {
     const current = await getCurrentMonthSpend();
+    
+    // Map provider IDs to nicer labels
+    const labelMap: Record<string, string> = {
+      "openai-gpt5": "OpenAI GPT-5",
+      "gab-ai": "Gab AI",
+      "anthropic-claude-sonnet": "Anthropic Claude",
+      "grok-code": "Grok Code",
+      "gemini-pro": "Gemini Pro",
+      "mistral-large": "Mistral Large",
+      "llama-local": "Llama Local",
+      "ollama-local": "Ollama Local",
+    };
+    
+    // Always include OpenAI and Gab AI, even if they have $0 spend
+    const providers: Array<{ id: string; label: string; usd: number }> = [];
+    
+    // Add OpenAI GPT-5 (always show)
+    providers.push({
+      id: "openai-gpt5",
+      label: labelMap["openai-gpt5"] || "OpenAI GPT-5",
+      usd: current.providers["openai-gpt5"] || 0,
+    });
+    
+    // Add Gab AI (always show)
+    providers.push({
+      id: "gab-ai",
+      label: labelMap["gab-ai"] || "Gab AI",
+      usd: current.providers["gab-ai"] || 0,
+    });
+    
+    // Add any other providers that have been used
+    for (const [id, usd] of Object.entries(current.providers)) {
+      if (id !== "openai-gpt5" && id !== "gab-ai") {
+        providers.push({
+          id,
+          label: labelMap[id] || id,
+          usd,
+        });
+      }
+    }
+    
     res.json({
       ok: true,
       month: current.monthId,
       totalUsd: current.totalUsd,
-      providers: Object.entries(current.providers).map(([id, usd]) => {
-        // Map provider IDs to nicer labels
-        const labelMap: Record<string, string> = {
-          "openai-gpt5": "OpenAI GPT-5",
-          "gab-ai": "Gab AI",
-          "anthropic-claude-sonnet": "Anthropic Claude",
-          "grok-code": "Grok Code",
-          "gemini-pro": "Gemini Pro",
-          "mistral-large": "Mistral Large",
-          "llama-local": "Llama Local",
-          "ollama-local": "Ollama Local",
-        };
-        return {
-          id,
-          label: labelMap[id] || id,
-          usd,
-        };
-      }),
+      providers,
     });
   } catch (err: any) {
     console.error("[AI-Router] /v1/ai/spend/monthly error:", err);
