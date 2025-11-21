@@ -147,38 +147,48 @@ const ChatComposer: React.FC = () => {
       };
       
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'chunk') {
-          streamedContent += data.content;
-          updateStreamingContent(streamedContent);
-        } else if (data.type === 'done') {
-          // Add final message
-          addMessage({ role: 'assistant', content: streamedContent });
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'chunk') {
+            streamedContent += data.content;
+            updateStreamingContent(streamedContent);
+          } else if (data.type === 'done') {
+            // Add final message
+            addMessage({ role: 'assistant', content: streamedContent });
+            clearStreaming();
+            ws.close();
+          } else if (data.type === 'error') {
+            // Only log to console if it's not a connection error (those are expected)
+            if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
+              console.error('WebSocket error:', data.content);
+            }
+            clearStreaming();
+            ws.close();
+            // Show the actual error message
+            addMessage({ 
+              role: 'assistant', 
+              content: `Error: ${data.content}` 
+            });
+            setLoading(false);
+          }
+        } catch (e) {
+          // Silently handle parse errors
           clearStreaming();
           ws.close();
-        } else if (data.type === 'error') {
-          console.error('WebSocket error:', data.content);
-          clearStreaming();
-          ws.close();
-          // Show the actual error message
-          addMessage({ 
-            role: 'assistant', 
-            content: `Error: ${data.content}` 
-          });
-          setLoading(false);
+          fallbackToRest(messageToSend);
         }
       };
       
       ws.onerror = () => {
         clearStreaming();
         ws.close();
-        // Fallback to REST API
+        // Fallback to REST API (silently, don't log)
         fallbackToRest(messageToSend);
       };
       
     } catch (error) {
-      console.error('WebSocket connection failed, using REST:', error);
+      // Silently fallback to REST - this is expected behavior
       fallbackToRest(messageToSend);
     }
   };

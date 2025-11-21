@@ -107,12 +107,25 @@ const ChatMessages: React.FC = () => {
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Auto-scroll to bottom when messages change or streaming updates
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && !isStreaming) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, streamingContent, isStreaming]);
+  }, [messages, isStreaming]);
+
+  // Separate effect for streaming content - debounced to prevent vibrating
+  useEffect(() => {
+    if (isStreaming && messagesEndRef.current) {
+      // Use instant scroll (no smooth) and debounce to prevent jumping
+      const timeoutId = setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        }
+      }, 150); // Debounce to every 150ms during streaming
+      return () => clearTimeout(timeoutId);
+    }
+  }, [streamingContent, isStreaming]);
 
   const handleBack = () => {
     if (currentConversation?.trashed) {
@@ -838,4 +851,5 @@ const ChatMessages: React.FC = () => {
 };
 
 export default ChatMessages;
+
 

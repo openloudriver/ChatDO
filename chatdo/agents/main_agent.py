@@ -3,7 +3,10 @@ from langchain_openai import ChatOpenAI
 from pathlib import Path
 from typing import Callable, List, Dict, Any, Optional
 import os
+import re
 import requests
+import httpx
+from bs4 import BeautifulSoup
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import repo_tools
@@ -169,32 +172,84 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Classify intent from user message
     intent = classify_intent(task)
     
-    # If this is a web search query, perform the search first and include results in context
+    # If this is a web scraping/search query, perform search and scrape content
     if intent == "web_scraping":
-        # Extract search query from task
-        # Remove common prefixes like "find", "search for", "look for", etc.
-        search_query = task
-        for prefix in ["find", "search for", "look for", "what are", "show me", "get me"]:
-            if task.lower().startswith(prefix):
-                search_query = task[len(prefix):].strip()
-                break
+        # Check if user provided a direct URL to scrape
+        url_pattern = re.compile(r'https?://[^\s]+')
+        urls_in_task = url_pattern.findall(task)
         
-        # Perform web search
-        try:
-            search_results = web_search.search_web(search_query, max_results=10)
-            if search_results and len(search_results) > 0:
-                # Format search results for the AI
-                results_text = "Web Search Results:\n\n"
-                for i, result in enumerate(search_results, 1):
-                    results_text += f"{i}. **{result.get('title', 'No title')}**\n"
-                    results_text += f"   URL: {result.get('url', 'No URL')}\n"
-                    results_text += f"   {result.get('snippet', 'No description')}\n\n"
-                
-                # Prepend search results to the user's task
-                task = f"{results_text}\n\nBased on the above web search results, please answer: {task}"
-        except Exception as e:
-            # If search fails, continue without search results
-            pass
+        if urls_in_task:
+            # User provided URLs directly - scrape them
+            scraped_content = []
+            for url in urls_in_task[:5]:  # Limit to 5 URLs
+                try:
+                    # Fetch and scrape URL content
+                    with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+                        response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+                        response.raise_for_status()
+                        html = response.text
+                    
+                    # Extract main content
+                    soup = BeautifulSoup(html, 'html.parser')
+                    for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
+                        script.decompose()
+                    text = soup.get_text()
+                    # Clean up whitespace
+                    lines = (line.strip() for line in text.splitlines())
+                    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                    clean_text = '\n'.join(chunk for chunk in chunks if chunk)
+                    
+                    scraped_content.append(f"=== Content from {url} ===\n{clean_text[:5000]}\n")  # Limit to 5000 chars per URL
+                except Exception as e:
+                    scraped_content.append(f"=== Error scraping {url}: {str(e)} ===\n")
+            
+            if scraped_content:
+                task = f"Scraped Web Content:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please answer: {task}"
+        else:
+            # No direct URLs - perform web search, then scrape top results
+            search_query = task
+            for prefix in ["find", "search for", "look for", "what are", "show me", "get me", "scrape"]:
+                if task.lower().startswith(prefix):
+                    search_query = task[len(prefix):].strip()
+                    break
+            
+            # Perform web search
+            try:
+                search_results = web_search.search_web(search_query, max_results=5)  # Limit to 5 for scraping
+                if search_results and len(search_results) > 0:
+                    scraped_content = []
+                    for result in search_results:
+                        url = result.get('url', '')
+                        if not url:
+                            continue
+                        
+                        try:
+                            # Actually scrape the URL content
+                            with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+                                response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+                                response.raise_for_status()
+                                html = response.text
+                            
+                            # Extract main content
+                            soup = BeautifulSoup(html, 'html.parser')
+                            for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
+                                script.decompose()
+                            text = soup.get_text()
+                            # Clean up whitespace
+                            lines = (line.strip() for line in text.splitlines())
+                            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                            clean_text = '\n'.join(chunk for chunk in chunks if chunk)
+                            
+                            scraped_content.append(f"=== {result.get('title', 'No title')} ({url}) ===\n{clean_text[:5000]}\n")  # Limit to 5000 chars per page
+                        except Exception as e:
+                            # If scraping fails, fall back to search snippet
+                            scraped_content.append(f"=== {result.get('title', 'No title')} ({url}) ===\n{result.get('snippet', 'Could not scrape content')}\n")
+                    
+                    if scraped_content:
+                        task = f"Scraped Web Content:\n\n{''.join(scraped_content)}\n\nBased on the above scraped content, please answer: {task}"
+            except Exception as e:
+                # If search fails, continue without search results
+                pass
     
     # Build message history
     messages: List[Dict[str, str]] = []

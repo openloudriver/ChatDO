@@ -23,17 +23,16 @@ export const AiSpendIndicator: React.FC = () => {
       try {
         const res = await fetch("http://localhost:8081/v1/ai/spend/monthly");
         if (!res.ok) {
-          console.error(`Failed to fetch spend: ${res.status} ${res.statusText}`);
+          // Silently fail - don't log to console
           return;
         }
         const json = await res.json();
         if (json.ok) {
           setData(json);
-        } else {
-          console.error('Spend API returned error:', json.error);
         }
+        // Silently ignore errors
       } catch (e) {
-        console.error('Error fetching spend data:', e);
+        // Silently fail - don't log to console
         // Set empty data on error so menu can still show
         setData({
           ok: true,

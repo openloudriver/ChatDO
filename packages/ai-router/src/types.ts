@@ -8,7 +8,8 @@ export type AiIntent =
   | "doc_draft"
   | "summarize"
   | "tool_orchestration"
-  | "web_scraping";
+  | "web_scraping"
+  | "web_search";
 
 export type Priority = "low" | "medium" | "high";
 
