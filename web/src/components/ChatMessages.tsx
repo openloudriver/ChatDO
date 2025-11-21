@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
+import ScrapedArticleCard from './ScrapedArticleCard';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -81,6 +82,47 @@ const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath,
       )}
     </div>
   );
+};
+
+// Helper to parse scraped markdown into metadata and body
+const parseScrapedMarkdown = (raw: string) => {
+  const lines = raw.split("\n");
+  let title = "";
+  let sourceUrl: string | undefined;
+  let outlet: string | undefined;
+  let published: string | undefined;
+  const bodyLines: string[] = [];
+  let inHeader = true;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (inHeader && trimmed.startsWith("## ")) {
+      title = trimmed.replace(/^## /, "").trim();
+      continue;
+    }
+    if (inHeader && trimmed.startsWith("**Source:**")) {
+      sourceUrl = trimmed.replace(/\*\*Source:\*\*/, "").trim();
+      continue;
+    }
+    if (inHeader && trimmed.startsWith("**Outlet:**")) {
+      outlet = trimmed.replace(/\*\*Outlet:\*\*/, "").trim();
+      continue;
+    }
+    if (inHeader && trimmed.startsWith("**Published:**")) {
+      published = trimmed.replace(/\*\*Published:\*\*/, "").trim();
+      continue;
+    }
+    if (inHeader && trimmed.startsWith("---")) {
+      inHeader = false;
+      continue;
+    }
+    if (!inHeader) {
+      bodyLines.push(line);
+    }
+  }
+
+  const bodyMarkdown = bodyLines.join("\n").trim() || raw.trim();
+  return { title, sourceUrl, outlet, published, bodyMarkdown };
 };
 
 const ChatMessages: React.FC = () => {
@@ -688,32 +730,24 @@ const ChatMessages: React.FC = () => {
                       )}
                       
                       {/* Display web_scrape if message type is web_scrape */}
-                      {message.type === 'web_scrape' && message.data && (
-                        <div className="rounded-xl bg-[#1a1a1a] p-6 border border-[#565869]">
-                          <div className="prose prose-invert max-w-none">
-                            <ReactMarkdown
-                              components={{
-                                h2: ({ children }) => <h2 className="text-2xl font-bold mb-4 text-[#ececf1] border-b border-[#565869] pb-2">{children}</h2>,
-                                h3: ({ children }) => <h3 className="text-xl font-semibold mt-6 mb-3 text-[#ececf1]">{children}</h3>,
-                                p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
-                                ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1] ml-4">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1] ml-4">{children}</ol>,
-                                li: ({ children }) => <li className="text-[#ececf1] mb-1">{children}</li>,
-                                strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
-                                em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
-                                hr: () => <hr className="my-6 border-[#565869]" />,
-                                a: ({ href, children }) => (
-                                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
-                                    {children}
-                                  </a>
-                                ),
-                              }}
-                            >
-                              {message.data.content || ''}
-                            </ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
+                      {message.type === 'web_scrape' && message.data && (() => {
+                        const content = message.data.content || '';
+                        const { title, sourceUrl, outlet, published, bodyMarkdown } = parseScrapedMarkdown(content);
+                        
+                        // Fallback to message.data.url if sourceUrl not parsed from markdown
+                        const finalSourceUrl = sourceUrl || message.data.url;
+                        const finalOutlet = outlet || message.data.domain;
+                        
+                        return (
+                          <ScrapedArticleCard
+                            title={title || 'Untitled Article'}
+                            sourceUrl={finalSourceUrl}
+                            outlet={finalOutlet}
+                            published={published}
+                            bodyMarkdown={bodyMarkdown}
+                          />
+                        );
+                      })()}
                       
                       {/* Display text content if any (and not web_search_results or web_scrape) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'web_scrape' && (

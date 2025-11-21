@@ -25,5 +25,10 @@ def strip_tags(text: str) -> str:
     no_tags = re.sub(r'&lt;[^&]+&gt;', '', no_tags)
     
     # Unescape HTML entities (&#x27;, &amp;, etc.)
-    return html.unescape(no_tags).strip()
+    cleaned = html.unescape(no_tags)
+    
+    # Collapse excessive blank lines (3+ newlines become 2)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    
+    return cleaned.strip()
 
