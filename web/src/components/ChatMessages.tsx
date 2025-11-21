@@ -483,7 +483,8 @@ const ChatMessages: React.FC = () => {
                   content = content.trim();
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0;
+                  // For web_search_results, always show (has structured data)
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results';
                   
                   if (!hasContent) {
                     return null;

@@ -162,6 +162,7 @@ const ChatComposer: React.FC = () => {
               data: data.data
             });
             clearStreaming();
+            setLoading(false);
             ws.close();
           } else if (data.type === 'done') {
             // Add final message

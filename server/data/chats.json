@@ -35,9 +35,9 @@
     "title": "Testing",
     "thread_id": "22e8536d-e74b-4c78-8c3e-e77c06768075",
     "created_at": "2025-11-20T03:24:22.024140+00:00",
-    "updated_at": "2025-11-20T04:43:24.776608+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-11-21T02:02:47.318290+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T02:02:47.318268+00:00"
   },
   {
     "id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
@@ -55,7 +55,17 @@
     "title": "Can you tell me the big USA political news head...",
     "thread_id": "db935d93-df80-46fb-9d69-db7de636db77",
     "created_at": "2025-11-20T23:03:52.137401+00:00",
-    "updated_at": "2025-11-20T23:04:00.118365+00:00",
+    "updated_at": "2025-11-21T02:02:45.333470+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T02:02:45.333449+00:00"
+  },
+  {
+    "id": "468fe2a9-eb35-422e-a55b-e15b53f3c6fd",
+    "project_id": "scratch",
+    "title": "What are the top headlines today?",
+    "thread_id": "468fe2a9-eb35-422e-a55b-e15b53f3c6fd",
+    "created_at": "2025-11-21T02:02:48.036063+00:00",
+    "updated_at": "2025-11-21T02:02:50.501804+00:00",
     "trashed": false,
     "trashed_at": null
   }
