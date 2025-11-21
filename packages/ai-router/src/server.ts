@@ -53,21 +53,21 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "ollama-local": "Ollama Local",
     };
     
-    // Always include OpenAI and Gab AI, even if they have $0 spend
+    // Always include Gab AI and GPT-5, even if they have $0 spend
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
-    // Add GPT-5 (always show)
-    providers.push({
-      id: "openai-gpt5",
-      label: labelMap["openai-gpt5"] || "GPT-5",
-      usd: current.providers["openai-gpt5"] || 0,
-    });
-    
-    // Add Gab AI (always show)
+    // Add Gab AI first (always show)
     providers.push({
       id: "gab-ai",
       label: labelMap["gab-ai"] || "Gab AI",
       usd: current.providers["gab-ai"] || 0,
+    });
+    
+    // Add GPT-5 second (always show)
+    providers.push({
+      id: "openai-gpt5",
+      label: labelMap["openai-gpt5"] || "GPT-5",
+      usd: current.providers["openai-gpt5"] || 0,
     });
     
     // Add any other providers that have been used

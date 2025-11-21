@@ -58,12 +58,12 @@ export const AiSpendIndicator: React.FC = () => {
 
   const total = data?.totalUsd ?? 0;
 
-  // Sort providers: OpenAI first, then Gab AI, then others
+  // Sort providers: Gab AI first, then GPT-5, then others
   const sortedProviders = data?.providers ? [...data.providers].sort((a, b) => {
     // Define priority order
     const priority: Record<string, number> = {
-      'openai-gpt5': 1,
-      'gab-ai': 2,
+      'gab-ai': 1,
+      'openai-gpt5': 2,
     };
     
     const aPriority = priority[a.id] ?? 999;
