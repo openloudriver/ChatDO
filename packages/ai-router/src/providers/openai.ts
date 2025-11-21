@@ -8,6 +8,7 @@ import {
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+  timeout: 120000, // 120 seconds for complex reasoning queries
 });
 
 export const openAiGpt5Provider: AiProvider = {
@@ -49,11 +50,9 @@ export const openAiGpt5Provider: AiProvider = {
 
     // gpt-5 uses v1/chat/completions endpoint
     // gpt-5 models don't support custom temperature - only default (1)
-    // Increase timeout for complex reasoning queries
     const response = await client.chat.completions.create({
       model: modelId,
       messages,
-      timeout: 120000, // 120 seconds
     });
 
     const content =
