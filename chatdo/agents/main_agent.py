@@ -72,7 +72,8 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat")
         },
     }
     try:
-        resp = requests.post(AI_ROUTER_URL, json=payload, timeout=60)
+        # Increase timeout for complex reasoning queries (GPT-5 can take longer)
+        resp = requests.post(AI_ROUTER_URL, json=payload, timeout=120)
         resp.raise_for_status()
         data = resp.json()
         if not data.get("ok"):
