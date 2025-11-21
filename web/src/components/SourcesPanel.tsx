@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Source, SourceKind } from '../types/sources';
+import type { Source, SourceKind } from '../types/sources';
 
 interface SourcesPanelProps {
   sources: Source[];

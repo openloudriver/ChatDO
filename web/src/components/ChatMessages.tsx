@@ -4,7 +4,7 @@ import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import SourcesPanel from './SourcesPanel';
-import { Source } from '../types/sources';
+import type { Source } from '../types/sources';
 import { v4 as uuidv4 } from 'uuid';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!

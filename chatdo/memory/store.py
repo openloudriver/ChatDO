@@ -53,3 +53,39 @@ def delete_thread_history(target_name: str, thread_id: str) -> None:
         import shutil
         shutil.rmtree(thread_path)
 
+def thread_sources_path(target_name: str, thread_id: str) -> Path:
+    return thread_dir(target_name, thread_id) / "sources.json"
+
+def load_thread_sources(target_name: str, thread_id: str) -> List[Dict[str, Any]]:
+    """
+    Load sources for this target + thread.
+    Format: [{"id": "...", "kind": "url|file|text|note", "title": "...", ...}]
+    """
+    path = thread_sources_path(target_name, thread_id)
+    if not path.exists():
+        return []
+    
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return []
+
+def save_thread_sources(target_name: str, thread_id: str, sources: List[Dict[str, Any]]) -> None:
+    ensure_thread_dirs(target_name, thread_id)
+    path = thread_sources_path(target_name, thread_id)
+    path.write_text(json.dumps(sources, indent=2, ensure_ascii=False))
+
+def add_thread_source(target_name: str, thread_id: str, source: Dict[str, Any]) -> None:
+    """Add a source to the thread's sources list."""
+    sources = load_thread_sources(target_name, thread_id)
+    # Check if source already exists (by URL or fileName)
+    existing = None
+    if source.get("url"):
+        existing = next((s for s in sources if s.get("url") == source["url"]), None)
+    elif source.get("fileName"):
+        existing = next((s for s in sources if s.get("fileName") == source["fileName"]), None)
+    
+    if not existing:
+        sources.append(source)
+        save_thread_sources(target_name, thread_id, sources)
+

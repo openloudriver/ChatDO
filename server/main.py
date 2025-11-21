@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
-from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history
+from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history, load_thread_sources, add_thread_source
 from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
@@ -674,6 +674,22 @@ Keep it concise, neutral, and factual."""
                     
                     # Save back to memory store
                     save_thread_history(target_name, thread_id, history)
+                    
+                    # Also save as a source
+                    import uuid as uuid_lib
+                    source = {
+                        "id": str(uuid_lib.uuid4()),
+                        "kind": "url",
+                        "title": message_data.get("title") or "Article",
+                        "description": summary_paragraph[:200] if summary_paragraph else None,
+                        "url": article_data["url"],
+                        "createdAt": datetime.now(timezone.utc).isoformat(),
+                        "meta": {
+                            "siteName": article_data.get("site_name"),
+                            "published": article_data.get("published"),
+                        }
+                    }
+                    add_thread_source(target_name, thread_id, source)
             except Exception as e:
                 # Don't fail the request if saving to memory store fails
                 print(f"Warning: Failed to save article summary to memory store: {e}")
@@ -1196,6 +1212,33 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         messages = messages[-limit:]
     
     return {"messages": messages}
+
+
+@app.get("/api/chats/{chat_id}/sources")
+async def get_chat_sources(chat_id: str):
+    """Get sources for a specific chat conversation"""
+    chats = load_chats()
+    chat = next((c for c in chats if c.get("id") == chat_id), None)
+    
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    # Get project to find target_name
+    projects = load_projects()
+    project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    target_name = project.get("default_target", "general")
+    thread_id = chat.get("thread_id")
+    
+    if not thread_id:
+        return {"sources": []}
+    
+    # Load sources from memory store
+    sources = load_thread_sources(target_name, thread_id)
+    
+    return {"sources": sources}
 
 
 @app.patch("/api/chats/{chat_id}", response_model=Chat)

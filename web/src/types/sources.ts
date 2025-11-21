@@ -5,9 +5,8 @@ export type Source = {
   kind: SourceKind;
   title: string;
   description?: string;
-  url?: string;          // for url / web articles
-  fileName?: string;     // for uploaded files
+  url?: string;
+  fileName?: string;
   createdAt: string;
   meta?: Record<string, any>;
 };
-
