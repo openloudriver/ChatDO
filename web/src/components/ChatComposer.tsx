@@ -342,13 +342,78 @@ const ChatComposer: React.FC = () => {
     if (!url || !currentProject || !currentConversation) return;
 
     try {
-      // Add user message with scrape command to trigger web_scraping intent
+      // Set input and trigger send to scrape the URL
       const message = `scrape ${url}`;
       setInput(message);
-      // Trigger send automatically
-      setTimeout(() => {
-        handleSend();
-      }, 100);
+      // Use a small delay to ensure state is updated, then send
+      setTimeout(async () => {
+        // Manually trigger the send flow
+        const messageWithFiles = message;
+        addMessage({ role: 'user', content: messageWithFiles });
+        setInput('');
+        setLoading(true);
+        
+        // Try WebSocket first
+        try {
+          const ws = new WebSocket('ws://localhost:8000/api/chat/stream');
+          let streamedContent = '';
+          
+          ws.onopen = () => {
+            setStreaming(true);
+            ws.send(JSON.stringify({
+              project_id: currentProject.id,
+              conversation_id: currentConversation.id,
+              target_name: currentConversation.targetName,
+              message: messageWithFiles
+            }));
+          };
+          
+          ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              
+              if (data.type === 'chunk') {
+                streamedContent += data.content;
+                updateStreamingContent(streamedContent);
+              } else if (data.type === 'done') {
+                addMessage({ 
+                  role: 'assistant', 
+                  content: streamedContent,
+                  model: data.model,
+                  provider: data.provider
+                });
+                clearStreaming();
+                setLoading(false);
+                ws.close();
+              } else if (data.type === 'error') {
+                if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
+                  console.error('WebSocket error:', data.content);
+                }
+                clearStreaming();
+                ws.close();
+                addMessage({ 
+                  role: 'assistant', 
+                  content: `Error: ${data.content}` 
+                });
+                setLoading(false);
+              }
+            } catch (e) {
+              clearStreaming();
+              ws.close();
+              // Fallback to REST
+              fallbackToRest(messageWithFiles);
+            }
+          };
+          
+          ws.onerror = () => {
+            clearStreaming();
+            ws.close();
+            fallbackToRest(messageWithFiles);
+          };
+        } catch (error) {
+          fallbackToRest(messageWithFiles);
+        }
+      }, 50);
     } catch (error) {
       console.error('URL scraping failed:', error);
     }

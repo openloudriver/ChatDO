@@ -299,6 +299,15 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 if url not in urls_in_task:
                     urls_in_task.append(url)
         
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_urls = []
+        for url in urls_in_task:
+            if url not in seen:
+                seen.add(url)
+                unique_urls.append(url)
+        urls_in_task = unique_urls
+        
         if urls_in_task:
             # User provided URLs directly - scrape them
             scraped_content = []
