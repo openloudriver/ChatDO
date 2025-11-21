@@ -74,7 +74,8 @@ async def stream_chat_response(
             import requests
             from datetime import datetime, timezone
             from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
-            from server.main import load_projects, ARTICLE_SUMMARY_SYSTEM_PROMPT
+            from server.main import load_projects
+            from chatdo.agents.main_agent import ARTICLE_SUMMARY_SYSTEM_PROMPT
             
             # Extract articles
             articles_data = []
@@ -272,7 +273,8 @@ Keep it concise, neutral, and factual. Focus on synthesis and comparison."""
             import os
             from datetime import datetime, timezone
             from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
-            from server.main import load_projects, ARTICLE_SUMMARY_SYSTEM_PROMPT
+            from server.main import load_projects
+            from chatdo.agents.main_agent import ARTICLE_SUMMARY_SYSTEM_PROMPT
             
             url = urls[0]
             article_data = extract_article(url)
