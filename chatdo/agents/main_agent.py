@@ -427,10 +427,15 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
             scraped_content = []
             for url in urls_in_task[:5]:  # Limit to 5 URLs
                 try:
-                    # Fetch and scrape URL content
-                    with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-                        response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
-                        response.raise_for_status()
+                    # Fetch and scrape URL content (15s timeout)
+                    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+                        try:
+                            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=15.0)
+                            response.raise_for_status()
+                        except httpx.TimeoutException:
+                            raise Exception(f"Request timed out after 15 seconds. The website may be slow or blocking requests.")
+                        except httpx.HTTPStatusError as e:
+                            raise Exception(f"HTTP {e.response.status_code}: {e.response.reason_phrase}")
                         
                         # Check if we got redirected to an unwanted domain (like Canva)
                         final_url = str(response.url)
@@ -484,12 +489,29 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 ]
                 
                 # Call AI Router with web_scraping intent and custom system prompt
+                # Use shorter timeout for web scraping (60s instead of 120s)
                 try:
-                    assistant_messages, model_id, provider_id, model_display = call_ai_router(
-                        messages,
-                        intent="web_scraping",
-                        system_prompt_override=WEB_SCRAPE_SYSTEM_PROMPT
-                    )
+                    # Temporarily override AI_ROUTER_URL timeout by making direct request
+                    ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+                    payload = {
+                        "role": "chatdo",
+                        "intent": "web_scraping",
+                        "priority": "high",
+                        "privacyLevel": "normal",
+                        "costTier": "standard",
+                        "input": {
+                            "messages": messages,
+                        },
+                    }
+                    resp = requests.post(ai_router_url, json=payload, timeout=60)  # 60s timeout for scraping
+                    resp.raise_for_status()
+                    data = resp.json()
+                    if not data.get("ok"):
+                        raise RuntimeError(f"AI-Router error: {data.get('error')}")
+                    model_id = data.get("modelId", "arya")
+                    provider_id = data.get("providerId", "gab-ai")
+                    model_display = _format_model_name(provider_id, model_id)
+                    assistant_messages = data["output"]["messages"]
                     
                     # Extract the formatted response
                     if assistant_messages and len(assistant_messages) > 0:
@@ -504,6 +526,10 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                         }, model_display, provider_id
                     else:
                         return "Failed to generate formatted response from scraped content.", "Gab AI", "gab-ai"
+                except requests.exceptions.Timeout:
+                    return f"Error: AI Router request timed out after 60 seconds. The scraped content may be too large or the AI service is slow. Try scraping a shorter article.", "Gab AI", "gab-ai"
+                except requests.exceptions.ConnectionError as e:
+                    return f"Error: Failed to connect to AI Router. Is the AI Router server running? {str(e)}", "Gab AI", "gab-ai"
                 except Exception as e:
                     return f"Error processing scraped content: {str(e)}", "Gab AI", "gab-ai"
             else:
