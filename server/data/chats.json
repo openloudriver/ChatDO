@@ -20,26 +20,6 @@
     "trashed_at": null
   },
   {
-    "id": "6253d21e-1681-4baa-8a14-83111fe61243",
-    "project_id": "scratch",
-    "title": "Summarize this",
-    "thread_id": "6253d21e-1681-4baa-8a14-83111fe61243",
-    "created_at": "2025-11-20T03:03:58.849500+00:00",
-    "updated_at": "2025-11-20T03:24:20.995638+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-20T03:24:20.995619+00:00"
-  },
-  {
-    "id": "22e8536d-e74b-4c78-8c3e-e77c06768075",
-    "project_id": "scratch",
-    "title": "Testing",
-    "thread_id": "22e8536d-e74b-4c78-8c3e-e77c06768075",
-    "created_at": "2025-11-20T03:24:22.024140+00:00",
-    "updated_at": "2025-11-21T02:02:47.318290+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T02:02:47.318268+00:00"
-  },
-  {
     "id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
     "project_id": "privacypay",
     "title": "Provide a grade on a scale of 1-10 of the compl...",
@@ -48,75 +28,5 @@
     "updated_at": "2025-11-20T13:12:32.008344+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "db935d93-df80-46fb-9d69-db7de636db77",
-    "project_id": "scratch",
-    "title": "Can you tell me the big USA political news head...",
-    "thread_id": "db935d93-df80-46fb-9d69-db7de636db77",
-    "created_at": "2025-11-20T23:03:52.137401+00:00",
-    "updated_at": "2025-11-21T02:02:45.333470+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T02:02:45.333449+00:00"
-  },
-  {
-    "id": "468fe2a9-eb35-422e-a55b-e15b53f3c6fd",
-    "project_id": "scratch",
-    "title": "What are the top headlines today?",
-    "thread_id": "468fe2a9-eb35-422e-a55b-e15b53f3c6fd",
-    "created_at": "2025-11-21T02:02:48.036063+00:00",
-    "updated_at": "2025-11-21T02:43:48.265262+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T02:43:48.265243+00:00"
-  },
-  {
-    "id": "532319f8-b001-4beb-8eab-aa50a2e59493",
-    "project_id": "scratch",
-    "title": "What are the top headlines for today in politic...",
-    "thread_id": "532319f8-b001-4beb-8eab-aa50a2e59493",
-    "created_at": "2025-11-21T02:44:06.062197+00:00",
-    "updated_at": "2025-11-21T03:03:23.695735+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T03:03:23.695710+00:00"
-  },
-  {
-    "id": "bd33f99e-f56b-4823-9577-7dd30e0c686a",
-    "project_id": "scratch",
-    "title": "What are the top headlines in the mounting conf...",
-    "thread_id": "bd33f99e-f56b-4823-9577-7dd30e0c686a",
-    "created_at": "2025-11-21T03:03:24.407735+00:00",
-    "updated_at": "2025-11-21T03:17:17.883156+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T03:17:17.883124+00:00"
-  },
-  {
-    "id": "130f5493-14ff-45a0-a35c-d5adc44fe81a",
-    "project_id": "scratch",
-    "title": "What's going on with the US military buildup in...",
-    "thread_id": "130f5493-14ff-45a0-a35c-d5adc44fe81a",
-    "created_at": "2025-11-21T03:17:49.726515+00:00",
-    "updated_at": "2025-11-21T03:45:38.475044+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T03:45:38.475020+00:00"
-  },
-  {
-    "id": "3439dcf5-4c39-48e8-92b7-6b0015b3458b",
-    "project_id": "scratch",
-    "title": "What's going on with the US military buildup in...",
-    "thread_id": "3439dcf5-4c39-48e8-92b7-6b0015b3458b",
-    "created_at": "2025-11-21T03:45:40.141254+00:00",
-    "updated_at": "2025-11-21T04:02:02.592291+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T04:02:02.592271+00:00"
-  },
-  {
-    "id": "b75087df-9582-402d-b475-f95df2cc36ec",
-    "project_id": "scratch",
-    "title": "Give me some articles on why the sun is yellow",
-    "thread_id": "b75087df-9582-402d-b475-f95df2cc36ec",
-    "created_at": "2025-11-21T04:02:03.870399+00:00",
-    "updated_at": "2025-11-21T04:06:46.098823+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T04:06:46.098803+00:00"
   }
 ]

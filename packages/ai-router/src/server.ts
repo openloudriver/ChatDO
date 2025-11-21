@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { runTask, AiRouterInput } from "./index";
 import { getCurrentMonthSpend, getMonthlyHistory } from "./spendTracker";
-import { callOllamaSummary } from "./providers/ollama";
 
 const app = express();
 app.use(cors({
@@ -50,7 +49,6 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "gemini-pro": "Gemini Pro",
       "mistral-large": "Mistral Large",
       "llama-local": "Llama Local",
-      "ollama-local": "Ollama Local",
     };
     
     // Always include Gab AI and GPT-5, even if they have $0 spend
@@ -102,27 +100,6 @@ app.get("/v1/ai/spend/history", async (_req, res) => {
     });
   } catch (err: any) {
     console.error("[AI-Router] /v1/ai/spend/history error:", err);
-    res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
-  }
-});
-
-app.post("/v1/ai/ollama/summarize", async (req, res) => {
-  try {
-    const { systemPrompt, userPrompt } = req.body;
-    if (!systemPrompt || !userPrompt) {
-      res.status(400).json({
-        ok: false,
-        error: "Missing required fields: systemPrompt, userPrompt",
-      });
-      return;
-    }
-    const summary = await callOllamaSummary(systemPrompt, userPrompt);
-    res.json({
-      ok: true,
-      summary,
-    });
-  } catch (err: any) {
-    console.error("[AI-Router] /v1/ai/ollama/summarize error:", err);
     res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
   }
 });

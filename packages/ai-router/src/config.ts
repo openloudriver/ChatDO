@@ -4,7 +4,7 @@ import { AiIntent } from "./types";
 export const routingRules: Record<AiIntent, { model: string; providerId: string }> = {
   long_planning: { model: "gpt-5", providerId: "openai-gpt5" },
   general_chat: { model: "gpt-5", providerId: "openai-gpt5" },
-  summarize: { model: "llama3.1:8b", providerId: "ollama-local" },  // Ollama for summaries
+  summarize: { model: "gpt-5", providerId: "openai-gpt5" },  // GPT-5 for summaries
   doc_draft: { model: "gpt-5", providerId: "openai-gpt5" },
   code_gen: { model: "gpt-5", providerId: "openai-gpt5" },
   code_edit: { model: "gpt-5", providerId: "openai-gpt5" },

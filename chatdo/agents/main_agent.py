@@ -115,7 +115,6 @@ def _format_model_name(provider_id: str, model_id: str) -> str:
     provider_labels = {
         "openai-gpt5": "GPT-5",
         "gab-ai": "Gab AI",
-        "ollama-local": "Ollama",
         "anthropic-claude-sonnet": "Claude",
         "grok-code": "Grok",
         "gemini-pro": "Gemini",
@@ -124,9 +123,6 @@ def _format_model_name(provider_id: str, model_id: str) -> str:
     }
     provider_label = provider_labels.get(provider_id, provider_id)
     
-    # For Ollama, include the model name
-    if provider_id == "ollama-local":
-        return f"{provider_label} {model_id}"
     
     # For others, just use the provider label or model ID if it's more descriptive
     if provider_id == "openai-gpt5":
@@ -311,18 +307,6 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Classify intent from user message
     intent = classify_intent(task)
     
-    # Special handling: if summarize intent but query seems to need current info, do web search first
-    if intent == "summarize":
-        # Check if this is a summary request that needs current information (web search)
-        task_lower = task.lower()
-        needs_web_search = any(phrase in task_lower for phrase in [
-            "what's going on", "what is happening", "current", "latest", "recent", 
-            "today", "now", "headlines", "news", "update"
-        ])
-        
-        if needs_web_search:
-            # Treat as web_search with summary request
-            intent = "web_search"
     
     # Handle web search - use Brave Search API, return structured results (no LLM by default)
     if intent == "web_search":
@@ -333,59 +317,21 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
                 search_query = task[len(prefix):].strip()
                 break
         
-        # Check if user wants a summary
-        wants_summary = any(word in task.lower() for word in ["summarize", "summary", "bullet points", "in a few points"])
-        
         # Perform web search using Brave Search API
         try:
             search_results = web_search.search_web(search_query, max_results=10)
             if search_results and len(search_results) > 0:
-                # Return structured results (no LLM call)
+                # Return structured results (no LLM call, no summarization)
                 structured_result = {
                     "type": "web_search_results",
                     "query": search_query,
                     "provider": "brave",
-                    "results": search_results,
-                    "wants_summary": wants_summary
+                    "results": search_results
                 }
                 
-                # If user wants a summary, call Ollama via AI Router
-                if wants_summary:
-                    try:
-                        # Build prompt for Ollama
-                        results_text = "\n".join([
-                            f"{i+1}. {r.get('title', 'No title')}\n   {r.get('snippet', 'No description')}"
-                            for i, r in enumerate(search_results[:5])  # Use top 5 for summary
-                        ])
-                        system_prompt = "You are a neutral summarizer. Using only the provided headlines and snippets from Brave Search, summarize the main themes in 3 bullet points. Do not hallucinate or add external facts."
-                        user_prompt = f"Summarize these search results:\n\n{results_text}"
-                        
-                        # Call Ollama via AI Router
-                        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081")
-                        ollama_url = f"{ai_router_url}/v1/ai/ollama/summarize"
-                        ollama_response = requests.post(
-                            ollama_url,
-                            json={"systemPrompt": system_prompt, "userPrompt": user_prompt},
-                            timeout=30
-                        )
-                        ollama_response.raise_for_status()
-                        ollama_data = ollama_response.json()
-                        
-                        if ollama_data.get("ok") and ollama_data.get("summary"):
-                            structured_result["summary"] = ollama_data["summary"]
-                            # Update model display to include Ollama
-                            model_display = "Brave Search + Ollama llama3.1:8b"
-                            provider = "brave_search+ollama"
-                    except Exception as e:
-                        # If Ollama fails, just return results without summary
-                        print(f"Ollama summary failed: {e}")
-                
-                # Set model/provider for web search (default, may be updated above if summary added)
-                if wants_summary and "summary" in structured_result:
-                    pass  # Already set above
-                else:
-                    model_display = "Brave Search"
-                    provider = "brave_search"
+                # Set model/provider for web search
+                model_display = "Brave Search"
+                provider = "brave_search"
                 
                 return structured_result, model_display, provider
             else:

@@ -9,7 +9,6 @@ import { geminiProProvider } from "./providers/gemini";
 import { mistralLargeProvider } from "./providers/mistral";
 import { llamaLocalProvider } from "./providers/llamaLocal";
 import { gabAiProvider } from "./providers/gabai";
-import { ollamaProvider } from "./providers/ollama";
 
 const providers: Record<string, AiProvider> = {
   [openAiGpt5Provider.id]: openAiGpt5Provider,
@@ -19,7 +18,6 @@ const providers: Record<string, AiProvider> = {
   [mistralLargeProvider.id]: mistralLargeProvider,
   [llamaLocalProvider.id]: llamaLocalProvider,
   [gabAiProvider.id]: gabAiProvider,
-  [ollamaProvider.id]: ollamaProvider,
 };
 
 function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {
