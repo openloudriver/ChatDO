@@ -210,6 +210,19 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) 
     # Classify intent from user message
     intent = classify_intent(task)
     
+    # Special handling: if summarize intent but query seems to need current info, do web search first
+    if intent == "summarize":
+        # Check if this is a summary request that needs current information (web search)
+        task_lower = task.lower()
+        needs_web_search = any(phrase in task_lower for phrase in [
+            "what's going on", "what is happening", "current", "latest", "recent", 
+            "today", "now", "headlines", "news", "update"
+        ])
+        
+        if needs_web_search:
+            # Treat as web_search with summary request
+            intent = "web_search"
+    
     # Handle web search - use Brave Search API, return structured results (no LLM by default)
     if intent == "web_search":
         # Extract search query from task

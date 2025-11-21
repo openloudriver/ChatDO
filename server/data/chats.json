@@ -75,7 +75,17 @@
     "title": "What are the top headlines for today in politic...",
     "thread_id": "532319f8-b001-4beb-8eab-aa50a2e59493",
     "created_at": "2025-11-21T02:44:06.062197+00:00",
-    "updated_at": "2025-11-21T02:44:19.018134+00:00",
+    "updated_at": "2025-11-21T03:03:23.695735+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-21T03:03:23.695710+00:00"
+  },
+  {
+    "id": "bd33f99e-f56b-4823-9577-7dd30e0c686a",
+    "project_id": "scratch",
+    "title": "What are the top headlines in the mounting conf...",
+    "thread_id": "bd33f99e-f56b-4823-9577-7dd30e0c686a",
+    "created_at": "2025-11-21T03:03:24.407735+00:00",
+    "updated_at": "2025-11-21T03:03:47.376382+00:00",
     "trashed": false,
     "trashed_at": null
   }
