@@ -358,6 +358,13 @@ Keep it concise, neutral, and factual."""
             rag_files = load_rag_files(conversation_id) if rag_file_ids else []
             source_files = [f.get("filename") for f in rag_files if f.get("id") in (rag_file_ids or [])]
             
+            # Log raw RAG output to verify markdown headings are present
+            print(f"[RAG] Raw RAG output (first 500 chars):\n{human_text[:500]}")
+            if "###" in human_text:
+                print("[RAG] ✅ Markdown headings (###) detected in response")
+            else:
+                print("[RAG] ⚠️  WARNING: No markdown headings (###) found in response")
+            
             # Update the last message in memory store to have structured type
             # (run_agent already saved it as a regular message, so we update it)
             if conversation_id and project_id:

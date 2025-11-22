@@ -592,6 +592,13 @@ async def chat(request: ChatRequest):
             rag_files = load_rag_files(request.conversation_id) if request.rag_file_ids else []
             source_files = [f.get("filename") for f in rag_files if f.get("id") in (request.rag_file_ids or [])]
             
+            # Log raw RAG output to verify markdown headings are present
+            print(f"[RAG] Raw RAG output (first 500 chars):\n{human_text[:500]}")
+            if "###" in human_text:
+                print("[RAG] ✅ Markdown headings (###) detected in response")
+            else:
+                print("[RAG] ⚠️  WARNING: No markdown headings (###) found in response")
+            
             # Update the last message in memory store to have structured type
             # (run_agent already saved it as a regular message, so we update it)
             if request.conversation_id and request.project_id:
@@ -949,7 +956,19 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
     
     print(f"[RAG] Building context for {len(rag_file_ids)} files, chat_id={chat_id}")
     
-    context_parts = ["You have access to the following reference documents for this conversation. Use them as primary sources when answering.\n"]
+    context_parts = [
+        "You have access to the following reference documents for this conversation. Use them as primary sources when answering.\n",
+        "\n",
+        "IMPORTANT: When answering questions about these documents, format your response using markdown with level-3 headings (###) for each major section.\n",
+        "Use this structure where applicable:\n",
+        "- ### Summary\n",
+        "- ### Highlights\n",
+        "- ### Analysis (or similar section titles as needed)\n",
+        "- ### Recommendation\n",
+        "- ### Bottom line\n",
+        "\n",
+        "Under each heading, use bullet points where helpful. The exact section titles can vary based on the question, but always use markdown headings (### Heading) for every section title instead of plain text lines.\n"
+    ]
     
     # Load RAG files - if chat_id is provided, use it directly for efficiency
     all_files = []

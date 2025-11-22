@@ -1,4 +1,5 @@
 import React from "react";
+import SectionHeading from "./shared/SectionHeading";
 
 interface ArticleCardProps {
   url: string;
@@ -125,9 +126,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {/* Summary */}
         {summary && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
-              Summary
-            </h3>
+            <SectionHeading>SUMMARY</SectionHeading>
             <p className="text-sm text-[#ececf1] leading-relaxed">{summary}</p>
           </div>
         )}
@@ -135,9 +134,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {/* Key points */}
         {keyPoints && keyPoints.length > 0 && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
-              Key Points
-            </h3>
+            <SectionHeading>KEY POINTS</SectionHeading>
             <ul className="list-disc list-inside space-y-1 text-[#ececf1] ml-2">
               {keyPoints.map((point, index) => (
                 <li key={index} className="text-sm text-[#ececf1] leading-relaxed">{point}</li>
@@ -149,9 +146,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {/* Why this matters */}
         {whyMatters && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
-              Why This Matters
-            </h3>
+            <SectionHeading>WHY THIS MATTERS</SectionHeading>
             <p className="text-sm text-[#ececf1] leading-relaxed">{whyMatters}</p>
           </div>
         )}

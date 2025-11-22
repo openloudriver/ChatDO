@@ -215,7 +215,17 @@
     "title": "Explain Joint Cloud to me. Hit the highlights, ...",
     "thread_id": "6deea7bd-bdb8-41fc-ab4e-3e293f8b010c",
     "created_at": "2025-11-22T03:29:12.565651+00:00",
-    "updated_at": "2025-11-22T03:30:59.107965+00:00",
+    "updated_at": "2025-11-22T03:37:27.951153+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:37:27.951131+00:00"
+  },
+  {
+    "id": "b2c9956c-6faa-4030-aa62-63cb8daef62d",
+    "project_id": "scratch",
+    "title": "Summarize Joint Cloud for me, provide highlight...",
+    "thread_id": "b2c9956c-6faa-4030-aa62-63cb8daef62d",
+    "created_at": "2025-11-22T03:37:29.570924+00:00",
+    "updated_at": "2025-11-22T03:38:28.869965+00:00",
     "trashed": false,
     "trashed_at": null
   }

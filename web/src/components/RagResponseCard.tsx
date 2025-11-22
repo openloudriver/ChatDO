@@ -1,5 +1,6 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import SectionHeading from "./shared/SectionHeading";
 
 interface RagResponseCardProps {
   content: string;
@@ -71,42 +72,15 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
 
       {/* Content Section */}
       <div className="border-t border-[#565869] pt-4">
-        <div className="prose prose-invert max-w-none text-sm text-[#ececf1] leading-relaxed [&_h1]:!text-base [&_h1]:!font-semibold [&_h1]:!text-[#8e8ea0] [&_h1]:!mb-3 [&_h1]:!uppercase [&_h1]:!tracking-wide [&_h2]:!text-base [&_h2]:!font-semibold [&_h2]:!text-[#8e8ea0] [&_h2]:!mb-3 [&_h2]:!uppercase [&_h2]:!tracking-wide [&_h3]:!text-base [&_h3]:!font-semibold [&_h3]:!text-[#8e8ea0] [&_h3]:!mb-3 [&_h3]:!uppercase [&_h3]:!tracking-wide [&_h4]:!text-base [&_h4]:!font-semibold [&_h4]:!text-[#8e8ea0] [&_h4]:!mb-3 [&_h4]:!uppercase [&_h4]:!tracking-wide [&_h5]:!text-base [&_h5]:!font-semibold [&_h5]:!text-[#8e8ea0] [&_h5]:!mb-3 [&_h5]:!uppercase [&_h5]:!tracking-wide [&_h6]:!text-base [&_h6]:!font-semibold [&_h6]:!text-[#8e8ea0] [&_h6]:!mb-3 [&_h6]:!uppercase [&_h6]:!tracking-wide">
+        <div className="prose prose-invert max-w-none text-sm text-[#ececf1] leading-relaxed">
           <ReactMarkdown
             components={{
-              h1: ({ children }) => (
-                <h1 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h1>
-              ),
-              h2: ({ children }) => (
-                <h2 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h2>
-              ),
-              h3: ({ children }) => (
-                <h3 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h3>
-              ),
-              h4: ({ children }) => (
-                <h4 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h4>
-              ),
-              h5: ({ children }) => (
-                <h5 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h5>
-              ),
-              h6: ({ children }) => (
-                <h6 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-                  {children}
-                </h6>
-              ),
-              p: ({ children }) => (
-                <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>
-              ),
+              h1: ({ children }) => <SectionHeading>{children}</SectionHeading>,
+              h2: ({ children }) => <SectionHeading>{children}</SectionHeading>,
+              h3: ({ children }) => <SectionHeading>{children}</SectionHeading>,
+              h4: ({ children }) => <SectionHeading>{children}</SectionHeading>,
+              h5: ({ children }) => <SectionHeading>{children}</SectionHeading>,
+              h6: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               ul: ({ children }) => (
                 <ul className="list-disc list-inside mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ul>
               ),
@@ -186,9 +160,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
       {/* Sources Section */}
       {extractedSources.length > 0 && (
         <div className="border-t border-[#565869] pt-4">
-          <h3 className="text-base font-semibold text-[#8e8ea0] mb-3 uppercase tracking-wide">
-            Sources
-          </h3>
+          <SectionHeading>SOURCES</SectionHeading>
           <div className="flex flex-wrap gap-2">
             {extractedSources.map((source, index) => (
               <span
