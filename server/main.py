@@ -33,7 +33,7 @@ from server.uploads import handle_file_upload
 from server.scraper import scrape_url
 from server.ws import websocket_endpoint
 from server.article_summary import extract_article
-from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT
+from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT, FILE_SUMMARY_SYSTEM_PROMPT
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -198,6 +198,7 @@ app.add_middleware(
 
 
 class ChatRequest(BaseModel):
+    rag_file_ids: Optional[List[str]] = None  # IDs of RAG files to use as context
     project_id: str
     conversation_id: str
     target_name: str
@@ -219,17 +220,24 @@ class ArticleSummaryRequest(BaseModel):
     project_id: Optional[str] = None  # Optional project_id to determine target_name
 
 
-class MultiArticleSummaryRequest(BaseModel):
-    urls: List[str]  # List of URLs to summarize together
-    conversation_id: Optional[str] = None
-    project_id: Optional[str] = None
-
-
 class ArticleSummaryResponse(BaseModel):
     message_type: str = "article_card"
     message_data: Dict[str, Any]
     model: str = "Trafilatura + GPT-5"
     provider: str = "trafilatura-gpt5"
+
+
+# RAG File model
+class RagFile(BaseModel):
+    id: str
+    chat_id: str  # conversation_id
+    filename: str
+    mime_type: str
+    size: int
+    created_at: str
+    text_path: Optional[str] = None  # Path to extracted text file
+    text_extracted: bool = False
+    error: Optional[str] = None
 
 
 class NewConversationRequest(BaseModel):
@@ -475,33 +483,8 @@ async def chat(request: ChatRequest):
     Main chat endpoint - calls ChatDO's run_agent()
     """
     try:
-        # Check for multiple URLs in the message - route to multi-article summary
-        urls = extract_urls(request.message)
-        if len(urls) >= 2:
-            # Get project_id from conversation if not in request
-            project_id = getattr(request, 'project_id', None)
-            if not project_id and request.conversation_id:
-                chats = load_chats()
-                chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
-                if chat:
-                    project_id = chat.get("project_id")
-            
-            # User provided multiple URLs - route to multi-article summary
-            multi_request = MultiArticleSummaryRequest(
-                urls=urls,
-                conversation_id=request.conversation_id,
-                project_id=project_id
-            )
-            result = await multi_article_summary(multi_request)
-            return ChatResponse(
-                reply=result.get("message_data", {}).get("jointSummary", ""),
-                message_type=result.get("message_type", "text"),
-                message_data=result.get("message_data", {}),
-                model_used=result.get("model", "Trafilatura + GPT-5"),
-                provider=result.get("provider", "trafilatura-gpt5")
-            )
-        
         # Check for single URL with "summarize" keyword - route to article summary
+        urls = extract_urls(request.message)
         if len(urls) == 1 and ("summarize" in request.message.lower() or "summary" in request.message.lower()):
             # Get project_id from conversation if not in request
             project_id = getattr(request, 'project_id', None)
@@ -525,13 +508,23 @@ async def chat(request: ChatRequest):
                 provider=result.provider
             )
         
+        # Build RAG context if RAG files are provided
+        rag_context = ""
+        if request.rag_file_ids:
+            rag_context = build_rag_context(request.rag_file_ids, request.message)
+        
+        # Prepend RAG context to user message if available
+        user_message = request.message
+        if rag_context:
+            user_message = f"{rag_context}\n\nUser question: {request.message}"
+        
         # Load target configuration
         target_cfg = load_target(request.target_name)
         
         # 1) Get raw response from ChatDO (may include <TASKS> block or structured results)
         raw_result, model_display, provider = run_agent(
             target=target_cfg,
-            task=request.message,
+            task=user_message,
             thread_id=request.conversation_id
         )
         
@@ -626,7 +619,9 @@ async def summarize_article(request: ArticleSummaryRequest):
 Provide:
 1. A 2–4 sentence summary paragraph
 2. 3–5 key bullet points
-3. (Optional) 1–2 sentences on why this matters or context
+3. 1–2 sentences on why this matters or its significance
+
+Format your response clearly with the summary first, then key points (as bullet points), then "Why This Matters:" followed by your analysis.
 
 Keep it concise, neutral, and factual."""
         
@@ -675,18 +670,35 @@ Keep it concise, neutral, and factual."""
             if not line:
                 continue
             
+            line_lower = line.lower()
+            
+            # Detect "why this matters" section - be more flexible
+            if ("why" in line_lower and ("matter" in line_lower or "context" in line_lower or "significance" in line_lower)):
+                current_section = "why_matters"
+                # If the line has content after a colon, extract it
+                if ":" in line:
+                    content = line.split(":", 1)[1].strip()
+                    if content:
+                        why_matters = content
+                continue
+            
             # Detect bullet points
             if line.startswith("-") or line.startswith("•") or (line.startswith("*") and len(line) > 1):
                 bullet_text = line.lstrip("-•* ").strip()
                 if bullet_text:
-                    key_points.append(bullet_text)
-            # Detect "why this matters" section
-            elif "why" in line.lower() and ("matter" in line.lower() or "context" in line.lower()):
-                current_section = "why_matters"
-            elif current_section == "summary" and not summary_paragraph:
-                summary_paragraph = line
-            elif current_section == "summary" and summary_paragraph:
-                summary_paragraph += " " + line
+                    if current_section == "why_matters":
+                        # Bullet point in why_matters section
+                        if why_matters:
+                            why_matters += " " + bullet_text
+                        else:
+                            why_matters = bullet_text
+                    else:
+                        key_points.append(bullet_text)
+            elif current_section == "summary":
+                if not summary_paragraph:
+                    summary_paragraph = line
+                else:
+                    summary_paragraph += " " + line
             elif current_section == "why_matters":
                 if why_matters:
                     why_matters += " " + line
@@ -697,10 +709,17 @@ Keep it concise, neutral, and factual."""
         if not summary_paragraph:
             summary_paragraph = summary_text[:500]  # First 500 chars as summary
         
+        # Get title with proper fallback
+        title = request.title or article_data.get("title")
+        if not title or title.strip() == "":
+            from urllib.parse import urlparse
+            domain = urlparse(article_data["url"]).netloc.replace("www.", "")
+            title = f"Article from {domain}"
+        
         # Build response
         message_data = {
             "url": article_data["url"],
-            "title": request.title or article_data.get("title") or "Article",
+            "title": title,
             "siteName": article_data.get("site_name") or "",
             "published": article_data.get("published") or None,
             "summary": summary_paragraph,
@@ -743,7 +762,7 @@ Keep it concise, neutral, and factual."""
                     source = {
                         "id": str(uuid_lib.uuid4()),
                         "kind": "url",
-                        "title": message_data.get("title") or "Article",
+                        "title": message_data.get("title") or title,
                         "description": summary_paragraph[:200] if summary_paragraph else None,
                         "url": article_data["url"],
                         "createdAt": datetime.now(timezone.utc).isoformat(),
@@ -769,6 +788,187 @@ Keep it concise, neutral, and factual."""
         raise HTTPException(status_code=500, detail=f"Error summarizing article: {str(e)}")
 
 
+# Removed auto-summarize endpoint - files are now used for RAG context instead
+
+
+@app.post("/api/upload")
+            raise HTTPException(status_code=400, detail="File text is too short or empty. Cannot summarize.")
+        
+        # Truncate text to safe length for GPT-5 (first 15k chars for documents)
+        document_text = request.extracted_text[:15000]
+        
+        # Build prompt for GPT-5
+        user_prompt = f"""Please summarize the following document:
+
+{document_text}
+
+Provide:
+1. A 2–4 sentence summary paragraph
+2. 3–5 key bullet points
+3. 1–2 sentences on why this matters or its significance
+
+Format your response clearly with the summary first, then key points (as bullet points), then "Why This Matters:" followed by your analysis.
+
+Keep it concise, neutral, and factual."""
+        
+        # Call AI Router with file_summary intent
+        messages = [
+            {"role": "system", "content": FILE_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+        payload = {
+            "role": "chatdo",
+            "intent": "file_summary",
+            "priority": "high",
+            "privacyLevel": "normal",
+            "costTier": "standard",
+            "input": {
+                "messages": messages,
+            },
+        }
+        
+        import requests
+        resp = requests.post(ai_router_url, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if not data.get("ok"):
+            raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
+        
+        assistant_messages = data["output"]["messages"]
+        if not assistant_messages or len(assistant_messages) == 0:
+            raise HTTPException(status_code=500, detail="No response from AI Router")
+        
+        summary_text = assistant_messages[0].get("content", "")
+        
+        # Parse summary into summary paragraph, bullet points, and why matters
+        lines = summary_text.split("\n")
+        summary_paragraph = ""
+        key_points = []
+        why_matters = ""
+        
+        current_section = "summary"
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            line_lower = line.lower()
+            
+            # Detect "why this matters" section - be more flexible
+            if ("why" in line_lower and ("matter" in line_lower or "context" in line_lower or "significance" in line_lower)):
+                current_section = "why_matters"
+                # If the line has content after a colon, extract it
+                if ":" in line:
+                    content = line.split(":", 1)[1].strip()
+                    if content:
+                        why_matters = content
+                continue
+            
+            # Detect bullet points
+            if line.startswith("-") or line.startswith("•") or (line.startswith("*") and len(line) > 1):
+                bullet_text = line.lstrip("-•* ").strip()
+                if bullet_text:
+                    if current_section == "why_matters":
+                        # Bullet point in why_matters section
+                        if why_matters:
+                            why_matters += " " + bullet_text
+                        else:
+                            why_matters = bullet_text
+                    else:
+                        key_points.append(bullet_text)
+            elif current_section == "summary":
+                if not summary_paragraph:
+                    summary_paragraph = line
+                else:
+                    summary_paragraph += " " + line
+            elif current_section == "why_matters":
+                if why_matters:
+                    why_matters += " " + line
+                else:
+                    why_matters = line
+        
+        # If no structured parsing worked, use the whole text as summary
+        if not summary_paragraph:
+            summary_paragraph = summary_text[:500]
+        
+        # Estimate word count and read time
+        word_count = len(request.extracted_text.split())
+        estimated_read_time = max(1, (word_count + 199) // 200)  # Round up
+        
+        # Build response
+        message_data = {
+            "fileName": request.file_name,
+            "filePath": request.file_path,
+            "summary": summary_paragraph,
+            "keyPoints": key_points if key_points else [],
+            "whyMatters": why_matters if why_matters else None,
+            "wordCount": word_count,
+            "estimatedReadTimeMinutes": estimated_read_time,
+        }
+        
+        # Save to memory store if conversation_id is provided
+        if request.conversation_id and request.project_id:
+            try:
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == request.project_id), None)
+                if project:
+                    target_name = project.get("default_target", "general")
+                    thread_id = request.conversation_id
+                    
+                    # Load existing history
+                    history = load_thread_history(target_name, thread_id)
+                    
+                    # Add user message
+                    user_message = f"Uploaded and summarized: {request.file_name}"
+                    history.append({"role": "user", "content": user_message})
+                    
+                    # Add assistant message with structured data
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": "",
+                        "type": "document_card",
+                        "data": message_data,
+                        "model": "GPT-5",
+                        "provider": "openai-gpt5"
+                    }
+                    history.append(assistant_message)
+                    save_thread_history(target_name, thread_id, history)
+                    
+                    # Also save as a source
+                    import uuid as uuid_lib
+                    source = {
+                        "id": str(uuid_lib.uuid4()),
+                        "kind": "file",
+                        "title": request.file_name,
+                        "description": summary_paragraph[:200] if summary_paragraph else None,
+                        "fileName": request.file_name,
+                        "url": None,
+                        "createdAt": datetime.now(timezone.utc).isoformat(),
+                        "meta": {
+                            "filePath": request.file_path,
+                            "wordCount": word_count,
+                        }
+                    }
+                    add_thread_source(target_name, thread_id, source)
+            except Exception as e:
+                # Don't fail the request if saving to memory store fails
+                print(f"Warning: Failed to save file summary to memory store: {e}")
+        
+        return FileSummaryResponse(
+            message_data=message_data
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error summarizing file: {str(e)}")
+
+
 @app.post("/api/upload")
 async def upload_file(
     project_id: str = Form(...),
@@ -776,15 +976,188 @@ async def upload_file(
     file: UploadFile = File(...)
 ):
     """
-    Handle file uploads
+    Handle file uploads (legacy endpoint for one-off file sharing in conversations)
     Saves to uploads/<project_id>/<conversation_id>/<uuid>.<ext>
     Extracts text if PDF/Word/Excel/PPT/image
+    Note: For RAG context files, use /api/rag/files instead
     """
     try:
         result = await handle_file_upload(project_id, conversation_id, file)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# RAG File Storage
+RAG_FILES_DIR = Path(__file__).parent.parent / "rag_files"
+RAG_FILES_DIR.mkdir(exist_ok=True)
+
+def get_rag_files_path(chat_id: str) -> Path:
+    """Get path to RAG files JSON for a chat"""
+    return RAG_FILES_DIR / f"{chat_id}.json"
+
+def load_rag_files(chat_id: str) -> List[Dict[str, Any]]:
+    """Load RAG files for a chat"""
+    rag_path = get_rag_files_path(chat_id)
+    if not rag_path.exists():
+        return []
+    try:
+        with open(rag_path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading RAG files: {e}")
+        return []
+
+def save_rag_files(chat_id: str, files: List[Dict[str, Any]]):
+    """Save RAG files for a chat"""
+    rag_path = get_rag_files_path(chat_id)
+    with open(rag_path, 'w') as f:
+        json.dump(files, f, indent=2)
+
+def chunk_text(text: str, chunk_size: int = 2000) -> List[str]:
+    """Simple text chunking for RAG"""
+    chunks = []
+    words = text.split()
+    current_chunk = []
+    current_length = 0
+    
+    for word in words:
+        word_length = len(word) + 1  # +1 for space
+        if current_length + word_length > chunk_size and current_chunk:
+            chunks.append(' '.join(current_chunk))
+            current_chunk = [word]
+            current_length = word_length
+        else:
+            current_chunk.append(word)
+            current_length += word_length
+    
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+    
+    return chunks
+
+def build_rag_context(rag_file_ids: List[str], user_message: str) -> str:
+    """Build RAG context message from file IDs"""
+    if not rag_file_ids:
+        return ""
+    
+    context_parts = ["You have access to the following reference documents for this conversation. Use them as primary sources when answering.\n"]
+    
+    # Load all RAG files
+    all_files = []
+    for file_id in rag_file_ids:
+        # Find which chat this file belongs to by searching all RAG files
+        for rag_file in RAG_FILES_DIR.glob("*.json"):
+            try:
+                with open(rag_file, 'r') as f:
+                    files = json.load(f)
+                    for f in files:
+                        if f.get("id") == file_id:
+                            all_files.append(f)
+                            break
+            except:
+                continue
+    
+    # Load text for each file and build context
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    for rag_file in all_files:
+        if not rag_file.get("text_extracted") or not rag_file.get("text_path"):
+            continue
+        
+        try:
+            text_path = uploads_dir / rag_file["text_path"]
+            if text_path.exists():
+                with open(text_path, 'r', encoding='utf-8') as f:
+                    text_content = f.read()
+                
+                # Simple keyword relevance filter
+                user_keywords = set(user_message.lower().split())
+                text_lower = text_content.lower()
+                relevance_score = sum(1 for kw in user_keywords if kw in text_lower)
+                
+                # Only include if some relevance or if it's a short document
+                if relevance_score > 0 or len(text_content) < 5000:
+                    chunks = chunk_text(text_content)
+                    # Take first 3 chunks or all if less than 3
+                    selected_chunks = chunks[:3]
+                    context_parts.append(f"\n----\nSource: {rag_file['filename']}\n")
+                    context_parts.append('\n\n'.join(selected_chunks))
+                    context_parts.append("\n----\n")
+        except Exception as e:
+            print(f"Error loading RAG file text: {e}")
+            continue
+    
+    return '\n'.join(context_parts)
+
+
+@app.post("/api/rag/files", response_model=RagFile)
+async def upload_rag_file(
+    chat_id: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """
+    Upload a file for RAG context in a specific chat
+    """
+    try:
+        # Use handle_file_upload but store as RAG file
+        # We'll use a special "rag" project_id
+        upload_result = await handle_file_upload("rag", chat_id, file)
+        
+        # Create RagFile entry
+        rag_file = RagFile(
+            id=str(uuid.uuid4()),
+            chat_id=chat_id,
+            filename=upload_result.get("original_filename", upload_result.get("filename", "")),
+            mime_type=upload_result.get("mime_type", "application/octet-stream"),
+            size=upload_result.get("size", 0),
+            created_at=datetime.now(timezone.utc).isoformat(),
+            text_path=upload_result.get("text_path"),
+            text_extracted=upload_result.get("text_extracted", False),
+            error=upload_result.get("extraction_error")
+        )
+        
+        # Save to RAG files list
+        rag_files = load_rag_files(chat_id)
+        rag_files.append(rag_file.dict())
+        save_rag_files(chat_id, rag_files)
+        
+        return rag_file
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading RAG file: {str(e)}")
+
+
+@app.get("/api/rag/files")
+async def list_rag_files(chat_id: str):
+    """
+    List all RAG files for a chat
+    """
+    rag_files = load_rag_files(chat_id)
+    return rag_files
+
+
+@app.delete("/api/rag/files/{file_id}")
+async def delete_rag_file(chat_id: str, file_id: str):
+    """
+    Delete a RAG file
+    """
+    rag_files = load_rag_files(chat_id)
+    original_count = len(rag_files)
+    rag_files = [f for f in rag_files if f.get("id") != file_id]
+    
+    if len(rag_files) == original_count:
+        raise HTTPException(status_code=404, detail="RAG file not found")
+    
+    # Optionally delete the actual file and text file
+    deleted_file = next((f for f in load_rag_files(chat_id) if f.get("id") == file_id), None)
+    if deleted_file:
+        uploads_dir = Path(__file__).parent.parent / "uploads"
+        if deleted_file.get("text_path"):
+            text_path = uploads_dir / deleted_file["text_path"]
+            if text_path.exists():
+                text_path.unlink()
+    
+    save_rag_files(chat_id, rag_files)
+    return {"success": True}
 
 
 @app.get("/uploads/{file_path:path}")
@@ -1302,6 +1675,13 @@ async def get_chat_sources(chat_id: str):
     sources = load_thread_sources(target_name, thread_id)
     
     return {"sources": sources}
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Handle favicon requests to prevent 410 errors"""
+    # Return 204 No Content to indicate no favicon is available
+    return JSONResponse(status_code=204, content=None)
 
 
 @app.patch("/api/chats/{chat_id}", response_model=Chat)

@@ -35,6 +35,19 @@ When summarizing an article, produce a clean, concise summary with:
 
 Keep it concise, neutral, and factual. Do not include the source URL in the summary text (it's already displayed separately)."""
 
+# File/Document Summary System Prompt - Clean summary format
+FILE_SUMMARY_SYSTEM_PROMPT = """You are ChatDO's Document Summarizer.
+
+When summarizing a document, produce a clean, concise summary with:
+
+1. A 2–4 sentence summary paragraph
+2. 3–5 key bullet points
+3. 1–2 sentences on why this matters or its significance
+
+Format your response clearly with the summary first, then key points (as bullet points), then "Why This Matters:" followed by your analysis.
+
+Keep it concise, neutral, and factual."""
+
 # Cache the model ID to avoid making a preliminary call on every request
 _cached_model_id: Optional[str] = None
 

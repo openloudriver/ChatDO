@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
+import RagContextTray from './RagContextTray';
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -14,6 +15,7 @@ const ChatComposer: React.FC = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isRagTrayOpen, setIsRagTrayOpen] = useState(false);
   
   // Auto-resize textarea based on content
   const adjustTextareaHeight = () => {
@@ -42,7 +44,8 @@ const ChatComposer: React.FC = () => {
     clearStreaming,
     renameChat,
     editMessage,
-    removeMessagesAfter
+    removeMessagesAfter,
+    ragFileIds
   } = useChatStore();
 
   const handleSend = async () => {
@@ -179,19 +182,6 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
-          } else if (data.type === 'multi_article_card') {
-            // Handle structured multi-article card results
-            addMessage({ 
-              role: 'assistant', 
-              content: '',
-              type: 'multi_article_card',
-              data: data.data,
-              model: data.model || 'Trafilatura + GPT-5',
-              provider: data.provider || 'trafilatura-gpt5'
-            });
-            clearStreaming();
-            setLoading(false);
-            ws.close();
           } else if (data.type === 'done') {
             // Add final message with model/provider info
             addMessage({ 
@@ -248,7 +238,8 @@ const ChatComposer: React.FC = () => {
         project_id: currentProject.id,
         conversation_id: currentConversation.id,
         target_name: currentConversation.targetName,
-        message: messageToSend
+        message: messageToSend,
+        rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined
       });
       
       // Check if response is structured (web_search_results or article_card)
@@ -298,11 +289,49 @@ const ChatComposer: React.FC = () => {
     formData.append('file', file);
     formData.append('project_id', currentProject.id);
     formData.append('conversation_id', currentConversation.id);
+    // Auto-summarize if text can be extracted
+    formData.append('auto_summarize', 'true');
 
     try {
       const response = await axios.post('http://localhost:8000/api/upload', formData);
       console.log('File uploaded:', response.data);
       console.log('Extracted text available:', !!response.data.extracted_text);
+      console.log('Text extracted flag:', response.data.text_extracted);
+      console.log('Summary available:', !!response.data.summary);
+      if (response.data.summary_error) {
+        console.error('Summary error:', response.data.summary_error);
+      }
+      
+      // If summary was created, add it as a message
+      if (response.data.summary) {
+        console.log('Adding document card to chat', response.data.summary);
+        const { addMessage } = useChatStore.getState();
+        
+        // Add user message indicating file was uploaded
+        addMessage({
+          id: `file-upload-${Date.now()}`,
+          role: 'user',
+          content: `Uploaded: ${file.name}`,
+          timestamp: new Date()
+        });
+        
+        // Add assistant message with document card
+        addMessage({
+          id: `doc-${Date.now()}`,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+          type: 'document_card',
+          model: 'GPT-5',
+          provider: 'openai-gpt5',
+          data: response.data.summary
+        });
+      } else {
+        console.warn('No summary in response. Response keys:', Object.keys(response.data));
+        if (response.data.summary_error) {
+          console.error('Summary error:', response.data.summary_error);
+        }
+      }
       
       // For images, read as base64 to include in message
       let base64: string | undefined;
@@ -550,11 +579,15 @@ const ChatComposer: React.FC = () => {
       }
     };
 
-    window.addEventListener('resend-message', handleResendMessage as EventListener);
+    window.addEventListener('resend-message', handleResendMessage as unknown as EventListener);
     return () => {
-      window.removeEventListener('resend-message', handleResendMessage as EventListener);
+      window.removeEventListener('resend-message', handleResendMessage as unknown as EventListener);
     };
   }, [currentProject, currentConversation, addMessage, setLoading, setStreaming, updateStreamingContent, clearStreaming]);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
 
   const handleCancelEdit = () => {
     setEditingMessageId(null);
@@ -778,6 +811,19 @@ const ChatComposer: React.FC = () => {
                 </svg>
               )}
             </button>
+            <button
+              onClick={() => setIsRagTrayOpen(!isRagTrayOpen)}
+              className={`p-2 rounded transition-colors ${
+                isRagTrayOpen
+                  ? 'text-[#19c37d] bg-[#19c37d]/20'
+                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+              }`}
+              title="RAG context tray (upload reference files)"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </button>
           </div>
           <input
             ref={fileInputRef}
@@ -880,6 +926,12 @@ const ChatComposer: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* RAG Context Tray */}
+      <RagContextTray 
+        isOpen={isRagTrayOpen} 
+        onClose={() => setIsRagTrayOpen(false)}
+      />
     </div>
   );
 };

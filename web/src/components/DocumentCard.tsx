@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 interface DocumentCardProps {
   fileName: string;
@@ -64,24 +64,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   wordCount,
   pageCount,
 }) => {
-  const [copied, setCopied] = useState(false);
   const readTime = estimatedReadTimeMinutes || estimateReadTime(summary, keyPoints, whyMatters, wordCount);
-
-  const handleCopySummary = async () => {
-    const copyText = [
-      summary && `Summary:\n${summary}`,
-      keyPoints && keyPoints.length > 0 && `\n\nKey Points:\n${keyPoints.map(p => `• ${p}`).join('\n')}`,
-      whyMatters && `\n\nWhy This Matters:\n${whyMatters}`,
-    ].filter(Boolean).join('\n');
-
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  };
 
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
@@ -93,22 +76,6 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             Document
           </div>
         </div>
-        {/* Copy Summary Button */}
-        <button
-          onClick={handleCopySummary}
-          className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex-shrink-0"
-          title="Copy summary"
-        >
-          {copied ? (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          )}
-        </button>
       </div>
 
       {/* Document Title */}
@@ -145,22 +112,22 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         {/* Summary */}
         {summary && (
           <div>
-            <h3 className="text-sm font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
               Summary
             </h3>
-            <p className="text-[#ececf1] leading-relaxed">{summary}</p>
+            <p className="text-sm text-[#ececf1] leading-relaxed">{summary}</p>
           </div>
         )}
         
         {/* Key points */}
         {keyPoints && keyPoints.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
               Key Points
             </h3>
             <ul className="list-disc list-inside space-y-1 text-[#ececf1] ml-2">
               {keyPoints.map((point, index) => (
-                <li key={index} className="text-sm">{point}</li>
+                <li key={index} className="text-sm text-[#ececf1] leading-relaxed">{point}</li>
               ))}
             </ul>
           </div>
@@ -169,7 +136,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         {/* Why this matters */}
         {whyMatters && (
           <div>
-            <h3 className="text-sm font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
               Why This Matters
             </h3>
             <p className="text-sm text-[#ececf1] leading-relaxed">{whyMatters}</p>
@@ -177,12 +144,6 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         )}
       </div>
 
-      {/* Footer: Model attribution */}
-      <div className="border-t border-[#565869] pt-3">
-        <div className="text-xs text-[#8e8ea0] text-right">
-          Model: GPT-5
-        </div>
-      </div>
     </div>
   );
 };

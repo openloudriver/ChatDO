@@ -3,10 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
-import MultiArticleCard from './MultiArticleCard';
-import SourcesPanel from './SourcesPanel';
-import type { Source } from '../types/sources';
-import { v4 as uuidv4 } from 'uuid';
+import DocumentCard from './DocumentCard';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -101,14 +98,10 @@ const ChatMessages: React.FC = () => {
     viewMode, 
     renameChat,
     deleteMessage,
-    sources,
-    addSource,
-    loadSources
   } = useChatStore();
   
   // Track which articles are being summarized or have been summarized
   const [articleStates, setArticleStates] = useState<Record<string, 'idle' | 'summarizing' | 'summarized'>>({});
-  const [showSourcesPanel, setShowSourcesPanel] = useState(false);
   
   const [previewFile, setPreviewFile] = useState<{name: string, data: string, type: 'image' | 'pdf' | 'pptx' | 'xlsx' | 'docx' | 'video' | 'other', mimeType: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -120,37 +113,6 @@ const ChatMessages: React.FC = () => {
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Load sources when conversation changes
-  useEffect(() => {
-    if (currentConversation?.id) {
-      loadSources(currentConversation.id);
-    }
-  }, [currentConversation?.id, loadSources]);
-  
-  // Auto-generate source when article_card message is added
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.type === 'article_card' && lastMessage.data) {
-      const articleData = lastMessage.data;
-      // Check if source already exists for this URL
-      const existingSource = sources.find(s => s.url === articleData.url);
-      if (!existingSource && articleData.url) {
-        const newSource: Source = {
-          id: uuidv4(),
-          kind: 'url',
-          title: articleData.title || 'Untitled Article',
-          description: articleData.summary || undefined,
-          url: articleData.url,
-          createdAt: new Date().toISOString(),
-          meta: {
-            siteName: articleData.siteName,
-            published: articleData.published,
-          }
-        };
-        addSource(newSource);
-      }
-    }
-  }, [messages, sources, addSource]);
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -254,11 +216,25 @@ const ChatMessages: React.FC = () => {
     }
   }, [isEditingTitle]);
 
-  const handleCopyMessage = async (content: string, messageId: string) => {
+  const handleCopyMessage = async (content: string, messageId: string, messageData?: any) => {
     try {
-      // Strip markdown for plain text copy
-      const plainText = content.replace(/[#*`_~\[\]()]/g, '').trim();
-      await navigator.clipboard.writeText(plainText);
+      let textContent = content;
+      
+      // If this is an article_card, format it nicely
+      if (messageData && messageData.url) {
+        const copyText = [
+          messageData.title && `${messageData.title}\n${messageData.url}\n`,
+          messageData.summary && `Summary:\n${messageData.summary}`,
+          messageData.keyPoints && messageData.keyPoints.length > 0 && `\n\nKey Points:\n${messageData.keyPoints.map((p: string) => `• ${p}`).join('\n')}`,
+          messageData.whyMatters && `\n\nWhy This Matters:\n${messageData.whyMatters}`,
+        ].filter(Boolean).join('\n');
+        textContent = copyText;
+      } else {
+        // Strip markdown for plain text copy
+        textContent = content.replace(/[#*`_~\[\]()]/g, '').trim();
+      }
+      
+      await navigator.clipboard.writeText(textContent);
       
       // Show feedback
       setCopiedMessageId(messageId);
@@ -268,8 +244,20 @@ const ChatMessages: React.FC = () => {
     } catch (error) {
       console.error('Failed to copy message:', error);
       // Fallback for older browsers
+      let textContent = content;
+      if (messageData && messageData.url) {
+        const copyText = [
+          messageData.title && `${messageData.title}\n${messageData.url}\n`,
+          messageData.summary && `Summary:\n${messageData.summary}`,
+          messageData.keyPoints && messageData.keyPoints.length > 0 && `\n\nKey Points:\n${messageData.keyPoints.map((p: string) => `• ${p}`).join('\n')}`,
+          messageData.whyMatters && `\n\nWhy This Matters:\n${messageData.whyMatters}`,
+        ].filter(Boolean).join('\n');
+        textContent = copyText;
+      } else {
+        textContent = content.replace(/[#*`_~\[\]()]/g, '').trim();
+      }
       const textArea = document.createElement('textarea');
-      textArea.value = content.replace(/[#*`_~\[\]()]/g, '').trim();
+      textArea.value = textContent;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
@@ -294,13 +282,6 @@ const ChatMessages: React.FC = () => {
     if (window.confirm('Delete this message and all messages after it?')) {
       deleteMessage(messageId);
     }
-  };
-
-  const handleInsertReference = (source: Source) => {
-    // Dispatch event to ChatComposer to insert reference
-    window.dispatchEvent(new CustomEvent('insert-reference', { 
-      detail: { source } 
-    }));
   };
 
   return (
@@ -348,16 +329,6 @@ const ChatMessages: React.FC = () => {
               )}
             </>
           )}
-          {/* Sources Panel Toggle */}
-          <button
-            onClick={() => setShowSourcesPanel(!showSourcesPanel)}
-            className="ml-auto p-2 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
-            title={showSourcesPanel ? "Hide sources" : "Show sources"}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </button>
         </div>
       )}
 
@@ -548,7 +519,7 @@ const ChatMessages: React.FC = () => {
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
                   // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'multi_article_card';
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'document_card';
                   
                   if (!hasContent) {
                     return null;
@@ -874,6 +845,21 @@ const ChatMessages: React.FC = () => {
                         </div>
                       )}
                       
+                      {/* Display document_card if message type is document_card */}
+                      {message.type === 'document_card' && message.data && (
+                        <DocumentCard
+                          fileName={message.data.fileName || 'Document'}
+                          fileType={message.data.fileType}
+                          filePath={message.data.filePath}
+                          summary={message.data.summary || ''}
+                          keyPoints={message.data.keyPoints || []}
+                          whyMatters={message.data.whyMatters}
+                          estimatedReadTimeMinutes={message.data.estimatedReadTimeMinutes}
+                          wordCount={message.data.wordCount}
+                          pageCount={message.data.pageCount}
+                        />
+                      )}
+                      
                       {/* Display article_card if message type is article_card */}
                       {message.type === 'article_card' && message.data && (
                         <ArticleCard
@@ -887,19 +873,8 @@ const ChatMessages: React.FC = () => {
                         />
                       )}
                       
-                      {/* Display multi_article_card if message type is multi_article_card */}
-                      {message.type === 'multi_article_card' && message.data && (
-                        <MultiArticleCard
-                          articles={message.data.articles || []}
-                          jointSummary={message.data.jointSummary || ''}
-                          keyAgreements={message.data.keyAgreements || []}
-                          keyDifferences={message.data.keyDifferences || []}
-                          whyMatters={message.data.whyMatters}
-                        />
-                      )}
-                      
                       {/* Display text content if any (and not structured message types) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'multi_article_card' && (
+                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>
@@ -963,7 +938,7 @@ const ChatMessages: React.FC = () => {
                   </>
                 ) : (
                   <button
-                    onClick={() => handleCopyMessage(message.content, message.id)}
+                    onClick={() => handleCopyMessage(message.content, message.id, message.data)}
                     className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
                     title="Copy message"
                   >
@@ -1012,29 +987,6 @@ const ChatMessages: React.FC = () => {
       <div ref={messagesEndRef} />
         </div>
         
-        {/* Sources Panel */}
-        {showSourcesPanel && (
-          <div className="w-80 border-l border-[#565869] bg-[#1a1a1a] flex flex-col">
-            <div className="px-4 py-3 border-b border-[#565869] flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-[#ececf1]">Sources</h3>
-              <button
-                onClick={() => setShowSourcesPanel(false)}
-                className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
-                title="Close sources panel"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <SourcesPanel
-                sources={sources}
-                onInsertReference={handleInsertReference}
-              />
-            </div>
-          </div>
-        )}
       </div>
       
       {/* File Preview Modal */}

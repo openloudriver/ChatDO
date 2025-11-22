@@ -61,15 +61,22 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
             # PDF extraction (requires PyPDF2 or pdfplumber)
             try:
                 text_content = await extract_pdf_text(file_path)
-                if text_content:
+                if text_content and text_content.strip():
                     text_path = upload_dir / f"{uuid.uuid4()}.txt"
                     async with aiofiles.open(text_path, 'w', encoding='utf-8') as f:
                         await f.write(text_content)
                     result["text_extracted"] = True
                     result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
                     result["extracted_text"] = text_content
+                else:
+                    result["extraction_error"] = "No text could be extracted from PDF (may be image-based/scanned)"
+                    print(f"PDF extraction returned empty text for {file.filename}")
+            except ImportError as e:
+                result["extraction_error"] = f"PDF extraction library not installed: {str(e)}"
+                print(f"PDF extraction failed: {e}")
             except Exception as e:
                 result["extraction_error"] = str(e)
+                print(f"PDF extraction error: {e}")
         
         elif mime_type in [
             "application/msword",
@@ -78,15 +85,22 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
             # Word document extraction
             try:
                 text_content = await extract_word_text(file_path)
-                if text_content:
+                if text_content and text_content.strip():
                     text_path = upload_dir / f"{uuid.uuid4()}.txt"
                     async with aiofiles.open(text_path, 'w', encoding='utf-8') as f:
                         await f.write(text_content)
                     result["text_extracted"] = True
                     result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
                     result["extracted_text"] = text_content
+                else:
+                    result["extraction_error"] = "No text could be extracted from Word document"
+                    print(f"Word document extraction returned empty text for {file.filename}")
+            except ImportError as e:
+                result["extraction_error"] = f"Word document extraction library not installed: {str(e)}"
+                print(f"Word document extraction failed: {e}")
             except Exception as e:
                 result["extraction_error"] = str(e)
+                print(f"Word document extraction error: {e}")
         
         elif mime_type in [
             "application/vnd.ms-powerpoint",
@@ -121,19 +135,34 @@ async def extract_pdf_text(pdf_path: Path) -> str:
         with open(pdf_path, 'rb') as f:
             pdf_reader = PyPDF2.PdfReader(f)
             for page in pdf_reader.pages:
-                text_parts.append(page.extract_text())
-        return "\n\n".join(text_parts)
+                text = page.extract_text()
+                if text:
+                    text_parts.append(text)
+        result = "\n\n".join(text_parts)
+        if not result:
+            print(f"Warning: PyPDF2 extracted no text from {pdf_path}")
+        return result
     except ImportError:
+        print("Warning: PyPDF2 not installed, trying pdfplumber...")
         # Fallback: try pdfplumber
         try:
             import pdfplumber
             text_parts = []
             with pdfplumber.open(pdf_path) as pdf:
                 for page in pdf.pages:
-                    text_parts.append(page.extract_text() or "")
-            return "\n\n".join(text_parts)
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(text or "")
+            result = "\n\n".join(text_parts)
+            if not result:
+                print(f"Warning: pdfplumber extracted no text from {pdf_path}")
+            return result
         except ImportError:
-            return ""  # No PDF library available
+            print("Error: Neither PyPDF2 nor pdfplumber is installed. Please install one: pip install PyPDF2 or pip install pdfplumber")
+            raise ImportError("No PDF extraction library available. Install PyPDF2 or pdfplumber.")
+    except Exception as e:
+        print(f"Error extracting PDF text: {e}")
+        raise
 
 
 async def extract_word_text(doc_path: Path) -> str:
@@ -141,10 +170,17 @@ async def extract_word_text(doc_path: Path) -> str:
     try:
         from docx import Document
         doc = Document(doc_path)
-        paragraphs = [p.text for p in doc.paragraphs]
-        return "\n\n".join(paragraphs)
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        result = "\n\n".join(paragraphs)
+        if not result:
+            print(f"Warning: python-docx extracted no text from {doc_path}")
+        return result
     except ImportError:
-        return ""  # python-docx not available
+        print("Error: python-docx not installed. Please install: pip install python-docx")
+        raise ImportError("python-docx not available. Install with: pip install python-docx")
+    except Exception as e:
+        print(f"Error extracting Word document text: {e}")
+        raise
 
 
 async def extract_pptx_text(pptx_path: Path) -> str:

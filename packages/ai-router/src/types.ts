@@ -8,6 +8,7 @@ export type AiIntent =
   | "doc_draft"
   | "summarize"
   | "summarize_article"
+  | "file_summary"
   | "tool_orchestration"
   | "web_search";
 

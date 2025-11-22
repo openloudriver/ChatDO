@@ -8,7 +8,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'web_search_results' | 'article_card' | 'multi_article_card' | 'compare_articles_card' | 'timeline_card';  // Message types
+  type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card';  // Message types
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
   data?: {
@@ -58,6 +58,7 @@ interface ChatStore {
   searchResults: Conversation[];
   searchQuery: string;
   sources: Source[];  // Sources for current conversation
+  ragFileIds: string[];  // RAG file IDs for current conversation
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -92,6 +93,7 @@ interface ChatStore {
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
   clearStreaming: () => void;
+  setRagFileIds: (ids: string[]) => void;
   addSource: (source: Source) => void;
   setSources: (sources: Source[]) => void;
   loadSources: (conversationId: string) => Promise<void>;
