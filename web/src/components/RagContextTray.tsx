@@ -1,22 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useChatStore } from '../store/chat';
-
-interface RagFile {
-  id: string;
-  chat_id: string;
-  filename: string;
-  mime_type: string;
-  size: number;
-  created_at: string;
-  text_path: string | null;
-  text_extracted: boolean;
-  error?: string | null;
-}
+import type { RagFile } from '../types/rag';
 
 interface RagContextTrayProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenRagFile?: (file: RagFile) => void; // Optional callback to open file preview
 }
 
 const getFileIcon = (mimeType: string) => {
@@ -55,7 +45,7 @@ const getFileIcon = (mimeType: string) => {
   }
 };
 
-export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose }) => {
+export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose, onOpenRagFile }) => {
   const { currentConversation, setRagFileIds } = useChatStore();
   const [ragFiles, setRagFiles] = useState<RagFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -87,7 +77,11 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
         params: { chat_id: currentConversation.id }
       });
       const files = response.data || [];
-      setRagFiles(files);
+      // Sort by created_at to ensure consistent ordering (matches ChatMessages)
+      const sortedFiles = files.sort((a: RagFile, b: RagFile) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      setRagFiles(sortedFiles as RagFile[]);
       // RAG file IDs will be updated by the useEffect hook above
     } catch (error) {
       console.error('Failed to load RAG files:', error);
@@ -261,44 +255,55 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
           </div>
         ) : (
           <div className="space-y-2">
-            {ragFiles.map((file) => (
-              <div
-                key={file.id}
-                className="bg-[#2a2a2a] rounded-lg p-3 border border-[#565869] hover:border-[#19c37d] transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  {getFileIcon(file.mime_type)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-[#ececf1] truncate">{file.filename}</p>
-                      <button
-                        onClick={() => handleDeleteFile(file.id)}
-                        className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex-shrink-0"
-                        title="Remove"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2">
-                      {file.text_extracted ? (
+            {(() => {
+              // Compute indexed files (same logic as ChatMessages)
+              const readyFiles = ragFiles.filter(f => f.text_extracted);
+              const ragFilesWithIndex = readyFiles.map((file, i) => ({
+                ...file,
+                index: i + 1, // 1-based index
+              }));
+              
+              return ragFilesWithIndex.map((file) => (
+                <button
+                  key={file.id}
+                  type="button"
+                  onClick={() => onOpenRagFile?.(file)}
+                  className="w-full bg-[#2a2a2a] rounded-lg p-3 border border-[#565869] hover:border-[#19c37d] transition-colors text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    {getFileIcon(file.mime_type)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-semibold text-[#19c37d] flex-shrink-0">
+                            {file.index}.
+                          </span>
+                          <p className="text-sm font-medium text-[#ececf1] truncate">{file.filename}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFile(file.id);
+                          }}
+                          className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex-shrink-0"
+                          title="Remove"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
                         <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded">Ready</span>
-                      ) : file.error ? (
-                        <span className="text-xs px-2 py-0.5 bg-red-500/20 text-red-400 rounded" title={file.error}>
-                          Error
+                        <span className="text-xs text-[#8e8ea0]">
+                          {(file.size / 1024).toFixed(1)} KB
                         </span>
-                      ) : (
-                        <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded">Indexing...</span>
-                      )}
-                      <span className="text-xs text-[#8e8ea0]">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </button>
+              ));
+            })()}
           </div>
         )}
       </div>

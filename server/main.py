@@ -236,6 +236,7 @@ class RagFile(BaseModel):
     size: int
     created_at: str
     text_path: Optional[str] = None  # Path to extracted text file
+    path: Optional[str] = None  # Path to original file (for preview)
     text_extracted: bool = False
     error: Optional[str] = None
 
@@ -589,8 +590,14 @@ async def chat(request: ChatRequest):
         # 4) If RAG context was used, return as structured rag_response
         if has_rag_context and not tasks_json:
             # Extract source file names from RAG context
+            # IMPORTANT: Return sources in the SAME ORDER as rag_file_ids to match RAG tray numbering
             rag_files = load_rag_files(request.conversation_id) if request.rag_file_ids else []
-            source_files = [f.get("filename") for f in rag_files if f.get("id") in (request.rag_file_ids or [])]
+            # Create a lookup dict for fast access
+            rag_files_by_id = {f.get("id"): f for f in rag_files}
+            # Return sources in the order of rag_file_ids (matches RAG tray order)
+            source_files = [rag_files_by_id.get(fid, {}).get("filename", "") 
+                          for fid in (request.rag_file_ids or [])
+                          if fid in rag_files_by_id and rag_files_by_id[fid].get("text_extracted")]
             
             # Log raw RAG output to verify markdown headings are present
             print(f"[RAG] Raw RAG output (first 500 chars):\n{human_text[:500]}")
@@ -1052,6 +1059,7 @@ async def upload_rag_file(
             size=upload_result.get("size", 0),
             created_at=datetime.now(timezone.utc).isoformat(),
             text_path=upload_result.get("text_path"),
+            path=upload_result.get("path"),  # Store original file path for preview
             text_extracted=upload_result.get("text_extracted", False),
             error=upload_result.get("extraction_error")
         )
@@ -1073,6 +1081,55 @@ async def list_rag_files(chat_id: str):
     """
     rag_files = load_rag_files(chat_id)
     return rag_files
+
+
+@app.get("/api/rag/find-original")
+async def find_original_file(text_path: str, mime_type: str):
+    """
+    Find the original file path given a text_path.
+    This is needed when old RAG files don't have the 'path' field.
+    """
+    from pathlib import Path
+    
+    # text_path format: uploads/rag/chat_id/uuid.txt
+    # We need to find the original file in the same directory
+    uploads_base = Path(__file__).parent.parent / "uploads"
+    text_file_path = uploads_base / text_path.replace('uploads/', '')
+    
+    if not text_file_path.exists():
+        raise HTTPException(status_code=404, detail="Text file not found")
+    
+    # Get the directory containing the text file
+    file_dir = text_file_path.parent
+    
+    # Determine expected extension from mime type
+    extension = ''
+    if mime_type == 'application/pdf':
+        extension = '.pdf'
+    elif 'presentation' in mime_type or 'powerpoint' in mime_type:
+        extension = '.pptx'
+    elif 'spreadsheet' in mime_type or 'excel' in mime_type or 'sheet' in mime_type:
+        extension = '.xlsx'
+    elif 'word' in mime_type or 'wordprocessing' in mime_type:
+        extension = '.docx'
+    
+    # Find all files in the directory with the expected extension (excluding .txt files)
+    matching_files = [f for f in file_dir.iterdir() 
+                      if f.is_file() 
+                      and f.suffix == extension 
+                      and not f.name.endswith('.txt')]
+    
+    if not matching_files:
+        raise HTTPException(status_code=404, detail=f"Original file with extension {extension} not found in directory")
+    
+    # If multiple files, prefer the one that's not a .txt file
+    # Usually there should be only one, but if there are multiple, take the first
+    original_file = matching_files[0]
+    
+    # Return path relative to uploads base parent (to match the format used elsewhere)
+    path = str(original_file.relative_to(uploads_base.parent))
+    
+    return {"path": path}
 
 
 @app.delete("/api/rag/files/{file_id}")

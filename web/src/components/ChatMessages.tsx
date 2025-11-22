@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
+import type { RagFile } from '../types/rag';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -102,6 +103,7 @@ const ChatMessages: React.FC = () => {
     isSummarizingArticle,
     setSummarizingArticle,
     isRagTrayOpen,
+    ragFileIds, // Get ragFileIds to match backend order
   } = useChatStore();
   
   // Track which articles are being summarized or have been summarized
@@ -116,7 +118,148 @@ const ChatMessages: React.FC = () => {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [ragFiles, setRagFiles] = useState<RagFile[]>([]);
 
+  // Load RAG files when conversation changes
+  useEffect(() => {
+    if (currentConversation) {
+      loadRagFiles();
+    } else {
+      setRagFiles([]);
+    }
+  }, [currentConversation?.id]);
+
+  const loadRagFiles = async () => {
+    if (!currentConversation) return;
+    
+    try {
+      const response = await axios.get('http://localhost:8000/api/rag/files', {
+        params: { chat_id: currentConversation.id }
+      });
+      const files = response.data || [];
+      // Sort by created_at to ensure consistent ordering (matches RAG tray)
+      const sortedFiles = files.sort((a: RagFile, b: RagFile) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      setRagFiles(sortedFiles);
+    } catch (error) {
+      // 404 is expected if no RAG files exist yet
+      if ((error as any).response?.status !== 404) {
+        console.error('Failed to load RAG files:', error);
+      }
+      setRagFiles([]);
+    }
+  };
+
+  // Compute indexed RAG files once - this is the single source of truth
+  // CRITICAL: Use ragFileIds order to match backend numbering (not created_at order!)
+  // Only files with text_extracted get numbered (1-based)
+  const ragFilesWithIndex = useMemo(() => {
+    if (!ragFileIds || ragFileIds.length === 0) return [];
+    
+    // Create a lookup map for fast access
+    const filesById = new Map(ragFiles.map(f => [f.id, f]));
+    
+    // Build indexed files in the SAME ORDER as ragFileIds (matches backend)
+    const indexed: RagFile[] = [];
+    ragFileIds.forEach((fileId, idx) => {
+      const file = filesById.get(fileId);
+      if (file && file.text_extracted) {
+        indexed.push({
+          ...file,
+          index: indexed.length + 1, // 1-based index, only counting ready files
+        });
+      }
+    });
+    
+    return indexed;
+  }, [ragFiles, ragFileIds]);
+
+  // Handler to open RAG file in preview - accepts file object
+  const handleOpenRagFile = async (file: RagFile) => {
+    if (!file) {
+      console.error('[RAG] File not provided');
+      return;
+    }
+
+    console.log('[RAG] Opening file:', file.filename, 'path:', file.path, 'text_path:', file.text_path);
+
+    // Use stored path if available
+    let previewPath = '';
+    let apiPath = '';
+    
+    if (file.path) {
+      // path format from backend: uploads/rag/chat_id/uuid.ext
+      // For direct file access: http://localhost:8000/uploads/rag/chat_id/uuid.ext
+      // For API endpoints: rag/chat_id/uuid.ext (without uploads/ prefix)
+      if (file.path.startsWith('uploads/')) {
+        apiPath = file.path.substring(8); // Remove "uploads/" prefix
+        previewPath = `http://localhost:8000/${file.path}`;
+      } else {
+        apiPath = file.path;
+        previewPath = `http://localhost:8000/uploads/${file.path}`;
+      }
+    } else if (file.text_path) {
+      // Fallback: find original file by querying the backend
+      // text_path format: uploads/rag/chat_id/uuid.txt
+      // We need to find the original file in the same directory
+      try {
+        // Query backend to find the original file
+        const response = await axios.get(`http://localhost:8000/api/rag/find-original`, {
+          params: {
+            text_path: file.text_path,
+            mime_type: file.mime_type
+          }
+        });
+        
+        if (response.data && response.data.path) {
+          const foundPath = response.data.path;
+          if (foundPath.startsWith('uploads/')) {
+            apiPath = foundPath.substring(8);
+            previewPath = `http://localhost:8000/${foundPath}`;
+          } else {
+            apiPath = foundPath;
+            previewPath = `http://localhost:8000/uploads/${foundPath}`;
+          }
+        } else {
+          console.error('[RAG] Could not find original file for:', file.filename);
+          alert(`Unable to open file: ${file.filename}. The file may have been moved or deleted.`);
+          return;
+        }
+      } catch (error) {
+        console.error('[RAG] Error finding original file:', error);
+        alert(`Unable to open file: ${file.filename}. Please try re-uploading the file.`);
+        return;
+      }
+    } else {
+      console.error('[RAG] No path or text_path available for file:', file.filename);
+      alert(`Unable to open file: ${file.filename}. File path information is missing.`);
+      return;
+    }
+
+    console.log('[RAG] Preview path:', previewPath, 'API path:', apiPath);
+
+    const mimeType = file.mime_type;
+
+    if (mimeType === 'application/pdf') {
+      setPreviewFile({ name: file.filename, data: previewPath, type: 'pdf', mimeType });
+    } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+      // URL encode the path segments to handle special characters
+      const encodedPath = apiPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+      setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/pptx-preview/${encodedPath}`, type: 'pptx', mimeType });
+    } else if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('sheet')) {
+      // URL encode the path segments to handle special characters
+      const encodedPath = apiPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+      setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/xlsx-preview/${encodedPath}`, type: 'xlsx', mimeType });
+    } else if (mimeType.includes('word') || mimeType.includes('wordprocessing')) {
+      // URL encode the path segments to handle special characters
+      const encodedPath = apiPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+      setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/docx-preview/${encodedPath}`, type: 'docx', mimeType });
+    } else {
+      setPreviewFile({ name: file.filename, data: previewPath, type: 'other', mimeType });
+    }
+  };
+  
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -886,8 +1029,9 @@ const ChatMessages: React.FC = () => {
                       {message.type === 'rag_response' && (
                         <RagResponseCard
                           content={message.data?.content || message.content || ''}
-                          sources={message.data?.sources || []}
+                          ragFiles={ragFilesWithIndex}
                           model={message.model}
+                          onOpenRagFile={handleOpenRagFile}
                         />
                       )}
                       
@@ -1066,9 +1210,11 @@ const ChatMessages: React.FC = () => {
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'pptx' ? (
-                <div className={isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}>
-                  <PPTXPreview filePath={previewFile.data} fileName={previewFile.name} />
-                </div>
+                <iframe
+                  src={previewFile.data}
+                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  title={previewFile.name}
+                />
               ) : previewFile.type === 'xlsx' ? (
                 <iframe
                   src={previewFile.data}

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import RagContextTray from './RagContextTray';
+import type { RagFile } from '../types/rag';
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -895,6 +896,12 @@ const ChatComposer: React.FC = () => {
                   className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
+              ) : previewFile.type === 'pptx' ? (
+                <iframe
+                  src={previewFile.data}
+                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  title={previewFile.name}
+                />
               ) : previewFile.type === 'xlsx' ? (
                 <iframe
                   src={previewFile.data}
@@ -931,6 +938,63 @@ const ChatComposer: React.FC = () => {
       <RagContextTray 
         isOpen={isRagTrayOpen} 
         onClose={() => setRagTrayOpen(false)}
+        onOpenRagFile={async (file: RagFile) => {
+          // Open RAG file in preview modal (same logic as handleOpenRagSource in ChatMessages)
+          let previewPath = '';
+          let apiPath = '';
+          
+          if (file.path) {
+            if (file.path.startsWith('uploads/')) {
+              apiPath = file.path.substring(8);
+              previewPath = `http://localhost:8000/${file.path}`;
+            } else {
+              apiPath = file.path;
+              previewPath = `http://localhost:8000/uploads/${file.path}`;
+            }
+          } else if (file.text_path) {
+            try {
+              const response = await axios.get(`http://localhost:8000/api/rag/find-original`, {
+                params: {
+                  text_path: file.text_path,
+                  mime_type: file.mime_type
+                }
+              });
+              
+              if (response.data && response.data.path) {
+                const foundPath = response.data.path;
+                if (foundPath.startsWith('uploads/')) {
+                  apiPath = foundPath.substring(8);
+                  previewPath = `http://localhost:8000/${foundPath}`;
+                } else {
+                  apiPath = foundPath;
+                  previewPath = `http://localhost:8000/uploads/${foundPath}`;
+                }
+              } else {
+                console.error('[RAG] Could not find original file for:', file.filename);
+                return;
+              }
+            } catch (error) {
+              console.error('[RAG] Error finding original file:', error);
+              return;
+            }
+          } else {
+            console.error('[RAG] No path or text_path available for file:', file.filename);
+            return;
+          }
+
+          const mimeType = file.mime_type;
+          if (mimeType === 'application/pdf') {
+            setPreviewFile({ name: file.filename, data: previewPath, type: 'pdf', mimeType });
+          } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+            setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/pptx-preview/${apiPath}`, type: 'pptx', mimeType });
+          } else if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('sheet')) {
+            setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/xlsx-preview/${apiPath}`, type: 'xlsx', mimeType });
+          } else if (mimeType.includes('word') || mimeType.includes('wordprocessing')) {
+            setPreviewFile({ name: file.filename, data: `http://localhost:8000/api/docx-preview/${apiPath}`, type: 'docx', mimeType });
+          } else {
+            setPreviewFile({ name: file.filename, data: previewPath, type: 'other', mimeType });
+          }
+        }}
       />
     </div>
   );

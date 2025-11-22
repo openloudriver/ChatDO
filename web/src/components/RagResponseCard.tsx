@@ -1,50 +1,119 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import SectionHeading from "./shared/SectionHeading";
+import type { RagFile } from "../types/rag";
 
-interface RagResponseCardProps {
+export interface RagResponseCardProps {
   content: string;
-  sources?: string[];
+  ragFiles: RagFile[]; // Indexed RAG files (single source of truth)
   model?: string;
+  onOpenRagFile: (file: RagFile) => void;
 }
 
-// Extract sources from content (look for "Sources:" patterns)
-const extractSources = (content: string): string[] => {
-  const sources: string[] = [];
-  const sourcePatterns = [
-    /\(Sources?:?\s*([^)]+)\)/gi,
-    /Sources?:?\s*([^\n]+)/gi,
-  ];
+// Helper to find file by index
+const findFileByIndex = (ragFiles: RagFile[], index: number): RagFile | undefined =>
+  ragFiles.find((f) => f.index === index);
+
+// Parse source citations - handles both formats:
+// 1. source: [n] or [n] or source: [n, m] (new format)
+// 2. (Source: filename) or (Source: filename1; filename2) (old format - convert to numbers)
+const parseSourceCitations = (
+  text: string, 
+  ragFiles: RagFile[]
+): { before: string; indices: number[]; after: string } | null => {
+  // First, try the new format: source: [n] or just [n]
+  let match = text.match(/(?:source:\s*)?\[([0-9,\s]+)\]/i);
+  if (match) {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index! + match[0].length);
+    const indices = match[1]
+      .split(',')
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !Number.isNaN(n) && n > 0);
+    return { before, indices, after };
+  }
   
-  for (const pattern of sourcePatterns) {
-    const matches = content.matchAll(pattern);
-    for (const match of matches) {
-      const sourceList = match[1]
-        .split(/[;,]/)
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-      sources.push(...sourceList);
+  // Fallback: try old format (Source: filename) and convert to numbers
+  // Handle nested parentheses by counting them
+  const sourcePattern = /\(Sources?:/i;
+  const sourceMatch = text.search(sourcePattern);
+  if (sourceMatch === -1) return null;
+  
+  // Find the matching closing parenthesis, accounting for nested parens
+  let parenCount = 0;
+  let startIdx = sourceMatch;
+  let endIdx = startIdx;
+  
+  for (let i = startIdx; i < text.length; i++) {
+    if (text[i] === '(') parenCount++;
+    if (text[i] === ')') {
+      parenCount--;
+      if (parenCount === 0) {
+        endIdx = i + 1;
+        break;
+      }
     }
   }
   
-  // Remove duplicates and return
-  return Array.from(new Set(sources));
-};
-
-// Clean content - we'll keep source citations but style them differently
-const cleanContent = (content: string): string => {
-  // Don't remove sources - we'll style them in the markdown renderer
-  return content.trim();
+  if (endIdx === startIdx) return null; // No closing paren found
+  
+  const before = text.slice(0, startIdx);
+  const after = text.slice(endIdx);
+  const fullMatch = text.slice(startIdx, endIdx);
+  
+  // Extract filenames from the source citation (remove the outer parentheses and "Source:" prefix)
+  const sourceText = fullMatch
+    .replace(/^\(Sources?:/i, "")
+    .replace(/\)$/, "")
+    .trim();
+  
+  const sourceNames = sourceText
+    .split(/;|,/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  
+  // Convert filenames to indices
+  const indices: number[] = [];
+  for (const name of sourceNames) {
+    const cleanName = name.trim().toLowerCase();
+    // Try exact match first
+    let file = ragFiles.find((f) => f.filename.toLowerCase() === cleanName);
+    
+    // If no exact match, try matching by filename without extension
+    if (!file) {
+      const nameWithoutExt = cleanName.replace(/\.(pdf|docx|pptx|xlsx|doc|ppt|xls)$/, '');
+      file = ragFiles.find((f) => {
+        const filenameWithoutExt = f.filename.toLowerCase().replace(/\.(pdf|docx|pptx|xlsx|doc|ppt|xls)$/, '');
+        return filenameWithoutExt === nameWithoutExt || 
+               filenameWithoutExt.includes(nameWithoutExt) ||
+               nameWithoutExt.includes(filenameWithoutExt);
+      });
+    }
+    
+    // If still no match, try startsWith for longer names
+    if (!file && cleanName.length >= 10) {
+      file = ragFiles.find((f) => f.filename.toLowerCase().startsWith(cleanName));
+    }
+    
+    if (file) {
+      indices.push(file.index);
+    }
+  }
+  
+  if (indices.length === 0) return null;
+  
+  return { before, indices, after };
 };
 
 export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   content,
-  sources,
+  ragFiles,
   model,
+  onOpenRagFile,
 }) => {
-  // Extract sources from content if not provided
-  const extractedSources = sources || extractSources(content);
-  const cleanedContent = cleanContent(content);
+  const cleanedContent = content.trim();
+  const [hoveredFileId, setHoveredFileId] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
@@ -87,9 +156,76 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
               ol: ({ children }) => (
                 <ol className="list-decimal list-inside mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ol>
               ),
-              li: ({ children }) => (
-                <li className="ml-4 text-[#ececf1]">{children}</li>
-              ),
+              li: ({ children }) => {
+                const text = React.Children.toArray(children)
+                  .map((child) => (typeof child === "string" ? child : ""))
+                  .join("");
+                
+                const parsed = parseSourceCitations(text, ragFiles);
+                if (!parsed || parsed.indices.length === 0) {
+                  return (
+                    <li className="ml-4 text-sm text-[#ececf1] mb-1">
+                      {children}
+                    </li>
+                  );
+                }
+
+                return (
+                  <li className="ml-4 text-sm text-[#ececf1] mb-1">
+                    {parsed.before}
+                    {" "}
+                    <span className="text-[11px] text-[#8e8ea0] italic ml-1">
+                      [
+                      {parsed.indices.map((num, idx) => {
+                        const file = findFileByIndex(ragFiles, num);
+                        if (!file) {
+                          return (
+                            <span key={num}>{num}{idx < parsed.indices.length - 1 ? ", " : ""}</span>
+                          );
+                        }
+                        return (
+                          <span key={file.id} className="relative inline-block">
+                            <button
+                              type="button"
+                              onClick={() => onOpenRagFile(file)}
+                              onMouseEnter={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setHoveredFileId(file.id);
+                                setTooltipPosition({
+                                  x: rect.left + rect.width / 2,
+                                  y: rect.top - 8,
+                                });
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredFileId(null);
+                                setTooltipPosition(null);
+                              }}
+                              className="ml-1 px-1.5 py-0.5 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] hover:bg-[#3a3b45] transition underline"
+                            >
+                              {num}{idx < parsed.indices.length - 1 ? ", " : ""}
+                            </button>
+                            {hoveredFileId === file.id && tooltipPosition && (
+                              <div
+                                className="fixed z-50 px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869]"
+                                style={{
+                                  left: `${tooltipPosition.x}px`,
+                                  top: `${tooltipPosition.y}px`,
+                                  transform: 'translate(-50%, -100%)',
+                                  fontStyle: 'normal',
+                                }}
+                              >
+                                {file.filename}
+                              </div>
+                            )}
+                          </span>
+                        );
+                      })}
+                      ]
+                    </span>
+                    {parsed.after && ` ${parsed.after}`}
+                  </li>
+                );
+              },
               strong: ({ children }) => (
                 <strong className="font-semibold text-[#ececf1]">{children}</strong>
               ),
@@ -112,43 +248,75 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 }
                 return <code className={className}>{children}</code>;
               },
-              // Style parenthetical source citations
               p: ({ children }) => {
-                // Convert children to string to check for source citations
-                const childrenArray = React.Children.toArray(children);
-                const hasSourceCitation = childrenArray.some(child => {
-                  const text = typeof child === 'string' ? child : String(child);
-                  return text.match(/\(References?:?\s*[^)]+\)|\(Sources?:?\s*[^)]+\)/gi);
-                });
+                const text = React.Children.toArray(children)
+                  .map((child) => (typeof child === "string" ? child : ""))
+                  .join("");
                 
-                if (hasSourceCitation) {
+                const parsed = parseSourceCitations(text, ragFiles);
+                if (!parsed || parsed.indices.length === 0) {
                   return (
-                    <p className="mb-3 text-[#ececf1] leading-relaxed">
-                      {React.Children.map(children, (child, idx) => {
-                        if (typeof child === 'string') {
-                          // Split text and style source citations
-                          const parts = child.split(/(\(References?:?\s*[^)]+\)|\(Sources?:?\s*[^)]+\))/gi);
-                          return (
-                            <React.Fragment key={idx}>
-                              {parts.map((part, i) => {
-                                if (part.match(/\(References?:?\s*[^)]+\)|\(Sources?:?\s*[^)]+\)/gi)) {
-                                  return (
-                                    <span key={i} className="text-[#6b7280] text-xs italic">
-                                      {part}
-                                    </span>
-                                  );
-                                }
-                                return <React.Fragment key={i}>{part}</React.Fragment>;
-                              })}
-                            </React.Fragment>
-                          );
-                        }
-                        return child;
-                      })}
+                    <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
+                      {children}
                     </p>
                   );
                 }
-                return <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>;
+
+                return (
+                  <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
+                    {parsed.before}
+                    {" "}
+                    <span className="text-[11px] text-[#8e8ea0] italic ml-1">
+                      [
+                      {parsed.indices.map((num, idx) => {
+                        const file = findFileByIndex(ragFiles, num);
+                        if (!file) {
+                          return (
+                            <span key={num}>{num}{idx < parsed.indices.length - 1 ? ", " : ""}</span>
+                          );
+                        }
+                        return (
+                          <span key={file.id} className="relative inline-block">
+                            <button
+                              type="button"
+                              onClick={() => onOpenRagFile(file)}
+                              onMouseEnter={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setHoveredFileId(file.id);
+                                setTooltipPosition({
+                                  x: rect.left + rect.width / 2,
+                                  y: rect.top - 8,
+                                });
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredFileId(null);
+                                setTooltipPosition(null);
+                              }}
+                              className="ml-1 px-1.5 py-0.5 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] hover:bg-[#3a3b45] transition underline"
+                            >
+                              {num}{idx < parsed.indices.length - 1 ? ", " : ""}
+                            </button>
+                            {hoveredFileId === file.id && tooltipPosition && (
+                              <div
+                                className="fixed z-50 px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869]"
+                                style={{
+                                  left: `${tooltipPosition.x}px`,
+                                  top: `${tooltipPosition.y}px`,
+                                  transform: 'translate(-50%, -100%)',
+                                  fontStyle: 'normal',
+                                }}
+                              >
+                                {file.filename}
+                              </div>
+                            )}
+                          </span>
+                        );
+                      })}
+                      ]
+                    </span>
+                    {parsed.after && ` ${parsed.after}`}
+                  </p>
+                );
               },
             }}
           >
@@ -157,22 +325,6 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
         </div>
       </div>
 
-      {/* Sources Section */}
-      {extractedSources.length > 0 && (
-        <div className="border-t border-[#565869] pt-4">
-          <SectionHeading>SOURCES</SectionHeading>
-          <div className="flex flex-wrap gap-2">
-            {extractedSources.map((source, index) => (
-              <span
-                key={index}
-                className="px-3 py-1.5 bg-[#40414f] text-[#ececf1] rounded-md text-xs font-medium"
-              >
-                {source}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Model attribution footer */}
       {model && (

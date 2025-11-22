@@ -351,12 +351,18 @@ Keep it concise, neutral, and factual."""
         # If RAG context was used, send as structured rag_response
         if has_rag_context and not tasks_json:
             # Extract source file names from RAG context
+            # IMPORTANT: Return sources in the SAME ORDER as rag_file_ids to match RAG tray numbering
             from server.main import load_rag_files
             from chatdo.memory.store import load_thread_history, save_thread_history
             from server.main import load_projects
             
             rag_files = load_rag_files(conversation_id) if rag_file_ids else []
-            source_files = [f.get("filename") for f in rag_files if f.get("id") in (rag_file_ids or [])]
+            # Create a lookup dict for fast access
+            rag_files_by_id = {f.get("id"): f for f in rag_files}
+            # Return sources in the order of rag_file_ids (matches RAG tray order)
+            source_files = [rag_files_by_id.get(fid, {}).get("filename", "") 
+                          for fid in (rag_file_ids or [])
+                          if fid in rag_files_by_id and rag_files_by_id[fid].get("text_extracted")]
             
             # Log raw RAG output to verify markdown headings are present
             print(f"[RAG] Raw RAG output (first 500 chars):\n{human_text[:500]}")
