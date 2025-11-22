@@ -46,78 +46,94 @@ const getFileIcon = (mimeType: string) => {
 };
 
 export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose, onOpenRagFile }) => {
-  const { currentConversation, setRagFileIds } = useChatStore();
-  const [ragFiles, setRagFiles] = useState<RagFile[]>([]);
+  const { 
+    currentConversation, 
+    ragFileIds, 
+    setRagFileIds, 
+    setRagFilesForConversation,
+    ragFilesByConversationId 
+  } = useChatStore();
   const [isUploading, setIsUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Load RAG files when tray opens (they're already loaded when conversation changes)
-  useEffect(() => {
-    if (isOpen && currentConversation) {
-      loadRagFiles();
-    }
-  }, [isOpen, currentConversation?.id]);
+  // Get RAG files from store (conversation-scoped) - use direct selector for reactivity
+  const ragFiles = React.useMemo(() => {
+    if (!currentConversation?.id) return [];
+    return ragFilesByConversationId[currentConversation.id] || [];
+  }, [currentConversation?.id, ragFilesByConversationId]);
   
-  // Fix React warning: wrap setRagFileIds in useEffect to avoid setState during render
+  // Update ragFileIds when ragFiles change - ensure it matches backend order
   useEffect(() => {
-    if (currentConversation) {
-      const fileIds = ragFiles.filter((f: RagFile) => f.text_extracted).map((f: RagFile) => f.id);
+    if (currentConversation && ragFiles.length > 0) {
+      // Sort by created_at to match backend order, then filter for text_extracted
+      const sortedFiles = [...ragFiles].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      const fileIds = sortedFiles.filter((f: RagFile) => f.text_extracted).map((f: RagFile) => f.id);
       setRagFileIds(fileIds);
     } else {
       setRagFileIds([]);
     }
   }, [ragFiles, currentConversation?.id, setRagFileIds]);
 
-  const loadRagFiles = async () => {
-    if (!currentConversation) return;
-    
-    setLoading(true);
-    try {
-      const response = await axios.get('http://localhost:8000/api/rag/files', {
-        params: { chat_id: currentConversation.id }
-      });
-      const files = response.data || [];
-      // Sort by created_at to ensure consistent ordering (matches ChatMessages)
-      const sortedFiles = files.sort((a: RagFile, b: RagFile) => 
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-      setRagFiles(sortedFiles as RagFile[]);
-      // RAG file IDs will be updated by the useEffect hook above
-    } catch (error) {
-      console.error('Failed to load RAG files:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFileUpload = async (file: File) => {
-    if (!file || !currentConversation) return;
+    if (!file || !currentConversation) {
+      console.error('[RAG] Cannot upload: missing file or conversation');
+      return;
+    }
 
+    console.log('[RAG] Starting upload for file:', file.name, 'to chat:', currentConversation.id);
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('chat_id', currentConversation.id);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/rag/files', formData);
-      const newFile = response.data;
-      setRagFiles(prev => {
-        const updated = [...prev, newFile];
-        // RAG file IDs will be updated by the useEffect hook
-        return updated;
+      const response = await axios.post('http://localhost:8000/api/rag/files', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-    } catch (error) {
-      console.error('Failed to upload RAG file:', error);
-      alert('Failed to upload file. Please try again.');
+      console.log('[RAG] Upload response:', response.data);
+      
+      // Reload from backend to ensure consistency (handles async text extraction)
+      // This ensures we get the latest state including text_extracted status
+      const ragResponse = await axios.get('http://localhost:8000/api/rag/files', {
+        params: { chat_id: currentConversation.id }
+      });
+      const allFiles: RagFile[] = ragResponse.data || [];
+      // Sort by created_at to match backend order
+      const sortedFiles = allFiles.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      console.log('[RAG] Reloaded files from backend:', sortedFiles.length);
+      
+      // Update store - this will trigger re-render
+      setRagFilesForConversation(currentConversation.id, sortedFiles);
+      
+      // Force update ragFileIds immediately
+      const fileIds = sortedFiles.filter((f) => f.text_extracted).map((f) => f.id);
+      setRagFileIds(fileIds);
+      
+      console.log('[RAG] Updated store with', sortedFiles.length, 'files,', fileIds.length, 'ready');
+    } catch (error: any) {
+      console.error('[RAG] Failed to upload RAG file:', error);
+      console.error('[RAG] Error details:', error.response?.data || error.message);
+      const errorMsg = error.response?.data?.detail || error.message || 'Unknown error';
+      alert(`Failed to upload file: ${errorMsg}`);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await handleFileUpload(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      console.log('[RAG] File input changed:', files.length, 'files');
+      // Upload files sequentially
+      for (let i = 0; i < files.length; i++) {
+        await handleFileUpload(files[i]);
+      }
     }
     if (e.target) {
       e.target.value = '';
@@ -127,38 +143,82 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Add visual feedback
+    if (e.currentTarget === e.target || (e.currentTarget as HTMLElement).contains(e.target as Node)) {
+      (e.currentTarget as HTMLElement).classList.add('border-[#19c37d]');
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Remove visual feedback
+    if (e.currentTarget === e.target || (e.currentTarget as HTMLElement).contains(e.target as Node)) {
+      (e.currentTarget as HTMLElement).classList.remove('border-[#19c37d]');
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Remove visual feedback
+    (e.currentTarget as HTMLElement).classList.remove('border-[#19c37d]');
+    
     const files = Array.from(e.dataTransfer.files);
+    console.log('[RAG] Dropped files:', files.length, 'files:', files.map(f => f.name));
+    
+    if (!currentConversation) {
+      console.error('[RAG] Cannot drop files: no current conversation');
+      alert('Please select a conversation first.');
+      return;
+    }
+    
+    // Upload files sequentially to avoid race conditions
     for (const file of files) {
+      console.log('[RAG] Processing file:', file.name);
       await handleFileUpload(file);
     }
+    
+    console.log('[RAG] Finished processing all dropped files');
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!currentConversation) return;
+    if (!currentConversation) {
+      console.error('[RAG] No current conversation');
+      return;
+    }
+    
+    console.log('[RAG] Deleting file:', fileId, 'for chat:', currentConversation.id);
     
     try {
-      await axios.delete(`http://localhost:8000/api/rag/files/${fileId}`, {
+      const response = await axios.delete(`http://localhost:8000/api/rag/files/${fileId}`, {
         params: { chat_id: currentConversation.id }
       });
-      setRagFiles(prev => {
-        const updated = prev.filter(f => f.id !== fileId);
-        // RAG file IDs will be updated by the useEffect hook
-        return updated;
+      console.log('[RAG] Delete response:', response.data);
+      
+      // Reload from backend to ensure consistency
+      const ragResponse = await axios.get('http://localhost:8000/api/rag/files', {
+        params: { chat_id: currentConversation.id }
       });
-    } catch (error) {
-      console.error('Failed to delete RAG file:', error);
-      alert('Failed to delete file. Please try again.');
+      const remainingFiles: RagFile[] = ragResponse.data || [];
+      // Sort by created_at to match backend order
+      const sortedFiles = remainingFiles.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      
+      // Update store - this will trigger re-render
+      setRagFilesForConversation(currentConversation.id, sortedFiles);
+      
+      // Force update ragFileIds immediately
+      const fileIds = sortedFiles.filter((f) => f.text_extracted).map((f) => f.id);
+      setRagFileIds(fileIds);
+      
+      console.log('[RAG] Files after delete:', sortedFiles.length, 'remaining,', fileIds.length, 'ready');
+    } catch (error: any) {
+      console.error('[RAG] Failed to delete file:', error);
+      console.error('[RAG] Error details:', error.response?.data || error.message);
+      alert(`Failed to delete file: ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -166,13 +226,49 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
     if (!currentConversation || !confirm('Clear all context files for this chat?')) return;
     
     try {
-      await Promise.all(ragFiles.map(file => 
-        axios.delete(`http://localhost:8000/api/rag/files/${file.id}`, {
+      // Delete files one by one, handling individual failures gracefully
+      const deletePromises = ragFiles.map(async (file) => {
+        try {
+          await axios.delete(`http://localhost:8000/api/rag/files/${file.id}`, {
+            params: { chat_id: currentConversation.id }
+          });
+          return { success: true, fileId: file.id };
+        } catch (error) {
+          console.error(`Failed to delete file ${file.filename}:`, error);
+          return { success: false, fileId: file.id, error };
+        }
+      });
+      
+      const results = await Promise.all(deletePromises);
+      const failed = results.filter(r => !r.success);
+      
+      if (failed.length > 0) {
+        console.warn(`Failed to delete ${failed.length} file(s) out of ${ragFiles.length}`);
+        // Still clear the store - the backend will have deleted what it could
+      }
+      
+      // Clear in store regardless (backend has already updated)
+      setRagFilesForConversation(currentConversation.id, []);
+      
+      // Reload from backend to ensure consistency
+      try {
+        const response = await axios.get('http://localhost:8000/api/rag/files', {
           params: { chat_id: currentConversation.id }
-        })
-      ));
-      setRagFiles([]);
-      // RAG file IDs will be updated by the useEffect hook (to empty array)
+        });
+        const remainingFiles: RagFile[] = response.data || [];
+        const sortedFiles = remainingFiles.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        setRagFilesForConversation(currentConversation.id, sortedFiles);
+        
+        // Force update ragFileIds immediately
+        const fileIds = sortedFiles.filter((f) => f.text_extracted).map((f) => f.id);
+        setRagFileIds(fileIds);
+      } catch (error) {
+        console.error('Failed to reload RAG files after clear:', error);
+        // Store is already cleared, so this is fine
+        setRagFileIds([]);
+      }
     } catch (error) {
       console.error('Failed to clear RAG files:', error);
       alert('Failed to clear files. Please try again.');
@@ -183,10 +279,8 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
 
   return (
     <div 
-      className="fixed right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#565869] flex flex-col z-40"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className="rag-tray fixed right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#565869] flex flex-col z-50 pointer-events-auto"
+      data-rag-tray="true"
     >
       {/* Header */}
       <div className="p-4 border-b border-[#565869] flex items-center justify-between">
@@ -215,6 +309,11 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => {
+              if (fileInputRef.current && !isUploading && currentConversation) {
+                fileInputRef.current.click();
+              }
+            }}
           >
             {isUploading ? (
               <div className="flex items-center justify-center gap-2 text-[#8e8ea0]">
@@ -232,10 +331,12 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
             )}
           </div>
           <input
+            ref={fileInputRef}
             type="file"
             className="hidden"
             onChange={handleFileInputChange}
             accept=".pdf,.doc,.docx,.pptx,.xlsx,.xls,.txt,.md"
+            multiple
             disabled={isUploading || !currentConversation}
           />
         </label>
@@ -243,12 +344,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
 
       {/* File List */}
       <div className="flex-1 overflow-y-auto p-4">
-        {loading ? (
-          <div className="text-center text-[#8e8ea0] py-8">
-            <div className="animate-spin h-6 w-6 border-2 border-[#19c37d] border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm">Loading files...</p>
-          </div>
-        ) : ragFiles.length === 0 ? (
+        {ragFiles.length === 0 ? (
           <div className="text-center text-[#8e8ea0] py-8">
             <p className="text-sm">No context files yet.</p>
             <p className="text-xs mt-1">Upload files to use them as reference.</p>
@@ -256,34 +352,50 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
         ) : (
           <div className="space-y-2">
             {(() => {
-              // Compute indexed files (same logic as ChatMessages)
-              const readyFiles = ragFiles.filter(f => f.text_extracted);
-              const ragFilesWithIndex = readyFiles.map((file, i) => ({
-                ...file,
-                index: i + 1, // 1-based index
-              }));
+              // Compute indexed files - MUST match ChatMessages logic (use ragFileIds order!)
+              if (!ragFileIds || ragFileIds.length === 0) return [];
               
-              return ragFilesWithIndex.map((file) => (
-                <button
+              // Create a lookup map for fast access
+              const filesById = new Map(ragFiles.map(f => [f.id, f]));
+              
+              // Build indexed files in the SAME ORDER as ragFileIds (matches backend)
+              const indexed: RagFile[] = [];
+              ragFileIds.forEach((fileId) => {
+                const file = filesById.get(fileId);
+                if (file && file.text_extracted) {
+                  indexed.push({
+                    ...file,
+                    index: indexed.length + 1, // 1-based index, only counting ready files
+                  });
+                }
+              });
+              
+              return indexed.map((file) => (
+                <div
                   key={file.id}
-                  type="button"
-                  onClick={() => onOpenRagFile?.(file)}
-                  className="w-full bg-[#2a2a2a] rounded-lg p-3 border border-[#565869] hover:border-[#19c37d] transition-colors text-left"
+                  className="w-full bg-[#2a2a2a] rounded-lg p-3 border border-[#565869] hover:border-[#19c37d] transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     {getFileIcon(file.mime_type)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => onOpenRagFile?.(file)}
+                          className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+                        >
                           <span className="text-xs font-semibold text-[#19c37d] flex-shrink-0">
                             {file.index}.
                           </span>
                           <p className="text-sm font-medium text-[#ececf1] truncate">{file.filename}</p>
-                        </div>
+                        </button>
                         <button
-                          onClick={(e) => {
+                          type="button"
+                          onClick={async (e) => {
+                            e.preventDefault();
                             e.stopPropagation();
-                            handleDeleteFile(file.id);
+                            console.log('[RAG] Delete button clicked for file:', file.id, 'for chat:', currentConversation?.id);
+                            await handleDeleteFile(file.id);
                           }}
                           className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex-shrink-0"
                           title="Remove"
@@ -301,7 +413,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               ));
             })()}
           </div>

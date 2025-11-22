@@ -1,0 +1,62 @@
+[
+  {
+    "id": "13e73c41-2f95-4513-a811-9dd48ccff920",
+    "chat_id": "6c2edcb7-28d7-435e-bf4d-50c5b119b0d7",
+    "filename": "Joint Cloud Slides v4.pdf",
+    "mime_type": "application/pdf",
+    "size": 2364866,
+    "created_at": "2025-11-22T19:29:30.890716+00:00",
+    "text_path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/e59972af-b5da-4e9a-a2fa-6778885236b4.txt",
+    "path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/a792ec78-4e55-42ed-8e29-f4b8700e560c.pdf",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "dfcad993-15e4-41e2-bdd3-f3d525e7e810",
+    "chat_id": "6c2edcb7-28d7-435e-bf4d-50c5b119b0d7",
+    "filename": "Joint Cloud Whitepaper.docx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 222355,
+    "created_at": "2025-11-22T19:29:38.636115+00:00",
+    "text_path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/29667e3f-d8b9-4bb7-a21e-b3b00c7519ee.txt",
+    "path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/5415b2f1-9fa2-4482-8ba2-1495deb7a39f.docx",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "3c46fef8-c782-468a-b1f4-1e909cf8ea1a",
+    "chat_id": "6c2edcb7-28d7-435e-bf4d-50c5b119b0d7",
+    "filename": "Joint Cloud Costs.xlsx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "size": 13421,
+    "created_at": "2025-11-22T19:29:41.252865+00:00",
+    "text_path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/5ae1d3ba-19ff-46ed-aabc-bc3e46af96e7.txt",
+    "path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/aada6450-e717-4950-bb06-addb3efb1d58.xlsx",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "84ba5766-ebb8-4bb3-ad7e-1921cd17ae13",
+    "chat_id": "6c2edcb7-28d7-435e-bf4d-50c5b119b0d7",
+    "filename": "Joint Cloud (TACSIT) BBP.pdf",
+    "mime_type": "application/pdf",
+    "size": 125656,
+    "created_at": "2025-11-22T19:29:43.069128+00:00",
+    "text_path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/f6400297-c903-4c01-99b1-12ab0eb7977c.txt",
+    "path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/1f341b82-cca2-426d-9a33-46865f93c0d2.pdf",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "c5c7a235-1c49-4c5f-b7ec-104d5012e144",
+    "chat_id": "6c2edcb7-28d7-435e-bf4d-50c5b119b0d7",
+    "filename": "Joint Cloud FY26 White Paper 2_26_2025.docx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 48833,
+    "created_at": "2025-11-22T19:29:44.881365+00:00",
+    "text_path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/0897bc56-6025-4b88-8089-a8e55d0d4caf.txt",
+    "path": "uploads/rag/6c2edcb7-28d7-435e-bf4d-50c5b119b0d7/ba08c15a-03e9-4654-b1c0-789f4bc8ee32.docx",
+    "text_extracted": true,
+    "error": null
+  }
+]

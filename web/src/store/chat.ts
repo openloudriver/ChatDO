@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import type { Source } from '../types/sources';
+import type { RagFile } from '../types/rag';
 
 export interface Message {
   id: string;
@@ -60,7 +61,8 @@ interface ChatStore {
   searchResults: Conversation[];
   searchQuery: string;
   sources: Source[];  // Sources for current conversation
-  ragFileIds: string[];  // RAG file IDs for current conversation
+  ragFileIds: string[];  // RAG file IDs for current conversation (deprecated - use ragFilesByConversationId)
+  ragFilesByConversationId: Record<string, RagFile[]>;  // RAG files scoped per conversation
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -98,6 +100,8 @@ interface ChatStore {
   setSummarizingArticle: (summarizing: boolean) => void;
   setRagTrayOpen: (open: boolean) => void;
   setRagFileIds: (ids: string[]) => void;
+  setRagFilesForConversation: (conversationId: string, files: RagFile[]) => void;
+  getRagFilesForConversation: (conversationId: string | null) => RagFile[];
   addSource: (source: Source) => void;
   setSources: (sources: Source[]) => void;
   loadSources: (conversationId: string) => Promise<void>;
@@ -121,6 +125,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   searchResults: [],
   sources: [],
   ragFileIds: [],
+  ragFilesByConversationId: {},
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -648,7 +653,8 @@ export const useChatStore = create<ChatStore>((set) => ({
         currentConversation: null,
         messages: [],
         viewMode: 'projectList',
-        ragFileIds: []  // Clear RAG files when conversation is cleared
+        ragFileIds: [],  // Clear RAG files when conversation is cleared
+        // Note: ragFilesByConversationId is preserved so switching back works
       });
       return;
     }
@@ -663,23 +669,45 @@ export const useChatStore = create<ChatStore>((set) => ({
     // Set conversation immediately
     set({ 
       currentConversation: conversation,
-      viewMode: 'chat'
+      viewMode: 'chat',
+      // Clear ragFileIds immediately when switching conversations
+      ragFileIds: []
     });
     
-    // Load RAG files for this conversation
+    // Load RAG files for this conversation (scoped per conversation)
     try {
       const ragResponse = await axios.get('http://localhost:8000/api/rag/files', {
         params: { chat_id: conversation.id }
       });
-      const ragFiles = ragResponse.data || [];
-      const ragFileIds = ragFiles.filter((f: any) => f.text_extracted).map((f: any) => f.id);
-      set({ ragFileIds });
+      const ragFiles: RagFile[] = ragResponse.data || [];
+      // Sort by created_at to ensure consistent ordering (matches backend)
+      const sortedFiles = ragFiles.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      // Store per conversation
+      set((state) => ({
+        ragFilesByConversationId: {
+          ...state.ragFilesByConversationId,
+          [conversation.id]: sortedFiles,
+        },
+        // Update ragFileIds for current conversation (only text_extracted files)
+        ragFileIds: sortedFiles.filter((f) => f.text_extracted).map((f) => f.id),
+      }));
+      console.log(`[RAG] Loaded ${sortedFiles.length} files for conversation ${conversation.id}, ${sortedFiles.filter((f) => f.text_extracted).length} ready`);
     } catch (error) {
-      // 404 is expected if no RAG files exist yet
+      // 404 is expected if no RAG files exist yet - initialize with empty array
       if ((error as any).response?.status !== 404) {
         console.error('Failed to load RAG files:', error);
       }
-      set({ ragFileIds: [] });
+      // Initialize this conversation with empty RAG files
+      set((state) => ({
+        ragFilesByConversationId: {
+          ...state.ragFilesByConversationId,
+          [conversation.id]: [],
+        },
+        ragFileIds: [],
+      }));
+      console.log(`[RAG] Initialized empty RAG files for conversation ${conversation.id}`);
     }
     
     // Load messages from backend
@@ -883,6 +911,23 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   setRagFileIds: (ids) => set({ ragFileIds: ids }),
   
+  setRagFilesForConversation: (conversationId, files) => {
+    set((state) => ({
+      ragFilesByConversationId: {
+        ...state.ragFilesByConversationId,
+        [conversationId]: files,
+      },
+      // Also update ragFileIds for backward compatibility
+      ragFileIds: files.filter((f) => f.text_extracted).map((f) => f.id),
+    }));
+  },
+  
+  getRagFilesForConversation: (conversationId) => {
+    if (!conversationId) return [];
+    const state = useChatStore.getState();
+    return state.ragFilesByConversationId[conversationId] || [];
+  },
+  
   // Sources management
   addSource: (source: Source) => set((state) => ({
     sources: [...state.sources, source]
@@ -946,6 +991,15 @@ export const useChatStore = create<ChatStore>((set) => ({
       if (!newConversation) {
         throw new Error('Failed to find newly created conversation');
       }
+      
+      // Initialize new conversation with empty RAG files
+      set((state) => ({
+        ragFilesByConversationId: {
+          ...state.ragFilesByConversationId,
+          [conversationId]: [],
+        },
+        ragFileIds: [],
+      }));
       
       return newConversation;
     } catch (error) {

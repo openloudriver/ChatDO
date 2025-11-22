@@ -104,6 +104,7 @@ const ChatMessages: React.FC = () => {
     setSummarizingArticle,
     isRagTrayOpen,
     ragFileIds, // Get ragFileIds to match backend order
+    getRagFilesForConversation, // Get conversation-scoped RAG files
   } = useChatStore();
   
   // Track which articles are being summarized or have been summarized
@@ -118,38 +119,11 @@ const ChatMessages: React.FC = () => {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [ragFiles, setRagFiles] = useState<RagFile[]>([]);
-
-  // Load RAG files when conversation changes
-  useEffect(() => {
-    if (currentConversation) {
-      loadRagFiles();
-    } else {
-      setRagFiles([]);
-    }
-  }, [currentConversation?.id]);
-
-  const loadRagFiles = async () => {
-    if (!currentConversation) return;
-    
-    try {
-      const response = await axios.get('http://localhost:8000/api/rag/files', {
-        params: { chat_id: currentConversation.id }
-      });
-      const files = response.data || [];
-      // Sort by created_at to ensure consistent ordering (matches RAG tray)
-      const sortedFiles = files.sort((a: RagFile, b: RagFile) => 
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-      setRagFiles(sortedFiles);
-    } catch (error) {
-      // 404 is expected if no RAG files exist yet
-      if ((error as any).response?.status !== 404) {
-        console.error('Failed to load RAG files:', error);
-      }
-      setRagFiles([]);
-    }
-  };
+  
+  // Get RAG files from store (conversation-scoped)
+  const ragFiles = useMemo(() => {
+    return getRagFilesForConversation(currentConversation?.id || null);
+  }, [currentConversation?.id, getRagFilesForConversation]);
 
   // Compute indexed RAG files once - this is the single source of truth
   // CRITICAL: Use ragFileIds order to match backend numbering (not created_at order!)

@@ -974,7 +974,13 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
         "- ### Recommendation\n",
         "- ### Bottom line\n",
         "\n",
-        "Under each heading, use bullet points where helpful. The exact section titles can vary based on the question, but always use markdown headings (### Heading) for every section title instead of plain text lines.\n"
+        "Under each heading, use bullet points where helpful. The exact section titles can vary based on the question, but always use markdown headings (### Heading) for every section title instead of plain text lines.\n",
+        "\n",
+        "CRITICAL: When referencing information from these documents, include inline citations using the format [n] where n is the document number.\n",
+        "The documents are numbered in the order they appear below (1, 2, 3, etc.).\n",
+        "For example: 'Joint Cloud provides multi-level transport [1] with cost advantages [2].'\n",
+        "If referencing multiple sources: 'The system supports both IL5 and IL6 operations [1, 2].'\n",
+        "Always include these citations when making claims or referencing specific information from the documents.\n"
     ]
     
     # Load RAG files - if chat_id is provided, use it directly for efficiency
@@ -1003,6 +1009,7 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
     # Load text for each file and build context
     # text_path is relative to project root (includes "uploads/" prefix)
     project_root = Path(__file__).parent.parent
+    file_number = 1  # Track file number for citations (1-based to match RAG tray)
     for rag_file in all_files:
         if not rag_file.get("text_extracted") or not rag_file.get("text_path"):
             continue
@@ -1024,10 +1031,12 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
                 # This ensures files are always included but relevant ones get more context
                 num_chunks = 5 if relevance_score > 0 else 3
                 selected_chunks = chunks[:num_chunks]
-                context_parts.append(f"\n----\nSource: {rag_file['filename']}\n")
+                # Include file number in the source header so model knows which number to use for citations
+                context_parts.append(f"\n----\nSource [{file_number}]: {rag_file['filename']}\n")
                 context_parts.append('\n\n'.join(selected_chunks))
                 context_parts.append("\n----\n")
-                print(f"[RAG] Added context from {rag_file['filename']} ({len(selected_chunks)} chunks)")
+                print(f"[RAG] Added context from {rag_file['filename']} ({len(selected_chunks)} chunks) as source [{file_number}]")
+                file_number += 1
         except Exception as e:
             print(f"Error loading RAG file text: {e}")
             continue
@@ -1139,19 +1148,36 @@ async def delete_rag_file(chat_id: str, file_id: str):
     """
     rag_files = load_rag_files(chat_id)
     original_count = len(rag_files)
+    
+    # Find the file to delete before filtering
+    deleted_file = next((f for f in rag_files if f.get("id") == file_id), None)
+    
+    if not deleted_file:
+        # File not found - might have been already deleted (e.g., in parallel delete)
+        # Return success to avoid errors when clearing all files
+        return {"success": True, "message": "File not found (may have been already deleted)"}
+    
+    # Filter out the deleted file
     rag_files = [f for f in rag_files if f.get("id") != file_id]
     
-    if len(rag_files) == original_count:
-        raise HTTPException(status_code=404, detail="RAG file not found")
-    
-    # Optionally delete the actual file and text file
-    deleted_file = next((f for f in load_rag_files(chat_id) if f.get("id") == file_id), None)
-    if deleted_file:
-        uploads_dir = Path(__file__).parent.parent / "uploads"
-        if deleted_file.get("text_path"):
-            text_path = uploads_dir / deleted_file["text_path"]
-            if text_path.exists():
+    # Delete the actual file and text file
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    if deleted_file.get("text_path"):
+        text_path = uploads_dir / deleted_file["text_path"]
+        if text_path.exists():
+            try:
                 text_path.unlink()
+            except Exception as e:
+                print(f"Warning: Failed to delete text file {text_path}: {e}")
+    
+    # Also try to delete the original file if path is available
+    if deleted_file.get("path"):
+        original_path = uploads_dir / deleted_file["path"]
+        if original_path.exists():
+            try:
+                original_path.unlink()
+            except Exception as e:
+                print(f"Warning: Failed to delete original file {original_path}: {e}")
     
     save_rag_files(chat_id, rag_files)
     return {"success": True}

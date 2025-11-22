@@ -373,26 +373,33 @@ const ChatComposer: React.FC = () => {
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    // Completely ignore drag events when RAG tray is open - let it handle everything
+    if (isRagTrayOpen) {
+      return; // Don't prevent, don't stop - let RAG tray handle it
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
+    // Completely ignore drag events when RAG tray is open - let it handle everything
+    if (isRagTrayOpen) {
+      return; // Don't prevent, don't stop - let RAG tray handle it
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
 
   const handleDrop = async (e: React.DragEvent) => {
+    // Completely ignore drop events when RAG tray is open - let it handle everything
+    if (isRagTrayOpen) {
+      return; // Don't prevent, don't stop - let RAG tray handle it
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
-    // Don't handle drops if RAG tray is open - let it handle its own drops
-    if (isRagTrayOpen) {
-      return;
-    }
     
     const files = Array.from(e.dataTransfer.files);
     for (const file of files) {
@@ -599,9 +606,9 @@ const ChatComposer: React.FC = () => {
     <div 
       ref={dropZoneRef}
       className={`border-t border-[#565869] p-4 bg-[#343541] ${isDragging ? 'bg-[#40414f] border-[#19c37d] border-2' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={isRagTrayOpen ? undefined : handleDragOver}
+      onDragLeave={isRagTrayOpen ? undefined : handleDragLeave}
+      onDrop={isRagTrayOpen ? undefined : handleDrop}
     >
       <div className="max-w-4xl mx-auto">
         {editingMessageId && (

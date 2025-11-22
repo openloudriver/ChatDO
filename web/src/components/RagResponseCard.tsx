@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import SectionHeading from "./shared/SectionHeading";
 import type { RagFile } from "../types/rag";
@@ -10,100 +10,235 @@ export interface RagResponseCardProps {
   onOpenRagFile: (file: RagFile) => void;
 }
 
-// Helper to find file by index
-const findFileByIndex = (ragFiles: RagFile[], index: number): RagFile | undefined =>
-  ragFiles.find((f) => f.index === index);
+// Build lookup map: index -> RagFile
+const buildRagFilesByIndex = (ragFiles: RagFile[]): Record<number, RagFile> => {
+  const map: Record<number, RagFile> = {};
+  ragFiles.forEach((file) => {
+    if (file.index) {
+      map[file.index] = file;
+    }
+  });
+  return map;
+};
 
-// Parse source citations - handles both formats:
-// 1. source: [n] or [n] or source: [n, m] (new format)
-// 2. (Source: filename) or (Source: filename1; filename2) (old format - convert to numbers)
-const parseSourceCitations = (
-  text: string, 
-  ragFiles: RagFile[]
-): { before: string; indices: number[]; after: string } | null => {
-  // First, try the new format: source: [n] or just [n]
-  let match = text.match(/(?:source:\s*)?\[([0-9,\s]+)\]/i);
-  if (match) {
-    const before = text.slice(0, match.index);
-    const after = text.slice(match.index! + match[0].length);
-    const indices = match[1]
-      .split(',')
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !Number.isNaN(n) && n > 0);
-    return { before, indices, after };
-  }
+// CitationChip component for inline citations like [1] or [1, 3]
+type CitationChipProps = {
+  indices: number[]; // e.g. [1] or [1, 3]
+  ragFilesByIndex: Record<number, RagFile>;
+  onOpenFile: (file: RagFile) => void;
+};
+
+const CitationChip: React.FC<CitationChipProps> = ({
+  indices,
+  ragFilesByIndex,
+  onOpenFile,
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+
+  if (!indices.length) return null;
+
+  // Pick the first index as the file we open on click
+  const primaryIndex = indices[0];
+  const primaryFile = ragFilesByIndex[primaryIndex];
+
+  // Tooltip: join all file names we have for the indices (no brackets)
+  const tooltipText = indices
+    .map((i) => ragFilesByIndex[i]?.filename || `Source ${i}`)
+    .join(", ");
+
+  const label = indices.join(", ");
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (primaryFile) {
+      onOpenFile(primaryFile);
+    }
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltipPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 4,
+    });
+    setShowTooltip(true);
+  };
   
-  // Fallback: try old format (Source: filename) and convert to numbers
-  // Handle nested parentheses by counting them
-  const sourcePattern = /\(Sources?:/i;
-  const sourceMatch = text.search(sourcePattern);
-  if (sourceMatch === -1) return null;
-  
-  // Find the matching closing parenthesis, accounting for nested parens
-  let parenCount = 0;
-  let startIdx = sourceMatch;
-  let endIdx = startIdx;
-  
-  for (let i = startIdx; i < text.length; i++) {
-    if (text[i] === '(') parenCount++;
-    if (text[i] === ')') {
-      parenCount--;
-      if (parenCount === 0) {
-        endIdx = i + 1;
-        break;
+  // Build tooltip text for title attribute (fallback)
+  const titleText = tooltipText || (primaryFile ? primaryFile.filename : '');
+
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowTooltip(false);
+    setTooltipPosition(null);
+  };
+
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        title={titleText}
+        className="ml-1 inline-flex items-center rounded-full border border-[#565869] px-1.5 py-0.5 text-[10px] leading-none text-[#8e8ea0] hover:bg-[#3a3b45] hover:text-[#ececf1] hover:border-[#565869] transition-colors cursor-pointer"
+      >
+        {label}
+      </button>
+      {showTooltip && tooltipPosition && (
+        <div
+          className="fixed px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869] z-[99999]"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          {tooltipText}
+        </div>
+      )}
+    </span>
+  );
+};
+
+// Citation regex: matches [1], [1, 3], [1,2,3], etc.
+const CITATION_REGEX = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+
+// Helper function to strip citations from text for empty bullet detection
+function stripCitations(text: string): string {
+  // Remove inline citation blocks like [1], [1, 2], [1, 2, 3]
+  return text.replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\]/g, '').trim();
+}
+
+// Sanitize RAG content: remove empty bullets, normalize formatting
+function sanitizeRagContent(content: string): string {
+  const lines = content.split('\n');
+  const sanitized: string[] = [];
+  let lastWasBlank = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip completely empty lines (but allow one blank line between sections)
+    if (!trimmed) {
+      if (!lastWasBlank && sanitized.length > 0) {
+        sanitized.push('');
+        lastWasBlank = true;
+      }
+      continue;
+    }
+    lastWasBlank = false;
+
+    // Don't remove headers (ALL CAPS or ending with ":")
+    const isHeader = /^[A-Z\s]+$/.test(trimmed) || trimmed.endsWith(':');
+    
+    // Don't remove lines with citations (e.g., "[1]", "[1, 3]")
+    const hasCitations = /\[\s*\d+(?:\s*,\s*\d+)*\s*\]/.test(trimmed);
+
+    // Remove orphan bullet lines (just "-", "–", "- ", "•", etc.)
+    if (trimmed === '-' || trimmed === '–' || trimmed === '- ' || trimmed === '•' || /^-\s*$/.test(trimmed)) {
+      continue;
+    }
+
+    // Remove list items that are empty after stripping citations (unless it's a header or has citations)
+    if (!isHeader && !hasCitations) {
+      const cleaned = stripCitations(trimmed);
+      if (!cleaned) {
+        continue;
       }
     }
-  }
-  
-  if (endIdx === startIdx) return null; // No closing paren found
-  
-  const before = text.slice(0, startIdx);
-  const after = text.slice(endIdx);
-  const fullMatch = text.slice(startIdx, endIdx);
-  
-  // Extract filenames from the source citation (remove the outer parentheses and "Source:" prefix)
-  const sourceText = fullMatch
-    .replace(/^\(Sources?:/i, "")
-    .replace(/\)$/, "")
-    .trim();
-  
-  const sourceNames = sourceText
-    .split(/;|,/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  
-  // Convert filenames to indices
-  const indices: number[] = [];
-  for (const name of sourceNames) {
-    const cleanName = name.trim().toLowerCase();
-    // Try exact match first
-    let file = ragFiles.find((f) => f.filename.toLowerCase() === cleanName);
-    
-    // If no exact match, try matching by filename without extension
-    if (!file) {
-      const nameWithoutExt = cleanName.replace(/\.(pdf|docx|pptx|xlsx|doc|ppt|xls)$/, '');
-      file = ragFiles.find((f) => {
-        const filenameWithoutExt = f.filename.toLowerCase().replace(/\.(pdf|docx|pptx|xlsx|doc|ppt|xls)$/, '');
-        return filenameWithoutExt === nameWithoutExt || 
-               filenameWithoutExt.includes(nameWithoutExt) ||
-               nameWithoutExt.includes(filenameWithoutExt);
-      });
-    }
-    
-    // If still no match, try startsWith for longer names
-    if (!file && cleanName.length >= 10) {
-      file = ragFiles.find((f) => f.filename.toLowerCase().startsWith(cleanName));
-    }
-    
-    if (file) {
-      indices.push(file.index);
+
+    // Keep valid bullets as "- " (ReactMarkdown needs this format)
+    // The CSS will display "• " instead of "-" via before:content
+    // Only normalize if it's a malformed bullet (no space after dash)
+    if (trimmed.startsWith('-') && trimmed.length > 1 && trimmed[1] !== ' ') {
+      // Handle "-" followed immediately by text (no space) - normalize to "- "
+      sanitized.push('- ' + trimmed.substring(1));
+    } else {
+      sanitized.push(line);
     }
   }
-  
-  if (indices.length === 0) return null;
-  
-  return { before, indices, after };
-};
+
+  return sanitized.join('\n');
+}
+
+// Render text with citations replaced by CitationChip components
+function renderTextWithCitations(
+  text: string,
+  ragFilesByIndex: Record<number, RagFile>,
+  onOpenFile: (file: RagFile) => void,
+): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  // Create a new regex instance for each call to avoid state issues
+  const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+
+  while ((match = regex.exec(text)) !== null) {
+    const matchStart = match.index;
+
+    // Plain text before the citation
+    if (matchStart > lastIndex) {
+      const beforeText = text.slice(lastIndex, matchStart);
+      parts.push(beforeText);
+    }
+
+    // Parse citation numbers and filter out invalid ones (hallucinated citations)
+    const numbers = match[1]
+      .split(",")
+      .map((n) => parseInt(n.trim(), 10))
+      .filter((n) => !Number.isNaN(n) && n > 0)
+      .filter((n) => ragFilesByIndex[n] !== undefined); // Only include citations that exist
+
+    if (numbers.length > 0) {
+      parts.push(
+        <CitationChip
+          key={`cit-${matchStart}-${match[0]}`}
+          indices={numbers}
+          ragFilesByIndex={ragFilesByIndex}
+          onOpenFile={onOpenFile}
+        />
+      );
+    } else {
+      // If all citations are invalid, don't render anything (silently ignore hallucinated citations)
+      // This prevents showing broken citations like [6] when there are only 5 files
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  // Remaining text after the last match
+  if (lastIndex < text.length) {
+    let remainingText = text.slice(lastIndex);
+    
+    // If period is immediately after the last citation, move it before the citation
+    if (remainingText.trim().startsWith('.')) {
+      // Find the last text part (not a React element) and add period to it
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (typeof parts[i] === 'string') {
+          const textPart = parts[i] as string;
+          // Only add period if it doesn't already end with one
+          if (!textPart.trim().endsWith('.')) {
+            parts[i] = textPart.trim() + '.';
+          }
+          // Remove the period from remaining text
+          remainingText = remainingText.trim().substring(1).trim();
+          break;
+        }
+      }
+    }
+    
+    if (remainingText.trim()) {
+      parts.push(remainingText);
+    }
+  }
+
+  return parts;
+}
 
 export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   content,
@@ -111,9 +246,13 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   model,
   onOpenRagFile,
 }) => {
-  const cleanedContent = content.trim();
-  const [hoveredFileId, setHoveredFileId] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  // Build lookup map: index -> RagFile (single source of truth)
+  const ragFilesByIndex = useMemo(() => buildRagFilesByIndex(ragFiles), [ragFiles]);
+  
+  // Sanitize content: remove empty bullets, normalize formatting
+  const cleanedContent = useMemo(() => {
+    return sanitizeRagContent(content.trim());
+  }, [content]);
 
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
@@ -151,78 +290,40 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
               h5: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               h6: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               ul: ({ children }) => (
-                <ul className="list-disc list-inside mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ul>
+                <ul className="list-none mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ul>
               ),
               ol: ({ children }) => (
-                <ol className="list-decimal list-inside mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ol>
+                <ol className="list-none mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ol>
               ),
               li: ({ children }) => {
                 const text = React.Children.toArray(children)
                   .map((child) => (typeof child === "string" ? child : ""))
                   .join("");
                 
-                const parsed = parseSourceCitations(text, ragFiles);
-                if (!parsed || parsed.indices.length === 0) {
+                // Strip citations to check if bullet has any visible content
+                const cleanedText = stripCitations(text);
+                
+                // Don't render empty bullets (e.g., just "-" or just "[1, 3]")
+                if (!cleanedText) {
+                  return null;
+                }
+                
+                // Check if text contains citations (use fresh regex to avoid state issues)
+                const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
+                if (!hasCitations) {
                   return (
-                    <li className="ml-4 text-sm text-[#ececf1] mb-1">
+                    <li className="ml-4 text-sm text-[#ececf1] mb-1 before:content-['•'] before:mr-2">
                       {children}
                     </li>
                   );
                 }
 
+                // Render with citations
+                const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
+
                 return (
-                  <li className="ml-4 text-sm text-[#ececf1] mb-1">
-                    {parsed.before}
-                    {" "}
-                    <span className="text-[11px] text-[#8e8ea0] italic ml-1">
-                      [
-                      {parsed.indices.map((num, idx) => {
-                        const file = findFileByIndex(ragFiles, num);
-                        if (!file) {
-                          return (
-                            <span key={num}>{num}{idx < parsed.indices.length - 1 ? ", " : ""}</span>
-                          );
-                        }
-                        return (
-                          <span key={file.id} className="relative inline-block">
-                            <button
-                              type="button"
-                              onClick={() => onOpenRagFile(file)}
-                              onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredFileId(file.id);
-                                setTooltipPosition({
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top - 8,
-                                });
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredFileId(null);
-                                setTooltipPosition(null);
-                              }}
-                              className="ml-1 px-1.5 py-0.5 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] hover:bg-[#3a3b45] transition underline"
-                            >
-                              {num}{idx < parsed.indices.length - 1 ? ", " : ""}
-                            </button>
-                            {hoveredFileId === file.id && tooltipPosition && (
-                              <div
-                                className="fixed z-50 px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869]"
-                                style={{
-                                  left: `${tooltipPosition.x}px`,
-                                  top: `${tooltipPosition.y}px`,
-                                  transform: 'translate(-50%, -100%)',
-                                  fontStyle: 'normal',
-                                }}
-                              >
-                                {file.filename}
-                              </div>
-                            )}
-                          </span>
-                        );
-                      })}
-                      ]
-                    </span>
-                    {parsed.after && ` ${parsed.after}`}
+                  <li className="ml-4 text-sm text-[#ececf1] mb-1 before:content-['•'] before:mr-2">
+                    {rendered}
                   </li>
                 );
               },
@@ -249,72 +350,46 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 return <code className={className}>{children}</code>;
               },
               p: ({ children }) => {
-                const text = React.Children.toArray(children)
+                const childrenArray = React.Children.toArray(children);
+                const text = childrenArray
                   .map((child) => (typeof child === "string" ? child : ""))
                   .join("");
                 
-                const parsed = parseSourceCitations(text, ragFiles);
-                if (!parsed || parsed.indices.length === 0) {
+                // Check if this paragraph is a sub-section heading:
+                // 1. Entire paragraph is a strong element, OR
+                // 2. First child is a strong element
+                let isSubSectionHeading = false;
+                if (childrenArray.length === 1) {
+                  const onlyChild = childrenArray[0];
+                  if (React.isValidElement(onlyChild) && onlyChild.type === 'strong') {
+                    isSubSectionHeading = true;
+                  }
+                } else {
+                  const firstChild = childrenArray[0];
+                  if (React.isValidElement(firstChild) && firstChild.type === 'strong') {
+                    isSubSectionHeading = true;
+                  }
+                }
+                
+                // Check if text contains citations (use fresh regex to avoid state issues)
+                const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
+                
+                if (!hasCitations) {
                   return (
                     <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
+                      {isSubSectionHeading && <span className="mr-2">-</span>}
                       {children}
                     </p>
                   );
                 }
 
+                // Render with citations
+                const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
+
                 return (
                   <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
-                    {parsed.before}
-                    {" "}
-                    <span className="text-[11px] text-[#8e8ea0] italic ml-1">
-                      [
-                      {parsed.indices.map((num, idx) => {
-                        const file = findFileByIndex(ragFiles, num);
-                        if (!file) {
-                          return (
-                            <span key={num}>{num}{idx < parsed.indices.length - 1 ? ", " : ""}</span>
-                          );
-                        }
-                        return (
-                          <span key={file.id} className="relative inline-block">
-                            <button
-                              type="button"
-                              onClick={() => onOpenRagFile(file)}
-                              onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredFileId(file.id);
-                                setTooltipPosition({
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top - 8,
-                                });
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredFileId(null);
-                                setTooltipPosition(null);
-                              }}
-                              className="ml-1 px-1.5 py-0.5 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] hover:bg-[#3a3b45] transition underline"
-                            >
-                              {num}{idx < parsed.indices.length - 1 ? ", " : ""}
-                            </button>
-                            {hoveredFileId === file.id && tooltipPosition && (
-                              <div
-                                className="fixed z-50 px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869]"
-                                style={{
-                                  left: `${tooltipPosition.x}px`,
-                                  top: `${tooltipPosition.y}px`,
-                                  transform: 'translate(-50%, -100%)',
-                                  fontStyle: 'normal',
-                                }}
-                              >
-                                {file.filename}
-                              </div>
-                            )}
-                          </span>
-                        );
-                      })}
-                      ]
-                    </span>
-                    {parsed.after && ` ${parsed.after}`}
+                    {isSubSectionHeading && <span className="mr-2">-</span>}
+                    {rendered}
                   </p>
                 );
               },

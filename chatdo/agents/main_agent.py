@@ -246,10 +246,19 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
     """
     # Classify intent from user message
     intent = classify_intent(task)
+    print(f"[INTENT] Classified '{task[:100]}...' as intent: {intent}, skip_web_search: {skip_web_search}")
     
     
     # Handle web search - use Brave Search API, return structured results (no LLM by default)
     # Skip web search if RAG context is provided (skip_web_search=True)
+    if intent == "web_search":
+        if skip_web_search:
+            print(f"[WEB_SEARCH] Skipping web search (RAG context provided)")
+        else:
+            print(f"[WEB_SEARCH] Triggering web search for query: {task}")
+    else:
+        print(f"[WEB_SEARCH] Intent is '{intent}', not 'web_search' - will use general chat")
+    
     if intent == "web_search" and not skip_web_search:
         # Extract search query from task
         search_query = task
@@ -371,8 +380,9 @@ When the user is exploring ideas, asking questions, or designing a solution:
 - Explain which files and components you intend to touch.
 
 Web Search & Information Discovery:
-- When the user asks you to search the web, find information, discover websites, or get current information, use your web search capabilities.
-- For queries like "find XYZ", "what are the top headlines", "search for zkSNARK websites", provide comprehensive, up-to-date information.
+- **IMPORTANT: When the user asks about current events, news, latest information, or anything requiring up-to-date data, you should automatically use web search. Do NOT ask for permission - just search and provide results.**
+- When the user asks you to search the web, find information, discover websites, or get current information, use your web search capabilities immediately.
+- For queries like "find XYZ", "what are the top headlines", "search for zkSNARK websites", "latest news", "current events", provide comprehensive, up-to-date information.
 - You can search for current events, recent developments, and discover relevant websites or resources.
 - **CRITICAL: When providing information from web search or article summaries, you MUST cite the source URL for every fact, claim, or piece of information you mention.**
 - Format citations clearly: use [Source: URL] or (Source: URL) after each relevant statement.
