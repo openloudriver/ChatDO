@@ -47,7 +47,7 @@ const CitationChip: React.FC<CitationChipProps> = ({
     .map((i) => ragFilesByIndex[i]?.filename || `Source ${i}`)
     .join(", ");
 
-  const label = indices.join(", ");
+  const label = '[' + indices.join(', ') + ']';
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
