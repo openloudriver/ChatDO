@@ -4,6 +4,7 @@ import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
+import RagResponseCard from './RagResponseCard';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
 const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
@@ -98,6 +99,9 @@ const ChatMessages: React.FC = () => {
     viewMode, 
     renameChat,
     deleteMessage,
+    isSummarizingArticle,
+    setSummarizingArticle,
+    isRagTrayOpen,
   } = useChatStore();
   
   // Track which articles are being summarized or have been summarized
@@ -335,7 +339,7 @@ const ChatMessages: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
       {messages.map((message) => {
         const isCopied = copiedMessageId === message.id;
         
@@ -519,7 +523,7 @@ const ChatMessages: React.FC = () => {
                   
                   const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
                   // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'document_card';
+                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'document_card' || message.type === 'rag_response';
                   
                   if (!hasContent) {
                     return null;
@@ -686,6 +690,7 @@ const ChatMessages: React.FC = () => {
                           <div className="space-y-3">
                             {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
                               const articleState = articleStates[result.url] || 'idle';
+                              // Brave Search button only shows spinner for its own article state
                               const isSummarizing = articleState === 'summarizing';
                               const isSummarized = articleState === 'summarized';
                               
@@ -742,6 +747,7 @@ const ChatMessages: React.FC = () => {
                                       onClick={async () => {
                                         if (!currentProject || !currentConversation || isSummarizing || isSummarized) return;
                                         setArticleStates(prev => ({ ...prev, [result.url]: 'summarizing' }));
+                                        setSummarizingArticle(true);
                                         try {
                                           const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
                                           setStoreLoading(true);
@@ -778,6 +784,8 @@ const ChatMessages: React.FC = () => {
                                           });
                                           setStoreLoading(false);
                                           setArticleStates(prev => ({ ...prev, [result.url]: 'idle' }));
+                                        } finally {
+                                          setSummarizingArticle(false);
                                         }
                                       }}
                                       disabled={isSummarizing || isSummarized}
@@ -870,11 +878,21 @@ const ChatMessages: React.FC = () => {
                           summary={message.data.summary || ''}
                           keyPoints={message.data.keyPoints || []}
                           whyMatters={message.data.whyMatters}
+                          model={message.model}
+                        />
+                      )}
+                      
+                      {/* Display rag_response if message type is rag_response */}
+                      {message.type === 'rag_response' && (
+                        <RagResponseCard
+                          content={message.data?.content || message.content || ''}
+                          sources={message.data?.sources || []}
+                          model={message.model}
                         />
                       )}
                       
                       {/* Display text content if any (and not structured message types) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && (
+                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
                           <div className="prose prose-invert max-w-none">
                             <ReactMarkdown>{content}</ReactMarkdown>
@@ -885,7 +903,12 @@ const ChatMessages: React.FC = () => {
                       )}
                       
                       {/* Display model attribution for assistant messages (only once, at the end) */}
-                      {message.role === 'assistant' && message.model && (
+                      {/* Don't show for article_card, document_card, rag_response, or web_search_results as they handle their own model display */}
+                      {message.role === 'assistant' && message.model && 
+                       message.type !== 'article_card' && 
+                       message.type !== 'document_card' && 
+                       message.type !== 'rag_response' &&
+                       message.type !== 'web_search_results' && (
                         <div className="text-xs text-[#8e8ea0] mt-2 text-right">
                           Model: {message.model}
                         </div>

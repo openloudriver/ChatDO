@@ -119,6 +119,30 @@ async def handle_file_upload(project_id: str, conversation_id: str, file: Upload
             except Exception as e:
                 result["extraction_error"] = str(e)
         
+        elif mime_type in [
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ]:
+            # Excel extraction
+            try:
+                text_content = await extract_excel_text(file_path)
+                if text_content and text_content.strip():
+                    text_path = upload_dir / f"{uuid.uuid4()}.txt"
+                    async with aiofiles.open(text_path, 'w', encoding='utf-8') as f:
+                        await f.write(text_content)
+                    result["text_extracted"] = True
+                    result["text_path"] = str(text_path.relative_to(UPLOADS_BASE.parent))
+                    result["extracted_text"] = text_content
+                else:
+                    result["extraction_error"] = "No text could be extracted from Excel file"
+                    print(f"Excel extraction returned empty text for {file.filename}")
+            except ImportError as e:
+                result["extraction_error"] = f"Excel extraction library not installed: {str(e)}"
+                print(f"Excel extraction failed: {e}")
+            except Exception as e:
+                result["extraction_error"] = str(e)
+                print(f"Excel extraction error: {e}")
+        
         elif mime_type.startswith("image/"):
             # Image OCR (would require pytesseract or similar)
             # For now, just save the image
@@ -234,4 +258,70 @@ async def extract_pptx_text(pptx_path: Path) -> str:
             return "\n\n".join(text_parts) if text_parts else ""
         except Exception:
             return ""  # python-pptx not available and ZIP extraction failed
+
+
+async def extract_excel_text(excel_path: Path) -> str:
+    """Extract text from Excel file"""
+    try:
+        import openpyxl
+        workbook = openpyxl.load_workbook(excel_path, data_only=True)
+        text_parts = []
+        
+        for sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]
+            sheet_text = [f"Sheet: {sheet_name}"]
+            
+            # Extract all cell values
+            for row in sheet.iter_rows(values_only=True):
+                row_values = []
+                for cell_value in row:
+                    if cell_value is not None:
+                        # Convert to string, handling different types
+                        if isinstance(cell_value, (int, float)):
+                            row_values.append(str(cell_value))
+                        elif isinstance(cell_value, str):
+                            row_values.append(cell_value.strip())
+                        else:
+                            row_values.append(str(cell_value))
+                
+                if row_values:  # Only add non-empty rows
+                    sheet_text.append("\t".join(row_values))
+            
+            if len(sheet_text) > 1:  # More than just "Sheet: X"
+                text_parts.append("\n".join(sheet_text))
+        
+        return "\n\n".join(text_parts)
+    except ImportError:
+        print("Warning: openpyxl not installed, trying pandas...")
+        # Fallback: try pandas
+        try:
+            import pandas as pd
+            text_parts = []
+            
+            # Read all sheets
+            excel_file = pd.ExcelFile(excel_path)
+            for sheet_name in excel_file.sheet_names:
+                df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                sheet_text = [f"Sheet: {sheet_name}"]
+                
+                # Convert DataFrame to text representation
+                # Include headers and all data
+                if not df.empty:
+                    # Add header row
+                    sheet_text.append("\t".join(str(col) for col in df.columns))
+                    # Add data rows
+                    for _, row in df.iterrows():
+                        row_values = [str(val) if pd.notna(val) else "" for val in row]
+                        sheet_text.append("\t".join(row_values))
+                
+                if len(sheet_text) > 1:  # More than just "Sheet: X"
+                    text_parts.append("\n".join(sheet_text))
+            
+            return "\n\n".join(text_parts)
+        except ImportError:
+            print("Error: Neither openpyxl nor pandas is installed. Please install one: pip install openpyxl or pip install pandas openpyxl")
+            raise ImportError("No Excel extraction library available. Install openpyxl or pandas.")
+    except Exception as e:
+        print(f"Error extracting Excel text: {e}")
+        raise
 

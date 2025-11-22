@@ -54,6 +54,8 @@ interface ChatStore {
   isLoading: boolean;
   isStreaming: boolean;
   streamingContent: string;
+  isSummarizingArticle: boolean;  // Shared state for article summarization
+  isRagTrayOpen: boolean;  // Whether RAG context tray is open
   viewMode: ViewMode;
   searchResults: Conversation[];
   searchQuery: string;
@@ -93,6 +95,8 @@ interface ChatStore {
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
   clearStreaming: () => void;
+  setSummarizingArticle: (summarizing: boolean) => void;
+  setRagTrayOpen: (open: boolean) => void;
   setRagFileIds: (ids: string[]) => void;
   addSource: (source: Source) => void;
   setSources: (sources: Source[]) => void;
@@ -110,10 +114,13 @@ export const useChatStore = create<ChatStore>((set) => ({
   isLoading: false,
   isStreaming: false,
   streamingContent: '',
+  isSummarizingArticle: false,
+  isRagTrayOpen: false,
   viewMode: 'projectList',
   searchQuery: '',
   searchResults: [],
   sources: [],
+  ragFileIds: [],
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -640,7 +647,8 @@ export const useChatStore = create<ChatStore>((set) => ({
       set({ 
         currentConversation: null,
         messages: [],
-        viewMode: 'projectList'
+        viewMode: 'projectList',
+        ragFileIds: []  // Clear RAG files when conversation is cleared
       });
       return;
     }
@@ -658,22 +666,74 @@ export const useChatStore = create<ChatStore>((set) => ({
       viewMode: 'chat'
     });
     
+    // Load RAG files for this conversation
+    try {
+      const ragResponse = await axios.get('http://localhost:8000/api/rag/files', {
+        params: { chat_id: conversation.id }
+      });
+      const ragFiles = ragResponse.data || [];
+      const ragFileIds = ragFiles.filter((f: any) => f.text_extracted).map((f: any) => f.id);
+      set({ ragFileIds });
+    } catch (error) {
+      // 404 is expected if no RAG files exist yet
+      if ((error as any).response?.status !== 404) {
+        console.error('Failed to load RAG files:', error);
+      }
+      set({ ragFileIds: [] });
+    }
+    
     // Load messages from backend
     try {
       const response = await axios.get(`http://localhost:8000/api/chats/${conversation.id}/messages`);
       const backendMessages = response.data.messages || [];
       
       // Convert backend messages to frontend format
-      const messages: Message[] = backendMessages.map((msg: any, index: number) => ({
-        id: `${conversation.id}-${index}`,
-        role: msg.role,
-        content: msg.content || '',
-        type: msg.type, // Preserve structured message types (article_card, web_search_results)
-        data: msg.data, // Preserve structured message data
-        model: msg.model, // Preserve model attribution
-        provider: msg.provider, // Preserve provider attribution
-        timestamp: new Date() // Backend doesn't provide timestamps, use current time
-      }));
+      // CRITICAL: Filter out RAG context preamble, system metadata, and oversized user messages
+      console.log(`[DIAG] Loading ${backendMessages.length} messages from backend for conversation ${conversation.id}`);
+      const messages: Message[] = [];
+      
+      for (let index = 0; index < backendMessages.length; index++) {
+        const msg = backendMessages[index];
+        
+        // Filter out system-generated RAG metadata and oversized user messages
+        const isRagPreamble = msg.content?.includes("You have access to the following reference documents") ||
+                             msg.content?.includes("----\nSource:") ||
+                             (msg.role === "user" && msg.content && msg.content.length > 2000);
+        
+        const isSystemMetadata = msg.type === "roleresume" ||
+                                 msg.type === "rag_reference_preamble" ||
+                                 msg.type === "reference_preamble" ||
+                                 msg.role === "system";
+        
+        if (isRagPreamble || isSystemMetadata) {
+          console.log(`[DIAG] Filtering out message ${index}: role=${msg.role}, type=${msg.type || 'none'}, length=${msg.content?.length || 0}, reason=${isRagPreamble ? 'RAG preamble' : 'system metadata'}`);
+          continue; // Skip this message
+        }
+        
+        // Debug: Log rag_response messages to verify they're being loaded
+        if (msg.type === 'rag_response') {
+          console.log('[RAG] Loading rag_response message:', { 
+            type: msg.type, 
+            hasData: !!msg.data, 
+            dataKeys: msg.data ? Object.keys(msg.data) : [],
+            content: msg.content?.substring(0, 50),
+            dataContent: msg.data?.content?.substring(0, 50)
+          });
+        }
+        
+        messages.push({
+          id: `${conversation.id}-${messages.length}`,
+          role: msg.role,
+          content: msg.content || '',
+          type: msg.type || undefined, // Preserve structured message types (article_card, web_search_results, rag_response)
+          data: msg.data || undefined, // Preserve structured message data
+          model: msg.model || undefined, // Preserve model attribution
+          provider: msg.provider || undefined, // Preserve provider attribution
+          timestamp: new Date() // Backend doesn't provide timestamps, use current time
+        });
+      }
+      
+      console.log(`[DIAG] Converted ${messages.length} messages for frontend (filtered ${backendMessages.length - messages.length} RAG/system messages)`);
       
       // Update conversation object with messages so preview works
       const updatedConversation = {
@@ -816,6 +876,12 @@ export const useChatStore = create<ChatStore>((set) => ({
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   
   clearStreaming: () => set({ isStreaming: false, streamingContent: '' }),
+  
+  setSummarizingArticle: (summarizing) => set({ isSummarizingArticle: summarizing }),
+  
+  setRagTrayOpen: (open) => set({ isRagTrayOpen: open }),
+  
+  setRagFileIds: (ids) => set({ ragFileIds: ids }),
   
   // Sources management
   addSource: (source: Source) => set((state) => ({

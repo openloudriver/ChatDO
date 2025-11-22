@@ -3,7 +3,7 @@ WebSocket streaming endpoint for ChatDO
 Streams ChatDO replies chunk-by-chunk
 """
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import Optional
+from typing import Optional, List
 import sys
 import re
 from pathlib import Path
@@ -273,22 +273,54 @@ Keep it concise, neutral, and factual."""
         
         # Build RAG context if RAG files are provided
         user_message = message
+        has_rag_context = False
         if rag_file_ids:
+            print(f"[RAG] Building context for {len(rag_file_ids)} files in WebSocket handler")
             from server.main import build_rag_context
-            rag_context = build_rag_context(rag_file_ids, message)
+            rag_context = build_rag_context(rag_file_ids, message, chat_id=conversation_id)
             if rag_context:
                 user_message = f"{rag_context}\n\nUser question: {message}"
+                has_rag_context = True
+                print(f"[RAG] Context built successfully, length: {len(rag_context)}")
+            else:
+                print(f"[RAG] Warning: No context was built despite {len(rag_file_ids)} file IDs provided")
         
         # Load target configuration
         target_cfg = load_target(target_name)
         
         # Run ChatDO agent (this is synchronous, so we'll chunk the result)
         # TODO: In the future, integrate with streaming LLM responses
+        # Pass has_rag_context flag to skip web search when RAG is available
+        # Pass thread_id so run_agent can load history for context and save messages
         raw_result, model_display, provider = run_agent(
             target=target_cfg,
-            task=user_message,
-            thread_id=conversation_id
+            task=user_message,  # This includes RAG context
+            thread_id=conversation_id if conversation_id else None,  # Load history for context
+            skip_web_search=has_rag_context
         )
+        
+        # NOTE: run_agent now filters out RAG context automatically, so we don't need to fix it here
+        # But we'll keep this as a safety net in case any RAG context slips through
+        if has_rag_context and conversation_id:
+            print(f"[DIAG] WebSocket: RAG context was used, but run_agent should have filtered it. Verifying...")
+            try:
+                target_name_save = target_cfg.name
+                thread_id = conversation_id
+                history = load_thread_history(target_name_save, thread_id)
+                
+                # Check if last user message still has RAG context
+                if len(history) >= 2:
+                    user_idx = len(history) - 2
+                    if history[user_idx].get("role") == "user":
+                        user_content = history[user_idx].get("content", "")
+                        # Check if it contains RAG context markers
+                        if "You have access to the following reference documents" in user_content or "----\nSource:" in user_content:
+                            print(f"[DIAG] WebSocket: WARNING - User message still contains RAG context! Fixing now...")
+                            history[user_idx]["content"] = message
+                            save_thread_history(target_name_save, thread_id, history)
+                            print(f"[DIAG] WebSocket: ✅ FIXED user message (removed RAG context)")
+            except Exception as e:
+                print(f"[DIAG] WebSocket: Error verifying/fixing user message: {e}")
         
         # Check if result is structured (web_search_results or article_card)
         if isinstance(raw_result, dict):
@@ -316,7 +348,64 @@ Keep it concise, neutral, and factual."""
         # Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)
         
+        # If RAG context was used, send as structured rag_response
+        if has_rag_context and not tasks_json:
+            # Extract source file names from RAG context
+            from server.main import load_rag_files
+            from chatdo.memory.store import load_thread_history, save_thread_history
+            from server.main import load_projects
+            
+            rag_files = load_rag_files(conversation_id) if rag_file_ids else []
+            source_files = [f.get("filename") for f in rag_files if f.get("id") in (rag_file_ids or [])]
+            
+            # Update the last message in memory store to have structured type
+            # (run_agent already saved it as a regular message, so we update it)
+            if conversation_id and project_id:
+                try:
+                    projects = load_projects()
+                    project = next((p for p in projects if p.get("id") == project_id), None)
+                    if project:
+                        target_name = project.get("default_target", "general")
+                        thread_id = conversation_id
+                        
+                        history = load_thread_history(target_name, thread_id)
+                        # Find the last assistant message (saved by run_agent) and update it with structured type
+                        updated = False
+                        for i in range(len(history) - 1, -1, -1):
+                            if history[i].get("role") == "assistant":
+                                # Update existing message with structured type
+                                history[i]["type"] = "rag_response"
+                                history[i]["data"] = {
+                                    "content": human_text,
+                                    "sources": source_files
+                                }
+                                history[i]["model"] = model_display
+                                history[i]["provider"] = provider
+                                updated = True
+                                print(f"[RAG] Updated message at index {i} with type=rag_response, data keys: {list(history[i].get('data', {}).keys())}")
+                                break
+                        if updated:
+                            save_thread_history(target_name, thread_id, history)
+                            print(f"[RAG] Saved updated history with {len(history)} messages")
+                        else:
+                            print(f"[RAG] Warning: Could not find assistant message to update in history of {len(history)} messages")
+                except Exception as e:
+                    print(f"Warning: Failed to update RAG response in memory store: {e}")
+            
+            await websocket.send_json({
+                "type": "rag_response",
+                "data": {
+                    "content": human_text,
+                    "sources": source_files
+                },
+                "model": model_display,
+                "provider": provider,
+                "done": True
+            })
+            return
+        
         # Stream human text in chunks (simulate streaming for now)
+        # Note: run_agent already saved the assistant message, so we don't need to save it again
         chunk_size = 50  # characters per chunk
         for i in range(0, len(human_text), chunk_size):
             chunk = human_text[i:i + chunk_size]
@@ -401,6 +490,7 @@ async def websocket_endpoint(websocket: WebSocket):
             target_name = data.get("target_name")
             message = data.get("message")
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
+            print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             
             if not all([project_id, conversation_id, target_name, message]):
                 await websocket.send_json({

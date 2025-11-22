@@ -238,17 +238,19 @@ def build_agent(target: TargetConfig, task: str):
     )
     return agent
 
-def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None) -> tuple[Union[str, Dict[str, Any]], str, str]:
+def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, skip_web_search: bool = False) -> tuple[Union[str, Dict[str, Any]], str, str]:
     """
     Run ChatDO on a given task using AI-Router.
     If thread_id is provided, load/save conversation history so the agent has long-term context.
+    If skip_web_search is True, skip web search even if intent is web_search (e.g., when RAG context is provided).
     """
     # Classify intent from user message
     intent = classify_intent(task)
     
     
     # Handle web search - use Brave Search API, return structured results (no LLM by default)
-    if intent == "web_search":
+    # Skip web search if RAG context is provided (skip_web_search=True)
+    if intent == "web_search" and not skip_web_search:
         # Extract search query from task
         search_query = task
         for prefix in ["find", "search for", "look for", "what are", "show me", "get me"]:
@@ -454,11 +456,46 @@ Notes:
         final_content = ""
     
     # Update memory if thread_id is provided
+    # CRITICAL: Never save RAG context preamble or system metadata to history
+    # Only save actual user messages and assistant responses
     if thread_id:
         # We store only user/assistant messages, not system
         history = memory_store.load_thread_history(target.name, thread_id)
-        history.append({"role": "user", "content": task})
+        print(f"[DIAG] run_agent: Before saving, history has {len(history)} messages")
+        
+        # Check if task contains RAG context preamble (should be filtered by caller, but double-check)
+        # RAG context typically starts with "You have access to the following reference documents"
+        # or contains "----\nSource:" markers
+        task_to_save = task
+        if "You have access to the following reference documents" in task or "----\nSource:" in task or "User question:" in task:
+            # Extract just the user question part (after "User question:")
+            if "User question:" in task:
+                task_to_save = task.split("User question:")[-1].strip()
+                print(f"[DIAG] run_agent: Detected RAG context in task, extracted user question (length: {len(task_to_save)} vs {len(task)})")
+            else:
+                # If we can't extract, don't save this message - it's RAG metadata
+                print(f"[DIAG] run_agent: WARNING - Task contains RAG context but no 'User question:' marker. NOT saving to history.")
+                print(f"[DIAG] run_agent: Task preview: {task[:200]}...")
+                # Don't save the user message, only save assistant response
+                history.append({"role": "assistant", "content": final_content})
+                memory_store.save_thread_history(target.name, thread_id, history)
+                print(f"[DIAG] run_agent: Saved only assistant message (skipped RAG context user message)")
+                return final_content, model_display, provider_id
+        
+        # Only save if message is reasonable length (not a full document dump)
+        if len(task_to_save) > 5000:
+            print(f"[DIAG] run_agent: WARNING - Task is too long ({len(task_to_save)} chars), likely contains full document text. NOT saving to history.")
+            # Don't save the user message, only save assistant response
+            history.append({"role": "assistant", "content": final_content})
+            memory_store.save_thread_history(target.name, thread_id, history)
+            print(f"[DIAG] run_agent: Saved only assistant message (skipped oversized user message)")
+            return final_content, model_display, provider_id
+        
+        history.append({"role": "user", "content": task_to_save})
         history.append({"role": "assistant", "content": final_content})
+        print(f"[DIAG] run_agent: Saving user message (length={len(task_to_save)}), assistant message (length={len(final_content)})")
+        print(f"[DIAG] run_agent: User message preview: {task_to_save[:100]}...")
         memory_store.save_thread_history(target.name, thread_id, history)
+        print(f"[DIAG] run_agent: After saving, history has {len(history)} messages")
     
     return final_content, model_display, provider_id

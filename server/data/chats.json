@@ -30,32 +30,192 @@
     "trashed_at": null
   },
   {
-    "id": "4059471e-fea7-45fa-8c35-df153998c14d",
-    "project_id": "scratch",
-    "title": "Is there any news about why the US military is ...",
-    "thread_id": "4059471e-fea7-45fa-8c35-df153998c14d",
-    "created_at": "2025-11-21T13:10:28.918632+00:00",
-    "updated_at": "2025-11-21T23:14:53.986627+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-21T23:14:53.986613+00:00"
-  },
-  {
-    "id": "9e63725c-c73e-4cdc-8896-5a0a1d4ef784",
+    "id": "1f63931c-b1ff-414c-aa50-b548855d2637",
     "project_id": "scratch",
     "title": "What's the latest news between Ukraine and Russia?",
-    "thread_id": "9e63725c-c73e-4cdc-8896-5a0a1d4ef784",
-    "created_at": "2025-11-21T23:14:55.050305+00:00",
-    "updated_at": "2025-11-21T23:15:07.241031+00:00",
+    "thread_id": "1f63931c-b1ff-414c-aa50-b548855d2637",
+    "created_at": "2025-11-22T01:27:18.622231+00:00",
+    "updated_at": "2025-11-22T01:42:18.747754+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T01:42:18.747735+00:00"
+  },
+  {
+    "id": "70d003ab-b2f1-4f1b-8959-032396607a01",
+    "project_id": "scratch",
+    "title": "New Chat",
+    "thread_id": "70d003ab-b2f1-4f1b-8959-032396607a01",
+    "created_at": "2025-11-22T01:39:12.489063+00:00",
+    "updated_at": "2025-11-22T01:42:09.859313+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T01:42:09.859272+00:00"
+  },
+  {
+    "id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "project_id": "scratch",
+    "title": "What's the latest news between Ukraine and Russia?",
+    "thread_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "created_at": "2025-11-22T01:42:19.482484+00:00",
+    "updated_at": "2025-11-22T01:42:22.059209+00:00",
     "trashed": false,
     "trashed_at": null
   },
   {
-    "id": "ffdca6fe-0f05-4b96-81eb-c03feaff0c60",
+    "id": "9fe5ee95-4d03-413a-ac35-74a1b5d5ae32",
+    "project_id": "scratch",
+    "title": "What are the key points from the Joint Cloud Wh...",
+    "thread_id": "9fe5ee95-4d03-413a-ac35-74a1b5d5ae32",
+    "created_at": "2025-11-22T01:45:43.167189+00:00",
+    "updated_at": "2025-11-22T01:58:28.276167+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T01:58:28.276146+00:00"
+  },
+  {
+    "id": "7e36481b-18b2-4b60-bf48-b1d76318b129",
     "project_id": "scratch",
     "title": "New Chat",
-    "thread_id": "ffdca6fe-0f05-4b96-81eb-c03feaff0c60",
-    "created_at": "2025-11-22T00:27:09.382901+00:00",
-    "updated_at": "2025-11-22T00:27:09.382937+00:00",
+    "thread_id": "7e36481b-18b2-4b60-bf48-b1d76318b129",
+    "created_at": "2025-11-22T01:58:29.542504+00:00",
+    "updated_at": "2025-11-22T01:58:34.764207+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T01:58:34.764186+00:00"
+  },
+  {
+    "id": "31a86ff8-48aa-4a6c-b0a9-76aa69eb9372",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "31a86ff8-48aa-4a6c-b0a9-76aa69eb9372",
+    "created_at": "2025-11-22T01:58:35.506586+00:00",
+    "updated_at": "2025-11-22T02:19:31.338246+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:19:31.338226+00:00"
+  },
+  {
+    "id": "18a0e4cd-95de-4b60-bf5e-fa5000c69259",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "18a0e4cd-95de-4b60-bf5e-fa5000c69259",
+    "created_at": "2025-11-22T02:19:32.221461+00:00",
+    "updated_at": "2025-11-22T02:22:26.986875+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:22:26.986854+00:00"
+  },
+  {
+    "id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "created_at": "2025-11-22T02:22:27.620175+00:00",
+    "updated_at": "2025-11-22T02:30:12.319331+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:30:12.319311+00:00"
+  },
+  {
+    "id": "c004b5a0-6ce7-4014-a9da-20526e78fa3f",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "c004b5a0-6ce7-4014-a9da-20526e78fa3f",
+    "created_at": "2025-11-22T02:30:13.369120+00:00",
+    "updated_at": "2025-11-22T02:37:28.181186+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:37:28.181166+00:00"
+  },
+  {
+    "id": "83098f64-2f23-4322-a641-04a7bbadab97",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "83098f64-2f23-4322-a641-04a7bbadab97",
+    "created_at": "2025-11-22T02:37:29.045554+00:00",
+    "updated_at": "2025-11-22T02:47:08.336149+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:47:08.336129+00:00"
+  },
+  {
+    "id": "0352c78e-8f49-44c1-a196-cbf5d8a54a9b",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "0352c78e-8f49-44c1-a196-cbf5d8a54a9b",
+    "created_at": "2025-11-22T02:47:09.231261+00:00",
+    "updated_at": "2025-11-22T02:53:49.293830+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T02:53:49.293810+00:00"
+  },
+  {
+    "id": "a853b210-1c7d-4e8c-848a-ffa4b30175dc",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "a853b210-1c7d-4e8c-848a-ffa4b30175dc",
+    "created_at": "2025-11-22T02:53:51.393882+00:00",
+    "updated_at": "2025-11-22T03:01:29.676738+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:01:29.676716+00:00"
+  },
+  {
+    "id": "6c2353af-091c-4854-8fbb-6b3baf041ea4",
+    "project_id": "scratch",
+    "title": "Can you summarize a YouTube video by going to t...",
+    "thread_id": "6c2353af-091c-4854-8fbb-6b3baf041ea4",
+    "created_at": "2025-11-22T02:57:50.295588+00:00",
+    "updated_at": "2025-11-22T02:58:36.276006+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "46f9cf59-b9e3-44d8-a88e-ca644d121a8d",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "46f9cf59-b9e3-44d8-a88e-ca644d121a8d",
+    "created_at": "2025-11-22T03:01:30.834948+00:00",
+    "updated_at": "2025-11-22T03:06:41.839211+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:06:41.839191+00:00"
+  },
+  {
+    "id": "b4e93c7b-a9e6-47c6-8033-03e03b911d32",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "b4e93c7b-a9e6-47c6-8033-03e03b911d32",
+    "created_at": "2025-11-22T03:06:43.802943+00:00",
+    "updated_at": "2025-11-22T03:12:19.250685+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:12:19.250666+00:00"
+  },
+  {
+    "id": "839337cd-871b-4e49-8766-759cf5e11693",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "839337cd-871b-4e49-8766-759cf5e11693",
+    "created_at": "2025-11-22T03:12:23.785208+00:00",
+    "updated_at": "2025-11-22T03:15:42.032487+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:15:42.032465+00:00"
+  },
+  {
+    "id": "a278a849-b406-4eae-b37d-aa218700ecaa",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "a278a849-b406-4eae-b37d-aa218700ecaa",
+    "created_at": "2025-11-22T03:15:43.074734+00:00",
+    "updated_at": "2025-11-22T03:23:52.579725+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:23:52.579706+00:00"
+  },
+  {
+    "id": "04f42810-78b0-457b-930f-4825ceddd8c8",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "04f42810-78b0-457b-930f-4825ceddd8c8",
+    "created_at": "2025-11-22T03:23:53.754913+00:00",
+    "updated_at": "2025-11-22T03:29:11.264744+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T03:29:11.264725+00:00"
+  },
+  {
+    "id": "6deea7bd-bdb8-41fc-ab4e-3e293f8b010c",
+    "project_id": "scratch",
+    "title": "Explain Joint Cloud to me. Hit the highlights, ...",
+    "thread_id": "6deea7bd-bdb8-41fc-ab4e-3e293f8b010c",
+    "created_at": "2025-11-22T03:29:12.565651+00:00",
+    "updated_at": "2025-11-22T03:30:59.107965+00:00",
     "trashed": false,
     "trashed_at": null
   }

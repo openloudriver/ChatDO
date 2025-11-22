@@ -1,0 +1,57 @@
+[
+  {
+    "id": "cf4441e4-24b8-4679-8a0f-99cc7ed7aa0a",
+    "chat_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "filename": "Microsoft Azure Data Transfer Product Overview_Jan2025.pdf",
+    "mime_type": "application/pdf",
+    "size": 544717,
+    "created_at": "2025-11-22T01:44:54.972427+00:00",
+    "text_path": "uploads/rag/e904643f-6dd1-4631-ae43-79fd600dcbc3/db55158b-323e-45ad-a9ab-c86b25f817e0.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "7835ac53-051a-4bff-b6fd-7b58ccf914f8",
+    "chat_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "filename": "Joint Cloud Slides v4.pdf",
+    "mime_type": "application/pdf",
+    "size": 2364866,
+    "created_at": "2025-11-22T01:44:57.812620+00:00",
+    "text_path": "uploads/rag/e904643f-6dd1-4631-ae43-79fd600dcbc3/01eee8d9-f9ee-405e-8473-1d3f2ff79a29.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "95d9cec1-a7b0-4011-a1c1-7b6a3fff50d1",
+    "chat_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "filename": "Joint Cloud Whitepaper.docx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 222355,
+    "created_at": "2025-11-22T01:45:01.406060+00:00",
+    "text_path": "uploads/rag/e904643f-6dd1-4631-ae43-79fd600dcbc3/f9c595ce-bc01-4d73-9132-78d8a8d46128.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "a871ae64-42a4-45d1-8bd5-ccb1d648fbcf",
+    "chat_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "filename": "Joint Cloud Whitepaper.docx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 222355,
+    "created_at": "2025-11-22T01:45:05.399668+00:00",
+    "text_path": "uploads/rag/e904643f-6dd1-4631-ae43-79fd600dcbc3/85b47962-97c8-431c-8289-929f08be11a8.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "3cc69989-a689-4dd3-bbf7-988c7efed034",
+    "chat_id": "e904643f-6dd1-4631-ae43-79fd600dcbc3",
+    "filename": "Joint Cloud (TACSIT) BBP.pdf",
+    "mime_type": "application/pdf",
+    "size": 125656,
+    "created_at": "2025-11-22T01:45:14.903793+00:00",
+    "text_path": "uploads/rag/e904643f-6dd1-4631-ae43-79fd600dcbc3/2aaac1ec-4f8f-4e64-911a-6416b82fb17c.txt",
+    "text_extracted": true,
+    "error": null
+  }
+]

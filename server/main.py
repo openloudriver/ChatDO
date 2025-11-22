@@ -510,8 +510,15 @@ async def chat(request: ChatRequest):
         
         # Build RAG context if RAG files are provided
         rag_context = ""
+        has_rag_context = False
         if request.rag_file_ids:
-            rag_context = build_rag_context(request.rag_file_ids, request.message)
+            print(f"[RAG] Received {len(request.rag_file_ids)} RAG file IDs: {request.rag_file_ids}")
+            rag_context = build_rag_context(request.rag_file_ids, request.message, chat_id=request.conversation_id)
+            if rag_context:
+                has_rag_context = True
+                print(f"[RAG] Context built successfully, length: {len(rag_context)}")
+            else:
+                print(f"[RAG] Warning: No context was built despite {len(request.rag_file_ids)} file IDs provided")
         
         # Prepend RAG context to user message if available
         user_message = request.message
@@ -522,11 +529,37 @@ async def chat(request: ChatRequest):
         target_cfg = load_target(request.target_name)
         
         # 1) Get raw response from ChatDO (may include <TASKS> block or structured results)
+        # Skip web search when RAG context is available (prioritize RAG over web search)
+        # Pass thread_id so run_agent can load history for context and save messages
         raw_result, model_display, provider = run_agent(
             target=target_cfg,
-            task=user_message,
-            thread_id=request.conversation_id
+            task=user_message,  # This includes RAG context
+            thread_id=request.conversation_id if request.conversation_id else None,  # Load history for context
+            skip_web_search=has_rag_context
         )
+        
+        # NOTE: run_agent now filters out RAG context automatically, so we don't need to fix it here
+        # But we'll keep this as a safety net in case any RAG context slips through
+        if has_rag_context and request.conversation_id:
+            print(f"[DIAG] REST: RAG context was used, but run_agent should have filtered it. Verifying...")
+            try:
+                target_name_save = target_cfg.name
+                thread_id = request.conversation_id
+                history = load_thread_history(target_name_save, thread_id)
+                
+                # Check if last user message still has RAG context
+                if len(history) >= 2:
+                    user_idx = len(history) - 2
+                    if history[user_idx].get("role") == "user":
+                        user_content = history[user_idx].get("content", "")
+                        # Check if it contains RAG context markers
+                        if "You have access to the following reference documents" in user_content or "----\nSource:" in user_content:
+                            print(f"[DIAG] REST: WARNING - User message still contains RAG context! Fixing now...")
+                            history[user_idx]["content"] = request.message
+                            save_thread_history(target_name_save, thread_id, history)
+                            print(f"[DIAG] REST: ✅ FIXED user message (removed RAG context)")
+            except Exception as e:
+                print(f"[DIAG] REST: Error verifying/fixing user message: {e}")
         
         # 2) Check if result is structured (web_search_results or article_card)
         if isinstance(raw_result, dict):
@@ -553,11 +586,62 @@ async def chat(request: ChatRequest):
         # 3) Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)
         
-        # 4) If no tasks, behave exactly like before
+        # 4) If RAG context was used, return as structured rag_response
+        if has_rag_context and not tasks_json:
+            # Extract source file names from RAG context
+            rag_files = load_rag_files(request.conversation_id) if request.rag_file_ids else []
+            source_files = [f.get("filename") for f in rag_files if f.get("id") in (request.rag_file_ids or [])]
+            
+            # Update the last message in memory store to have structured type
+            # (run_agent already saved it as a regular message, so we update it)
+            if request.conversation_id and request.project_id:
+                try:
+                    projects = load_projects()
+                    project = next((p for p in projects if p.get("id") == request.project_id), None)
+                    if project:
+                        target_name = project.get("default_target", "general")
+                        thread_id = request.conversation_id
+                        
+                        history = load_thread_history(target_name, thread_id)
+                        # Find the last assistant message (saved by run_agent) and update it with structured type
+                        updated = False
+                        for i in range(len(history) - 1, -1, -1):
+                            if history[i].get("role") == "assistant":
+                                # Update existing message with structured type
+                                history[i]["type"] = "rag_response"
+                                history[i]["data"] = {
+                                    "content": human_text,
+                                    "sources": source_files
+                                }
+                                history[i]["model"] = model_display
+                                history[i]["provider"] = provider
+                                updated = True
+                                print(f"[RAG] Updated message at index {i} with type=rag_response, data keys: {list(history[i].get('data', {}).keys())}")
+                                break
+                        if updated:
+                            save_thread_history(target_name, thread_id, history)
+                            print(f"[RAG] Saved updated history with {len(history)} messages")
+                        else:
+                            print(f"[RAG] Warning: Could not find assistant message to update in history of {len(history)} messages")
+                except Exception as e:
+                    print(f"Warning: Failed to update RAG response in memory store: {e}")
+            
+            return ChatResponse(
+                reply=human_text,
+                message_type="rag_response",
+                message_data={
+                    "content": human_text,
+                    "sources": source_files
+                },
+                model_used=model_display,
+                provider=provider
+            )
+        
+        # 5) If no tasks, return (run_agent already saved the message)
         if not tasks_json:
             return ChatResponse(reply=human_text, model_used=model_display, provider=provider)
         
-        # 5) Parse tasks from JSON
+        # 6) Parse tasks from JSON
         try:
             tasks = parse_tasks_block(tasks_json)
         except Exception as e:
@@ -565,10 +649,10 @@ async def chat(request: ChatRequest):
             error_note = f"\n\n---\nExecutor error: could not parse tasks JSON ({e})."
             return ChatResponse(reply=human_text + error_note)
         
-        # 6) Execute tasks against the target repo
+        # 7) Execute tasks against the target repo
         exec_result = apply_tasks(target_cfg, tasks)
         
-        # 7) Build a human-readable summary
+        # 8) Build a human-readable summary
         summary_lines = [exec_result.summary()]
         for r in exec_result.results:
             prefix = "✅" if r.status == "success" else "❌"
@@ -858,58 +942,73 @@ def chunk_text(text: str, chunk_size: int = 2000) -> List[str]:
     
     return chunks
 
-def build_rag_context(rag_file_ids: List[str], user_message: str) -> str:
+def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optional[str] = None) -> str:
     """Build RAG context message from file IDs"""
     if not rag_file_ids:
         return ""
     
+    print(f"[RAG] Building context for {len(rag_file_ids)} files, chat_id={chat_id}")
+    
     context_parts = ["You have access to the following reference documents for this conversation. Use them as primary sources when answering.\n"]
     
-    # Load all RAG files
+    # Load RAG files - if chat_id is provided, use it directly for efficiency
     all_files = []
-    for file_id in rag_file_ids:
-        # Find which chat this file belongs to by searching all RAG files
-        for rag_file in RAG_FILES_DIR.glob("*.json"):
-            try:
-                with open(rag_file, 'r') as f:
-                    files = json.load(f)
-                    for f in files:
-                        if f.get("id") == file_id:
-                            all_files.append(f)
+    if chat_id:
+        # Direct lookup using chat_id
+        rag_files = load_rag_files(chat_id)
+        for file_id in rag_file_ids:
+            file = next((f for f in rag_files if f.get("id") == file_id), None)
+            if file:
+                all_files.append(file)
+    else:
+        # Fallback: search all RAG files (less efficient but works)
+        for file_id in rag_file_ids:
+            for rag_file_path in RAG_FILES_DIR.glob("*.json"):
+                try:
+                    with open(rag_file_path, 'r') as f:
+                        files = json.load(f)
+                        file = next((f for f in files if f.get("id") == file_id), None)
+                        if file:
+                            all_files.append(file)
                             break
-            except:
-                continue
+                except:
+                    continue
     
     # Load text for each file and build context
-    uploads_dir = Path(__file__).parent.parent / "uploads"
+    # text_path is relative to project root (includes "uploads/" prefix)
+    project_root = Path(__file__).parent.parent
     for rag_file in all_files:
         if not rag_file.get("text_extracted") or not rag_file.get("text_path"):
             continue
         
         try:
-            text_path = uploads_dir / rag_file["text_path"]
+            text_path = project_root / rag_file["text_path"]
             if text_path.exists():
                 with open(text_path, 'r', encoding='utf-8') as f:
                     text_content = f.read()
                 
-                # Simple keyword relevance filter
+                # Always include RAG files when available - they're explicitly uploaded for context
+                # Use keyword relevance to prioritize chunks, but include all files
                 user_keywords = set(user_message.lower().split())
                 text_lower = text_content.lower()
                 relevance_score = sum(1 for kw in user_keywords if kw in text_lower)
                 
-                # Only include if some relevance or if it's a short document
-                if relevance_score > 0 or len(text_content) < 5000:
-                    chunks = chunk_text(text_content)
-                    # Take first 3 chunks or all if less than 3
-                    selected_chunks = chunks[:3]
-                    context_parts.append(f"\n----\nSource: {rag_file['filename']}\n")
-                    context_parts.append('\n\n'.join(selected_chunks))
-                    context_parts.append("\n----\n")
+                chunks = chunk_text(text_content)
+                # If there's relevance, take first 5 chunks, otherwise take first 3
+                # This ensures files are always included but relevant ones get more context
+                num_chunks = 5 if relevance_score > 0 else 3
+                selected_chunks = chunks[:num_chunks]
+                context_parts.append(f"\n----\nSource: {rag_file['filename']}\n")
+                context_parts.append('\n\n'.join(selected_chunks))
+                context_parts.append("\n----\n")
+                print(f"[RAG] Added context from {rag_file['filename']} ({len(selected_chunks)} chunks)")
         except Exception as e:
             print(f"Error loading RAG file text: {e}")
             continue
     
-    return '\n'.join(context_parts)
+    result = '\n'.join(context_parts)
+    print(f"[RAG] Built context: {len(result)} characters, {len(all_files)} files processed")
+    return result
 
 
 @app.post("/api/rag/files", response_model=RagFile)
@@ -1432,19 +1531,25 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         raise HTTPException(status_code=404, detail="Project not found")
     
     target_name = project.get("default_target", "general")
-    thread_id = chat.get("thread_id")
+    thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
+    
+    print(f"[DIAG] get_chat_messages: chat_id={chat_id}, thread_id={thread_id}, target_name={target_name}")
     
     if not thread_id:
+        print(f"[DIAG] WARNING: No thread_id for chat {chat_id}, returning empty messages")
         return {"messages": []}
     
     # Load messages from memory store
     history = load_thread_history(target_name, thread_id)
+    print(f"[DIAG] get_chat_messages: Loaded {len(history)} messages from memory store")
     
     # Convert to frontend format
     messages = []
-    for msg in history:
+    print(f"[DIAG] Loading messages for chat {chat_id}: history has {len(history)} messages")
+    for idx, msg in enumerate(history):
         # Skip system messages for display
         if msg.get("role") == "system":
+            print(f"[DIAG] Skipping system message at index {idx}")
             continue
         
         # Preserve structured message types if they exist
@@ -1463,7 +1568,10 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         if msg.get("provider"):
             message_obj["provider"] = msg.get("provider")
         
+        print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, content_preview={msg.get('content', '')[:50]}...")
         messages.append(message_obj)
+    
+    print(f"[DIAG] Returning {len(messages)} messages to frontend")
     
     # If limit is specified, return only the last N messages (for previews)
     if limit and limit > 0:

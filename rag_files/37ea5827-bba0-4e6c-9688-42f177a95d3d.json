@@ -1,0 +1,57 @@
+[
+  {
+    "id": "50b35fb9-245d-430b-b11e-225b1d16708b",
+    "chat_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "filename": "Joint Cloud Slides v4.pdf",
+    "mime_type": "application/pdf",
+    "size": 2364866,
+    "created_at": "2025-11-22T02:22:32.278176+00:00",
+    "text_path": "uploads/rag/37ea5827-bba0-4e6c-9688-42f177a95d3d/edf796d4-5459-4db7-bb7b-4d9bbc47dc02.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "047ecb6d-1848-4a07-b2d3-3c699f9399c3",
+    "chat_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "filename": "Program Slides.pptx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "size": 5130624,
+    "created_at": "2025-11-22T02:22:32.333438+00:00",
+    "text_path": "uploads/rag/37ea5827-bba0-4e6c-9688-42f177a95d3d/863d4c4d-a345-45ea-99e2-c9305fa05c65.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "a7583a7b-a766-416b-ac50-a38e4d6a5f4b",
+    "chat_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "filename": "Joint Cloud Whitepaper.docx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 222355,
+    "created_at": "2025-11-22T02:22:36.122492+00:00",
+    "text_path": "uploads/rag/37ea5827-bba0-4e6c-9688-42f177a95d3d/8e786b07-9e15-49f9-aeb2-d9d3cf1dbb54.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "e0a9b74d-897c-451f-8bbe-058d4aa876d6",
+    "chat_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "filename": "Joint Cloud (TACSIT) BBP.pdf",
+    "mime_type": "application/pdf",
+    "size": 125656,
+    "created_at": "2025-11-22T02:22:38.673149+00:00",
+    "text_path": "uploads/rag/37ea5827-bba0-4e6c-9688-42f177a95d3d/72c979c9-548e-44b0-8307-5da49119ea1e.txt",
+    "text_extracted": true,
+    "error": null
+  },
+  {
+    "id": "4fd1768c-bbc9-4fde-b1fd-6b12c72ff1bd",
+    "chat_id": "37ea5827-bba0-4e6c-9688-42f177a95d3d",
+    "filename": "Joint Cloud Costs.xlsx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "size": 13421,
+    "created_at": "2025-11-22T02:22:40.247654+00:00",
+    "text_path": "uploads/rag/37ea5827-bba0-4e6c-9688-42f177a95d3d/b7a135c7-84b0-44a2-9636-82284eac53e0.txt",
+    "text_extracted": true,
+    "error": null
+  }
+]

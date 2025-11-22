@@ -15,7 +15,6 @@ const ChatComposer: React.FC = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isRagTrayOpen, setIsRagTrayOpen] = useState(false);
   
   // Auto-resize textarea based on content
   const adjustTextareaHeight = () => {
@@ -45,10 +44,18 @@ const ChatComposer: React.FC = () => {
     renameChat,
     editMessage,
     removeMessagesAfter,
-    ragFileIds
+    ragFileIds,
+    isSummarizingArticle,  // Shared state from Brave Search buttons
+    isRagTrayOpen,
+    setRagTrayOpen,
   } = useChatStore();
+  
+  // Local state for this button's own summarization
+  const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
 
   const handleSend = async () => {
+    // Debug: Log RAG file IDs before sending
+    console.log('[RAG] Current ragFileIds from store:', ragFileIds);
     if ((!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation) return;
 
     const userMessage = input.trim();
@@ -141,12 +148,15 @@ const ChatComposer: React.FC = () => {
       
       ws.onopen = () => {
         setStreaming(true);
-        ws.send(JSON.stringify({
+        const payload = {
           project_id: currentProject.id,
           conversation_id: currentConversation.id,
           target_name: currentConversation.targetName,
-          message: messageToSend
-        }));
+          message: messageToSend,
+          rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined
+        };
+        console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds);
+        ws.send(JSON.stringify(payload));
       };
       
       ws.onmessage = (event) => {
@@ -178,6 +188,19 @@ const ChatComposer: React.FC = () => {
               data: data.data,
               model: data.model || 'Trafilatura + GPT-5',
               provider: data.provider || 'trafilatura-gpt5'
+            });
+            clearStreaming();
+            setLoading(false);
+            ws.close();
+          } else if (data.type === 'rag_response') {
+            // Handle structured RAG response
+            addMessage({ 
+              role: 'assistant', 
+              content: data.data?.content || '',
+              type: 'rag_response',
+              data: data.data,
+              model: data.model,
+              provider: data.provider
             });
             clearStreaming();
             setLoading(false);
@@ -261,6 +284,15 @@ const ChatComposer: React.FC = () => {
           model: response.data.model || 'Trafilatura + GPT-5',
           provider: response.data.provider || 'trafilatura-gpt5'
         });
+      } else if (response.data.message_type === 'rag_response' && response.data.message_data) {
+        addMessage({ 
+          role: 'assistant', 
+          content: response.data.message_data.content || response.data.reply || '',
+          type: 'rag_response',
+          data: response.data.message_data,
+          model: response.data.model_used,
+          provider: response.data.provider
+        });
       } else {
         addMessage({ 
           role: 'assistant', 
@@ -289,49 +321,10 @@ const ChatComposer: React.FC = () => {
     formData.append('file', file);
     formData.append('project_id', currentProject.id);
     formData.append('conversation_id', currentConversation.id);
-    // Auto-summarize if text can be extracted
-    formData.append('auto_summarize', 'true');
+    // No auto-summarize - files are just uploaded for sharing in the conversation
 
     try {
       const response = await axios.post('http://localhost:8000/api/upload', formData);
-      console.log('File uploaded:', response.data);
-      console.log('Extracted text available:', !!response.data.extracted_text);
-      console.log('Text extracted flag:', response.data.text_extracted);
-      console.log('Summary available:', !!response.data.summary);
-      if (response.data.summary_error) {
-        console.error('Summary error:', response.data.summary_error);
-      }
-      
-      // If summary was created, add it as a message
-      if (response.data.summary) {
-        console.log('Adding document card to chat', response.data.summary);
-        const { addMessage } = useChatStore.getState();
-        
-        // Add user message indicating file was uploaded
-        addMessage({
-          id: `file-upload-${Date.now()}`,
-          role: 'user',
-          content: `Uploaded: ${file.name}`,
-          timestamp: new Date()
-        });
-        
-        // Add assistant message with document card
-        addMessage({
-          id: `doc-${Date.now()}`,
-          role: 'assistant',
-          content: '',
-          timestamp: new Date(),
-          type: 'document_card',
-          model: 'GPT-5',
-          provider: 'openai-gpt5',
-          data: response.data.summary
-        });
-      } else {
-        console.warn('No summary in response. Response keys:', Object.keys(response.data));
-        if (response.data.summary_error) {
-          console.error('Summary error:', response.data.summary_error);
-        }
-      }
       
       // For images, read as base64 to include in message
       let base64: string | undefined;
@@ -395,19 +388,23 @@ const ChatComposer: React.FC = () => {
     e.stopPropagation();
     setIsDragging(false);
     
+    // Don't handle drops if RAG tray is open - let it handle its own drops
+    if (isRagTrayOpen) {
+      return;
+    }
+    
     const files = Array.from(e.dataTransfer.files);
     for (const file of files) {
       await processFile(file);
     }
   };
 
-  const [isSummarizingArticle, setIsSummarizingArticle] = useState(false);
-  
   const handleArticleSummary = async () => {
     const url = prompt('Enter article URL to summarize:');
-    if (!url || !currentProject || !currentConversation || isSummarizingArticle) return;
+    // Only check local state - this button is independent
+    if (!url || !currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
-    setIsSummarizingArticle(true);
+    setIsSummarizingArticleLocal(true);
     try {
       setLoading(true);
       
@@ -450,9 +447,12 @@ const ChatComposer: React.FC = () => {
       });
       setLoading(false);
     } finally {
-      setIsSummarizingArticle(false);
+      setIsSummarizingArticleLocal(false);
     }
   };
+  
+  // Show spinner if either local state (this button) or shared state (Brave Search button) is active
+  const showSpinner = isSummarizingArticleLocal || isSummarizingArticle;
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -792,15 +792,15 @@ const ChatComposer: React.FC = () => {
             </button>
             <button
               onClick={handleArticleSummary}
-              disabled={isSummarizingArticle}
+              disabled={showSpinner}
               className={`p-2 rounded transition-colors ${
-                isSummarizingArticle
+                showSpinner
                   ? 'text-blue-400 cursor-wait'
                   : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
               }`}
-              title={isSummarizingArticle ? "Summarizing article..." : "Summarize article (by URL)"}
+              title={showSpinner ? "Summarizing article..." : "Summarize article (by URL)"}
             >
-              {isSummarizingArticle ? (
+              {showSpinner ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -812,7 +812,7 @@ const ChatComposer: React.FC = () => {
               )}
             </button>
             <button
-              onClick={() => setIsRagTrayOpen(!isRagTrayOpen)}
+              onClick={() => setRagTrayOpen(!isRagTrayOpen)}
               className={`p-2 rounded transition-colors ${
                 isRagTrayOpen
                   ? 'text-[#19c37d] bg-[#19c37d]/20'
@@ -930,7 +930,7 @@ const ChatComposer: React.FC = () => {
       {/* RAG Context Tray */}
       <RagContextTray 
         isOpen={isRagTrayOpen} 
-        onClose={() => setIsRagTrayOpen(false)}
+        onClose={() => setRagTrayOpen(false)}
       />
     </div>
   );

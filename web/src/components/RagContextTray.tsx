@@ -26,7 +26,15 @@ const getFileIcon = (mimeType: string) => {
         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
       </svg>
     );
-  } else if (mimeType.includes('word') || mimeType.includes('document')) {
+  } else if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+    // Check Excel BEFORE Word because Excel MIME types contain "document"
+    return (
+      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+      </svg>
+    );
+  } else if (mimeType.includes('word') || mimeType.includes('wordprocessing')) {
+    // Word documents - check for wordprocessing to avoid matching Excel
     return (
       <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -35,12 +43,6 @@ const getFileIcon = (mimeType: string) => {
   } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
     return (
       <svg className="w-5 h-5 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-      </svg>
-    );
-  } else if (mimeType.includes('sheet') || mimeType.includes('excel')) {
-    return (
-      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
       </svg>
     );
@@ -54,17 +56,27 @@ const getFileIcon = (mimeType: string) => {
 };
 
 export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose }) => {
-  const { currentConversation } = useChatStore();
+  const { currentConversation, setRagFileIds } = useChatStore();
   const [ragFiles, setRagFiles] = useState<RagFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Load RAG files when conversation changes or tray opens
+  // Load RAG files when tray opens (they're already loaded when conversation changes)
   useEffect(() => {
     if (isOpen && currentConversation) {
       loadRagFiles();
     }
   }, [isOpen, currentConversation?.id]);
+  
+  // Fix React warning: wrap setRagFileIds in useEffect to avoid setState during render
+  useEffect(() => {
+    if (currentConversation) {
+      const fileIds = ragFiles.filter((f: RagFile) => f.text_extracted).map((f: RagFile) => f.id);
+      setRagFileIds(fileIds);
+    } else {
+      setRagFileIds([]);
+    }
+  }, [ragFiles, currentConversation?.id, setRagFileIds]);
 
   const loadRagFiles = async () => {
     if (!currentConversation) return;
@@ -76,9 +88,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
       });
       const files = response.data || [];
       setRagFiles(files);
-      // Update store with RAG file IDs
-      const fileIds = files.filter((f: RagFile) => f.text_extracted).map((f: RagFile) => f.id);
-      setRagFileIds(fileIds);
+      // RAG file IDs will be updated by the useEffect hook above
     } catch (error) {
       console.error('Failed to load RAG files:', error);
     } finally {
@@ -86,8 +96,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file || !currentConversation) return;
 
     setIsUploading(true);
@@ -100,9 +109,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
       const newFile = response.data;
       setRagFiles(prev => {
         const updated = [...prev, newFile];
-        // Update store with RAG file IDs (only ready files)
-        const fileIds = updated.filter(f => f.text_extracted).map(f => f.id);
-        setRagFileIds(fileIds);
+        // RAG file IDs will be updated by the useEffect hook
         return updated;
       });
     } catch (error) {
@@ -110,9 +117,36 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
       alert('Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
-      if (e.target) {
-        e.target.value = '';
-      }
+    }
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await handleFileUpload(file);
+    }
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      await handleFileUpload(file);
     }
   };
 
@@ -125,9 +159,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
       });
       setRagFiles(prev => {
         const updated = prev.filter(f => f.id !== fileId);
-        // Update store with remaining RAG file IDs
-        const fileIds = updated.filter(f => f.text_extracted).map(f => f.id);
-        setRagFileIds(fileIds);
+        // RAG file IDs will be updated by the useEffect hook
         return updated;
       });
     } catch (error) {
@@ -146,7 +178,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
         })
       ));
       setRagFiles([]);
-      setRagFileIds([]);
+      // RAG file IDs will be updated by the useEffect hook (to empty array)
     } catch (error) {
       console.error('Failed to clear RAG files:', error);
       alert('Failed to clear files. Please try again.');
@@ -156,7 +188,12 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#565869] flex flex-col z-50">
+    <div 
+      className="fixed right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#565869] flex flex-col z-40"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Header */}
       <div className="p-4 border-b border-[#565869] flex items-center justify-between">
         <div>
@@ -179,7 +216,12 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
       {/* Upload Area */}
       <div className="p-4 border-b border-[#565869]">
         <label className="block">
-          <div className="border-2 border-dashed border-[#565869] rounded-lg p-4 text-center cursor-pointer hover:border-[#19c37d] transition-colors">
+          <div 
+            className="border-2 border-dashed border-[#565869] rounded-lg p-4 text-center cursor-pointer hover:border-[#19c37d] transition-colors"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             {isUploading ? (
               <div className="flex items-center justify-center gap-2 text-[#8e8ea0]">
                 <div className="animate-spin h-4 w-4 border-2 border-[#19c37d] border-t-transparent rounded-full"></div>
@@ -191,15 +233,15 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose 
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 <p className="text-sm font-medium">Drop files here or click to upload</p>
-                <p className="text-xs mt-1">PDF, DOCX, PPTX, TXT, MD</p>
+                <p className="text-xs mt-1">PDF, DOCX, PPTX, XLSX, TXT, MD</p>
               </div>
             )}
           </div>
           <input
             type="file"
             className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.doc,.docx,.pptx,.txt,.md"
+            onChange={handleFileInputChange}
+            accept=".pdf,.doc,.docx,.pptx,.xlsx,.xls,.txt,.md"
             disabled={isUploading || !currentConversation}
           />
         </label>

@@ -11,6 +11,7 @@ interface ArticleCardProps {
   whyMatters?: string;
   estimatedReadTimeMinutes?: number;
   wordCount?: number;
+  model?: string;
 }
 
 const getDomain = (url: string) => {
@@ -54,6 +55,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   whyMatters,
   estimatedReadTimeMinutes,
   wordCount,
+  model,
 }) => {
   const domain = getDomain(url);
   const faviconUrl = getFaviconUrl(url);
@@ -155,6 +157,14 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         )}
       </div>
 
+      {/* Model attribution footer */}
+      {model && (
+        <div className="border-t border-[#565869] pt-4">
+          <div className="text-xs text-[#8e8ea0] text-right">
+            Model: {model}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
