@@ -335,7 +335,17 @@
     "title": "Summarize and highlight the Joint Cloud, what i...",
     "thread_id": "0c4e499a-bfd1-430f-aa2b-a4c7f2362a2c",
     "created_at": "2025-11-22T20:44:05.386216+00:00",
-    "updated_at": "2025-11-22T20:45:02.247340+00:00",
+    "updated_at": "2025-11-22T21:03:56.266871+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-22T21:03:56.266847+00:00"
+  },
+  {
+    "id": "df9ed104-e6ad-44a9-8d43-dd4edf711cf2",
+    "project_id": "scratch",
+    "title": "New Chat",
+    "thread_id": "df9ed104-e6ad-44a9-8d43-dd4edf711cf2",
+    "created_at": "2025-11-22T21:03:57.488533+00:00",
+    "updated_at": "2025-11-22T21:03:57.488575+00:00",
     "trashed": false,
     "trashed_at": null
   }

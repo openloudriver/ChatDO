@@ -104,9 +104,6 @@ const CitationChip: React.FC<CitationChipProps> = ({
   );
 };
 
-// Citation regex: matches [1], [1, 3], [1,2,3], etc.
-const CITATION_REGEX = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-
 // Helper function to strip citations from text for empty bullet detection
 function stripCitations(text: string): string {
   // Remove inline citation blocks like [1], [1, 2], [1, 2, 3]
