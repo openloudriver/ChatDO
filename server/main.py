@@ -222,7 +222,7 @@ class ArticleSummaryRequest(BaseModel):
     title: Optional[str] = None  # Optional title from UI
     conversation_id: Optional[str] = None  # Optional conversation_id to save to memory store
     project_id: Optional[str] = None  # Optional project_id to determine target_name
-    force_mode: Optional[str] = "auto"  # "auto" | "web" | "video"
+    force_mode: Optional[str] = None  # Deprecated - kept for backward compatibility but not used
     privacy_mode: bool = False  # If True, use local LLM instead of OpenAI
 
 
@@ -231,7 +231,7 @@ class ArticleSummaryResponse(BaseModel):
     message_data: Dict[str, Any]
     model: str = "Trafilatura + GPT-5"
     provider: str = "trafilatura-gpt5"
-    model_label: Optional[str] = None  # Human-readable model label (e.g., "Whisper-small + Llama-3.2 (local)")
+    model_label: Optional[str] = None  # Human-readable model label (e.g., "Whisper-small + Llama-3.2")
 
 
 # RAG File model
@@ -707,7 +707,18 @@ async def chat(request: ChatRequest):
 @app.post("/api/article/summary", response_model=ArticleSummaryResponse)
 async def summarize_article(request: ArticleSummaryRequest):
     """
-    Summarize a URL (web page or video) using Trafilatura + GPT-5 or local Whisper + GPT-5.
+    Summarize a URL (web page or video) using deterministic routing.
+    
+    Routing logic:
+    - Video hosts (youtube.com, rumble.com, etc.) → video pipeline
+    - All other URLs → web page pipeline (Trafilatura)
+    
+    Model labels:
+    - Video (Privacy OFF): Whisper-1 + GPT-5
+    - Video (Privacy ON): Whisper-small + Llama-3.2
+    - Web (Privacy OFF): Trafilatura + GPT-5
+    - Web (Privacy ON): Trafilatura + Llama-3.2
+    
     Returns a structured article_card message.
     """
     try:
@@ -715,108 +726,30 @@ async def summarize_article(request: ArticleSummaryRequest):
         if not request.url.startswith(("http://", "https://")):
             raise HTTPException(status_code=400, detail="Invalid URL. Must start with http:// or https://")
         
-        # Branch on privacy mode first to determine video detection method
-        from server.services.video_source import is_video_url
+        # Deterministic URL classification
+        from server.utils.url_classification import is_video_host
+        from server.services.video_transcription import get_transcript_from_url
+        from urllib.parse import urlparse
         
-        # Helper for non-privacy mode (YouTube-only detection)
-        def is_youtube_url(url: str) -> bool:
-            """Check if URL is YouTube (used for non-privacy mode)."""
-            return "youtube.com/watch" in url or "youtu.be/" in url
+        # Determine if URL is a video host
+        is_video = is_video_host(request.url)
         
-        force_mode = request.force_mode or "auto"
-        is_video = False
-        
-        # Get source text based on mode
+        # Get source text based on URL type
         article_text = None
         article_title = None
         article_site_name = None
+        model_label = None
         
-        if request.privacy_mode:
-            # Privacy Mode: use unified video detection (supports all video sites)
-            if force_mode == "auto":
-                is_video = is_video_url(request.url)
-            elif force_mode == "video":
-                is_video = True
-                if not is_video_url(request.url):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Video mode requested but URL is not a supported video source."
-                    )
-            # force_mode == "web" -> is_video stays False
-            
-            if is_video:
-                # Tier 2 (Privacy Mode): yt-dlp → local Whisper-small → Llama-3.2
+        if is_video:
+            # VIDEO PIPELINE
+            if not request.privacy_mode:
+                # Privacy OFF (default): Whisper-1 + GPT-5
                 try:
-                    from server.services.video_transcription import get_transcript_from_url
-                    from urllib.parse import urlparse
-                    
-                    article_text = await get_transcript_from_url(request.url, use_local_whisper=True)
-                    
-                    # Extract title from URL or use default
-                    parsed = urlparse(request.url)
-                    article_site_name = "Video"
-                    article_title = f"Video from {parsed.netloc}"
-                    
-                except ValueError as ve:
-                    raise HTTPException(status_code=400, detail=str(ve))
-                except RuntimeError as re:
-                    # Log the detailed error for debugging (especially for Vimeo, DRM, etc.)
-                    logging.exception(
-                        "Privacy mode video transcription failed: url=%s error_type=%s error=%s",
-                        request.url,
-                        type(re).__name__,
-                        str(re),
-                    )
-                    # Keep user-facing message unchanged
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Privacy mode: failed to transcribe video audio locally. Check yt-dlp/ffmpeg or model configuration.",
-                    ) from re
-                except Exception as e:
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Unexpected error while processing video URL in privacy mode.",
-                    ) from e
-            else:
-                # Privacy Mode web: Trafilatura → Llama-3.2 (local)
-                logging.info(f"[Summary] Privacy Mode: Processing as web page: {request.url}")
-                article_data = extract_article(request.url)
-                
-                if article_data.get("error"):
-                    raise HTTPException(status_code=400, detail=article_data["error"])
-                
-                if not article_data.get("text"):
-                    raise HTTPException(status_code=400, detail="Could not extract article text from URL")
-                
-                article_text = article_data["text"]
-                article_title = article_data.get("title")
-                article_site_name = article_data.get("site_name")
-        else:
-            # Non-privacy mode: use YouTube-only detection (keep existing behavior)
-            if force_mode == "auto":
-                is_video = is_youtube_url(request.url)
-            elif force_mode == "video":
-                is_video = True
-                if not is_youtube_url(request.url):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Video mode requested but URL is not a YouTube URL."
-                    )
-            # force_mode == "web" -> is_video stays False
-            
-            if is_video:
-                # Tier 1 (Non-privacy): yt-dlp → OpenAI Whisper-1 → GPT-5
-                try:
-                    from server.services.video_transcription import get_transcript_from_url
-                    from urllib.parse import urlparse
-                    
                     article_text = await get_transcript_from_url(request.url, use_local_whisper=False)
-                    
-                    # Extract title from URL or use default
                     parsed = urlparse(request.url)
                     article_site_name = "Video"
                     article_title = f"Video from {parsed.netloc}"
-                    
+                    model_label = "Whisper-1 + GPT-5"
                 except ValueError as ve:
                     raise HTTPException(status_code=400, detail=str(ve))
                 except RuntimeError as re:
@@ -827,37 +760,67 @@ async def summarize_article(request: ArticleSummaryRequest):
                 except Exception as e:
                     raise HTTPException(status_code=500, detail="Unexpected error while summarizing this URL.") from e
             else:
-                # Non-privacy web: Trafilatura → GPT-5
-                logging.info(f"[Summary] Processing as web page: {request.url}")
-                article_data = extract_article(request.url)
-                
-                if article_data.get("error"):
-                    raise HTTPException(status_code=400, detail=article_data["error"])
-                
-                if not article_data.get("text"):
-                    raise HTTPException(status_code=400, detail="Could not extract article text from URL")
-                
-                article_text = article_data["text"]
-                article_title = article_data.get("title")
-                article_site_name = article_data.get("site_name")
+                # Privacy ON: Whisper-small + Llama-3.2
+                try:
+                    article_text = await get_transcript_from_url(request.url, use_local_whisper=True)
+                    parsed = urlparse(request.url)
+                    article_site_name = "Video"
+                    article_title = f"Video from {parsed.netloc}"
+                    model_label = "Whisper-small + Llama-3.2"
+                except ValueError as ve:
+                    raise HTTPException(status_code=400, detail=str(ve))
+                except RuntimeError as re:
+                    # Log the detailed error for debugging (especially for Vimeo, DRM, etc.)
+                    logging.exception(
+                        "Privacy mode video transcription failed: url=%s error_type=%s error=%s",
+                        request.url,
+                        type(re).__name__,
+                        str(re),
+                    )
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Privacy mode: failed to transcribe video audio locally. Check yt-dlp/ffmpeg or model configuration.",
+                    ) from re
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Unexpected error while processing video URL in privacy mode.",
+                    ) from e
+            
+            if not article_text:
+                raise HTTPException(status_code=502, detail="Video could not be processed.")
+        else:
+            # WEB PAGE PIPELINE
+            logging.info(f"[Summary] Processing as web page: {request.url}")
+            article_data = extract_article(request.url)
+            
+            if article_data.get("error"):
+                raise HTTPException(status_code=400, detail=article_data["error"])
+            
+            if not article_data.get("text"):
+                raise HTTPException(status_code=400, detail="Could not extract article content.")
+            
+            article_text = article_data["text"]
+            article_title = article_data.get("title")
+            article_site_name = article_data.get("site_name")
+            
+            # Set model label for web pages
+            if request.privacy_mode:
+                model_label = "Trafilatura + Llama-3.2"
+            else:
+                model_label = "Trafilatura + GPT-5"
         
         # Truncate text to safe length (first 10k chars)
         article_text = article_text[:10000]
         
-        # Branch on privacy mode for summarization
-        model_label = None
+        # Summarize based on privacy mode
         if request.privacy_mode:
             # Privacy mode: local-only summarization
             from server.services.local_llm_service import summarize_text_locally
             summary_mode = "video" if is_video else "web"
             summary_text = await summarize_text_locally(article_text, mode=summary_mode)
-            model_label = (
-                "Whisper-small (local) + Llama-3.2"
-                if is_video
-                else "Trafilatura + Llama-3.2"
-            )
         else:
-            # Existing (non-privacy) path: use GPT-5 summarizer as today
+            # Non-privacy path: use GPT-5 summarizer
             source_type = "video transcript" if is_video else "article"
             user_prompt = f"""Please summarize the following {source_type}:
 
@@ -903,12 +866,6 @@ Keep it concise, neutral, and factual."""
                 raise HTTPException(status_code=500, detail="No response from AI Router")
             
             summary_text = assistant_messages[0].get("content", "")
-            
-            # Set model label for non-privacy mode
-            if is_video:
-                model_label = "OpenAI Whisper-1 + GPT-5"
-            else:
-                model_label = "Trafilatura + GPT-5"
         
         # Parse summary into summary paragraph and bullet points
         # Simple parsing: look for bullet points (lines starting with - or •)
@@ -1002,7 +959,7 @@ Keep it concise, neutral, and factual."""
                         "content": "",  # Empty content for structured messages
                         "type": "article_card",
                         "data": message_data,
-                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else "Whisper-small + GPT-5"),
+                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else "Whisper-1 + GPT-5"),
                         "provider": "trafilatura-gpt5" if not is_video else "whisper-gpt5"
                     }
                     history.append(assistant_message)
@@ -1030,9 +987,9 @@ Keep it concise, neutral, and factual."""
                 print(f"Warning: Failed to save article summary to memory store: {e}")
         
         # Determine model/provider name based on mode
-        model_name = model_label or ("OpenAI Whisper-1 + GPT-5" if is_video else "Trafilatura + GPT-5")
+        model_name = model_label or ("Whisper-1 + GPT-5" if is_video else "Trafilatura + GPT-5")
         if request.privacy_mode:
-            provider_name = "yt-dlp-whisper-local" if is_video else "local-llm"
+            provider_name = "yt-dlp-whisper-small" if is_video else "local-llm"
         else:
             provider_name = "yt-dlp-openai-whisper" if is_video else "trafilatura-gpt5"
         

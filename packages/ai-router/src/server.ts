@@ -3,7 +3,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { runTask, AiRouterInput } from "./index";
-import { getCurrentMonthSpend, getMonthlyHistory } from "./spendTracker";
+import { getCurrentMonthSpend, getMonthlyHistory, recordUsage } from "./spendTracker";
 
 const app = express();
 app.use(cors({
@@ -43,6 +43,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     // Map provider IDs to nicer labels (model names only, no company names)
     const labelMap: Record<string, string> = {
       "openai-gpt5": "GPT-5",
+      "openai-whisper-1": "Whisper-1",
       "anthropic-claude-sonnet": "Claude Sonnet",
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",
@@ -50,7 +51,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "llama-local": "Llama Local",
     };
     
-    // Always include GPT-5, even if it has $0 spend
+    // Always include GPT-5 and Whisper-1, even if they have $0 spend
     // Only show providers that have been used
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
@@ -61,9 +62,16 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       usd: current.providers["openai-gpt5"] || 0,
     });
     
+    // Add Whisper-1 (always show)
+    providers.push({
+      id: "openai-whisper-1",
+      label: labelMap["openai-whisper-1"] || "Whisper-1",
+      usd: current.providers["openai-whisper-1"] || 0,
+    });
+    
     // Add any other providers that have been used
     for (const [id, usd] of Object.entries(current.providers)) {
-      if (id !== "openai-gpt5") {
+      if (id !== "openai-gpt5" && id !== "openai-whisper-1") {
         providers.push({
           id,
           label: labelMap[id] || id,
@@ -80,6 +88,30 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     });
   } catch (err: any) {
     console.error("[AI-Router] /v1/ai/spend/monthly error:", err);
+    res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
+  }
+});
+
+app.post("/v1/ai/spend/record", async (req, res) => {
+  try {
+    const { providerId, modelId, costUsd } = req.body;
+    
+    if (!providerId || typeof costUsd !== "number") {
+      res.status(400).json({
+        ok: false,
+        error: "Missing required fields: providerId, costUsd",
+      });
+      return;
+    }
+    
+    await recordUsage(providerId, modelId || "unknown", costUsd);
+    
+    res.json({
+      ok: true,
+      message: "Usage recorded",
+    });
+  } catch (err: any) {
+    console.error("[AI-Router] /v1/ai/spend/record error:", err);
     res.status(500).json({ ok: false, error: err?.message ?? "Unknown error" });
   }
 });
