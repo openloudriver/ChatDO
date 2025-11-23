@@ -3,14 +3,16 @@ YouTube transcript service for Tier 1 (YouTube-only, Privacy OFF).
 Uses youtube-transcript-api to get text transcripts directly.
 No audio download or Whisper transcription.
 """
+from __future__ import annotations
+
 import logging
+from typing import List
 from urllib.parse import parse_qs, urlparse
 
 from youtube_transcript_api import (
     YouTubeTranscriptApi,
     NoTranscriptFound,
     TranscriptsDisabled,
-    CouldNotRetrieveTranscript,
 )
 
 logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ class YouTubeTranscriptError(Exception):
     pass
 
 
-def _extract_youtube_video_id(url: str) -> str:
+def extract_youtube_video_id(url: str) -> str:
     """
     Extract YouTube video ID from various URL formats.
     
@@ -41,30 +43,32 @@ def _extract_youtube_video_id(url: str) -> str:
     """
     parsed = urlparse(url)
     
-    if parsed.netloc.endswith("youtu.be"):
+    # Standard watch URL
+    if "youtube.com" in parsed.netloc:
+        query = parse_qs(parsed.query)
+        video_id_list = query.get("v")
+        if video_id_list and video_id_list[0]:
+            return video_id_list[0]
+    
+    # Short youtu.be URL
+    if "youtu.be" in parsed.netloc:
         # path is like "/VIDEO_ID"
         video_id = parsed.path.lstrip("/")
         if video_id:
             return video_id
     
-    if parsed.netloc.endswith("youtube.com"):
-        qs = parse_qs(parsed.query)
-        vid_list = qs.get("v")
-        if vid_list and vid_list[0]:
-            return vid_list[0]
-    
-    raise YouTubeTranscriptError("Could not extract YouTube video id from URL.")
+    raise YouTubeTranscriptError(f"Could not extract YouTube video ID from URL: {url}")
 
 
-def get_youtube_transcript(url: str) -> str:
+def get_youtube_transcript(url: str, languages: List[str] | None = None) -> str:
     """
-    Get YouTube transcript using youtube-transcript-api.
+    Tier 1: Fetches transcript text for a YouTube video using youtube-transcript-api.
     
-    This is Tier 1: YouTube-only, text-based, no audio download.
-    If this fails, we do NOT fall back to audio pipeline.
+    NO fallbacks. Raises YouTubeTranscriptError if anything fails.
     
     Args:
         url: YouTube video URL
+        languages: List of language codes to try (default: ["en", "en-US", "en-GB"])
         
     Returns:
         Full transcript text as a single string
@@ -72,20 +76,32 @@ def get_youtube_transcript(url: str) -> str:
     Raises:
         YouTubeTranscriptError: If transcript cannot be retrieved
     """
-    video_id = _extract_youtube_video_id(url)
+    if languages is None:
+        languages = ["en", "en-US", "en-GB"]
+    
+    try:
+        video_id = extract_youtube_video_id(url)
+    except YouTubeTranscriptError:
+        raise
+    
     logger.info("get_youtube_transcript: fetching transcript for video_id=%s", video_id)
     
     try:
-        segments = YouTubeTranscriptApi.get_transcript(video_id, languages=["en"])
-    except (NoTranscriptFound, TranscriptsDisabled, CouldNotRetrieveTranscript) as e:
+        # Create API instance and fetch transcript
+        # The API uses fetch() method which returns a FetchedTranscript object
+        api = YouTubeTranscriptApi()
+        fetched_transcript = api.fetch(video_id, languages=languages)
+        
+    except (NoTranscriptFound, TranscriptsDisabled) as e:
         logger.warning("get_youtube_transcript: transcript unavailable video_id=%s error=%s", video_id, e)
-        raise YouTubeTranscriptError(f"YouTube transcript unavailable: {e}") from e
+        raise YouTubeTranscriptError(f"No transcript available for this video: {e}") from e
     except Exception as e:
         logger.exception("get_youtube_transcript: API error video_id=%s", video_id)
         raise YouTubeTranscriptError(f"YouTube transcript API error: {e}") from e
     
-    # Concatenate all text segments into a single transcript string
-    transcript_text = " ".join(s.get("text", "") for s in segments if s.get("text"))
+    # Join snippet texts into a single block for GPT-5
+    # FetchedTranscript.snippets is a list of snippet objects with .text attribute
+    transcript_text = " ".join(snippet.text for snippet in fetched_transcript.snippets if snippet.text)
     
     if not transcript_text.strip():
         raise YouTubeTranscriptError("YouTube transcript returned empty text")

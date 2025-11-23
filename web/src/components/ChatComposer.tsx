@@ -414,7 +414,7 @@ const ChatComposer: React.FC = () => {
     setIsUrlDialogOpen(true);
   };
 
-  const handleUrlDialogSubmit = async (url: string, privacyMode: boolean) => {
+  const handleUrlDialogSubmit = async (url: string) => {
     if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
     setIsSummarizingArticleLocal(true);
@@ -432,7 +432,6 @@ const ChatComposer: React.FC = () => {
         url: url.trim(),
         conversation_id: currentConversation.id,
         project_id: currentProject.id,
-        privacy_mode: privacyMode,
       });
       
       if (response.data.message_type === 'article_card' && response.data.message_data) {

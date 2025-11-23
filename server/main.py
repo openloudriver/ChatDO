@@ -224,7 +224,7 @@ class ArticleSummaryRequest(BaseModel):
     conversation_id: Optional[str] = None  # Optional conversation_id to save to memory store
     project_id: Optional[str] = None  # Optional project_id to determine target_name
     force_mode: Optional[str] = None  # Deprecated - kept for backward compatibility but not used
-    privacy_mode: bool = False  # If True, use local LLM instead of OpenAI
+    privacy_mode: bool = False  # Deprecated - kept for backward compatibility but ignored
 
 
 class ArticleSummaryResponse(BaseModel):
@@ -232,7 +232,7 @@ class ArticleSummaryResponse(BaseModel):
     message_data: Dict[str, Any]
     model: str = "Trafilatura + GPT-5"
     provider: str = "trafilatura-gpt5"
-    model_label: Optional[str] = None  # Human-readable model label (e.g., "Whisper-small + Llama-3.2")
+    model_label: Optional[str] = None  # Human-readable model label (e.g., "YouTube transcript + GPT-5")
 
 
 # RAG File model
@@ -708,26 +708,24 @@ async def chat(request: ChatRequest):
 @app.post("/api/article/summary", response_model=ArticleSummaryResponse)
 async def summarize_article(request: ArticleSummaryRequest):
     """
-    Summarize a URL (web page or video) using strict 3-tier routing.
+    Summarize a URL (web page or video) using deterministic 2-tier routing.
     
-    3-Tier Video Pipeline:
-    - Tier 1 (YouTube-only, Privacy OFF): youtube-transcript-api + GPT-5
-      → NO FALLBACK: If transcript API fails, return error (do not use audio pipeline)
-    - Tier 2 (Non-YouTube video, Privacy OFF): yt-dlp + Whisper-1 + GPT-5
-      → NO FALLBACK: If audio pipeline fails, return error (do not use web extraction)
-    - Tier 3 (All video, Privacy ON): yt-dlp + Whisper-small + Llama-3.2
-      → Fully local, no OpenAI calls
+    Routing Rules:
+    1. If URL is YouTube (youtube.com or youtu.be)
+       → Tier 1: YouTube transcript API + GPT-5
+       → NO FALLBACK: If transcript API fails, return error
     
-    Web Page Pipeline:
-    - Privacy OFF: Trafilatura + GPT-5
-    - Privacy ON: Trafilatura + Llama-3.2
+    2. Else if URL is a video host (rumble.com, bitchute.com, archive.org)
+       → Tier 2: yt-dlp + Whisper-small + GPT-5
+       → NO FALLBACK: If audio pipeline fails, return error
+    
+    3. Else
+       → Web page: Trafilatura + GPT-5
     
     Model labels:
     - "YouTube transcript + GPT-5" (Tier 1)
-    - "Whisper-1 + GPT-5" (Tier 2)
-    - "Whisper-small + Llama-3.2" (Tier 3)
-    - "Trafilatura + GPT-5" (Web, Privacy OFF)
-    - "Trafilatura + Llama-3.2" (Web, Privacy ON)
+    - "yt-dlp + Whisper-small + GPT-5" (Tier 2)
+    - "Trafilatura + GPT-5" (Web pages)
     
     Returns a structured article_card message.
     """
@@ -738,7 +736,6 @@ async def summarize_article(request: ArticleSummaryRequest):
         
         # Deterministic URL classification
         from server.utils.url_classification import (
-            is_video_host,
             is_youtube_url,
             is_other_video_host,
         )
@@ -749,106 +746,62 @@ async def summarize_article(request: ArticleSummaryRequest):
         from server.services.video_transcription import get_transcript_from_url
         from urllib.parse import urlparse
         
-        # Determine if URL is a video host
-        is_video = is_video_host(request.url)
-        
-        # Get source text based on URL type and privacy mode
+        # Get source text based on URL type
         article_text = None
         article_title = None
         article_site_name = None
         model_label = None
         
-        if is_video:
-            # VIDEO PIPELINE - 3 tiers with no fallbacks
-            if request.privacy_mode:
-                # --- Tier 3: Privacy ON, all video ---
-                # yt-dlp + Whisper-small + Llama-3.2
-                # NO FALLBACK: If this fails, return error (do not try web extraction)
-                try:
-                    article_text = await get_transcript_from_url(request.url, use_local_whisper=True)
-                    parsed = urlparse(request.url)
-                    article_site_name = "Video"
-                    article_title = f"Video from {parsed.netloc}"
-                    model_label = "Whisper-small + Llama-3.2"
-                except ValueError as ve:
-                    raise HTTPException(status_code=400, detail=str(ve))
-                except RuntimeError as re:
-                    # Log the detailed error for debugging (especially for Vimeo, DRM, etc.)
-                    logging.exception(
-                        "Tier 3 (Privacy ON) video transcription failed: url=%s error_type=%s error=%s",
-                        request.url,
-                        type(re).__name__,
-                        str(re),
-                    )
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Privacy mode: failed to transcribe video audio locally. Check yt-dlp/ffmpeg or model configuration.",
-                    ) from re
-                except Exception as e:
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Unexpected error while processing video URL in privacy mode.",
-                    ) from e
-            else:
-                # Privacy OFF - branch by video host type
-                if is_youtube_url(request.url):
-                    # --- Tier 1: YouTube-only, Privacy OFF ---
-                    # youtube-transcript-api + GPT-5
-                    # NO FALLBACK: If transcript API fails, return error (do NOT call yt-dlp or Whisper)
-                    try:
-                        article_text = get_youtube_transcript(request.url)
-                        parsed = urlparse(request.url)
-                        article_site_name = "Video"
-                        article_title = f"Video from {parsed.netloc}"
-                        model_label = "YouTube transcript + GPT-5"
-                    except YouTubeTranscriptError as e:
-                        # Explicitly do NOT fall back to audio pipeline
-                        logger.warning("Tier 1 (YouTube transcript) failed: url=%s error=%s", request.url, e)
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Could not obtain YouTube transcript: {str(e)}",
-                        ) from e
-                    except Exception as e:
-                        logger.exception("Tier 1 (YouTube transcript) unexpected error: url=%s", request.url)
-                        raise HTTPException(
-                            status_code=500,
-                            detail=f"Error retrieving YouTube transcript: {str(e)}",
-                        ) from e
-                elif is_other_video_host(request.url):
-                    # --- Tier 2: Non-YouTube video, Privacy OFF ---
-                    # Rumble / BitChute / Archive.org
-                    # yt-dlp + Whisper-1 + GPT-5
-                    # NO FALLBACK: If audio pipeline fails, return error (do NOT try web extraction)
-                    try:
-                        article_text = await get_transcript_from_url(request.url, use_local_whisper=False)
-                        parsed = urlparse(request.url)
-                        article_site_name = "Video"
-                        article_title = f"Video from {parsed.netloc}"
-                        model_label = "Whisper-1 + GPT-5"
-                    except ValueError as ve:
-                        raise HTTPException(status_code=400, detail=str(ve))
-                    except RuntimeError as re:
-                        logger.exception("Tier 2 (audio pipeline) failed: url=%s", request.url)
-                        raise HTTPException(
-                            status_code=502,
-                            detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
-                        ) from re
-                    except Exception as e:
-                        raise HTTPException(
-                            status_code=500,
-                            detail="Unexpected error while summarizing this video URL.",
-                        ) from e
-                else:
-                    # Should not happen if is_video_host() is correct, but handle gracefully
-                    raise HTTPException(
-                        status_code=400,
-                        detail="URL detected as video host but not recognized as YouTube or other video host.",
-                    )
-            
-            if not article_text:
-                raise HTTPException(status_code=502, detail="Video could not be processed.")
+        if is_youtube_url(request.url):
+            # --- Tier 1: YouTube-only ---
+            # youtube-transcript-api + GPT-5
+            # NO FALLBACK: If transcript API fails, return error (do NOT call yt-dlp or Whisper)
+            try:
+                article_text = get_youtube_transcript(request.url)
+                parsed = urlparse(request.url)
+                article_site_name = "Video"
+                article_title = f"Video from {parsed.netloc}"
+                model_label = "YouTube transcript + GPT-5"
+            except YouTubeTranscriptError as e:
+                # Explicitly do NOT fall back to audio pipeline
+                logger.warning("Tier 1 (YouTube transcript) failed: url=%s error=%s", request.url, e)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not obtain YouTube transcript: {str(e)}",
+                ) from e
+            except Exception as e:
+                logger.exception("Tier 1 (YouTube transcript) unexpected error: url=%s", request.url)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error retrieving YouTube transcript: {str(e)}",
+                ) from e
+        elif is_other_video_host(request.url):
+            # --- Tier 2: Non-YouTube video hosts ---
+            # Rumble / BitChute / Archive.org
+            # yt-dlp + Whisper-small + GPT-5
+            # NO FALLBACK: If audio pipeline fails, return error (do NOT try web extraction)
+            try:
+                article_text = await get_transcript_from_url(request.url)
+                parsed = urlparse(request.url)
+                article_site_name = "Video"
+                article_title = f"Video from {parsed.netloc}"
+                model_label = "yt-dlp + Whisper-small + GPT-5"
+            except ValueError as ve:
+                raise HTTPException(status_code=400, detail=str(ve))
+            except RuntimeError as re:
+                logger.exception("Tier 2 (audio pipeline) failed: url=%s", request.url)
+                raise HTTPException(
+                    status_code=502,
+                    detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
+                ) from re
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Unexpected error while summarizing this video URL.",
+                ) from e
         else:
-            # WEB PAGE PIPELINE
+            # --- Web page ---
+            # Trafilatura + GPT-5
             logging.info(f"[Summary] Processing as web page: {request.url}")
             article_data = extract_article(request.url)
             
@@ -861,26 +814,18 @@ async def summarize_article(request: ArticleSummaryRequest):
             article_text = article_data["text"]
             article_title = article_data.get("title")
             article_site_name = article_data.get("site_name")
-            
-            # Set model label for web pages
-            if request.privacy_mode:
-                model_label = "Trafilatura + Llama-3.2"
-            else:
-                model_label = "Trafilatura + GPT-5"
+            model_label = "Trafilatura + GPT-5"
+        
+        if not article_text:
+            raise HTTPException(status_code=502, detail="Content could not be processed.")
         
         # Truncate text to safe length (first 10k chars)
         article_text = article_text[:10000]
         
-        # Summarize based on privacy mode
-        if request.privacy_mode:
-            # Privacy mode: local-only summarization
-            from server.services.local_llm_service import summarize_text_locally
-            summary_mode = "video" if is_video else "web"
-            summary_text = await summarize_text_locally(article_text, mode=summary_mode)
-        else:
-            # Non-privacy path: use GPT-5 summarizer
-            source_type = "video transcript" if is_video else "article"
-            user_prompt = f"""Please summarize the following {source_type}:
+        # Summarize with GPT-5 (always use GPT-5, no privacy mode)
+        is_video = is_youtube_url(request.url) or is_other_video_host(request.url)
+        source_type = "video transcript" if is_video else "article"
+        user_prompt = f"""Please summarize the following {source_type}:
 
 {article_text}
 
@@ -892,38 +837,38 @@ Provide:
 Format your response clearly with the summary first, then key points (as bullet points), then "Why This Matters:" followed by your analysis.
 
 Keep it concise, neutral, and factual."""
-            
-            # Call AI Router with summarize_article intent
-            messages = [
-                {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt}
-            ]
-            
-            ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
-            payload = {
-                "role": "chatdo",
-                "intent": "summarize_article",
-                "priority": "high",
-                "privacyLevel": "normal",
-                "costTier": "standard",
-                "input": {
-                    "messages": messages,
-                },
-            }
-            
-            import requests
-            resp = requests.post(ai_router_url, json=payload, timeout=120)
-            resp.raise_for_status()
-            data = resp.json()
-            
-            if not data.get("ok"):
-                raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
-            
-            assistant_messages = data["output"]["messages"]
-            if not assistant_messages or len(assistant_messages) == 0:
-                raise HTTPException(status_code=500, detail="No response from AI Router")
-            
-            summary_text = assistant_messages[0].get("content", "")
+        
+        # Call AI Router with summarize_article intent
+        messages = [
+            {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+        payload = {
+            "role": "chatdo",
+            "intent": "summarize_article",
+            "priority": "high",
+            "privacyLevel": "normal",
+            "costTier": "standard",
+            "input": {
+                "messages": messages,
+            },
+        }
+        
+        import requests
+        resp = requests.post(ai_router_url, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if not data.get("ok"):
+            raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
+        
+        assistant_messages = data["output"]["messages"]
+        if not assistant_messages or len(assistant_messages) == 0:
+            raise HTTPException(status_code=500, detail="No response from AI Router")
+        
+        summary_text = assistant_messages[0].get("content", "")
         
         # Parse summary into summary paragraph and bullet points
         # Simple parsing: look for bullet points (lines starting with - or •)
@@ -1012,13 +957,23 @@ Keep it concise, neutral, and factual."""
                     history.append({"role": "user", "content": user_message})
                     
                     # Add assistant message with structured data
+                    # Determine provider for history
+                    is_video_for_history = is_youtube_url(request.url) or is_other_video_host(request.url)
+                    if is_video_for_history:
+                        if is_youtube_url(request.url):
+                            provider_for_history = "youtube-transcript-api"
+                        else:
+                            provider_for_history = "yt-dlp-whisper-small"
+                    else:
+                        provider_for_history = "trafilatura-gpt5"
+                    
                     assistant_message = {
                         "role": "assistant",
                         "content": "",  # Empty content for structured messages
                         "type": "article_card",
                         "data": message_data,
-                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "Whisper-1 + GPT-5")),
-                        "provider": "trafilatura-gpt5" if not is_video else "whisper-gpt5"
+                        "model": model_label or ("Trafilatura + GPT-5" if not is_video_for_history else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small + GPT-5")),
+                        "provider": provider_for_history
                     }
                     history.append(assistant_message)
                     
@@ -1046,11 +1001,15 @@ Keep it concise, neutral, and factual."""
         
         # Determine model/provider name based on mode
         # model_label should already be set correctly by the routing logic above
-        model_name = model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "Whisper-1 + GPT-5"))
-        if request.privacy_mode:
-            provider_name = "yt-dlp-whisper-small" if is_video else "local-llm"
+        is_video = is_youtube_url(request.url) or is_other_video_host(request.url)
+        model_name = model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small + GPT-5"))
+        if is_video:
+            if is_youtube_url(request.url):
+                provider_name = "youtube-transcript-api"
+            else:
+                provider_name = "yt-dlp-whisper-small"
         else:
-            provider_name = "yt-dlp-openai-whisper" if is_video else "trafilatura-gpt5"
+            provider_name = "trafilatura-gpt5"
         
         return ArticleSummaryResponse(
             message_data=message_data,

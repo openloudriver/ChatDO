@@ -4,7 +4,7 @@ interface UrlSummaryDialogProps {
   isOpen: boolean;
   initialUrl?: string;
   onClose: () => void;
-  onSubmit: (url: string, privacyMode: boolean) => void;
+  onSubmit: (url: string) => void;
 }
 
 const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
@@ -14,13 +14,11 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
   onSubmit,
 }) => {
   const [url, setUrl] = useState(initialUrl);
-  const [privacyMode, setPrivacyMode] = useState(false);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       setUrl(initialUrl);
-      setPrivacyMode(false);
     }
   }, [isOpen, initialUrl]);
 
@@ -29,7 +27,7 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
-    onSubmit(url.trim(), privacyMode);
+    onSubmit(url.trim());
     onClose();
   };
 
@@ -53,17 +51,7 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
             placeholder="https://example.com or https://www.youtube.com/..."
           />
 
-          <div className="flex items-center justify-between mt-2">
-            {/* Privacy toggle to the left of Cancel/OK row */}
-            <label className="inline-flex items-center gap-2 text-xs text-[#8e8ea0] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={privacyMode}
-                onChange={(e) => setPrivacyMode(e.target.checked)}
-                className="h-3 w-3 rounded border-[#565869] bg-transparent text-[#10a37f] focus:ring-1 focus:ring-[#10a37f]"
-              />
-              <span>Use Privacy mode (local only)</span>
-            </label>
+          <div className="flex items-center justify-end mt-2">
             <div className="flex items-center gap-2">
               <button
                 type="button"

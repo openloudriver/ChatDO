@@ -1,6 +1,6 @@
 """
 Deterministic URL classification for video vs web page routing.
-Separates YouTube from other video hosts for 3-tier pipeline.
+Separates YouTube from other video hosts for 2-tier video pipeline.
 """
 from urllib.parse import urlparse
 
