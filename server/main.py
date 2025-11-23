@@ -750,6 +750,7 @@ async def summarize_article(request: ArticleSummaryRequest):
         article_text = None
         article_title = None
         article_site_name = None
+        article_published = None  # Store published date from extraction
         model_label = None
         
         if is_youtube_url(request.url):
@@ -814,6 +815,7 @@ async def summarize_article(request: ArticleSummaryRequest):
             article_text = article_data["text"]
             article_title = article_data.get("title")
             article_site_name = article_data.get("site_name")
+            article_published = article_data.get("published")  # Extract published date
             model_label = "Trafilatura + GPT-5"
         
         if not article_text:
@@ -934,7 +936,7 @@ Keep it concise, neutral, and factual."""
             "url": request.url,
             "title": title,
             "siteName": article_site_name or "",
-            "published": None,  # Videos don't have published date from our extraction
+            "published": article_published,  # Use extracted date for web pages, None for videos
             "summary": summary_paragraph,
             "keyPoints": key_points if key_points else [],
             "whyMatters": why_matters if why_matters else None,
@@ -991,7 +993,7 @@ Keep it concise, neutral, and factual."""
                         "createdAt": datetime.now(timezone.utc).isoformat(),
                         "meta": {
                             "siteName": article_site_name,
-                            "published": None,  # Videos don't have published date
+                            "published": article_published,  # Use extracted date for web pages, None for videos
                         }
                     }
                     add_thread_source(target_name, thread_id, source)

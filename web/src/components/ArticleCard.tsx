@@ -1,5 +1,6 @@
 import React from "react";
 import SectionHeading from "./shared/SectionHeading";
+import { formatPublishedDate } from "../utils/formatDate";
 
 interface ArticleCardProps {
   url: string;
@@ -62,6 +63,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const faviconUrl = getFaviconUrl(url);
   const displaySiteName = (siteName || domain || "Article").toUpperCase();
   const readTime = estimatedReadTimeMinutes || estimateReadTime(summary, keyPoints, whyMatters, wordCount);
+  const formattedDate = formatPublishedDate(published);
 
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
@@ -102,6 +104,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         >
           {title}
         </a>
+        {formattedDate && (
+          <div className="text-xs text-[#8e8ea0] mt-1">
+            Published: {formattedDate}
+          </div>
+        )}
       </div>
 
       {/* Subheader: Read time and last updated */}
@@ -111,12 +118,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <>
             <span>•</span>
             <span>Last updated: {lastUpdated}</span>
-          </>
-        )}
-        {published && !lastUpdated && (
-          <>
-            <span>•</span>
-            <span>Published: {published}</span>
           </>
         )}
       </div>

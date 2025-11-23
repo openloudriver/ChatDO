@@ -32,6 +32,16 @@ def extract_article(url: str) -> Dict[str, Optional[str]]:
                 "error": "Could not fetch URL. The page may be blocked or require authentication."
             }
         
+        # Extract metadata first (includes date, author, title)
+        metadata = trafilatura.extract_metadata(downloaded)
+        metadata_date = None
+        metadata_author = None
+        metadata_title = None
+        if metadata:
+            metadata_date = metadata.date if hasattr(metadata, 'date') and metadata.date else None
+            metadata_author = metadata.author if hasattr(metadata, 'author') and metadata.author else None
+            metadata_title = metadata.title if hasattr(metadata, 'title') and metadata.title else None
+        
         # Extract with metadata - include formatting to get better title extraction
         extracted = trafilatura.extract(
             downloaded,
@@ -62,11 +72,11 @@ def extract_article(url: str) -> Dict[str, Optional[str]]:
         else:
             data = extracted
         
-        # Extract fields
-        title = data.get("title") or None
+        # Extract fields - prefer metadata values if available
+        title = metadata_title or data.get("title") or None
         text = data.get("text") or None
-        author = data.get("author") or None
-        date = data.get("date") or None
+        author = metadata_author or data.get("author") or None
+        date = metadata_date or data.get("date") or None
         
         # If Trafilatura didn't extract a title, try BeautifulSoup fallback
         if not title or title.strip() == "":
