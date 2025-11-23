@@ -61,3 +61,6 @@ packages/ai-router/data/
 # TypeScript
 *.tsbuildinfo
 
+models/
+data/tmp_audio/
+rag_files/*.json

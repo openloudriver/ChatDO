@@ -13,10 +13,14 @@ import json
 import uuid
 import re
 import os
+import logging
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Load environment variables from .env file in project root
 env_path = Path(__file__).parent.parent / ".env"
@@ -218,6 +222,8 @@ class ArticleSummaryRequest(BaseModel):
     title: Optional[str] = None  # Optional title from UI
     conversation_id: Optional[str] = None  # Optional conversation_id to save to memory store
     project_id: Optional[str] = None  # Optional project_id to determine target_name
+    force_mode: Optional[str] = "auto"  # "auto" | "web" | "video"
+    privacy_mode: bool = False  # If True, use local LLM instead of OpenAI
 
 
 class ArticleSummaryResponse(BaseModel):
@@ -225,6 +231,7 @@ class ArticleSummaryResponse(BaseModel):
     message_data: Dict[str, Any]
     model: str = "Trafilatura + GPT-5"
     provider: str = "trafilatura-gpt5"
+    model_label: Optional[str] = None  # Human-readable model label (e.g., "Whisper-small + Llama-3.2 (local)")
 
 
 # RAG File model
@@ -587,6 +594,17 @@ async def chat(request: ChatRequest):
         # 3) Split out any <TASKS> block
         human_text, tasks_json = split_tasks_block(raw_result)
         
+        # 3.5) Guardrail: Check for missing citations in RAG responses
+        if has_rag_context and not tasks_json and human_text:
+            if check_missing_citations(human_text):
+                print(f"[RAG] Guardrail: Missing citations detected, requesting fix-up...")
+                human_text = await fix_missing_citations(human_text, rag_context, model_display, provider)
+                # Re-check after fix-up
+                if check_missing_citations(human_text):
+                    print(f"[RAG] Guardrail: Still missing citations after fix-up, but proceeding with response")
+                else:
+                    print(f"[RAG] Guardrail: ✅ Citations added successfully")
+        
         # 4) If RAG context was used, return as structured rag_response
         if has_rag_context and not tasks_json:
             # Extract source file names from RAG context
@@ -689,7 +707,7 @@ async def chat(request: ChatRequest):
 @app.post("/api/article/summary", response_model=ArticleSummaryResponse)
 async def summarize_article(request: ArticleSummaryRequest):
     """
-    Summarize an article from a URL using Trafilatura + GPT-5.
+    Summarize a URL (web page or video) using Trafilatura + GPT-5 or local Whisper + GPT-5.
     Returns a structured article_card message.
     """
     try:
@@ -697,20 +715,151 @@ async def summarize_article(request: ArticleSummaryRequest):
         if not request.url.startswith(("http://", "https://")):
             raise HTTPException(status_code=400, detail="Invalid URL. Must start with http:// or https://")
         
-        # Extract article using Trafilatura
-        article_data = extract_article(request.url)
+        # Branch on privacy mode first to determine video detection method
+        from server.services.video_source import is_video_url
         
-        if article_data.get("error"):
-            raise HTTPException(status_code=400, detail=article_data["error"])
+        # Helper for non-privacy mode (YouTube-only detection)
+        def is_youtube_url(url: str) -> bool:
+            """Check if URL is YouTube (used for non-privacy mode)."""
+            return "youtube.com/watch" in url or "youtu.be/" in url
         
-        if not article_data.get("text"):
-            raise HTTPException(status_code=400, detail="Could not extract article text from URL")
+        force_mode = request.force_mode or "auto"
+        is_video = False
         
-        # Truncate text to safe length for GPT-5 (first 10k chars)
-        article_text = article_data["text"][:10000]
+        # Get source text based on mode
+        article_text = None
+        article_title = None
+        article_site_name = None
         
-        # Build prompt for GPT-5
-        user_prompt = f"""Please summarize the following article:
+        if request.privacy_mode:
+            # Privacy Mode: use unified video detection (supports all video sites)
+            if force_mode == "auto":
+                is_video = is_video_url(request.url)
+            elif force_mode == "video":
+                is_video = True
+                if not is_video_url(request.url):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Video mode requested but URL is not a supported video source."
+                    )
+            # force_mode == "web" -> is_video stays False
+            
+            if is_video:
+                # Tier 2 (Privacy Mode): yt-dlp → local Whisper-small → Llama-3.2
+                try:
+                    from server.services.video_transcription import get_transcript_from_url
+                    from urllib.parse import urlparse
+                    
+                    article_text = await get_transcript_from_url(request.url, use_local_whisper=True)
+                    
+                    # Extract title from URL or use default
+                    parsed = urlparse(request.url)
+                    article_site_name = "Video"
+                    article_title = f"Video from {parsed.netloc}"
+                    
+                except ValueError as ve:
+                    raise HTTPException(status_code=400, detail=str(ve))
+                except RuntimeError as re:
+                    # Log the detailed error for debugging (especially for Vimeo, DRM, etc.)
+                    logging.exception(
+                        "Privacy mode video transcription failed: url=%s error_type=%s error=%s",
+                        request.url,
+                        type(re).__name__,
+                        str(re),
+                    )
+                    # Keep user-facing message unchanged
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Privacy mode: failed to transcribe video audio locally. Check yt-dlp/ffmpeg or model configuration.",
+                    ) from re
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Unexpected error while processing video URL in privacy mode.",
+                    ) from e
+            else:
+                # Privacy Mode web: Trafilatura → Llama-3.2 (local)
+                logging.info(f"[Summary] Privacy Mode: Processing as web page: {request.url}")
+                article_data = extract_article(request.url)
+                
+                if article_data.get("error"):
+                    raise HTTPException(status_code=400, detail=article_data["error"])
+                
+                if not article_data.get("text"):
+                    raise HTTPException(status_code=400, detail="Could not extract article text from URL")
+                
+                article_text = article_data["text"]
+                article_title = article_data.get("title")
+                article_site_name = article_data.get("site_name")
+        else:
+            # Non-privacy mode: use YouTube-only detection (keep existing behavior)
+            if force_mode == "auto":
+                is_video = is_youtube_url(request.url)
+            elif force_mode == "video":
+                is_video = True
+                if not is_youtube_url(request.url):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Video mode requested but URL is not a YouTube URL."
+                    )
+            # force_mode == "web" -> is_video stays False
+            
+            if is_video:
+                # Tier 1 (Non-privacy): yt-dlp → OpenAI Whisper-1 → GPT-5
+                try:
+                    from server.services.video_transcription import get_transcript_from_url
+                    from urllib.parse import urlparse
+                    
+                    article_text = await get_transcript_from_url(request.url, use_local_whisper=False)
+                    
+                    # Extract title from URL or use default
+                    parsed = urlparse(request.url)
+                    article_site_name = "Video"
+                    article_title = f"Video from {parsed.netloc}"
+                    
+                except ValueError as ve:
+                    raise HTTPException(status_code=400, detail=str(ve))
+                except RuntimeError as re:
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
+                    ) from re
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail="Unexpected error while summarizing this URL.") from e
+            else:
+                # Non-privacy web: Trafilatura → GPT-5
+                logging.info(f"[Summary] Processing as web page: {request.url}")
+                article_data = extract_article(request.url)
+                
+                if article_data.get("error"):
+                    raise HTTPException(status_code=400, detail=article_data["error"])
+                
+                if not article_data.get("text"):
+                    raise HTTPException(status_code=400, detail="Could not extract article text from URL")
+                
+                article_text = article_data["text"]
+                article_title = article_data.get("title")
+                article_site_name = article_data.get("site_name")
+        
+        # Truncate text to safe length (first 10k chars)
+        article_text = article_text[:10000]
+        
+        # Branch on privacy mode for summarization
+        model_label = None
+        if request.privacy_mode:
+            # Privacy mode: local-only summarization
+            from server.services.local_llm_service import summarize_text_locally
+            summary_mode = "video" if is_video else "web"
+            summary_text = await summarize_text_locally(article_text, mode=summary_mode)
+            model_label = (
+                "Whisper-small (local) + Llama-3.2"
+                if is_video
+                else "Trafilatura + Llama-3.2"
+            )
+        else:
+            # Existing (non-privacy) path: use GPT-5 summarizer as today
+            source_type = "video transcript" if is_video else "article"
+            user_prompt = f"""Please summarize the following {source_type}:
 
 {article_text}
 
@@ -722,38 +871,44 @@ Provide:
 Format your response clearly with the summary first, then key points (as bullet points), then "Why This Matters:" followed by your analysis.
 
 Keep it concise, neutral, and factual."""
-        
-        # Call AI Router with summarize_article intent
-        messages = [
-            {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
-        ]
-        
-        ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
-        payload = {
-            "role": "chatdo",
-            "intent": "summarize_article",
-            "priority": "high",
-            "privacyLevel": "normal",
-            "costTier": "standard",
-            "input": {
-                "messages": messages,
-            },
-        }
-        
-        import requests
-        resp = requests.post(ai_router_url, json=payload, timeout=120)
-        resp.raise_for_status()
-        data = resp.json()
-        
-        if not data.get("ok"):
-            raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
-        
-        assistant_messages = data["output"]["messages"]
-        if not assistant_messages or len(assistant_messages) == 0:
-            raise HTTPException(status_code=500, detail="No response from AI Router")
-        
-        summary_text = assistant_messages[0].get("content", "")
+            
+            # Call AI Router with summarize_article intent
+            messages = [
+                {"role": "system", "content": ARTICLE_SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ]
+            
+            ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+            payload = {
+                "role": "chatdo",
+                "intent": "summarize_article",
+                "priority": "high",
+                "privacyLevel": "normal",
+                "costTier": "standard",
+                "input": {
+                    "messages": messages,
+                },
+            }
+            
+            import requests
+            resp = requests.post(ai_router_url, json=payload, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            if not data.get("ok"):
+                raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
+            
+            assistant_messages = data["output"]["messages"]
+            if not assistant_messages or len(assistant_messages) == 0:
+                raise HTTPException(status_code=500, detail="No response from AI Router")
+            
+            summary_text = assistant_messages[0].get("content", "")
+            
+            # Set model label for non-privacy mode
+            if is_video:
+                model_label = "OpenAI Whisper-1 + GPT-5"
+            else:
+                model_label = "Trafilatura + GPT-5"
         
         # Parse summary into summary paragraph and bullet points
         # Simple parsing: look for bullet points (lines starting with - or •)
@@ -808,18 +963,18 @@ Keep it concise, neutral, and factual."""
             summary_paragraph = summary_text[:500]  # First 500 chars as summary
         
         # Get title with proper fallback
-        title = request.title or article_data.get("title")
+        title = request.title or article_title
         if not title or title.strip() == "":
             from urllib.parse import urlparse
-            domain = urlparse(article_data["url"]).netloc.replace("www.", "")
-            title = f"Article from {domain}"
+            domain = urlparse(request.url).netloc.replace("www.", "")
+            title = f"{'Video' if is_video else 'Article'} from {domain}"
         
         # Build response
         message_data = {
-            "url": article_data["url"],
+            "url": request.url,
             "title": title,
-            "siteName": article_data.get("site_name") or "",
-            "published": article_data.get("published") or None,
+            "siteName": article_site_name or "",
+            "published": None,  # Videos don't have published date from our extraction
             "summary": summary_paragraph,
             "keyPoints": key_points if key_points else [],
             "whyMatters": why_matters if why_matters else None,
@@ -847,8 +1002,8 @@ Keep it concise, neutral, and factual."""
                         "content": "",  # Empty content for structured messages
                         "type": "article_card",
                         "data": message_data,
-                        "model": "Trafilatura + GPT-5",
-                        "provider": "trafilatura-gpt5"
+                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else "Whisper-small + GPT-5"),
+                        "provider": "trafilatura-gpt5" if not is_video else "whisper-gpt5"
                     }
                     history.append(assistant_message)
                     
@@ -862,11 +1017,11 @@ Keep it concise, neutral, and factual."""
                         "kind": "url",
                         "title": message_data.get("title") or title,
                         "description": summary_paragraph[:200] if summary_paragraph else None,
-                        "url": article_data["url"],
+                        "url": request.url,
                         "createdAt": datetime.now(timezone.utc).isoformat(),
                         "meta": {
-                            "siteName": article_data.get("site_name"),
-                            "published": article_data.get("published"),
+                            "siteName": article_site_name,
+                            "published": None,  # Videos don't have published date
                         }
                     }
                     add_thread_source(target_name, thread_id, source)
@@ -874,8 +1029,18 @@ Keep it concise, neutral, and factual."""
                 # Don't fail the request if saving to memory store fails
                 print(f"Warning: Failed to save article summary to memory store: {e}")
         
+        # Determine model/provider name based on mode
+        model_name = model_label or ("OpenAI Whisper-1 + GPT-5" if is_video else "Trafilatura + GPT-5")
+        if request.privacy_mode:
+            provider_name = "yt-dlp-whisper-local" if is_video else "local-llm"
+        else:
+            provider_name = "yt-dlp-openai-whisper" if is_video else "trafilatura-gpt5"
+        
         return ArticleSummaryResponse(
-            message_data=message_data
+            message_data=message_data,
+            model=model_name,
+            provider=provider_name,
+            model_label=model_label
         )
         
     except HTTPException:
@@ -976,11 +1141,18 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
         "\n",
         "Under each heading, use bullet points where helpful. The exact section titles can vary based on the question, but always use markdown headings (### Heading) for every section title instead of plain text lines.\n",
         "\n",
-        "CRITICAL: When referencing information from these documents, include inline citations using the format [n] where n is the document number.\n",
-        "The documents are numbered in the order they appear below (1, 2, 3, etc.).\n",
-        "For example: 'Joint Cloud provides multi-level transport [1] with cost advantages [2].'\n",
-        "If referencing multiple sources: 'The system supports both IL5 and IL6 operations [1, 2].'\n",
-        "Always include these citations when making claims or referencing specific information from the documents.\n"
+        "FORMATTING RULES (MANDATORY):\n",
+        "\n",
+        "- Use markdown headings and bullet lists.\n",
+        "- For EVERY bullet or sentence that uses information from the sources, you MUST include one or more inline citations in square brackets, like `[1]` or `[1, 3]`, at the **end** of the sentence or bullet.\n",
+        "- Do NOT invent source numbers. Only use IDs that correspond to the provided source list.\n",
+        "- There must be **no bullets or paragraphs without at least one citation** unless they are purely meta text (e.g., 'Bottom line:' heading).\n",
+        "- If you summarize multiple sources in a single bullet, include all relevant numbers, e.g. `[1, 2, 4]`.\n",
+        "- The documents are numbered in the order they appear below (1, 2, 3, etc.).\n",
+        "- For example: 'Joint Cloud provides multi-level transport [1] with cost advantages [2].'\n",
+        "- If referencing multiple sources: 'The system supports both IL5 and IL6 operations [1, 2].'\n",
+        "\n",
+        "CRITICAL: Every bullet point and paragraph that references information from the documents MUST end with at least one citation. This is mandatory.\n"
     ]
     
     # Load RAG files - if chat_id is provided, use it directly for efficiency
@@ -1044,6 +1216,123 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
     result = '\n'.join(context_parts)
     print(f"[RAG] Built context: {len(result)} characters, {len(all_files)} files processed")
     return result
+
+
+def check_missing_citations(text: str) -> bool:
+    """
+    Check if RAG response has bullets/paragraphs missing citations.
+    Returns True if citations are missing, False otherwise.
+    """
+    if not text:
+        return False
+    
+    # Split into lines
+    lines = text.split('\n')
+    
+    # Pattern to match citations like [1], [1, 3], [2, 4, 6]
+    citation_pattern = re.compile(r'\[\s*\d+(?:\s*,\s*\d+)*\s*\]')
+    
+    # Track bullets and paragraphs
+    in_bullet = False
+    bullet_text = ""
+    has_missing = False
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Skip empty lines and headers
+        if not stripped or stripped.startswith('###'):
+            if in_bullet and bullet_text:
+                # Check if this bullet has citations
+                if not citation_pattern.search(bullet_text):
+                    # Check if it's not just meta text
+                    if not any(meta in bullet_text.lower() for meta in ['bottom line', 'summary:', 'note:', 'important:']):
+                        print(f"[RAG] Missing citation in bullet: {bullet_text[:100]}")
+                        has_missing = True
+                bullet_text = ""
+                in_bullet = False
+            continue
+        
+        # Check if this is a bullet point
+        if stripped.startswith('- ') or stripped.startswith('* ') or stripped.startswith('• '):
+            if in_bullet and bullet_text:
+                # Check previous bullet
+                if not citation_pattern.search(bullet_text):
+                    if not any(meta in bullet_text.lower() for meta in ['bottom line', 'summary:', 'note:', 'important:']):
+                        print(f"[RAG] Missing citation in bullet: {bullet_text[:100]}")
+                        has_missing = True
+            in_bullet = True
+            bullet_text = stripped
+        elif in_bullet:
+            # Continuation of bullet (indented line)
+            if stripped.startswith('  ') or stripped.startswith('\t'):
+                bullet_text += " " + stripped
+            else:
+                # End of bullet, check it
+                if not citation_pattern.search(bullet_text):
+                    if not any(meta in bullet_text.lower() for meta in ['bottom line', 'summary:', 'note:', 'important:']):
+                        print(f"[RAG] Missing citation in bullet: {bullet_text[:100]}")
+                        has_missing = True
+                in_bullet = False
+                bullet_text = ""
+        else:
+            # Regular paragraph - check if it has citations
+            if stripped and not stripped.startswith('###'):
+                if not citation_pattern.search(stripped):
+                    # Check if it's not just meta text
+                    if not any(meta in stripped.lower() for meta in ['bottom line', 'summary:', 'note:', 'important:']):
+                        # Only flag if it looks like content (not just a heading)
+                        if len(stripped) > 20:  # Avoid flagging short headings
+                            print(f"[RAG] Missing citation in paragraph: {stripped[:100]}")
+                            has_missing = True
+    
+    # Check last bullet if still in progress
+    if in_bullet and bullet_text:
+        if not citation_pattern.search(bullet_text):
+            if not any(meta in bullet_text.lower() for meta in ['bottom line', 'summary:', 'note:', 'important:']):
+                print(f"[RAG] Missing citation in final bullet: {bullet_text[:100]}")
+                has_missing = True
+    
+    return has_missing
+
+
+async def fix_missing_citations(original_response: str, rag_context: str, model_display: str, provider: str) -> str:
+    """
+    Request a fix-up from the model to add missing citations.
+    Returns the revised response.
+    """
+    fix_prompt = f"""Please revise the following answer so that every bullet and paragraph includes at least one inline source citation in `[n]` format at the end.
+
+The original answer:
+{original_response}
+
+Please ensure:
+- Every bullet point ends with at least one citation like [1] or [1, 3]
+- Every paragraph that references information from sources ends with at least one citation
+- Do not add citations to pure meta text (like "Bottom line:" headings)
+- Keep all the original content and structure, just add the missing citations
+
+Revised answer:"""
+    
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant that adds inline citations to text while preserving all original content."},
+        {"role": "user", "content": fix_prompt}
+    ]
+    
+    try:
+        from chatdo.agents.main_agent import call_ai_router
+        assistant_messages, _, _, _ = call_ai_router(messages, intent="general_chat")
+        
+        if assistant_messages and len(assistant_messages) > 0:
+            fixed_response = assistant_messages[-1].get("content", original_response)
+            print(f"[RAG] Fix-up completed, new length: {len(fixed_response)} chars")
+            return fixed_response
+        else:
+            print(f"[RAG] Fix-up failed, returning original response")
+            return original_response
+    except Exception as e:
+        print(f"[RAG] Error during fix-up: {e}")
+        return original_response
 
 
 @app.post("/api/rag/files", response_model=RagFile)

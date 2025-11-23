@@ -54,7 +54,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   if (sources.length === 0) {
     return (
       <div className="p-4 text-center text-[#8e8ea0] text-sm">
-        No sources yet. Sources will appear here when you summarize articles or upload files.
+        No sources yet. Sources will appear here when you summarize URLs or upload files.
       </div>
     );
   }

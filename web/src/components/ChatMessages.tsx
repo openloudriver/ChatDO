@@ -897,7 +897,7 @@ const ChatMessages: React.FC = () => {
                                           const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
                                           addStoreMessage({
                                             role: 'assistant',
-                                            content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article.'}`,
+                                            content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize URL.'}`,
                                           });
                                           setStoreLoading(false);
                                           setArticleStates(prev => ({ ...prev, [result.url]: 'idle' }));
@@ -913,7 +913,7 @@ const ChatMessages: React.FC = () => {
                                           ? 'text-blue-400 cursor-wait'
                                           : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
                                       }`}
-                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this article"}
+                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this URL"}
                                     >
                                       {isSummarizing ? (
                                         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">

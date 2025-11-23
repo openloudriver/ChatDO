@@ -3,6 +3,7 @@ import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
+import UrlSummaryDialog from './UrlSummaryDialog';
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -53,6 +54,7 @@ const ChatComposer: React.FC = () => {
   
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
+  const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
 
   const handleSend = async () => {
     // Debug: Log RAG file IDs before sending
@@ -407,10 +409,13 @@ const ChatComposer: React.FC = () => {
     }
   };
 
-  const handleArticleSummary = async () => {
-    const url = prompt('Enter article URL to summarize:');
-    // Only check local state - this button is independent
-    if (!url || !currentProject || !currentConversation || isSummarizingArticleLocal) return;
+  const handleSummarizeUrlClick = () => {
+    if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
+    setIsUrlDialogOpen(true);
+  };
+
+  const handleUrlDialogSubmit = async (url: string, privacyMode: boolean) => {
+    if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
     setIsSummarizingArticleLocal(true);
     try {
@@ -427,6 +432,7 @@ const ChatComposer: React.FC = () => {
         url: url.trim(),
         conversation_id: currentConversation.id,
         project_id: currentProject.id,
+        privacy_mode: privacyMode,
       });
       
       if (response.data.message_type === 'article_card' && response.data.message_data) {
@@ -435,14 +441,14 @@ const ChatComposer: React.FC = () => {
           content: '',
           type: 'article_card',
           data: response.data.message_data,
-          model: response.data.model || 'Trafilatura + GPT-5',
+          model: response.data.model_label || response.data.model || 'Trafilatura + GPT-5',
           provider: response.data.provider || 'trafilatura-gpt5',
         });
       } else {
         // Fallback to error message
         addMessage({
           role: 'assistant',
-          content: 'Error: Could not summarize article. Please try again.',
+          content: 'Error: Could not summarize URL. Please try again.',
         });
       }
       
@@ -451,7 +457,7 @@ const ChatComposer: React.FC = () => {
       console.error('Error summarizing article:', error);
       addMessage({
         role: 'assistant',
-        content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize article. Please try again.'}`,
+        content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize URL. Please try again.'}`,
       });
       setLoading(false);
     } finally {
@@ -799,14 +805,14 @@ const ChatComposer: React.FC = () => {
               </svg>
             </button>
             <button
-              onClick={handleArticleSummary}
+              onClick={handleSummarizeUrlClick}
               disabled={showSpinner}
               className={`p-2 rounded transition-colors ${
                 showSpinner
                   ? 'text-blue-400 cursor-wait'
                   : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
               }`}
-              title={showSpinner ? "Summarizing article..." : "Summarize article (by URL)"}
+              title={showSpinner ? "Summarizing URL..." : "Summarize URL"}
             >
               {showSpinner ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1002,6 +1008,11 @@ const ChatComposer: React.FC = () => {
             setPreviewFile({ name: file.filename, data: previewPath, type: 'other', mimeType });
           }
         }}
+      />
+      <UrlSummaryDialog
+        isOpen={isUrlDialogOpen}
+        onClose={() => setIsUrlDialogOpen(false)}
+        onSubmit={handleUrlDialogSubmit}
       />
     </div>
   );
