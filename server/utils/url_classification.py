@@ -1,37 +1,84 @@
 """
 Deterministic URL classification for video vs web page routing.
+Separates YouTube from other video hosts for 3-tier pipeline.
 """
 from urllib.parse import urlparse
 
-# Hardcoded list of video hosts - this is the single source of truth
-VIDEO_HOSTS = [
+YOUTUBE_HOSTS = [
     "youtube.com",
+    "www.youtube.com",
+    "m.youtube.com",
     "youtu.be",
+]
+
+OTHER_VIDEO_HOSTS = [
     "bitchute.com",
+    "www.bitchute.com",
     "rumble.com",
+    "www.rumble.com",
     "archive.org",
+    "www.archive.org",
 ]
 
 
-def is_video_host(url: str) -> bool:
+def _get_domain(url: str) -> str:
     """
-    Return True if the URL host matches one of the known video sites.
+    Extract and normalize the domain from a URL.
     
-    We intentionally keep this list small and explicit for determinism.
-    This should be the only place that knows what a "video site" is.
-    In the future, we can safely update VIDEO_HOSTS without touching routing logic.
+    Args:
+        url: The URL to parse
+        
+    Returns:
+        Normalized domain (lowercase, www. stripped) or empty string on error
+    """
+    try:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        # Strip common prefixes like "www."
+        if host.startswith("www."):
+            host = host[4:]
+        return host
+    except Exception:
+        return ""
+
+
+def is_youtube_url(url: str) -> bool:
+    """
+    Return True if the URL is from YouTube.
     
     Args:
         url: The URL to check
         
     Returns:
-        True if the URL is from a known video host, False otherwise
+        True if the URL is from YouTube, False otherwise
     """
-    try:
-        host = urlparse(url).netloc.lower()
-    except Exception:
-        return False
+    host = _get_domain(url)
+    return host in {"youtube.com", "m.youtube.com", "youtu.be"}
+
+
+def is_other_video_host(url: str) -> bool:
+    """
+    Return True if the URL is from a non-YouTube video host.
     
-    # Allow for subdomains like www.youtube.com, m.youtube.com, etc.
-    return any(h in host for h in VIDEO_HOSTS)
+    Args:
+        url: The URL to check
+        
+    Returns:
+        True if the URL is from a non-YouTube video host, False otherwise
+    """
+    host = _get_domain(url)
+    return host in {"bitchute.com", "rumble.com", "archive.org"}
+
+
+def is_video_host(url: str) -> bool:
+    """
+    Return True if this URL is any video host we support.
+    
+    Args:
+        url: The URL to check
+        
+    Returns:
+        True if the URL is from any known video host, False otherwise
+    """
+    return is_youtube_url(url) or is_other_video_host(url)
 

@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file in project root
 env_path = Path(__file__).parent.parent / ".env"
@@ -707,17 +708,26 @@ async def chat(request: ChatRequest):
 @app.post("/api/article/summary", response_model=ArticleSummaryResponse)
 async def summarize_article(request: ArticleSummaryRequest):
     """
-    Summarize a URL (web page or video) using deterministic routing.
+    Summarize a URL (web page or video) using strict 3-tier routing.
     
-    Routing logic:
-    - Video hosts (youtube.com, rumble.com, etc.) → video pipeline
-    - All other URLs → web page pipeline (Trafilatura)
+    3-Tier Video Pipeline:
+    - Tier 1 (YouTube-only, Privacy OFF): youtube-transcript-api + GPT-5
+      → NO FALLBACK: If transcript API fails, return error (do not use audio pipeline)
+    - Tier 2 (Non-YouTube video, Privacy OFF): yt-dlp + Whisper-1 + GPT-5
+      → NO FALLBACK: If audio pipeline fails, return error (do not use web extraction)
+    - Tier 3 (All video, Privacy ON): yt-dlp + Whisper-small + Llama-3.2
+      → Fully local, no OpenAI calls
+    
+    Web Page Pipeline:
+    - Privacy OFF: Trafilatura + GPT-5
+    - Privacy ON: Trafilatura + Llama-3.2
     
     Model labels:
-    - Video (Privacy OFF): Whisper-1 + GPT-5
-    - Video (Privacy ON): Whisper-small + Llama-3.2
-    - Web (Privacy OFF): Trafilatura + GPT-5
-    - Web (Privacy ON): Trafilatura + Llama-3.2
+    - "YouTube transcript + GPT-5" (Tier 1)
+    - "Whisper-1 + GPT-5" (Tier 2)
+    - "Whisper-small + Llama-3.2" (Tier 3)
+    - "Trafilatura + GPT-5" (Web, Privacy OFF)
+    - "Trafilatura + Llama-3.2" (Web, Privacy ON)
     
     Returns a structured article_card message.
     """
@@ -727,40 +737,33 @@ async def summarize_article(request: ArticleSummaryRequest):
             raise HTTPException(status_code=400, detail="Invalid URL. Must start with http:// or https://")
         
         # Deterministic URL classification
-        from server.utils.url_classification import is_video_host
+        from server.utils.url_classification import (
+            is_video_host,
+            is_youtube_url,
+            is_other_video_host,
+        )
+        from server.services.youtube_transcript import (
+            get_youtube_transcript,
+            YouTubeTranscriptError,
+        )
         from server.services.video_transcription import get_transcript_from_url
         from urllib.parse import urlparse
         
         # Determine if URL is a video host
         is_video = is_video_host(request.url)
         
-        # Get source text based on URL type
+        # Get source text based on URL type and privacy mode
         article_text = None
         article_title = None
         article_site_name = None
         model_label = None
         
         if is_video:
-            # VIDEO PIPELINE
-            if not request.privacy_mode:
-                # Privacy OFF (default): Whisper-1 + GPT-5
-                try:
-                    article_text = await get_transcript_from_url(request.url, use_local_whisper=False)
-                    parsed = urlparse(request.url)
-                    article_site_name = "Video"
-                    article_title = f"Video from {parsed.netloc}"
-                    model_label = "Whisper-1 + GPT-5"
-                except ValueError as ve:
-                    raise HTTPException(status_code=400, detail=str(ve))
-                except RuntimeError as re:
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
-                    ) from re
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail="Unexpected error while summarizing this URL.") from e
-            else:
-                # Privacy ON: Whisper-small + Llama-3.2
+            # VIDEO PIPELINE - 3 tiers with no fallbacks
+            if request.privacy_mode:
+                # --- Tier 3: Privacy ON, all video ---
+                # yt-dlp + Whisper-small + Llama-3.2
+                # NO FALLBACK: If this fails, return error (do not try web extraction)
                 try:
                     article_text = await get_transcript_from_url(request.url, use_local_whisper=True)
                     parsed = urlparse(request.url)
@@ -772,7 +775,7 @@ async def summarize_article(request: ArticleSummaryRequest):
                 except RuntimeError as re:
                     # Log the detailed error for debugging (especially for Vimeo, DRM, etc.)
                     logging.exception(
-                        "Privacy mode video transcription failed: url=%s error_type=%s error=%s",
+                        "Tier 3 (Privacy ON) video transcription failed: url=%s error_type=%s error=%s",
                         request.url,
                         type(re).__name__,
                         str(re),
@@ -786,6 +789,61 @@ async def summarize_article(request: ArticleSummaryRequest):
                         status_code=500,
                         detail="Unexpected error while processing video URL in privacy mode.",
                     ) from e
+            else:
+                # Privacy OFF - branch by video host type
+                if is_youtube_url(request.url):
+                    # --- Tier 1: YouTube-only, Privacy OFF ---
+                    # youtube-transcript-api + GPT-5
+                    # NO FALLBACK: If transcript API fails, return error (do NOT call yt-dlp or Whisper)
+                    try:
+                        article_text = get_youtube_transcript(request.url)
+                        parsed = urlparse(request.url)
+                        article_site_name = "Video"
+                        article_title = f"Video from {parsed.netloc}"
+                        model_label = "YouTube transcript + GPT-5"
+                    except YouTubeTranscriptError as e:
+                        # Explicitly do NOT fall back to audio pipeline
+                        logger.warning("Tier 1 (YouTube transcript) failed: url=%s error=%s", request.url, e)
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Could not obtain YouTube transcript: {str(e)}",
+                        ) from e
+                    except Exception as e:
+                        logger.exception("Tier 1 (YouTube transcript) unexpected error: url=%s", request.url)
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Error retrieving YouTube transcript: {str(e)}",
+                        ) from e
+                elif is_other_video_host(request.url):
+                    # --- Tier 2: Non-YouTube video, Privacy OFF ---
+                    # Rumble / BitChute / Archive.org
+                    # yt-dlp + Whisper-1 + GPT-5
+                    # NO FALLBACK: If audio pipeline fails, return error (do NOT try web extraction)
+                    try:
+                        article_text = await get_transcript_from_url(request.url, use_local_whisper=False)
+                        parsed = urlparse(request.url)
+                        article_site_name = "Video"
+                        article_title = f"Video from {parsed.netloc}"
+                        model_label = "Whisper-1 + GPT-5"
+                    except ValueError as ve:
+                        raise HTTPException(status_code=400, detail=str(ve))
+                    except RuntimeError as re:
+                        logger.exception("Tier 2 (audio pipeline) failed: url=%s", request.url)
+                        raise HTTPException(
+                            status_code=502,
+                            detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
+                        ) from re
+                    except Exception as e:
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Unexpected error while summarizing this video URL.",
+                        ) from e
+                else:
+                    # Should not happen if is_video_host() is correct, but handle gracefully
+                    raise HTTPException(
+                        status_code=400,
+                        detail="URL detected as video host but not recognized as YouTube or other video host.",
+                    )
             
             if not article_text:
                 raise HTTPException(status_code=502, detail="Video could not be processed.")
@@ -959,7 +1017,7 @@ Keep it concise, neutral, and factual."""
                         "content": "",  # Empty content for structured messages
                         "type": "article_card",
                         "data": message_data,
-                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else "Whisper-1 + GPT-5"),
+                        "model": model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "Whisper-1 + GPT-5")),
                         "provider": "trafilatura-gpt5" if not is_video else "whisper-gpt5"
                     }
                     history.append(assistant_message)
@@ -987,7 +1045,8 @@ Keep it concise, neutral, and factual."""
                 print(f"Warning: Failed to save article summary to memory store: {e}")
         
         # Determine model/provider name based on mode
-        model_name = model_label or ("Whisper-1 + GPT-5" if is_video else "Trafilatura + GPT-5")
+        # model_label should already be set correctly by the routing logic above
+        model_name = model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "Whisper-1 + GPT-5"))
         if request.privacy_mode:
             provider_name = "yt-dlp-whisper-small" if is_video else "local-llm"
         else:

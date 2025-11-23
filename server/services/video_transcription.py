@@ -1,7 +1,10 @@
 """
-Video transcription service with 2-tier pipeline:
-- Tier 1 (Privacy OFF): yt-dlp → OpenAI Whisper-1 → GPT-5
-- Tier 2 (Privacy ON): yt-dlp → Whisper-small → Llama-3.2
+Video transcription service for Tiers 2 & 3 (audio pipeline).
+- Tier 2 (Non-YouTube video, Privacy OFF): yt-dlp → OpenAI Whisper-1 → GPT-5
+- Tier 3 (All video, Privacy ON): yt-dlp → Whisper-small → Llama-3.2
+
+Note: Tier 1 (YouTube-only, Privacy OFF) uses youtube-transcript-api directly
+and does not call this service.
 """
 import asyncio
 import logging
@@ -127,10 +130,10 @@ async def get_transcript_from_url(url: str, use_local_whisper: bool) -> str:
     Download audio for a video URL and return its transcript.
     
     Args:
-        url: Video URL (YouTube, Rumble, Bitchute, etc.)
+        url: Video URL (Rumble, Bitchute, Archive.org, or YouTube if Privacy ON)
         use_local_whisper: 
-            - False → Tier 1 (yt-dlp + OpenAI Whisper-1)
-            - True  → Tier 2 (yt-dlp + Whisper-small)
+            - False → Tier 2 (yt-dlp + OpenAI Whisper-1)
+            - True  → Tier 3 (yt-dlp + Whisper-small)
     
     Returns:
         Full transcript text as a string
@@ -142,10 +145,10 @@ async def get_transcript_from_url(url: str, use_local_whisper: bool) -> str:
         
         # Transcribe using the appropriate Whisper
         if use_local_whisper:
-            # Tier 2: Whisper-small (no cost tracking)
+            # Tier 3: Whisper-small (no cost tracking, fully local)
             transcript = await transcribe_with_local_whisper(str(audio_path))
         else:
-            # Tier 1: OpenAI Whisper-1 (tracks usage cost)
+            # Tier 2: OpenAI Whisper-1 (tracks usage cost)
             transcript = await transcribe_with_openai_whisper(audio_path)
         
         if not transcript or not transcript.strip():
