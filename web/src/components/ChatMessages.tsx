@@ -5,6 +5,7 @@ import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
+import { MessageRenderer } from './MessageRenderer';
 import type { RagFile } from '../types/rag';
 
 // Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
@@ -1012,11 +1013,9 @@ const ChatMessages: React.FC = () => {
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
-                          <div className="prose prose-invert max-w-none">
-                            <ReactMarkdown>{content}</ReactMarkdown>
-                          </div>
+                          <MessageRenderer content={content} />
                         ) : (
-                          <p className="whitespace-pre-wrap">{content}</p>
+                          <p className="whitespace-pre-wrap text-gray-200">{content}</p>
                         )
                       )}
                       
@@ -1117,9 +1116,7 @@ const ChatMessages: React.FC = () => {
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="max-w-3xl rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown>{streamingContent}</ReactMarkdown>
-            </div>
+            <MessageRenderer content={streamingContent} />
             <span className="animate-pulse">▊</span>
           </div>
         </div>

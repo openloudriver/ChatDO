@@ -58,5 +58,15 @@
     "updated_at": "2025-11-23T20:36:01.764073+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "9d85a742-d505-43de-824a-95a602075e60",
+    "project_id": "scratch",
+    "title": "ChatDO responses",
+    "thread_id": "9d85a742-d505-43de-824a-95a602075e60",
+    "created_at": "2025-11-23T22:44:31.902488+00:00",
+    "updated_at": "2025-11-23T22:44:39.733319+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]
