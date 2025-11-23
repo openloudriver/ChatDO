@@ -62,8 +62,10 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     });
     
     // Add any other providers that have been used
+    // Filter out deprecated providers (e.g., openai-whisper-1)
+    const deprecatedProviders = new Set(["openai-whisper-1"]);
     for (const [id, usd] of Object.entries(current.providers)) {
-      if (id !== "openai-gpt5") {
+      if (id !== "openai-gpt5" && !deprecatedProviders.has(id)) {
         providers.push({
           id,
           label: labelMap[id] || id,

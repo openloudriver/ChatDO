@@ -81,30 +81,33 @@ You still stay in control:
 
 ## Environment Variables
 
-For video summarization (YouTube, Bitchute, Rumble, etc.), set the following in your `.env` file:
+### Video Summarization (Tier 2)
+
+For video summarization of non-YouTube hosts (Rumble, Bitchute, Archive.org, etc.), the following environment variables control the Whisper transcription pipeline:
 
 - `FFMPEG_PATH` – optional, defaults to `ffmpeg`. On macOS with Homebrew, set to `/opt/homebrew/bin/ffmpeg`.
-- `WHISPER_MODEL_NAME` – optional, defaults to `small`. Whisper model for local transcription.
-- `WHISPER_COMPUTE_TYPE` – optional, defaults to `int8`. Compute type for Whisper (int8 works well on M1 Macs; alternatives: `int8_float16`, `float32`).
+- `WHISPER_MODEL_NAME` – optional, defaults to `small`. Whisper model size for local transcription.
+- `WHISPER_COMPUTE_TYPE` – optional, auto-detected based on hardware. On M1 Macs, defaults to `float16` for optimal performance. On other platforms, defaults to `int8`. Other options: `int8_float16`, `float32`.
+- `WHISPER_DEVICE` – optional, auto-detected. On Apple Silicon (M1/M2/M3), defaults to `auto` (uses Metal/GPU acceleration). On other platforms, defaults to `cpu`. Set explicitly to `cpu` to force CPU-only mode.
+- `WHISPER_THREADS` – optional, defaults to `0` (auto). Number of CPU threads for transcription. On M1 Macs, auto-detection uses 4-6 threads to keep UI responsive.
 
-### Privacy Mode (Tier 3)
+**M1 Mac Optimization**: The Whisper service is optimized for Apple Silicon with:
+- FP16 compute type for reduced memory usage and better throughput
+- Automatic Metal/GPU acceleration via faster-whisper's CTranslate2 backend
+- Automatic fallback to CPU/FP32 on non-Apple hardware
 
-Privacy mode enables fully local summarization without any OpenAI API calls. When enabled:
+### URL Summarization Pipeline
 
-- **Web pages**: Uses Trafilatura (local HTML extraction) + Llama-3.2 3B (local LLM)
-- **Videos**: Uses Whisper-small (local transcription) + Llama-3.2 3B (local LLM)
+The system uses a deterministic 2-tier routing:
 
-To use privacy mode:
+1. **Tier 1 (YouTube)**: `youtube-transcript-api` → GPT-5
+   - Fast, text-based transcript extraction
+   - No audio processing required
 
-1. Download a Llama-3.2 3B instruct GGUF model (e.g., `llama-3.2-3b-instruct.Q4_0.gguf`) and place it in the `models/` directory.
+2. **Tier 2 (Other video hosts)**: `yt-dlp` → `Whisper-small-FP16` → GPT-5
+   - Downloads audio via yt-dlp
+   - Transcribes with local Whisper-small (FP16, M1-optimized)
+   - Summarizes with GPT-5
 
-2. Configure the following environment variables (optional, defaults shown):
-
-   - `LOCAL_SUMMARY_MODEL_PATH` – defaults to `models/llama-3.2-3b-instruct.Q4_0.gguf`. Path to the GGUF model file.
-   - `LOCAL_SUMMARY_CTX` – defaults to `8192`. Context window size for the local LLM.
-   - `LOCAL_SUMMARY_THREADS` – defaults to `0` (auto). Number of CPU threads for inference.
-   - `LOCAL_SUMMARY_N_GPU_LAYERS` – defaults to `0`. Number of layers to offload to GPU (if available).
-
-3. In the "Summarize URL" dialog, toggle "Use Privacy mode (local only)" ON.
-
-**Note**: Privacy mode requires the GGUF model file to be present at `LOCAL_SUMMARY_MODEL_PATH`. If the model is not found, the request will fail with an error.
+3. **Web pages**: `Trafilatura` → GPT-5
+   - HTML extraction and text summarization

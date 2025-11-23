@@ -716,7 +716,7 @@ async def summarize_article(request: ArticleSummaryRequest):
        → NO FALLBACK: If transcript API fails, return error
     
     2. Else if URL is a video host (rumble.com, bitchute.com, archive.org)
-       → Tier 2: yt-dlp + Whisper-small + GPT-5
+       → Tier 2: yt-dlp + Whisper-small-FP16 + GPT-5 (M1-optimized)
        → NO FALLBACK: If audio pipeline fails, return error
     
     3. Else
@@ -724,7 +724,7 @@ async def summarize_article(request: ArticleSummaryRequest):
     
     Model labels:
     - "YouTube transcript + GPT-5" (Tier 1)
-    - "yt-dlp + Whisper-small + GPT-5" (Tier 2)
+    - "yt-dlp + Whisper-small-FP16 + GPT-5" (Tier 2, M1-optimized)
     - "Trafilatura + GPT-5" (Web pages)
     
     Returns a structured article_card message.
@@ -778,14 +778,14 @@ async def summarize_article(request: ArticleSummaryRequest):
         elif is_other_video_host(request.url):
             # --- Tier 2: Non-YouTube video hosts ---
             # Rumble / BitChute / Archive.org
-            # yt-dlp + Whisper-small + GPT-5
+            # yt-dlp → Whisper-small-FP16 (M1-optimized) → GPT-5
             # NO FALLBACK: If audio pipeline fails, return error (do NOT try web extraction)
             try:
                 article_text = await get_transcript_from_url(request.url)
                 parsed = urlparse(request.url)
                 article_site_name = "Video"
                 article_title = f"Video from {parsed.netloc}"
-                model_label = "yt-dlp + Whisper-small + GPT-5"
+                model_label = "yt-dlp + Whisper-small-FP16 + GPT-5"
             except ValueError as ve:
                 raise HTTPException(status_code=400, detail=str(ve))
             except RuntimeError as re:
@@ -972,7 +972,7 @@ Keep it concise, neutral, and factual."""
                         "content": "",  # Empty content for structured messages
                         "type": "article_card",
                         "data": message_data,
-                        "model": model_label or ("Trafilatura + GPT-5" if not is_video_for_history else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small + GPT-5")),
+                        "model": model_label or ("Trafilatura + GPT-5" if not is_video_for_history else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small-FP16 + GPT-5")),
                         "provider": provider_for_history
                     }
                     history.append(assistant_message)
@@ -1002,7 +1002,7 @@ Keep it concise, neutral, and factual."""
         # Determine model/provider name based on mode
         # model_label should already be set correctly by the routing logic above
         is_video = is_youtube_url(request.url) or is_other_video_host(request.url)
-        model_name = model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small + GPT-5"))
+        model_name = model_label or ("Trafilatura + GPT-5" if not is_video else ("YouTube transcript + GPT-5" if is_youtube_url(request.url) else "yt-dlp + Whisper-small-FP16 + GPT-5"))
         if is_video:
             if is_youtube_url(request.url):
                 provider_name = "youtube-transcript-api"
