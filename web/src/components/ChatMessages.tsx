@@ -569,8 +569,9 @@ const ChatMessages: React.FC = () => {
                       className={`rounded-lg px-4 py-3 ${
                         message.role === 'user'
                           ? 'bg-[#19c37d] text-white w-full ml-[55px]'
-                          : 'bg-[#444654] text-[#ececf1] w-full ml-[2px]'
+                          : 'bg-[#444654] text-[#ececf1]'
                       }`}
+                      style={message.role === 'assistant' ? { width: 'calc(100% + 6px)' } : undefined}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
                       {filesToShow.length > 0 && (
