@@ -980,28 +980,28 @@ const ChatMessages: React.FC = () => {
                       {/* Display document_card if message type is document_card */}
                       {message.type === 'document_card' && message.data && (
                         <DocumentCard
-                          fileName={message.data.fileName || 'Document'}
-                          fileType={message.data.fileType}
-                          filePath={message.data.filePath}
-                          summary={message.data.summary || ''}
-                          keyPoints={message.data.keyPoints || []}
-                          whyMatters={message.data.whyMatters}
-                          estimatedReadTimeMinutes={message.data.estimatedReadTimeMinutes}
-                          wordCount={message.data.wordCount}
-                          pageCount={message.data.pageCount}
+                          fileName={(message.data as any).fileName || 'Document'}
+                          fileType={(message.data as any).fileType}
+                          filePath={(message.data as any).filePath}
+                          summary={(message.data as any).summary || ''}
+                          keyPoints={(message.data as any).keyPoints || []}
+                          whyMatters={(message.data as any).whyMatters}
+                          estimatedReadTimeMinutes={(message.data as any).estimatedReadTimeMinutes}
+                          wordCount={(message.data as any).wordCount}
+                          pageCount={(message.data as any).pageCount}
                         />
                       )}
                       
                       {/* Display article_card if message type is article_card */}
                       {message.type === 'article_card' && message.data && (
                         <ArticleCard
-                          url={message.data.url}
-                          title={message.data.title || 'Untitled'}
-                          siteName={message.data.siteName}
-                          published={message.data.published}
-                          summary={message.data.summary || ''}
-                          keyPoints={message.data.keyPoints || []}
-                          whyMatters={message.data.whyMatters}
+                          url={(message.data as any).url || ''}
+                          title={(message.data as any).title || 'Untitled'}
+                          siteName={(message.data as any).siteName}
+                          published={(message.data as any).published}
+                          summary={(message.data as any).summary || ''}
+                          keyPoints={(message.data as any).keyPoints || []}
+                          whyMatters={(message.data as any).whyMatters}
                           model={message.model}
                         />
                       )}
