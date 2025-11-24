@@ -615,7 +615,6 @@ const ChatComposer: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingMessageId(null);
     setInput('');
-    setIsSearchMode(false); // Reset search mode when cancelling edit
   };
 
   const handleSearchWebClick = () => {
@@ -955,7 +954,7 @@ const ChatComposer: React.FC = () => {
             
             {/* Send button - circular with arrow, inside input box on the right */}
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={(!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation || isUploading}
               className="absolute right-2 bottom-4 w-8 h-8 rounded-full bg-[#19c37d] hover:bg-[#15a06a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               title={editingMessageId ? "Save & send" : "Send"}
