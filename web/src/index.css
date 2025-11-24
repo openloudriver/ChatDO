@@ -23,3 +23,98 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Chat layout */
+.chat-assistant {
+  @apply my-5 ml-3;
+}
+
+.chat-user {
+  @apply my-3 ml-3;
+}
+
+/* Bubbles */
+.assistant-bubble {
+  @apply w-full rounded-xl bg-[#1e1f23] px-5 py-4 leading-relaxed text-[15px] max-w-none;
+}
+
+.user-bubble {
+  @apply inline-block max-w-[65%] rounded-xl bg-emerald-500 px-4 py-2 text-[15px] leading-relaxed text-white;
+}
+
+/* Markdown typography (GPT-ish) */
+.prose {
+  @apply max-w-none;
+}
+
+.prose p {
+  @apply my-2;
+}
+
+.prose h1 {
+  @apply text-[22px] font-semibold mt-3 mb-2;
+}
+
+.prose h2 {
+  @apply text-[19px] font-semibold mt-3 mb-2;
+}
+
+.prose h3 {
+  @apply text-[17px] font-semibold mt-3 mb-2;
+}
+
+.prose ul,
+.prose ol {
+  @apply my-3 ml-5;
+}
+
+.prose li {
+  @apply my-1;
+}
+
+.prose strong {
+  @apply font-semibold;
+}
+
+.prose em {
+  @apply italic;
+}
+
+.prose blockquote {
+  @apply border-l-2 border-white/20 pl-4 italic my-3 text-white/80;
+}
+
+/* Inline code + code blocks */
+.prose code {
+  @apply bg-[#2b2d31] rounded px-1.5 py-0.5 text-[13px];
+}
+
+.prose pre {
+  @apply bg-[#2b2d31] rounded-xl p-4 text-[13px] overflow-x-auto;
+}
+
+/* Links */
+.prose a {
+  @apply text-sky-400 underline underline-offset-2;
+}
+
+.prose a:hover {
+  @apply text-sky-300;
+}
+
+/* Sources block styling (ChatGPT-like) */
+.assistant-sources-label {
+  @apply text-[11px] uppercase tracking-[0.15em] text-white/40 mb-2;
+}
+
+.assistant-sources-list {
+  @apply space-y-1 text-[13px];
+}
+
+.assistant-source-link {
+  @apply text-sky-400 underline underline-offset-2 break-all;
+}
+
+.assistant-source-link:hover {
+  @apply text-sky-300;
+}

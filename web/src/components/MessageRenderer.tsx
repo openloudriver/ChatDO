@@ -17,7 +17,7 @@ type MessageRendererProps = {
  */
 export function MessageRenderer({ content }: MessageRendererProps) {
   return (
-    <div className="max-w-full text-gray-100 leading-relaxed text-sm sm:text-[15px]">
+    <div className="prose max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

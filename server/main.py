@@ -208,6 +208,7 @@ class ChatRequest(BaseModel):
     conversation_id: str
     target_name: str
     message: str
+    force_search: bool = False  # Explicit "Search web" trigger
 
 
 class ChatResponse(BaseModel):
@@ -489,10 +490,13 @@ def extract_urls(text: str) -> List[str]:
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Main chat endpoint - calls ChatDO's run_agent()
+    Main chat endpoint - hybrid approach:
+    - URL summaries: unchanged (YouTube transcript, yt-dlp+Whisper, Trafilatura)
+    - Explicit search commands: return Brave "Top Results" card
+    - Normal chat: GPT-5 with smart auto-search (Brave in background when needed)
     """
     try:
-        # Check for single URL with "summarize" keyword - route to article summary
+        # 1. Check for single URL with "summarize" keyword - route to article summary (unchanged)
         urls = extract_urls(request.message)
         if len(urls) == 1 and ("summarize" in request.message.lower() or "summary" in request.message.lower()):
             # Get project_id from conversation if not in request
@@ -517,6 +521,71 @@ async def chat(request: ChatRequest):
                 provider=result.provider
             )
         
+        # 2. Check for explicit search (force_search flag or search: prefix)
+        message_lower = request.message.lower().strip()
+        explicit_search_patterns = ["search:", "web search:", "brave:", "find:"]
+        is_explicit_search = request.force_search or any(message_lower.startswith(pattern) for pattern in explicit_search_patterns)
+        
+        if is_explicit_search:
+            # Extract query from command
+            query = request.message
+            for pattern in explicit_search_patterns:
+                if message_lower.startswith(pattern):
+                    query = request.message[len(pattern):].strip()
+                    break
+            
+            if not query:
+                query = request.message
+            
+            # Perform explicit Brave search and return Top Results card
+            from chatdo.tools import web_search
+            try:
+                search_results = web_search.search_web(query, max_results=10)
+                if search_results and len(search_results) > 0:
+                    structured_result = {
+                        "type": "web_search_results",
+                        "query": query,
+                        "provider": "brave",
+                        "results": search_results
+                    }
+                    
+                    # Save to memory store
+                    if request.conversation_id:
+                        target_cfg = load_target(request.target_name)
+                        history = load_thread_history(target_cfg.name, request.conversation_id)
+                        history.append({"role": "user", "content": request.message})
+                        history.append({
+                            "role": "assistant",
+                            "content": "",
+                            "type": "web_search_results",
+                            "data": structured_result,
+                            "model": "Brave Search",
+                            "provider": "brave_search"
+                        })
+                        save_thread_history(target_cfg.name, request.conversation_id, history)
+                    
+                    return ChatResponse(
+                        reply="",
+                        message_type="web_search_results",
+                        message_data=structured_result,
+                        model_used="Brave Search",
+                        provider="brave_search"
+                    )
+                else:
+                    return ChatResponse(
+                        reply="No search results found. Please try a different query.",
+                        model_used="Brave Search",
+                        provider="brave_search"
+                    )
+            except Exception as e:
+                error_msg = f"Web search failed: {str(e)}"
+                return ChatResponse(
+                    reply=error_msg,
+                    model_used="Brave Search",
+                    provider="brave_search"
+                )
+        
+        # 3. Normal chat with smart auto-search (or RAG if provided)
         # Build RAG context if RAG files are provided
         rag_context = ""
         has_rag_context = False
@@ -529,24 +598,68 @@ async def chat(request: ChatRequest):
             else:
                 print(f"[RAG] Warning: No context was built despite {len(request.rag_file_ids)} file IDs provided")
         
-        # Prepend RAG context to user message if available
-        user_message = request.message
-        if rag_context:
-            user_message = f"{rag_context}\n\nUser question: {request.message}"
-        
         # Load target configuration
         target_cfg = load_target(request.target_name)
         
-        # 1) Get raw response from ChatDO (may include <TASKS> block or structured results)
-        # Skip web search when RAG context is available (prioritize RAG over web search)
-        # Pass thread_id so run_agent can load history for context and save messages
-        raw_result, model_display, provider = run_agent(
-            target=target_cfg,
-            task=user_message,  # This includes RAG context
-            thread_id=request.conversation_id if request.conversation_id else None,  # Load history for context
-            skip_web_search=has_rag_context
-        )
+        # If RAG context is provided, use run_agent (existing RAG flow)
+        # Otherwise, use smart chat with auto-search
+        if has_rag_context:
+            # Prepend RAG context to user message
+            user_message = f"{rag_context}\n\nUser question: {request.message}"
+            
+            # Use run_agent for RAG (existing flow)
+            raw_result, model_display, provider = run_agent(
+                target=target_cfg,
+                task=user_message,  # This includes RAG context
+                thread_id=request.conversation_id if request.conversation_id else None,
+                skip_web_search=True  # Skip web search when RAG is available
+            )
+        else:
+            # Use smart chat with auto-search for normal chat
+            from server.services.chat_with_smart_search import chat_with_smart_search
+            
+            result = await chat_with_smart_search(
+                user_message=request.message,
+                target_name=target_cfg.name,
+                thread_id=request.conversation_id if request.conversation_id else None
+            )
+            
+            # If result has tasks or needs special handling, route to run_agent
+            # Otherwise return the smart chat result
+            if result.get("type") == "assistant_message":
+                # Check if content contains <TASKS> block (needs task execution)
+                content = result.get("content", "")
+                human_text, tasks_json = split_tasks_block(content)
+                
+                if tasks_json:
+                    # Has tasks - need to execute them
+                    # Continue with task execution flow below
+                    raw_result = content
+                    model_display = result.get("model", "GPT-5")
+                    provider = result.get("provider", "openai-gpt5")
+                else:
+                    # No tasks - return smart chat result directly
+                    # Add meta information for frontend
+                    return ChatResponse(
+                        reply=human_text,  # Use human_text (content without tasks)
+                        message_type="text",
+                        message_data={
+                            "content": human_text,
+                            "meta": result.get("meta", {})
+                        },
+                        model_used=result.get("model", "GPT-5"),
+                        provider=result.get("provider", "openai-gpt5")
+                    )
+            else:
+                # Unexpected result type, fall back to run_agent
+                raw_result, model_display, provider = run_agent(
+                    target=target_cfg,
+                    task=request.message,
+                    thread_id=request.conversation_id if request.conversation_id else None,
+                    skip_web_search=False
+                )
         
+        # Continue with existing flow for RAG or tasks
         # NOTE: run_agent now filters out RAG context automatically, so we don't need to fix it here
         # But we'll keep this as a safety net in case any RAG context slips through
         if has_rag_context and request.conversation_id:

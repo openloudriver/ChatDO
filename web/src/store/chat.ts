@@ -20,7 +20,15 @@ export interface Message {
     url?: string;
     domain?: string;
     content?: string;
+    meta?: {
+      usedWebSearch?: boolean;
+      webResultsPreview?: Array<{ title: string; url: string; snippet: string }>;
+    };
   };  // Structured data for special message types
+  meta?: {
+    usedWebSearch?: boolean;
+    webResultsPreview?: Array<{ title: string; url: string; snippet: string }>;
+  };  // Metadata for messages (e.g., web search usage)
 }
 
 export interface Conversation {

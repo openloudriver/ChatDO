@@ -54,7 +54,8 @@ async def stream_chat_response(
     conversation_id: str,
     target_name: str,
     message: str,
-    rag_file_ids: Optional[List[str]] = None
+    rag_file_ids: Optional[List[str]] = None,
+    force_search: bool = False
 ):
     """
     Stream ChatDO response via WebSocket
@@ -271,6 +272,75 @@ Keep it concise, neutral, and factual."""
             })
             return
         
+        # Check for explicit search (force_search flag or search: prefix)
+        message_lower = message.lower().strip()
+        explicit_search_patterns = ["search:", "web search:", "brave:", "find:"]
+        is_explicit_search = force_search or any(message_lower.startswith(pattern) for pattern in explicit_search_patterns)
+        
+        if is_explicit_search:
+            # Extract query from command if using prefix
+            query = message
+            if not force_search:
+                for pattern in explicit_search_patterns:
+                    if message_lower.startswith(pattern):
+                        query = message[len(pattern):].strip()
+                        break
+            
+            if not query:
+                query = message
+            
+            # Perform explicit Brave search and return Top Results card
+            from chatdo.tools import web_search
+            from chatdo.memory.store import load_thread_history, save_thread_history
+            
+            try:
+                search_results = web_search.search_web(query, max_results=10)
+                if search_results and len(search_results) > 0:
+                    structured_result = {
+                        "type": "web_search_results",
+                        "query": query,
+                        "provider": "brave",
+                        "results": search_results
+                    }
+                    
+                    # Save to memory store
+                    if conversation_id:
+                        target_cfg = load_target(target_name)
+                        history = load_thread_history(target_cfg.name, conversation_id)
+                        history.append({"role": "user", "content": message})
+                        history.append({
+                            "role": "assistant",
+                            "content": "",
+                            "type": "web_search_results",
+                            "data": structured_result,
+                            "model": "Brave Search",
+                            "provider": "brave_search"
+                        })
+                        save_thread_history(target_cfg.name, conversation_id, history)
+                    
+                    await websocket.send_json({
+                        "type": "web_search_results",
+                        "data": structured_result,
+                        "model": "Brave Search",
+                        "provider": "brave_search"
+                    })
+                    return
+                else:
+                    await websocket.send_json({
+                        "type": "error",
+                        "content": "No search results found. Please try a different query.",
+                        "done": True
+                    })
+                    return
+            except Exception as e:
+                error_msg = f"Web search failed: {str(e)}"
+                await websocket.send_json({
+                    "type": "error",
+                    "content": error_msg,
+                    "done": True
+                })
+                return
+        
         # Build RAG context if RAG files are provided
         user_message = message
         has_rag_context = False
@@ -288,16 +358,60 @@ Keep it concise, neutral, and factual."""
         # Load target configuration
         target_cfg = load_target(target_name)
         
-        # Run ChatDO agent (this is synchronous, so we'll chunk the result)
-        # TODO: In the future, integrate with streaming LLM responses
-        # Pass has_rag_context flag to skip web search when RAG is available
-        # Pass thread_id so run_agent can load history for context and save messages
-        raw_result, model_display, provider = run_agent(
-            target=target_cfg,
-            task=user_message,  # This includes RAG context
-            thread_id=conversation_id if conversation_id else None,  # Load history for context
-            skip_web_search=has_rag_context
-        )
+        # If RAG context is available, use run_agent (preserves existing behavior)
+        # Otherwise, use chat_with_smart_search for normal chat (consistent with REST endpoint)
+        if has_rag_context:
+            # Run ChatDO agent (this is synchronous, so we'll chunk the result)
+            # TODO: In the future, integrate with streaming LLM responses
+            # Pass has_rag_context flag to skip web search when RAG is available
+            # Pass thread_id so run_agent can load history for context and save messages
+            raw_result, model_display, provider = run_agent(
+                target=target_cfg,
+                task=user_message,  # This includes RAG context
+                thread_id=conversation_id if conversation_id else None,  # Load history for context
+                skip_web_search=has_rag_context
+            )
+        else:
+            # Use chat_with_smart_search for normal chat (consistent with REST endpoint)
+            from server.services.chat_with_smart_search import chat_with_smart_search
+            from chatdo.memory.store import load_thread_history
+            
+            # Get conversation history for context
+            conversation_history = []
+            if conversation_id:
+                conversation_history = load_thread_history(target_cfg.name, conversation_id)
+            
+            # Call smart chat service
+            result = await chat_with_smart_search(
+                user_message=message,
+                target_name=target_cfg.name,
+                thread_id=conversation_id if conversation_id else None,
+                conversation_history=conversation_history
+            )
+            
+            # Extract response content
+            raw_result = result.get("content", "")
+            model_display = result.get("model", "GPT-5")
+            provider = result.get("provider", "openai-gpt5")
+            meta = result.get("meta", {})
+            
+            # Stream the response as chunks (simulate streaming)
+            chunk_size = 50  # Characters per chunk
+            for i in range(0, len(raw_result), chunk_size):
+                chunk = raw_result[i:i + chunk_size]
+                await websocket.send_json({
+                    "type": "chunk",
+                    "content": chunk
+                })
+            
+            # Send done message with meta
+            await websocket.send_json({
+                "type": "done",
+                "model": model_display,
+                "provider": provider,
+                "meta": meta
+            })
+            return
         
         # NOTE: run_agent now filters out RAG context automatically, so we don't need to fix it here
         # But we'll keep this as a safety net in case any RAG context slips through
@@ -503,6 +617,7 @@ async def websocket_endpoint(websocket: WebSocket):
             target_name = data.get("target_name")
             message = data.get("message")
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
+            force_search = data.get("force_search", False)  # Explicit web search flag
             print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             
             if not all([project_id, conversation_id, target_name, message]):
@@ -520,7 +635,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 conversation_id,
                 target_name,
                 message,
-                rag_file_ids=rag_file_ids
+                rag_file_ids=rag_file_ids,
+                force_search=force_search
             )
     
     except WebSocketDisconnect:

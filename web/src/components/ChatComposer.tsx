@@ -4,6 +4,7 @@ import axios from 'axios';
 import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
 import UrlSummaryDialog from './UrlSummaryDialog';
+import WebSearchDialog from './WebSearchDialog';
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -55,11 +56,15 @@ const ChatComposer: React.FC = () => {
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
   const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
-  const handleSend = async () => {
+  const handleSend = async (forceSearch: boolean = false) => {
     // Debug: Log RAG file IDs before sending
     console.log('[RAG] Current ragFileIds from store:', ragFileIds);
     if ((!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation) return;
+
+    // Use forceSearch if explicitly provided
+    const shouldForceSearch = forceSearch;
 
     const userMessage = input.trim();
     const isEditing = !!editingMessageId;
@@ -156,7 +161,8 @@ const ChatComposer: React.FC = () => {
           conversation_id: currentConversation.id,
           target_name: currentConversation.targetName,
           message: messageToSend,
-          rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined
+          rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
+          force_search: shouldForceSearch
         };
         console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds);
         ws.send(JSON.stringify(payload));
@@ -214,7 +220,8 @@ const ChatComposer: React.FC = () => {
               role: 'assistant', 
               content: streamedContent,
               model: data.model,
-              provider: data.provider
+              provider: data.provider,
+              meta: data.meta || undefined
             });
             clearStreaming();
             ws.close();
@@ -236,7 +243,7 @@ const ChatComposer: React.FC = () => {
           // Silently handle parse errors
           clearStreaming();
           ws.close();
-          fallbackToRest(messageToSend);
+          fallbackToRest(messageToSend, shouldForceSearch);
         }
       };
       
@@ -244,16 +251,16 @@ const ChatComposer: React.FC = () => {
         clearStreaming();
         ws.close();
         // Fallback to REST API (silently, don't log)
-        fallbackToRest(messageToSend);
+        fallbackToRest(messageToSend, shouldForceSearch);
       };
       
     } catch (error) {
       // Silently fallback to REST - this is expected behavior
-      fallbackToRest(messageToSend);
+      fallbackToRest(messageToSend, shouldForceSearch);
     }
   };
 
-  const fallbackToRest = async (message: string) => {
+  const fallbackToRest = async (message: string, forceSearch: boolean = false) => {
     if (!currentProject || !currentConversation) return;
     
     try {
@@ -265,7 +272,8 @@ const ChatComposer: React.FC = () => {
         conversation_id: currentConversation.id,
         target_name: currentConversation.targetName,
         message: messageToSend,
-        rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined
+        rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
+        force_search: forceSearch
       });
       
       // Check if response is structured (web_search_results or article_card)
@@ -297,11 +305,13 @@ const ChatComposer: React.FC = () => {
           provider: response.data.provider
         });
       } else {
+        // Normal chat message - may include meta for web search sources
         addMessage({ 
           role: 'assistant', 
           content: response.data.reply,
           model: response.data.model_used,
-          provider: response.data.provider
+          provider: response.data.provider,
+          meta: response.data.message_data?.meta || undefined
         });
       }
     } catch (error: any) {
@@ -605,6 +615,99 @@ const ChatComposer: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingMessageId(null);
     setInput('');
+    setIsSearchMode(false); // Reset search mode when cancelling edit
+  };
+
+  const handleSearchWebClick = () => {
+    if (!currentProject || !currentConversation) return;
+    setIsSearchDialogOpen(true);
+  };
+
+  const handleSearchDialogSubmit = async (query: string) => {
+    if (!currentProject || !currentConversation) return;
+    
+    // Add user message
+    addMessage({ role: 'user', content: query });
+    
+    setLoading(true);
+    
+    try {
+      // Try WebSocket streaming first
+      const ws = new WebSocket('ws://localhost:8000/api/chat/stream');
+      let streamedContent = '';
+      
+      ws.onopen = () => {
+        setStreaming(true);
+        const payload = {
+          project_id: currentProject.id,
+          conversation_id: currentConversation.id,
+          target_name: currentConversation.targetName,
+          message: query,
+          rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
+          force_search: true
+        };
+        ws.send(JSON.stringify(payload));
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'chunk') {
+            streamedContent += data.content;
+            updateStreamingContent(streamedContent);
+          } else if (data.type === 'web_search_results') {
+            // Handle structured web search results
+            addMessage({ 
+              role: 'assistant', 
+              content: '',
+              type: 'web_search_results',
+              data: data.data,
+              model: data.model,
+              provider: data.provider
+            });
+            clearStreaming();
+            setLoading(false);
+            ws.close();
+          } else if (data.type === 'done') {
+            // Add final message with model/provider info
+            addMessage({ 
+              role: 'assistant', 
+              content: streamedContent,
+              model: data.model,
+              provider: data.provider,
+              meta: data.meta || undefined
+            });
+            clearStreaming();
+            ws.close();
+          } else if (data.type === 'error') {
+            if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
+              console.error('WebSocket error:', data.content);
+            }
+            clearStreaming();
+            ws.close();
+            addMessage({ 
+              role: 'assistant', 
+              content: `Error: ${data.content}` 
+            });
+            setLoading(false);
+          }
+        } catch (e) {
+          clearStreaming();
+          ws.close();
+          fallbackToRest(query, true);
+        }
+      };
+      
+      ws.onerror = () => {
+        clearStreaming();
+        ws.close();
+        fallbackToRest(query, true);
+      };
+      
+    } catch (error) {
+      fallbackToRest(query, true);
+    }
   };
 
   return (
@@ -801,6 +904,15 @@ const ChatComposer: React.FC = () => {
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </button>
+            <button
+              onClick={handleSearchWebClick}
+              className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
+              title="Search the web"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
               </svg>
             </button>
             <button
@@ -1012,6 +1124,11 @@ const ChatComposer: React.FC = () => {
         isOpen={isUrlDialogOpen}
         onClose={() => setIsUrlDialogOpen(false)}
         onSubmit={handleUrlDialogSubmit}
+      />
+      <WebSearchDialog
+        isOpen={isSearchDialogOpen}
+        onClose={() => setIsSearchDialogOpen(false)}
+        onSubmit={handleSearchDialogSubmit}
       />
     </div>
   );
