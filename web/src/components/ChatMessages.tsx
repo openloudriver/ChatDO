@@ -382,7 +382,7 @@ const ChatMessages: React.FC = () => {
           <div
             key={message.id}
             className={`group flex ${
-              message.role === 'user' ? 'gap-4 justify-end' : 'gap-6'
+              message.role === 'user' ? 'gap-4 w-full' : 'gap-6'
             } ${message.role === 'assistant' ? 'w-full' : ''}`}
           >
             {message.role === 'assistant' && (
@@ -391,7 +391,7 @@ const ChatMessages: React.FC = () => {
               </div>
             )}
             
-            <div className={`flex flex-col ${message.role === 'assistant' ? 'flex-1 min-w-0 w-full' : ''}`}>
+            <div className={`flex flex-col ${message.role === 'assistant' ? 'flex-1 min-w-0 w-full' : message.role === 'user' ? 'flex-1 min-w-0 w-full' : ''}`}>
               <>
                 {/* Display images outside the message bubble for user messages */}
                 {message.role === 'user' && (() => {
@@ -568,8 +568,8 @@ const ChatMessages: React.FC = () => {
                     <div
                       className={`rounded-lg px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white w-2/3 ml-auto'
-                          : 'bg-[#444654] text-[#ececf1] w-full'
+                          ? 'bg-[#19c37d] text-white w-full ml-[55px]'
+                          : 'bg-[#444654] text-[#ececf1] w-full ml-[2px]'
                       }`}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
