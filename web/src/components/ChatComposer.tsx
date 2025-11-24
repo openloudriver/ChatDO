@@ -24,9 +24,9 @@ const ChatComposer: React.FC = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       const scrollHeight = textareaRef.current.scrollHeight;
-      // Max height: ~12 lines (about 300px), min height: 44px
+      // Max height: ~12 lines (about 300px), min height: 2 rows (~88px for two lines)
       const maxHeight = 300;
-      const minHeight = 44;
+      const minHeight = 88; // Two rows height
       const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
       textareaRef.current.style.height = `${newHeight}px`;
     }
@@ -884,6 +884,62 @@ const ChatComposer: React.FC = () => {
         )}
         <div className="flex gap-2 items-end">
           <div className="flex-1 relative">
+            {/* Left side icons - positioned with one icon space gap from send button */}
+            <div className="absolute right-[80px] bottom-2.5 flex gap-1 z-10">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
+                title="Upload file"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+              </button>
+              <button
+                onClick={handleSearchWebClick}
+                className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
+                title="Search the web"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+              </button>
+              <button
+                onClick={handleSummarizeUrlClick}
+                disabled={showSpinner}
+                className={`p-2 rounded transition-colors ${
+                  showSpinner
+                    ? 'text-blue-400 cursor-wait'
+                    : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                }`}
+                title={showSpinner ? "Summarizing URL..." : "Summarize URL"}
+              >
+                {showSpinner ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={() => setRagTrayOpen(!isRagTrayOpen)}
+                className={`p-2 rounded transition-colors ${
+                  isRagTrayOpen
+                    ? 'text-[#19c37d] bg-[#19c37d]/20'
+                    : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                }`}
+                title="RAG context tray (upload reference files)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </button>
+            </div>
+            
             <textarea
               ref={textareaRef}
               value={input}
@@ -893,60 +949,19 @@ const ChatComposer: React.FC = () => {
               }}
               onKeyPress={handleKeyPress}
               placeholder={editingMessageId ? "Edit your message..." : "Message ChatDO..."}
-              className="w-full p-3 pr-20 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
-              style={{ minHeight: '44px', maxHeight: '300px', height: '44px' }}
+              className="w-full p-3 pl-20 pr-12 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
+              style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }}
             />
-          <div className="absolute right-2 bottom-2 flex gap-1">
+            
+            {/* Send button - circular with arrow, inside input box on the right */}
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
-              title="Upload file"
+              onClick={handleSend}
+              disabled={(!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation || isUploading}
+              className="absolute right-2 bottom-4 w-8 h-8 rounded-full bg-[#19c37d] hover:bg-[#15a06a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+              title={editingMessageId ? "Save & send" : "Send"}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-            </button>
-            <button
-              onClick={handleSearchWebClick}
-              className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
-              title="Search the web"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
-            </button>
-            <button
-              onClick={handleSummarizeUrlClick}
-              disabled={showSpinner}
-              className={`p-2 rounded transition-colors ${
-                showSpinner
-                  ? 'text-blue-400 cursor-wait'
-                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
-              }`}
-              title={showSpinner ? "Summarizing URL..." : "Summarize URL"}
-            >
-              {showSpinner ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-            </button>
-            <button
-              onClick={() => setRagTrayOpen(!isRagTrayOpen)}
-              className={`p-2 rounded transition-colors ${
-                isRagTrayOpen
-                  ? 'text-[#19c37d] bg-[#19c37d]/20'
-                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
-              }`}
-              title="RAG context tray (upload reference files)"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
               </svg>
             </button>
           </div>
@@ -956,14 +971,6 @@ const ChatComposer: React.FC = () => {
             className="hidden"
             onChange={handleFileUpload}
           />
-        </div>
-        <button
-          onClick={handleSend}
-          disabled={(!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation || isUploading}
-          className="h-[44px] px-4 py-2 bg-[#19c37d] text-white rounded-lg hover:bg-[#15a06a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-        >
-          {editingMessageId ? 'Save & send' : 'Send'}
-        </button>
         </div>
       </div>
       

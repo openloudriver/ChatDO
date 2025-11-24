@@ -374,23 +374,24 @@ const ChatMessages: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Messages */}
         <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
+          <div className="max-w-4xl mx-auto">
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
         
         return (
           <div
             key={message.id}
-            className={`group flex gap-4 ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
+            className={`group flex ${
+              message.role === 'user' ? 'gap-4 justify-end' : 'gap-6'
+            } ${message.role === 'assistant' ? 'w-full' : ''}`}
           >
             {message.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0 -ml-12 relative z-10">
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
             
-            <div className="flex flex-col">
+            <div className={`flex flex-col ${message.role === 'assistant' ? 'flex-1 min-w-0 w-full' : ''}`}>
               <>
                 {/* Display images outside the message bubble for user messages */}
                 {message.role === 'user' && (() => {
@@ -565,10 +566,10 @@ const ChatMessages: React.FC = () => {
                   
                   return (
                     <div
-                      className={`max-w-3xl rounded-lg px-4 py-3 ${
+                      className={`rounded-lg px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white'
-                          : 'bg-[#444654] text-[#ececf1]'
+                          ? 'bg-[#19c37d] text-white w-2/3 ml-auto'
+                          : 'bg-[#444654] text-[#ececf1] w-full'
                       }`}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
@@ -1033,7 +1034,7 @@ const ChatMessages: React.FC = () => {
           <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-bold">C</span>
           </div>
-          <div className="max-w-3xl rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
+          <div className="flex-1 rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown>{streamingContent}</ReactMarkdown>
             </div>
@@ -1041,8 +1042,9 @@ const ChatMessages: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Invisible element at the bottom to scroll to */}
+          {/* Invisible element at the bottom to scroll to */}
       <div ref={messagesEndRef} />
+          </div>
         </div>
         
       </div>
