@@ -20,6 +20,19 @@ export interface Message {
     url?: string;
     domain?: string;
     content?: string;
+    // Document card properties
+    fileName?: string;
+    fileType?: string;
+    filePath?: string;
+    keyPoints?: string[];
+    whyMatters?: string;
+    estimatedReadTimeMinutes?: number;
+    wordCount?: number;
+    pageCount?: number;
+    // Article card properties
+    title?: string;
+    siteName?: string;
+    published?: string;
     meta?: {
       usedWebSearch?: boolean;
       webResultsPreview?: Array<{ title: string; url: string; snippet: string }>;
