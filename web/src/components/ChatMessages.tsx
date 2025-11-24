@@ -371,22 +371,20 @@ const ChatMessages: React.FC = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-x-visible overflow-y-hidden">
         {/* Messages */}
-        <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
-          <div className="max-w-4xl mx-auto">
+        <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto overflow-x-visible p-4 space-y-4 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
+          <div className="max-w-4xl mx-auto overflow-x-visible">
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
         
         return (
           <div
             key={message.id}
-            className={`group flex ${
-              message.role === 'user' ? 'gap-4 w-full' : 'gap-6'
-            } ${message.role === 'assistant' ? 'w-full' : ''}`}
+            className={`group flex w-full gap-6${message.role === 'user' ? ' justify-end' : ''}`}
           >
             {message.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0 -ml-12 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0 -ml-[49px] relative z-10">
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
@@ -566,12 +564,12 @@ const ChatMessages: React.FC = () => {
                   
                   return (
                     <div
-                      className={`rounded-lg px-4 py-3 ${
+                      className={`rounded-lg px-4 py-3 w-full ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white w-full ml-[55px]'
+                          ? 'bg-[#19c37d] text-white ml-[7px]'
                           : 'bg-[#444654] text-[#ececf1]'
                       }`}
-                      style={message.role === 'assistant' ? { width: 'calc(100% + 6px)' } : undefined}
+                      style={message.role === 'assistant' ? { width: 'calc(100% + 7px)' } : message.role === 'user' ? { width: 'calc(100% + 1px)' } : undefined}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
                       {filesToShow.length > 0 && (
@@ -1021,7 +1019,7 @@ const ChatMessages: React.FC = () => {
             </div>
             
             {message.role === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#5436da] flex-shrink-0 -mr-[55px] relative z-10 flex items-center justify-center">
                 <span className="text-white text-sm font-bold">U</span>
               </div>
             )}
