@@ -8,100 +8,17 @@ import RagResponseCard from './RagResponseCard';
 import { MessageRenderer } from './MessageRenderer';
 import type { RagFile } from '../types/rag';
 
-// Component for PPTX preview - converts to PDF for beautiful preview like PDFs!
-const PPTXPreview: React.FC<{filePath: string, fileName: string}> = ({ filePath, fileName }) => {
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    if (!filePath) {
-      setError('No file path provided');
-      setLoading(false);
-      return;
-    }
-    
-    // Extract the path - filePath might be full URL or just the path
-    // Server returns: uploads/project_id/conversation_id/file.pptx
-    // We need: project_id/conversation_id/file.pptx for the API
-    let apiPath = filePath;
-    if (filePath.startsWith('http://localhost:8000/uploads/')) {
-      apiPath = filePath.replace('http://localhost:8000/uploads/', '');
-    } else if (filePath.startsWith('uploads/')) {
-      apiPath = filePath.replace('uploads/', '');
-    }
-    
-    // The API converts PPTX to PDF and returns it
-    // We'll use it in an iframe just like PDFs
-    const previewUrl = `http://localhost:8000/api/pptx-preview/${apiPath}`;
-    setPdfUrl(previewUrl);
-    setLoading(false);
-  }, [filePath]);
-  
-  if (loading) {
-    return (
-      <div className="text-center text-[#8e8ea0] py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-[#19c37d] border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p>Converting presentation to PDF for preview...</p>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="text-[#ececf1]">
-        <div className="mb-4 p-4 bg-[#40414f] rounded-lg">
-          <h4 className="text-lg font-semibold mb-2">{fileName}</h4>
-          <p className="text-sm text-[#8e8ea0]">{error}</p>
-          <p className="text-sm text-[#8e8ea0] mt-2">The file has been uploaded and ChatDO can process its content.</p>
-          {filePath && (
-            <a 
-              href={filePath} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="mt-4 inline-block px-4 py-2 bg-[#19c37d] text-white rounded hover:bg-[#15a06a] transition-colors"
-            >
-              Download File
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  }
-  
-  // Show PDF preview in iframe (same beautiful experience as PDFs!)
-  return (
-    <div className="w-full h-full">
-      {pdfUrl ? (
-        <iframe
-          src={pdfUrl}
-          className="w-full h-full border border-[#565869] rounded"
-          title={fileName}
-          onError={() => setError('Failed to load converted PDF')}
-        />
-      ) : (
-        <div className="text-center text-[#8e8ea0] py-8">
-          <p>Preparing preview...</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-
 const ChatMessages: React.FC = () => {
   const { 
     messages, 
     isStreaming, 
     streamingContent, 
-    isLoading,
     currentConversation, 
     currentProject, 
     setViewMode, 
     viewMode, 
     renameChat,
     deleteMessage,
-    isSummarizingArticle,
     setSummarizingArticle,
     isRagTrayOpen,
     ragFileIds, // Get ragFileIds to match backend order
