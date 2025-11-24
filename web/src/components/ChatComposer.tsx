@@ -949,7 +949,7 @@ const ChatComposer: React.FC = () => {
               }}
               onKeyPress={handleKeyPress}
               placeholder={editingMessageId ? "Edit your message..." : "Message ChatDO..."}
-              className="w-full p-3 pl-20 pr-12 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
+              className="w-full p-3 pl-3 pr-12 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
               style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }}
             />
             
