@@ -66,4 +66,5 @@ data/tmp_audio/
 rag_files/*.json
 
 # Memory Service database
-memory_service/store/index.sqlite
+memory_service/store/**/*.sqlite
+memory_service/store/*.sqlite
