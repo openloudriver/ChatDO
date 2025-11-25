@@ -12,6 +12,7 @@ export interface Message {
   type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card' | 'rag_response';  // Message types
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
+  sources?: string[];  // Source tags (e.g., ["Memory-DRR", "Brave Search", "RAG-Upload"])
   data?: {
     query?: string;
     provider?: string;
@@ -778,6 +779,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           data: msg.data || undefined, // Preserve structured message data
           model: msg.model || undefined, // Preserve model attribution
           provider: msg.provider || undefined, // Preserve provider attribution
+          sources: msg.sources || undefined, // Preserve source tags
           timestamp: new Date() // Backend doesn't provide timestamps, use current time
         });
       }

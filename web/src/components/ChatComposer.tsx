@@ -209,7 +209,8 @@ const ChatComposer: React.FC = () => {
               type: 'rag_response',
               data: data.data,
               model: data.model,
-              provider: data.provider
+              provider: data.provider,
+              sources: data.sources || (data.data?.sources ? ["RAG-Upload"] : undefined)
             });
             clearStreaming();
             setLoading(false);
@@ -221,6 +222,7 @@ const ChatComposer: React.FC = () => {
               content: streamedContent,
               model: data.model,
               provider: data.provider,
+              sources: data.sources,
               meta: data.meta || undefined
             });
             clearStreaming();
@@ -284,7 +286,8 @@ const ChatComposer: React.FC = () => {
           type: 'web_search_results',
           data: response.data.message_data,
           model: response.data.model_used,
-          provider: response.data.provider
+          provider: response.data.provider,
+          sources: response.data.sources
         });
       } else if (response.data.message_type === 'article_card' && response.data.message_data) {
         addMessage({ 
@@ -302,7 +305,8 @@ const ChatComposer: React.FC = () => {
           type: 'rag_response',
           data: response.data.message_data,
           model: response.data.model_used,
-          provider: response.data.provider
+          provider: response.data.provider,
+          sources: response.data.sources
         });
       } else {
         // Normal chat message - may include meta for web search sources
@@ -310,6 +314,7 @@ const ChatComposer: React.FC = () => {
           role: 'assistant', 
           content: response.data.reply,
           model: response.data.model_used,
+          sources: response.data.sources,
           provider: response.data.provider,
           meta: response.data.message_data?.meta || undefined
         });
@@ -675,6 +680,7 @@ const ChatComposer: React.FC = () => {
               content: streamedContent,
               model: data.model,
               provider: data.provider,
+              sources: data.sources,
               meta: data.meta || undefined
             });
             clearStreaming();

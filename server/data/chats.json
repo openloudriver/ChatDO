@@ -78,5 +78,15 @@
     "updated_at": "2025-11-25T03:15:40.788120+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "733991e8-c504-4297-91bc-62aead1c8606",
+    "project_id": "scratch",
+    "title": "Where do chickens come from?",
+    "thread_id": "733991e8-c504-4297-91bc-62aead1c8606",
+    "created_at": "2025-11-25T04:07:43.990952+00:00",
+    "updated_at": "2025-11-25T04:07:51.903004+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

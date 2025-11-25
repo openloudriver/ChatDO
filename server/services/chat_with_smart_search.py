@@ -65,11 +65,19 @@ async def chat_with_smart_search(
     
     # 0. Get memory context if project_id is available
     memory_context = ""
+    sources = []
     if project_id:
         try:
-            memory_context = get_project_memory_context(project_id, user_message, limit=8)
-            if memory_context:
+            memory_context, has_memory = get_project_memory_context(project_id, user_message, limit=8)
+            if has_memory:
                 logger.info(f"Retrieved memory context for project {project_id}")
+                # Map project_id to user-friendly label
+                # Get project name from projects list
+                from server.main import load_projects
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == project_id), None)
+                project_name = project.get("name", project_id) if project else project_id
+                sources.append(f"Memory-{project_name}")
         except Exception as e:
             logger.warning(f"Failed to get memory context: {e}")
     
@@ -107,6 +115,7 @@ async def chat_with_smart_search(
                     "content": content,
                     "model": model_display,
                     "provider": provider_id,
+                    "sources": sources if sources else None,
                     "meta": {"usedWebSearch": False}
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
@@ -120,7 +129,8 @@ async def chat_with_smart_search(
                 "usedWebSearch": False,
             },
             "model": model_display,
-            "provider": provider_id
+            "provider": provider_id,
+            "sources": sources if sources else None
         }
     
     # 2b. Use Brave + GPT-5
@@ -159,6 +169,7 @@ async def chat_with_smart_search(
                     "content": content,
                     "model": model_display,
                     "provider": provider_id,
+                    "sources": sources if sources else None,
                     "meta": {"usedWebSearch": False, "webSearchError": str(e)}
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
@@ -173,7 +184,8 @@ async def chat_with_smart_search(
                 "webSearchError": str(e)
             },
             "model": model_display,
-            "provider": provider_id
+            "provider": provider_id,
+            "sources": sources if sources else None
         }
     
     if not web_results or len(web_results) == 0:
@@ -206,6 +218,7 @@ async def chat_with_smart_search(
                     "content": content,
                     "model": model_display,
                     "provider": provider_id,
+                    "sources": sources if sources else None,
                     "meta": {"usedWebSearch": False, "webSearchEmpty": True}
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
@@ -220,7 +233,8 @@ async def chat_with_smart_search(
                 "webSearchEmpty": True
             },
             "model": model_display,
-            "provider": provider_id
+            "provider": provider_id,
+            "sources": sources if sources else None
         }
     
     # Format web results for GPT-5
@@ -268,11 +282,16 @@ async def chat_with_smart_search(
             # Add user message
             history.append({"role": "user", "content": user_message})
             # Add assistant message
+            # Add Brave Search to sources if web search was used
+            web_sources = sources.copy() if sources else []
+            web_sources.append("Brave Search")
+            
             history.append({
                 "role": "assistant",
                 "content": content,
                 "model": model_display,
                 "provider": provider_id,
+                "sources": web_sources,
                 "meta": {
                     "usedWebSearch": True,
                     "webResultsPreview": web_results[:5]
@@ -282,6 +301,10 @@ async def chat_with_smart_search(
         except Exception as e:
             logger.warning(f"Failed to save conversation history: {e}")
     
+    # Add Brave Search to sources if web search was used
+    web_sources = sources.copy() if sources else []
+    web_sources.append("Brave Search")
+    
     return {
         "type": "assistant_message",
         "content": content,
@@ -290,6 +313,7 @@ async def chat_with_smart_search(
             "webResultsPreview": web_results[:5]  # Top 5 for sources display
         },
         "model": model_display,
-        "provider": provider_id
+        "provider": provider_id,
+        "sources": web_sources
     }
 

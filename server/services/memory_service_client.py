@@ -105,7 +105,7 @@ def get_memory_client() -> MemoryServiceClient:
     return _memory_client
 
 
-def get_project_memory_context(project_id: str, query: str, limit: int = 8) -> str:
+def get_project_memory_context(project_id: str, query: str, limit: int = 8) -> tuple[str, bool]:
     """
     Get memory context for a project and format it for injection into prompts.
     
@@ -115,9 +115,12 @@ def get_project_memory_context(project_id: str, query: str, limit: int = 8) -> s
         limit: Maximum number of results
         
     Returns:
-        Formatted context string, or empty string if no results or service unavailable
+        Tuple of (formatted context string, has_results: bool)
+        Returns ("", False) if no results or service unavailable
     """
     client = get_memory_client()
     results = client.search(project_id, query, limit)
-    return client.format_context(results)
+    if results:
+        return client.format_context(results), True
+    return "", False
 

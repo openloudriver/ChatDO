@@ -947,15 +947,24 @@ const ChatMessages: React.FC = () => {
                         )
                       )}
                       
-                      {/* Display model attribution for assistant messages (only once, at the end) */}
+                      {/* Display sources and model attribution for assistant messages (only once, at the end) */}
                       {/* Don't show for article_card, document_card, rag_response, or web_search_results as they handle their own model display */}
-                      {message.role === 'assistant' && message.model && 
+                      {message.role === 'assistant' && 
                        message.type !== 'article_card' && 
                        message.type !== 'document_card' && 
                        message.type !== 'rag_response' &&
                        message.type !== 'web_search_results' && (
-                        <div className="text-xs text-[#8e8ea0] mt-2 text-right">
-                          Model: {formatModelName(message.model)}
+                        <div className="text-xs text-[#8e8ea0] mt-2 text-right leading-tight">
+                          {message.sources && message.sources.length > 0 && (
+                            <div>
+                              Sources: {message.sources.join(', ')}
+                            </div>
+                          )}
+                          {message.model && (
+                            <div>
+                              Model: {formatModelName(message.model)}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

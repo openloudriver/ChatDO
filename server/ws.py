@@ -395,6 +395,7 @@ Keep it concise, neutral, and factual."""
             model_display = result.get("model", "GPT-5")
             provider = result.get("provider", "openai-gpt5")
             meta = result.get("meta", {})
+            sources = result.get("sources")
             
             # Stream the response as chunks (simulate streaming)
             chunk_size = 50  # Characters per chunk
@@ -410,6 +411,7 @@ Keep it concise, neutral, and factual."""
                 "type": "done",
                 "model": model_display,
                 "provider": provider,
+                "sources": sources,
                 "meta": meta
             })
             return
@@ -509,6 +511,8 @@ Keep it concise, neutral, and factual."""
                                 }
                                 history[i]["model"] = model_display
                                 history[i]["provider"] = provider
+                                # Add RAG sources
+                                history[i]["sources"] = ["RAG-Upload"] if source_files else None
                                 updated = True
                                 print(f"[RAG] Updated message at index {i} with type=rag_response, data keys: {list(history[i].get('data', {}).keys())}")
                                 break

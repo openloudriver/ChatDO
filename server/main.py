@@ -217,6 +217,7 @@ class ChatResponse(BaseModel):
     provider: Optional[str] = None
     message_type: Optional[str] = None  # 'text' (default), 'web_search_results', or 'article_card'
     message_data: Optional[Dict[str, Any]] = None  # Structured data for special message types
+    sources: Optional[List[str]] = None  # Source tags (e.g., ["Memory-DRR", "Brave Search"])
 
 
 class ArticleSummaryRequest(BaseModel):
@@ -569,7 +570,8 @@ async def chat(request: ChatRequest):
                         message_type="web_search_results",
                         message_data=structured_result,
                         model_used="Brave Search",
-                        provider="brave_search"
+                        provider="brave_search",
+                        sources=["Brave Search"]
                     )
                 else:
                     return ChatResponse(
@@ -657,7 +659,8 @@ async def chat(request: ChatRequest):
                             "meta": result.get("meta", {})
                         },
                         model_used=result.get("model", "GPT-5"),
-                        provider=result.get("provider", "openai-gpt5")
+                        provider=result.get("provider", "openai-gpt5"),
+                        sources=result.get("sources")
                     )
             else:
                 # Unexpected result type, fall back to run_agent
@@ -789,7 +792,8 @@ async def chat(request: ChatRequest):
                     "sources": source_files
                 },
                 model_used=model_display,
-                provider=provider
+                provider=provider,
+                sources=["RAG-Upload"] if source_files else None
             )
         
         # 5) If no tasks, return (run_agent already saved the message)
@@ -2057,6 +2061,8 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
             message_obj["model"] = msg.get("model")
         if msg.get("provider"):
             message_obj["provider"] = msg.get("provider")
+        if msg.get("sources"):
+            message_obj["sources"] = msg.get("sources")
         
         print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, content_preview={msg.get('content', '')[:50]}...")
         messages.append(message_obj)
