@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useChatStore, type Project } from '../store/chat';
 import { AiSpendIndicator } from './AiSpendIndicator';
+import ConnectProjectModal from './ConnectProjectModal';
 
 const PlusIcon = () => (
   <span className="inline-flex h-4 w-4 items-center justify-center text-xs font-bold">
@@ -33,7 +34,7 @@ interface SortableProjectItemProps {
   setOpenMenuId: (id: string | null) => void;
   handleEditProject: (id: string, name: string) => void;
   handleDeleteProject: (id: string, name: string) => void;
-  setViewMode: (mode: 'projectList' | 'chat' | 'trashList') => void;
+  setViewMode: (mode: 'projectList' | 'chat' | 'trashList' | 'memory') => void;
 }
 
 const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
@@ -105,6 +106,15 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
           </button>
           <button
             onClick={() => {
+              handleConnectProject(project.id, project.name);
+              setOpenMenuId(null);
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f]"
+          >
+            Connect project…
+          </button>
+          <button
+            onClick={() => {
               handleDeleteProject(project.id, project.name);
               setOpenMenuId(null);
             }}
@@ -149,6 +159,9 @@ const Sidebar: React.FC = () => {
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
+  const [connectModal, setConnectModal] = useState<{ open: boolean; projectId?: string; projectName?: string }>({
+    open: false,
+  });
 
   // Load chats when project changes
   useEffect(() => {
@@ -209,6 +222,10 @@ const Sidebar: React.FC = () => {
       console.error('Failed to rename project:', error);
       alert('Failed to rename project. Please try again.');
     }
+  };
+
+  const handleConnectProject = (projectId: string, projectName: string) => {
+    setConnectModal({ open: true, projectId, projectName });
   };
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
@@ -318,38 +335,76 @@ const Sidebar: React.FC = () => {
 
       {/* Chats section removed - chats are now shown in main area via ProjectChatList */}
 
-      {/* Bottom Status Bar - AI Spend Indicator and Trash Button */}
+      {/* Bottom Status Bar - AI Spend Indicator, Memory, and Trash Button */}
       <div className="px-2 py-2 border-t border-[#565869] flex items-center justify-between flex-shrink-0 bg-[#202123]">
         <div className="flex-1 min-w-0">
           <AiSpendIndicator />
         </div>
-        <button
-          onClick={() => {
-            setViewMode('trashList');
-            setCurrentProject(null);
-          }}
-          className={`p-2 rounded transition-colors flex-shrink-0 ${
-            viewMode === 'trashList'
-              ? 'bg-[#343541] text-white'
-              : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
-          }`}
-          title="Trash"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              setViewMode('memory');
+              setCurrentProject(null);
+            }}
+            className={`p-2 rounded transition-colors flex-shrink-0 ${
+              viewMode === 'memory'
+                ? 'bg-[#343541] text-white'
+                : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+            }`}
+            title="Memory Dashboard"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={() => {
+              setViewMode('trashList');
+              setCurrentProject(null);
+            }}
+            className={`p-2 rounded transition-colors flex-shrink-0 ${
+              viewMode === 'trashList'
+                ? 'bg-[#343541] text-white'
+                : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+            }`}
+            title="Trash"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
+      
+      {/* Connect Project Modal */}
+      {connectModal.open && connectModal.projectId && connectModal.projectName && (
+        <ConnectProjectModal
+          projectId={connectModal.projectId}
+          projectName={connectModal.projectName}
+          isOpen={connectModal.open}
+          onClose={() => setConnectModal({ open: false })}
+        />
+      )}
     </div>
   );
 };

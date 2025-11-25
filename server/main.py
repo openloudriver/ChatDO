@@ -281,38 +281,15 @@ def get_projects_path() -> Path:
 
 
 def load_projects() -> List[dict]:
-    """Load projects from projects.json, ensuring sort_index exists and sorting by it"""
-    projects_path = get_projects_path()
-    if not projects_path.exists():
-        return []
-    
-    with open(projects_path, "r") as f:
-        projects = json.load(f)
-    
-    # Ensure all projects have sort_index (assign based on current order if missing)
-    needs_save = False
-    for i, project in enumerate(projects):
-        if "sort_index" not in project:
-            project["sort_index"] = i
-            needs_save = True
-    
-    # Sort by sort_index, then by name as tie-breaker
-    projects.sort(key=lambda p: (p.get("sort_index", 0), p.get("name", "")))
-    
-    # Save if we added sort_index to any projects
-    if needs_save:
-        save_projects(projects)
-    
-    return projects
+    """Load projects from projects.json, ensuring sort_index and memory_sources exist"""
+    from server.services import projects_config
+    return projects_config.load_projects()
 
 
 def save_projects(projects: List[dict]) -> None:
     """Save projects to projects.json"""
-    projects_path = get_projects_path()
-    projects_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(projects_path, "w") as f:
-        json.dump(projects, f, indent=2)
+    from server.services import projects_config
+    projects_config.save_projects(projects)
 
 
 def generate_slug(name: str) -> str:
@@ -370,7 +347,8 @@ async def create_project(project_data: ProjectCreate):
         "id": project_id,
         "name": project_data.name.strip(),
         "default_target": "general",  # Default target for new projects
-        "sort_index": len(projects)  # Add at the end
+        "sort_index": len(projects),  # Add at the end
+        "memory_sources": []  # New projects start with no memory sources
     }
     
     projects.append(new_project)
@@ -2223,6 +2201,41 @@ async def purge_trashed_endpoint():
     """Manually trigger purge of old trashed chats"""
     purged_count = purge_trashed_chats()
     return {"success": True, "purged_count": purged_count}
+
+
+@app.get("/api/projects/{project_id}/memory-sources")
+async def get_project_memory_sources(project_id: str):
+    """Get memory sources for a project"""
+    from server.services import projects_config
+    
+    project = projects_config.get_project(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Always return a list
+    sources = project.get("memory_sources") or []
+    return {"project_id": project_id, "memory_sources": sources}
+
+
+class UpdateMemorySourcesRequest(BaseModel):
+    memory_sources: List[str]
+
+
+@app.put("/api/projects/{project_id}/memory-sources")
+async def update_project_memory_sources(project_id: str, body: UpdateMemorySourcesRequest):
+    """Update memory sources for a project"""
+    from server.services import projects_config
+    
+    try:
+        project = projects_config.update_project_memory_sources(
+            project_id, body.memory_sources
+        )
+        return {
+            "project_id": project_id,
+            "memory_sources": project.get("memory_sources") or [],
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @app.post("/api/chats/purge_all_trashed")

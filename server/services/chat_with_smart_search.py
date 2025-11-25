@@ -8,7 +8,7 @@ from chatdo.tools import web_search
 from chatdo.agents.main_agent import call_ai_router, CHATDO_SYSTEM_PROMPT
 from chatdo.memory import store as memory_store
 from .smart_search_classifier import decide_web_search
-from .memory_service_client import get_project_memory_context
+from .memory_service_client import get_project_memory_context, get_memory_client
 
 logger = logging.getLogger(__name__)
 
@@ -68,16 +68,22 @@ async def chat_with_smart_search(
     sources = []
     if project_id:
         try:
-            memory_context, has_memory = get_project_memory_context(project_id, user_message, limit=8)
-            if has_memory:
-                logger.info(f"Retrieved memory context for project {project_id}")
-                # Map project_id to user-friendly label
-                # Get project name from projects list
-                from server.main import load_projects
-                projects = load_projects()
-                project = next((p for p in projects if p.get("id") == project_id), None)
-                project_name = project.get("name", project_id) if project else project_id
-                sources.append(f"Memory-{project_name}")
+            memory_result = get_project_memory_context(project_id, user_message, limit=8)
+            if memory_result:
+                memory_context, has_memory = memory_result
+                if has_memory:
+                    logger.info(f"Retrieved memory context for project {project_id}")
+                    # Get source names from the actual sources used
+                    from server.services.memory_service_client import get_memory_sources_for_project
+                    from server.services import projects_config
+                    source_ids = get_memory_sources_for_project(project_id)
+                    # Get source display names from Memory Service
+                    client = get_memory_client()
+                    all_sources = client.get_sources()
+                    source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
+                    for source_id in source_ids:
+                        source_name = source_map.get(source_id, source_id)
+                        sources.append(f"Memory-{source_name}")
         except Exception as e:
             logger.warning(f"Failed to get memory context: {e}")
     

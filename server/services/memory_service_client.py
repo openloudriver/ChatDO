@@ -98,6 +98,64 @@ class MemoryServiceClient:
             context_parts.append(chunk_text)
         
         return "\n".join(context_parts)
+    
+    def get_sources(self) -> List[Dict]:
+        """Get all sources with status."""
+        if not self.is_available():
+            return []
+        
+        try:
+            response = requests.get(f"{self.base_url}/sources", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            return data.get("sources", [])
+        except Exception as e:
+            logger.warning(f"Memory Service get_sources failed: {e}")
+            return []
+    
+    def get_source_status(self, source_id: str) -> Optional[Dict]:
+        """Get status for a specific source."""
+        if not self.is_available():
+            return None
+        
+        try:
+            response = requests.get(f"{self.base_url}/sources/{source_id}/status", timeout=5)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.warning(f"Memory Service get_source_status failed: {e}")
+            return None
+    
+    def get_source_jobs(self, source_id: str, limit: int = 10) -> List[Dict]:
+        """Get recent jobs for a source."""
+        if not self.is_available():
+            return []
+        
+        try:
+            response = requests.get(f"{self.base_url}/sources/{source_id}/jobs?limit={limit}", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            return data.get("jobs", [])
+        except Exception as e:
+            logger.warning(f"Memory Service get_source_jobs failed: {e}")
+            return []
+    
+    def trigger_reindex(self, source_id: str) -> Optional[Dict]:
+        """Trigger a reindex for a source."""
+        if not self.is_available():
+            return None
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/reindex",
+                json={"source_id": source_id},
+                timeout=5
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.warning(f"Memory Service trigger_reindex failed: {e}")
+            return None
 
 
 # Global client instance
@@ -112,20 +170,38 @@ def get_memory_client() -> MemoryServiceClient:
     return _memory_client
 
 
-def get_project_memory_context(project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None) -> tuple[str, bool]:
+def get_memory_sources_for_project(project_id: str) -> List[str]:
+    """Get memory sources configured for a project."""
+    from server.services import projects_config
+    
+    project = projects_config.get_project(project_id)
+    if not project:
+        return []
+    
+    return project.get("memory_sources") or []
+
+
+def get_project_memory_context(project_id: str | None, query: str, limit: int = 8) -> Optional[tuple[str, bool]]:
     """
     Get memory context for a project and format it for injection into prompts.
     
     Args:
-        project_id: The project ID
+        project_id: The project ID (can be None)
         query: Search query (typically the user's message)
         limit: Maximum number of results
-        source_ids: Optional list of source IDs to search
         
     Returns:
-        Tuple of (formatted context string, has_results: bool)
+        Tuple of (formatted context string, has_results: bool) or None if no project_id or no sources
         Returns ("", False) if no results or service unavailable
     """
+    if not project_id:
+        return None
+    
+    source_ids = get_memory_sources_for_project(project_id)
+    if not source_ids:
+        # No sources attached -> skip memory search
+        return None
+    
     client = get_memory_client()
     results = client.search(project_id, query, limit, source_ids)
     if results:
