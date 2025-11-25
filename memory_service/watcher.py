@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 class IndexingHandler(FileSystemEventHandler):
     """Handler for file system events that triggers indexing."""
     
-    def __init__(self, source_id: int, root_path: Path, include_glob: str, exclude_glob: str):
+    def __init__(self, source_db_id: int, source_id: str, root_path: Path, include_glob: str, exclude_glob: str):
+        self.source_db_id = source_db_id
         self.source_id = source_id
         self.root_path = root_path
         self.include_glob = include_glob
@@ -33,7 +34,7 @@ class IndexingHandler(FileSystemEventHandler):
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
             logger.info(f"File created, indexing: {path}")
-            index_file(path, self.source_id)
+            index_file(path, self.source_db_id, self.source_id)
     
     def on_modified(self, event: FileSystemEvent):
         """Handle file modification."""
@@ -43,7 +44,7 @@ class IndexingHandler(FileSystemEventHandler):
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
             logger.info(f"File modified, re-indexing: {path}")
-            index_file(path, self.source_id)
+            index_file(path, self.source_db_id, self.source_id)
     
     def on_deleted(self, event: FileSystemEvent):
         """Handle file deletion."""
@@ -52,7 +53,7 @@ class IndexingHandler(FileSystemEventHandler):
         
         path = Path(event.src_path)
         logger.info(f"File deleted, removing from index: {path}")
-        delete_file(path, self.source_id)
+        delete_file(path, self.source_db_id, self.source_id)
 
 
 class WatcherManager:
@@ -91,7 +92,7 @@ class WatcherManager:
             return
         
         observer = Observer()
-        handler = IndexingHandler(db_id, root_path, include_glob, exclude_glob)
+        handler = IndexingHandler(db_id, source_id, root_path, include_glob, exclude_glob)
         observer.schedule(handler, str(root_path), recursive=True)
         observer.start()
         

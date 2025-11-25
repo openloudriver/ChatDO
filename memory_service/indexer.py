@@ -141,7 +141,7 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
     return path.suffix.lower() in ALL_SUPPORTED
 
 
-def index_file(path: Path, source_id: int) -> bool:
+def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
     """
     Index a single file (idempotent).
     
@@ -149,7 +149,8 @@ def index_file(path: Path, source_id: int) -> bool:
     
     Args:
         path: Path to the file
-        source_id: Database ID of the source
+        source_db_id: Database ID of the source
+        source_id: Source ID string (for database path)
         
     Returns:
         True if file was indexed successfully, False otherwise
@@ -166,7 +167,7 @@ def index_file(path: Path, source_id: int) -> bool:
         filetype = path.suffix.lower().lstrip('.')
         
         # Check if file already exists and hasn't changed
-        existing_file = db.get_file_by_path(source_id, str(path))
+        existing_file = db.get_file_by_path(source_db_id, str(path), source_id)
         if existing_file:
             # Check if file has been modified
             if existing_file.modified_at == modified_at and existing_file.size_bytes == size_bytes:
@@ -186,7 +187,7 @@ def index_file(path: Path, source_id: int) -> bool:
         # Check if content hash matches (avoid re-embedding if only metadata changed)
         if existing_file and existing_file.hash == content_hash:
             # Update metadata but don't re-embed
-            db.upsert_file(source_id, str(path), filetype, modified_at, size_bytes, content_hash)
+            db.upsert_file(source_db_id, str(path), filetype, modified_at, size_bytes, source_id, content_hash)
             logger.debug(f"Content unchanged, updated metadata only: {path}")
             return True
         
@@ -197,14 +198,14 @@ def index_file(path: Path, source_id: int) -> bool:
             return False
         
         # Upsert file record
-        file_id = db.upsert_file(source_id, str(path), filetype, modified_at, size_bytes, content_hash)
+        file_id = db.upsert_file(source_db_id, str(path), filetype, modified_at, size_bytes, source_id, content_hash)
         
         # Insert chunks
         chunk_data = [(idx, txt, start, end) for idx, txt, start, end in chunks]
-        db.insert_chunks(file_id, chunk_data)
+        db.insert_chunks(file_id, chunk_data, source_id)
         
         # Get chunk IDs for embedding
-        chunk_records = db.get_chunks_by_file_id(file_id)
+        chunk_records = db.get_chunks_by_file_id(file_id, source_id)
         chunk_ids = [c.id for c in chunk_records]
         chunk_texts = [c.text for c in chunk_records]
         
@@ -214,7 +215,7 @@ def index_file(path: Path, source_id: int) -> bool:
         
         # Store embeddings
         from memory_service.config import EMBEDDING_MODEL
-        db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL)
+        db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL, source_id)
         
         logger.info(f"Successfully indexed {path} ({len(chunks)} chunks)")
         return True
@@ -234,6 +235,9 @@ def index_source(source_id: str) -> int:
     Returns:
         Number of files indexed
     """
+    # Initialize DB for this source
+    db.init_db(source_id)
+    
     source = db.get_source_by_source_id(source_id)
     if not source:
         logger.error(f"Source not found: {source_id}")
@@ -253,7 +257,7 @@ def index_source(source_id: str) -> int:
     for path in root_path.rglob('*'):
         if path.is_file():
             if should_index_file(path, source.include_glob, source.exclude_glob):
-                if index_file(path, source.id):
+                if index_file(path, source.id, source_id):
                     indexed_count += 1
                 else:
                     skipped_count += 1
@@ -264,8 +268,8 @@ def index_source(source_id: str) -> int:
     return indexed_count
 
 
-def delete_file(path: Path, source_id: int):
+def delete_file(path: Path, source_db_id: int, source_id: str):
     """Delete a file and all its chunks/embeddings from the index."""
-    db.delete_file_by_path(source_id, str(path))
+    db.delete_file_by_path(source_db_id, str(path), source_id)
     logger.info(f"Deleted file from index: {path}")
 

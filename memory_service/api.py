@@ -29,8 +29,8 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle."""
     # Startup
     logger.info("Initializing Memory Service...")
-    db.init_db()
-    logger.info("Database initialized")
+    # Note: Databases are initialized per-source on first use
+    logger.info("Database system ready")
     
     # Load sources from config and start watchers
     watcher_manager.start_all()
@@ -56,6 +56,7 @@ class SearchRequest(BaseModel):
     project_id: str
     query: str
     limit: int = 10
+    source_ids: Optional[List[str]] = None
 
 
 class SearchResult(BaseModel):
@@ -105,6 +106,18 @@ async def get_sources():
 async def reindex(request: ReindexRequest):
     """Trigger a full reindex of a source."""
     try:
+        # Delete the old index directory for this source
+        import shutil
+        from memory_service.config import BASE_STORE_PATH
+        source_dir = BASE_STORE_PATH / request.source_id
+        if source_dir.exists():
+            shutil.rmtree(source_dir, ignore_errors=True)
+            logger.info(f"Deleted old index directory for source: {request.source_id}")
+        
+        # Recreate empty directory
+        source_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Reindex
         count = index_source(request.source_id)
         return {"status": "ok", "files_indexed": count}
     except Exception as e:
@@ -115,16 +128,28 @@ async def reindex(request: ReindexRequest):
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """
-    Search for relevant chunks by project_id and query.
+    Search for relevant chunks by source_ids and query.
     
     Returns top-N matches ordered by cosine similarity.
+    If source_ids is not provided, returns empty results.
     """
     try:
+        # Require source_ids
+        if not request.source_ids:
+            return SearchResponse(results=[])
+        
         # Embed the query
         query_embedding = embed_query(request.query)
         
-        # Get all embeddings for this project
-        all_embeddings = db.get_all_embeddings_for_project(request.project_id, EMBEDDING_MODEL)
+        # Search across all specified sources
+        all_embeddings = []
+        for source_id in request.source_ids:
+            try:
+                source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
+                all_embeddings.extend(source_embeddings)
+            except Exception as e:
+                logger.warning(f"Error searching source {source_id}: {e}")
+                continue
         
         if not all_embeddings:
             return SearchResponse(results=[])

@@ -5,10 +5,16 @@ sources:
     include_glob: "**/*"
     exclude_glob: "**/.git/**"
 
-  # ChatDO itself can be added later:
-  # - id: chatdo-repo
-  #   project_id: chatdo
-  #   root_path: /Users/christopher.peck/ChatDO
+  # Additional sources can be added here:
+  # - id: privacy-pay
+  #   project_id: privacypay
+  #   root_path: /Users/christopher.peck/PrivacyPay
+  #   include_glob: "**/*"
+  #   exclude_glob: "**/.git/**"
+  #
+  # - id: flywheel
+  #   project_id: flywheel
+  #   root_path: /Users/christopher.peck/Flywheel
   #   include_glob: "**/*"
   #   exclude_glob: "**/.git/**"
 

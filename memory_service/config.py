@@ -13,8 +13,14 @@ BASE_DIR = Path(__file__).parent.parent
 CONFIG_DIR = BASE_DIR / "config"
 MEMORY_SOURCES_YAML = CONFIG_DIR / "memory_sources.yaml"
 
-# Database path
-DB_PATH = BASE_DIR / "memory_service" / "store" / "index.sqlite"
+# Database base path (per-source databases will be in subfolders)
+BASE_STORE_PATH = BASE_DIR / "memory_service" / "store"
+
+def get_db_path_for_source(source_id: str) -> Path:
+    """Get the database path for a specific source."""
+    source_dir = BASE_STORE_PATH / source_id
+    source_dir.mkdir(parents=True, exist_ok=True)
+    return source_dir / "index.sqlite"
 
 # Embedding model
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"

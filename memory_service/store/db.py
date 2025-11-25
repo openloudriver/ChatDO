@@ -11,22 +11,23 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 import hashlib
 
-from memory_service.config import DB_PATH
+from memory_service.config import BASE_STORE_PATH, get_db_path_for_source
 from memory_service.models import Source, File, Chunk, Embedding, SearchResult
 
 
-def get_db_connection():
-    """Get a database connection."""
+def get_db_connection(source_id: str):
+    """Get a database connection for a specific source."""
+    db_path = get_db_path_for_source(source_id)
     # Ensure the directory exists
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH))
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
 
 
-def init_db():
-    """Initialize the database schema."""
-    conn = get_db_connection()
+def init_db(source_id: str):
+    """Initialize the database schema for a specific source."""
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     # Sources table
@@ -97,7 +98,9 @@ def init_db():
 def upsert_source(source_id: str, project_id: str, root_path: str, 
                   include_glob: Optional[str] = None, exclude_glob: Optional[str] = None) -> int:
     """Insert or update a source. Returns the database ID."""
-    conn = get_db_connection()
+    # Initialize DB for this source if needed
+    init_db(source_id)
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     cursor.execute("""
@@ -124,7 +127,7 @@ def upsert_source(source_id: str, project_id: str, root_path: str,
 
 def get_source_by_source_id(source_id: str) -> Optional[Source]:
     """Get a source by its source_id."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM sources WHERE source_id = ?", (source_id,))
     row = cursor.fetchone()
@@ -143,10 +146,11 @@ def get_source_by_source_id(source_id: str) -> Optional[Source]:
     return None
 
 
-def get_file_by_path(source_id: int, path: str) -> Optional[File]:
-    """Get a file by source_id and path."""
-    conn = get_db_connection()
+def get_file_by_path(source_db_id: int, path: str, source_id: str) -> Optional[File]:
+    """Get a file by source database ID and path."""
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
+    cursor.execute("SELECT * FROM files WHERE source_id = ? AND path = ?", (source_db_id, path))
     cursor.execute("SELECT * FROM files WHERE source_id = ? AND path = ?", (source_id, path))
     row = cursor.fetchone()
     conn.close()
@@ -164,10 +168,10 @@ def get_file_by_path(source_id: int, path: str) -> Optional[File]:
     return None
 
 
-def upsert_file(source_id: int, path: str, filetype: str, 
-                modified_at: datetime, size_bytes: int, content_hash: Optional[str] = None) -> int:
+def upsert_file(source_db_id: int, path: str, filetype: str, 
+                modified_at: datetime, size_bytes: int, source_id: str, content_hash: Optional[str] = None) -> int:
     """Insert or update a file. Returns the database ID."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     cursor.execute("""
@@ -190,9 +194,9 @@ def upsert_file(source_id: int, path: str, filetype: str,
     return db_id
 
 
-def delete_file(file_id: int):
+def delete_file(file_id: int, source_id: str):
     """Delete a file and all its chunks and embeddings."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     # Delete embeddings first (foreign key constraint)
@@ -206,16 +210,16 @@ def delete_file(file_id: int):
     conn.close()
 
 
-def delete_file_by_path(source_id: int, path: str):
+def delete_file_by_path(source_db_id: int, path: str, source_id: str):
     """Delete a file by path."""
-    file = get_file_by_path(source_id, path)
+    file = get_file_by_path(source_db_id, path, source_id)
     if file:
-        delete_file(file.id)
+        delete_file(file.id, source_id)
 
 
-def insert_chunks(file_id: int, chunks: List[Tuple[int, str, int, int]]):
+def insert_chunks(file_id: int, chunks: List[Tuple[int, str, int, int]], source_id: str):
     """Insert chunks for a file. chunks is a list of (chunk_index, text, start_char, end_char)."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     # Delete existing chunks
@@ -231,9 +235,9 @@ def insert_chunks(file_id: int, chunks: List[Tuple[int, str, int, int]]):
     conn.close()
 
 
-def get_chunks_by_file_id(file_id: int) -> List[Chunk]:
+def get_chunks_by_file_id(file_id: int, source_id: str) -> List[Chunk]:
     """Get all chunks for a file."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM chunks WHERE file_id = ? ORDER BY chunk_index", (file_id,))
     rows = cursor.fetchall()
@@ -249,9 +253,9 @@ def get_chunks_by_file_id(file_id: int) -> List[Chunk]:
     ) for row in rows]
 
 
-def insert_embeddings(chunk_ids: List[int], embeddings: np.ndarray, model_name: str):
+def insert_embeddings(chunk_ids: List[int], embeddings: np.ndarray, model_name: str, source_id: str):
     """Insert embeddings for chunks. embeddings should be shape [N, D]."""
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     # Delete existing embeddings for these chunks with this model
@@ -271,12 +275,12 @@ def insert_embeddings(chunk_ids: List[int], embeddings: np.ndarray, model_name: 
     conn.close()
 
 
-def get_all_embeddings_for_project(project_id: str, model_name: str) -> List[Tuple[int, np.ndarray, int, str, str, str, str]]:
+def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple[int, np.ndarray, int, str, str, str, str]]:
     """
-    Get all embeddings for a project.
+    Get all embeddings for a specific source.
     Returns list of (chunk_id, embedding_vector, file_id, file_path, chunk_text, source_id, project_id).
     """
-    conn = get_db_connection()
+    conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
     cursor.execute("""
@@ -285,8 +289,8 @@ def get_all_embeddings_for_project(project_id: str, model_name: str) -> List[Tup
         JOIN chunks c ON e.chunk_id = c.id
         JOIN files f ON c.file_id = f.id
         JOIN sources s ON f.source_id = s.id
-        WHERE s.project_id = ? AND e.model_name = ?
-    """, (project_id, model_name))
+        WHERE s.source_id = ? AND e.model_name = ?
+    """, (source_id, model_name))
     
     rows = cursor.fetchall()
     conn.close()

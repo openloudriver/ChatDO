@@ -26,7 +26,7 @@ class MemoryServiceClient:
         except Exception:
             return False
     
-    def search(self, project_id: str, query: str, limit: int = 8) -> List[Dict]:
+    def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None) -> List[Dict]:
         """
         Search for relevant chunks in a project's indexed files.
         
@@ -34,6 +34,7 @@ class MemoryServiceClient:
             project_id: The project ID (e.g., "drr", "privacypay")
             query: Search query string
             limit: Maximum number of results to return
+            source_ids: Optional list of source IDs to search. If None, uses [project_id] as fallback.
             
         Returns:
             List of search results with score, file_path, text, etc.
@@ -43,13 +44,19 @@ class MemoryServiceClient:
             logger.debug("Memory Service is not available, skipping memory search")
             return []
         
+        # For now, if source_ids not provided, use project_id as fallback
+        # Later this will be replaced with proper project -> sources mapping
+        if source_ids is None:
+            source_ids = [project_id]
+        
         try:
             response = requests.post(
                 f"{self.base_url}/search",
                 json={
                     "project_id": project_id,
                     "query": query,
-                    "limit": limit
+                    "limit": limit,
+                    "source_ids": source_ids
                 },
                 timeout=5
             )
@@ -105,7 +112,7 @@ def get_memory_client() -> MemoryServiceClient:
     return _memory_client
 
 
-def get_project_memory_context(project_id: str, query: str, limit: int = 8) -> tuple[str, bool]:
+def get_project_memory_context(project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None) -> tuple[str, bool]:
     """
     Get memory context for a project and format it for injection into prompts.
     
@@ -113,13 +120,14 @@ def get_project_memory_context(project_id: str, query: str, limit: int = 8) -> t
         project_id: The project ID
         query: Search query (typically the user's message)
         limit: Maximum number of results
+        source_ids: Optional list of source IDs to search
         
     Returns:
         Tuple of (formatted context string, has_results: bool)
         Returns ("", False) if no results or service unavailable
     """
     client = get_memory_client()
-    results = client.search(project_id, query, limit)
+    results = client.search(project_id, query, limit, source_ids)
     if results:
         return client.format_context(results), True
     return "", False
