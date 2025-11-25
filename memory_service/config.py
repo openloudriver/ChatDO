@@ -16,6 +16,9 @@ MEMORY_SOURCES_YAML = CONFIG_DIR / "memory_sources.yaml"
 # Database base path (per-source databases will be in subfolders)
 BASE_STORE_PATH = BASE_DIR / "memory_service" / "store"
 
+# Global tracking database for dashboard (tracks all sources)
+TRACKING_DB_PATH = BASE_STORE_PATH / "tracking.sqlite"
+
 def get_db_path_for_source(source_id: str) -> Path:
     """Get the database path for a specific source."""
     source_dir = BASE_STORE_PATH / source_id

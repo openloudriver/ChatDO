@@ -7,6 +7,7 @@ import ChatComposer from './components/ChatComposer';
 import ProjectChatList from './components/ProjectChatList';
 import TrashChatList from './components/TrashChatList';
 import SearchResults from './components/SearchResults';
+import MemoryDashboard from './components/MemoryDashboard';
 
 const App: React.FC = () => {
   const { 
@@ -117,6 +118,10 @@ const App: React.FC = () => {
 
   // Render main content based on view mode
   const renderMainContent = () => {
+    if (viewMode === 'memory') {
+      return <MemoryDashboard />;
+    }
+    
     if (viewMode === 'search') {
       return <SearchResults />;
     }

@@ -53,6 +53,12 @@ Thread history is stored in `memory/<target>/threads/<thread-id>/history.json` a
 - **Architecture & Strategy**: Helps design systems, modules, and security models
 - **Context Continuity**: Remembers decisions, conventions, and invariants across sessions
 
+**v1.5 Capabilities:**
+- **Memory Dashboard**: Monitor indexing progress and health of local repos and folders
+- **Per-Source Indexing**: Each source (repo/folder) has its own isolated index database
+- **Real-Time Progress**: Watch indexing jobs in real-time with file and byte progress
+- **Health Monitoring**: Track last index times, errors, and source status
+
 ## How ChatDO Works
 
 1. You write a *high-level* task for ChatDO, e.g.:

@@ -64,7 +64,7 @@ export interface Project {
   sort_index?: number;
 }
 
-export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search';
+export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory';
 
 interface ChatStore {
   // State

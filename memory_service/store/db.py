@@ -11,8 +11,8 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 import hashlib
 
-from memory_service.config import BASE_STORE_PATH, get_db_path_for_source
-from memory_service.models import Source, File, Chunk, Embedding, SearchResult
+from memory_service.config import BASE_STORE_PATH, get_db_path_for_source, TRACKING_DB_PATH
+from memory_service.models import Source, File, Chunk, Embedding, SearchResult, SourceStatus, IndexJob
 
 
 def get_db_connection(source_id: str):
@@ -324,4 +324,256 @@ def compute_file_hash(path: Path) -> str:
         for chunk in iter(lambda: f.read(4096), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
+
+
+# ============================================================================
+# Tracking Database (Global - tracks all sources)
+# ============================================================================
+
+def get_tracking_db_connection():
+    """Get a connection to the global tracking database."""
+    TRACKING_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(TRACKING_DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_tracking_db():
+    """Initialize the tracking database schema."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    # SourceStatus table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS source_status (
+            id TEXT PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            root_path TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'idle',
+            files_indexed INTEGER DEFAULT 0,
+            bytes_indexed INTEGER DEFAULT 0,
+            last_index_started_at TIMESTAMP,
+            last_index_completed_at TIMESTAMP,
+            last_error TEXT,
+            project_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # IndexJob table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS index_jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'running',
+            started_at TIMESTAMP NOT NULL,
+            completed_at TIMESTAMP,
+            files_total INTEGER,
+            files_processed INTEGER DEFAULT 0,
+            bytes_processed INTEGER DEFAULT 0,
+            error TEXT,
+            FOREIGN KEY (source_id) REFERENCES source_status(id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Indexes
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_source ON index_jobs(source_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_started ON index_jobs(started_at DESC)")
+    
+    conn.commit()
+    conn.close()
+
+
+def get_or_create_source(source_id: str, root_path: str, display_name: Optional[str] = None, project_id: Optional[str] = None) -> SourceStatus:
+    """Get or create a source status record."""
+    init_tracking_db()
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    if display_name is None:
+        display_name = source_id
+    
+    cursor.execute("""
+        INSERT INTO source_status (id, display_name, root_path, project_id, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            root_path = excluded.root_path,
+            project_id = excluded.project_id,
+            updated_at = excluded.updated_at
+    """, (source_id, display_name, str(root_path), project_id, datetime.now()))
+    
+    cursor.execute("SELECT * FROM source_status WHERE id = ?", (source_id,))
+    row = cursor.fetchone()
+    conn.commit()
+    conn.close()
+    
+    return SourceStatus(
+        id=row["id"],
+        display_name=row["display_name"],
+        root_path=row["root_path"],
+        status=row["status"],
+        files_indexed=row["files_indexed"],
+        bytes_indexed=row["bytes_indexed"],
+        last_index_started_at=datetime.fromisoformat(row["last_index_started_at"]) if row["last_index_started_at"] else None,
+        last_index_completed_at=datetime.fromisoformat(row["last_index_completed_at"]) if row["last_index_completed_at"] else None,
+        last_error=row["last_error"],
+        project_id=row["project_id"]
+    )
+
+
+def update_source_stats(source_id: str, **fields) -> None:
+    """Update source status fields."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    values = []
+    for key, value in fields.items():
+        updates.append(f"{key} = ?")
+        values.append(value)
+    
+    values.append(datetime.now())  # updated_at
+    values.append(source_id)
+    
+    cursor.execute(f"""
+        UPDATE source_status 
+        SET {', '.join(updates)}, updated_at = ?
+        WHERE id = ?
+    """, values)
+    
+    conn.commit()
+    conn.close()
+
+
+def create_index_job(source_id: str, files_total: Optional[int] = None) -> int:
+    """Create a new index job and return its ID."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        INSERT INTO index_jobs (source_id, status, started_at, files_total, files_processed, bytes_processed)
+        VALUES (?, 'running', ?, ?, 0, 0)
+    """, (source_id, datetime.now(), files_total))
+    
+    job_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return job_id
+
+
+def update_index_job(job_id: int, **fields) -> None:
+    """Update index job fields."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    values = []
+    for key, value in fields.items():
+        updates.append(f"{key} = ?")
+        values.append(value)
+    
+    values.append(job_id)
+    
+    cursor.execute(f"""
+        UPDATE index_jobs 
+        SET {', '.join(updates)}
+        WHERE id = ?
+    """, values)
+    
+    conn.commit()
+    conn.close()
+
+
+def get_latest_job(source_id: str) -> Optional[IndexJob]:
+    """Get the latest job for a source."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT * FROM index_jobs 
+        WHERE source_id = ? 
+        ORDER BY started_at DESC 
+        LIMIT 1
+    """, (source_id,))
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return IndexJob(
+            id=row["id"],
+            source_id=row["source_id"],
+            status=row["status"],
+            started_at=datetime.fromisoformat(row["started_at"]),
+            completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
+            files_total=row["files_total"],
+            files_processed=row["files_processed"],
+            bytes_processed=row["bytes_processed"],
+            error=row["error"]
+        )
+    return None
+
+
+def get_recent_jobs(source_id: str, limit: int = 10) -> List[IndexJob]:
+    """Get recent jobs for a source."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT * FROM index_jobs 
+        WHERE source_id = ? 
+        ORDER BY started_at DESC 
+        LIMIT ?
+    """, (source_id, limit))
+    
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [
+        IndexJob(
+            id=row["id"],
+            source_id=row["source_id"],
+            status=row["status"],
+            started_at=datetime.fromisoformat(row["started_at"]),
+            completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
+            files_total=row["files_total"],
+            files_processed=row["files_processed"],
+            bytes_processed=row["bytes_processed"],
+            error=row["error"]
+        )
+        for row in rows
+    ]
+
+
+def get_all_sources_with_latest_job() -> List[Tuple[SourceStatus, Optional[IndexJob]]]:
+    """Get all sources with their latest job."""
+    init_tracking_db()
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM source_status ORDER BY id")
+    source_rows = cursor.fetchall()
+    
+    results = []
+    for source_row in source_rows:
+        source = SourceStatus(
+            id=source_row["id"],
+            display_name=source_row["display_name"],
+            root_path=source_row["root_path"],
+            status=source_row["status"],
+            files_indexed=source_row["files_indexed"],
+            bytes_indexed=source_row["bytes_indexed"],
+            last_index_started_at=datetime.fromisoformat(source_row["last_index_started_at"]) if source_row["last_index_started_at"] else None,
+            last_index_completed_at=datetime.fromisoformat(source_row["last_index_completed_at"]) if source_row["last_index_completed_at"] else None,
+            last_error=source_row["last_error"],
+            project_id=source_row["project_id"]
+        )
+        
+        latest_job = get_latest_job(source.id)
+        results.append((source, latest_job))
+    
+    conn.close()
+    return results
 

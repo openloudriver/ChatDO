@@ -225,7 +225,7 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         return False
 
 
-def index_source(source_id: str) -> int:
+def index_source(source_id: str) -> Tuple[int, Optional[int]]:
     """
     Perform a full scan and index of a source folder.
     
@@ -233,7 +233,7 @@ def index_source(source_id: str) -> int:
         source_id: The source_id string (not database ID)
         
     Returns:
-        Number of files indexed
+        Tuple of (number of files indexed, job_id)
     """
     # Initialize DB for this source
     db.init_db(source_id)
@@ -241,31 +241,114 @@ def index_source(source_id: str) -> int:
     source = db.get_source_by_source_id(source_id)
     if not source:
         logger.error(f"Source not found: {source_id}")
-        return 0
+        return 0, None
     
     root_path = Path(source.root_path)
     if not root_path.exists():
         logger.error(f"Source root path does not exist: {root_path}")
-        return 0
+        return 0, None
     
-    logger.info(f"Starting full index of source: {source_id} at {root_path}")
+    # Register source in tracking DB
+    from memory_service.config import load_sources
+    sources = load_sources()
+    source_config = next((s for s in sources if s.id == source_id), None)
+    if source_config:
+        db.get_or_create_source(source_id, str(root_path), source_id, source_config.project_id)
+    
+    # Count files to be indexed (optional, can be expensive for large repos)
+    logger.info(f"Scanning files for source: {source_id}")
+    files_to_index = []
+    for path in root_path.rglob('*'):
+        if path.is_file() and should_index_file(path, source.include_glob, source.exclude_glob):
+            files_to_index.append(path)
+    
+    files_total = len(files_to_index)
+    logger.info(f"Found {files_total} files to index for source: {source_id}")
+    
+    # Create index job
+    job_id = db.create_index_job(source_id, files_total)
+    
+    # Update source status to indexing
+    db.update_source_stats(
+        source_id,
+        status="indexing",
+        last_index_started_at=datetime.now(),
+        last_error=None
+    )
+    
+    logger.info(f"Starting full index of source: {source_id} at {root_path} (job_id: {job_id})")
     
     indexed_count = 0
     skipped_count = 0
+    bytes_processed = 0
+    last_update = 0
+    BATCH_SIZE = 10  # Update progress every N files
     
-    # Walk the directory tree
-    for path in root_path.rglob('*'):
-        if path.is_file():
-            if should_index_file(path, source.include_glob, source.exclude_glob):
+    try:
+        # Walk the directory tree
+        for path in files_to_index:
+            try:
                 if index_file(path, source.id, source_id):
                     indexed_count += 1
+                    # Get file size for bytes tracking
+                    try:
+                        bytes_processed += path.stat().st_size
+                    except:
+                        pass
                 else:
                     skipped_count += 1
-            else:
+                
+                # Update progress every BATCH_SIZE files
+                if indexed_count - last_update >= BATCH_SIZE:
+                    db.update_index_job(job_id, files_processed=indexed_count, bytes_processed=bytes_processed)
+                    db.update_source_stats(
+                        source_id,
+                        files_indexed=indexed_count,
+                        bytes_indexed=bytes_processed
+                    )
+                    last_update = indexed_count
+                    
+            except Exception as e:
+                logger.error(f"Error indexing file {path}: {e}")
                 skipped_count += 1
-    
-    logger.info(f"Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id}")
-    return indexed_count
+        
+        # Final update
+        db.update_index_job(
+            job_id,
+            status="completed",
+            completed_at=datetime.now(),
+            files_processed=indexed_count,
+            bytes_processed=bytes_processed
+        )
+        db.update_source_stats(
+            source_id,
+            status="idle",
+            last_index_completed_at=datetime.now(),
+            files_indexed=indexed_count,
+            bytes_indexed=bytes_processed
+        )
+        
+        logger.info(f"Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id}")
+        return indexed_count, job_id, job_id
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error during indexing of source {source_id}: {e}", exc_info=True)
+        
+        # Mark job and source as failed
+        db.update_index_job(
+            job_id,
+            status="failed",
+            completed_at=datetime.now(),
+            error=error_msg
+        )
+        db.update_source_stats(
+            source_id,
+            status="error",
+            last_error=error_msg
+        )
+        
+        return 0, job_id
 
 
 def delete_file(path: Path, source_db_id: int, source_id: str):

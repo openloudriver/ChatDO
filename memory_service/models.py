@@ -65,3 +65,32 @@ class SearchResult:
     start_char: int
     end_char: int
 
+
+@dataclass
+class SourceStatus:
+    """Represents the status and stats of a source."""
+    id: str
+    display_name: str
+    root_path: str
+    status: str  # "idle" | "indexing" | "error" | "disabled"
+    files_indexed: int
+    bytes_indexed: int
+    last_index_started_at: Optional[datetime]
+    last_index_completed_at: Optional[datetime]
+    last_error: Optional[str]
+    project_id: Optional[str] = None
+
+
+@dataclass
+class IndexJob:
+    """Represents an indexing job."""
+    id: int
+    source_id: str
+    status: str  # "running" | "completed" | "failed" | "cancelled"
+    started_at: datetime
+    completed_at: Optional[datetime]
+    files_total: Optional[int]
+    files_processed: int
+    bytes_processed: int
+    error: Optional[str]
+
