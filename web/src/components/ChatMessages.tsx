@@ -37,6 +37,14 @@ const ChatMessages: React.FC = () => {
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
+  // Helper function to format model names for display
+  const formatModelName = (model: string): string => {
+    if (model.startsWith('gpt-5')) {
+      return 'GPT-5';
+    }
+    return model;
+  };
+  
   // Get RAG files from store (conversation-scoped)
   const ragFiles = useMemo(() => {
     return getRagFilesForConversation(currentConversation?.id || null);
@@ -947,7 +955,7 @@ const ChatMessages: React.FC = () => {
                        message.type !== 'rag_response' &&
                        message.type !== 'web_search_results' && (
                         <div className="text-xs text-[#8e8ea0] mt-2 text-right">
-                          Model: {message.model}
+                          Model: {formatModelName(message.model)}
                         </div>
                       )}
                     </div>
