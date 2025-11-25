@@ -8,6 +8,7 @@ from chatdo.tools import web_search
 from chatdo.agents.main_agent import call_ai_router, CHATDO_SYSTEM_PROMPT
 from chatdo.memory import store as memory_store
 from .smart_search_classifier import decide_web_search
+from .memory_service_client import get_project_memory_context
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ async def chat_with_smart_search(
     user_message: str,
     target_name: str = "general",
     thread_id: Optional[str] = None,
-    conversation_history: Optional[List[Dict[str, str]]] = None
+    conversation_history: Optional[List[Dict[str, str]]] = None,
+    project_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Handle chat with smart auto-search.
@@ -61,6 +63,16 @@ async def chat_with_smart_search(
         else:
             conversation_history = []
     
+    # 0. Get memory context if project_id is available
+    memory_context = ""
+    if project_id:
+        try:
+            memory_context = get_project_memory_context(project_id, user_message, limit=8)
+            if memory_context:
+                logger.info(f"Retrieved memory context for project {project_id}")
+        except Exception as e:
+            logger.warning(f"Failed to get memory context: {e}")
+    
     # 1. Decide if we need web search
     decision = await decide_web_search(user_message)
     logger.info(f"Smart search decision: use_search={decision.use_search}, reason={decision.reason}")
@@ -69,7 +81,13 @@ async def chat_with_smart_search(
         # 2a. Plain GPT-5 chat (no Brave)
         messages = conversation_history.copy()
         if not any(msg.get("role") == "system" for msg in messages):
-            messages.insert(0, {"role": "system", "content": CHATDO_SYSTEM_PROMPT})
+            system_content = CHATDO_SYSTEM_PROMPT
+            if memory_context:
+                system_content = f"{memory_context}\n\n{CHATDO_SYSTEM_PROMPT}"
+            messages.insert(0, {"role": "system", "content": system_content})
+        elif memory_context:
+            # Add memory context as a separate system message before the existing system message
+            messages.insert(0, {"role": "system", "content": memory_context})
         messages.append({"role": "user", "content": user_message})
         
         assistant_messages, model_id, provider_id, model_display = call_ai_router(
@@ -116,7 +134,12 @@ async def chat_with_smart_search(
         # Fall back to GPT-5 without search results
         messages = conversation_history.copy()
         if not any(msg.get("role") == "system" for msg in messages):
-            messages.insert(0, {"role": "system", "content": CHATDO_SYSTEM_PROMPT})
+            system_content = CHATDO_SYSTEM_PROMPT
+            if memory_context:
+                system_content = f"{memory_context}\n\n{CHATDO_SYSTEM_PROMPT}"
+            messages.insert(0, {"role": "system", "content": system_content})
+        elif memory_context:
+            messages.insert(0, {"role": "system", "content": memory_context})
         messages.append({"role": "user", "content": user_message})
         
         assistant_messages, model_id, provider_id, model_display = call_ai_router(
@@ -158,7 +181,12 @@ async def chat_with_smart_search(
         # Fall back to GPT-5 without search results
         messages = conversation_history.copy()
         if not any(msg.get("role") == "system" for msg in messages):
-            messages.insert(0, {"role": "system", "content": CHATDO_SYSTEM_PROMPT})
+            system_content = CHATDO_SYSTEM_PROMPT
+            if memory_context:
+                system_content = f"{memory_context}\n\n{CHATDO_SYSTEM_PROMPT}"
+            messages.insert(0, {"role": "system", "content": system_content})
+        elif memory_context:
+            messages.insert(0, {"role": "system", "content": memory_context})
         messages.append({"role": "user", "content": user_message})
         
         assistant_messages, model_id, provider_id, model_display = call_ai_router(
@@ -205,6 +233,8 @@ async def chat_with_smart_search(
     # Use the shared ChatDO system prompt - it already includes instructions for web search
     # The web search results will be provided as context in a separate system message
     system_prompt = CHATDO_SYSTEM_PROMPT
+    if memory_context:
+        system_prompt = f"{memory_context}\n\n{system_prompt}"
     
     # Build messages with web search context
     messages = conversation_history.copy()

@@ -386,7 +386,8 @@ Keep it concise, neutral, and factual."""
                 user_message=message,
                 target_name=target_cfg.name,
                 thread_id=conversation_id if conversation_id else None,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
+                project_id=project_id
             )
             
             # Extract response content

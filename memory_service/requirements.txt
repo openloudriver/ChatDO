@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+watchdog
+sentence-transformers
+torch
+numpy
+pydantic
+python-dotenv
+pypdf
+python-docx
+openpyxl
+python-pptx
+pillow
+pytesseract
+sqlalchemy
+pyyaml
+

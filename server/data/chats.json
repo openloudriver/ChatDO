@@ -68,5 +68,15 @@
     "updated_at": "2025-11-23T22:44:39.733319+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "3a5d546e-89be-4cb2-aeda-d829100f9af0",
+    "project_id": "drr",
+    "title": "What is the DRR project structure? Use project ...",
+    "thread_id": "3a5d546e-89be-4cb2-aeda-d829100f9af0",
+    "created_at": "2025-11-25T03:15:38.051994+00:00",
+    "updated_at": "2025-11-25T03:15:40.788120+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

@@ -618,10 +618,19 @@ async def chat(request: ChatRequest):
             # Use smart chat with auto-search for normal chat
             from server.services.chat_with_smart_search import chat_with_smart_search
             
+            # Get project_id from conversation if available
+            project_id = request.project_id if hasattr(request, 'project_id') else None
+            if not project_id and request.conversation_id:
+                chats = load_chats()
+                chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
+                if chat:
+                    project_id = chat.get("project_id")
+            
             result = await chat_with_smart_search(
                 user_message=request.message,
                 target_name=target_cfg.name,
-                thread_id=request.conversation_id if request.conversation_id else None
+                thread_id=request.conversation_id if request.conversation_id else None,
+                project_id=project_id
             )
             
             # If result has tasks or needs special handling, route to run_agent

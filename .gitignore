@@ -64,3 +64,6 @@ packages/ai-router/data/
 models/
 data/tmp_audio/
 rag_files/*.json
+
+# Memory Service database
+memory_service/store/index.sqlite
