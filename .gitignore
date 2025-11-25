@@ -65,5 +65,20 @@ models/
 data/tmp_audio/
 rag_files/*.json
 
-# Memory Service (synced to pCloud)
-memory_service/
+# --- Memory Service runtime data ---
+
+# Per-source index folders
+memory_service/store/*-repo/
+
+# SQLite databases + journals
+memory_service/store/*.sqlite
+memory_service/store/*.sqlite-journal
+memory_service/store/*.sqlite-wal
+
+# Python cache
+memory_service/store/__pycache__/
+memory_service/__pycache__/
+
+# Logs
+memory_service/*.log
+memory_service/store/*.log
