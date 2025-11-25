@@ -106,6 +106,18 @@ async def get_sources():
 async def reindex(request: ReindexRequest):
     """Trigger a full reindex of a source."""
     try:
+        # Load source config from YAML
+        from memory_service.config import load_sources
+        sources = load_sources()
+        source_config = None
+        for s in sources:
+            if s.id == request.source_id:
+                source_config = s
+                break
+        
+        if not source_config:
+            raise HTTPException(status_code=404, detail=f"Source not found in config: {request.source_id}")
+        
         # Delete the old index directory for this source
         import shutil
         from memory_service.config import BASE_STORE_PATH
@@ -117,9 +129,21 @@ async def reindex(request: ReindexRequest):
         # Recreate empty directory
         source_dir.mkdir(parents=True, exist_ok=True)
         
+        # Register source in database before indexing
+        db_id = db.upsert_source(
+            source_config.id,
+            source_config.project_id,
+            str(source_config.root_path),
+            source_config.include_glob,
+            source_config.exclude_glob
+        )
+        logger.info(f"Registered source {request.source_id} in database (db_id: {db_id})")
+        
         # Reindex
         count = index_source(request.source_id)
         return {"status": "ok", "files_indexed": count}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error reindexing source {request.source_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
