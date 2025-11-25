@@ -16,6 +16,7 @@ interface MonthlySpendResponse {
 export const AiSpendIndicator: React.FC = () => {
   const [data, setData] = useState<MonthlySpendResponse | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const amountRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +50,13 @@ export const AiSpendIndicator: React.FC = () => {
   }, []);
 
   function handleMouseEnter() {
+    if (amountRef.current) {
+      const rect = amountRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.top - 8, // Position above with gap
+        left: rect.left, // Align to left edge
+      });
+    }
     setMenuOpen(true);
   }
 
@@ -85,18 +93,21 @@ export const AiSpendIndicator: React.FC = () => {
       <div
         ref={amountRef}
         onClick={(e) => e.stopPropagation()}
-        className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis"
+        className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1 whitespace-nowrap"
+        style={{ minWidth: 'fit-content' }}
       >
         {`$${total.toFixed(2)}`}
       </div>
-      {menuOpen && amountRef.current && (
+      {menuOpen && menuPosition && (
         <div
-          className="spend-menu absolute bg-[#202123] border border-[#565869] rounded-lg p-2 z-[9999] min-w-[200px] max-w-[250px] shadow-lg"
+          className="spend-menu fixed bg-[#202123] border border-[#565869] rounded-lg p-2 z-[9999] min-w-[200px] max-w-[250px] shadow-lg"
           style={{
-            bottom: '100%', // Position above
-            right: 0, // Align to right edge
-            marginBottom: '8px', // Small gap
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+            transform: 'translateY(-100%)',
           }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           onClick={(e) => e.stopPropagation()}
         >
           {data ? (

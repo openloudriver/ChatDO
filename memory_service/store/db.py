@@ -352,12 +352,12 @@ def init_tracking_db():
             status TEXT NOT NULL DEFAULT 'idle',
             files_indexed INTEGER DEFAULT 0,
             bytes_indexed INTEGER DEFAULT 0,
-            last_index_started_at TIMESTAMP,
-            last_index_completed_at TIMESTAMP,
+            last_index_started_at TEXT,
+            last_index_completed_at TEXT,
             last_error TEXT,
             project_id TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now'))
         )
     """)
     
@@ -367,14 +367,13 @@ def init_tracking_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_id TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'running',
-            started_at TIMESTAMP NOT NULL,
-            completed_at TIMESTAMP,
+            started_at TEXT NOT NULL,
+            completed_at TEXT,
             files_total INTEGER,
             files_processed INTEGER DEFAULT 0,
             bytes_processed INTEGER DEFAULT 0,
             error TEXT,
-            FOREIGN KEY (source_id) REFERENCES source_status(id),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT (datetime('now'))
         )
     """)
     

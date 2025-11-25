@@ -240,7 +240,9 @@ const MemoryDashboard: React.FC = () => {
                     <div>
                       <div className="text-[#8e8ea0] mb-1">Project</div>
                       <div className="text-white font-medium">
-                        {source.project_id || 'N/A'}
+                        {source.id.endsWith('-repo') 
+                          ? source.id.slice(0, -5) 
+                          : source.project_id || 'N/A'}
                       </div>
                     </div>
                   </div>

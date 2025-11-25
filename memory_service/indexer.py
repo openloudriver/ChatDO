@@ -127,10 +127,13 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
     """Check if a file should be indexed based on glob patterns."""
     path_str = str(path)
     
-    # Check exclude first
+    # Check exclude first - support multiple patterns separated by commas
     if exclude_glob:
-        if fnmatch.fnmatch(path_str, exclude_glob) or exclude_glob in path_str:
-            return False
+        # Split by comma and check each pattern
+        exclude_patterns = [p.strip() for p in exclude_glob.split(',')]
+        for pattern in exclude_patterns:
+            if fnmatch.fnmatch(path_str, pattern) or pattern in path_str:
+                return False
     
     # Check include
     if include_glob:
@@ -225,15 +228,16 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         return False
 
 
-def index_source(source_id: str) -> Tuple[int, Optional[int]]:
+def index_source(source_id: str) -> Tuple[int, int, int]:
     """
     Perform a full scan and index of a source folder.
+    Supports automatic resume if a previous job was interrupted.
     
     Args:
         source_id: The source_id string (not database ID)
         
     Returns:
-        Tuple of (number of files indexed, job_id)
+        Tuple of (files_indexed, bytes_indexed, job_id)
     """
     # Initialize DB for this source
     db.init_db(source_id)
@@ -241,12 +245,12 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
     source = db.get_source_by_source_id(source_id)
     if not source:
         logger.error(f"Source not found: {source_id}")
-        return 0, None
+        return 0, 0, 0
     
     root_path = Path(source.root_path)
     if not root_path.exists():
         logger.error(f"Source root path does not exist: {root_path}")
-        return 0, None
+        return 0, 0, 0
     
     # Register source in tracking DB
     from memory_service.config import load_sources
@@ -254,6 +258,45 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
     source_config = next((s for s in sources if s.id == source_id), None)
     if source_config:
         db.get_or_create_source(source_id, str(root_path), source_id, source_config.project_id)
+    
+    # Check for existing running job to resume
+    latest_job = db.get_latest_job(source_id)
+    resume_job = False
+    job_id = None
+    initial_indexed_count = 0
+    initial_bytes_processed = 0
+    
+    if latest_job and latest_job.status == "running":
+        # Check if job is recent (within last 24 hours) - if too old, start fresh
+        from datetime import timedelta
+        job_age = datetime.now() - latest_job.started_at
+        if job_age < timedelta(hours=24):
+            logger.info(f"Resuming interrupted indexing job {latest_job.id} for source: {source_id}")
+            job_id = latest_job.id
+            resume_job = True
+            
+            # Get actual counts from database (more accurate than job progress)
+            conn = db.get_db_connection(source_id)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+            row = cursor.fetchone()
+            actual_file_count = row[0] if row else 0
+            actual_bytes = row[1] if row and len(row) > 1 else 0
+            conn.close()
+            
+            # Use actual database counts, but fall back to job progress if database is empty
+            if actual_file_count > 0:
+                initial_indexed_count = actual_file_count
+                initial_bytes_processed = actual_bytes
+                logger.info(f"Resuming from actual database state: {initial_indexed_count} files, {initial_bytes_processed:,} bytes")
+            else:
+                initial_indexed_count = latest_job.files_processed or 0
+                initial_bytes_processed = latest_job.bytes_processed or 0
+                logger.info(f"Resuming from job progress: {initial_indexed_count} files, {initial_bytes_processed:,} bytes")
+        else:
+            logger.info(f"Previous job {latest_job.id} is too old ({job_age}), starting fresh")
+            # Mark old job as cancelled
+            db.update_index_job(latest_job.id, status="cancelled", completed_at=datetime.now())
     
     # Count files to be indexed (optional, can be expensive for large repos)
     logger.info(f"Scanning files for source: {source_id}")
@@ -265,8 +308,9 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
     files_total = len(files_to_index)
     logger.info(f"Found {files_total} files to index for source: {source_id}")
     
-    # Create index job
-    job_id = db.create_index_job(source_id, files_total)
+    # Create new job if not resuming
+    if not resume_job:
+        job_id = db.create_index_job(source_id, files_total)
     
     # Update source status to indexing
     db.update_source_stats(
@@ -276,25 +320,47 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
         last_error=None
     )
     
-    logger.info(f"Starting full index of source: {source_id} at {root_path} (job_id: {job_id})")
+    if resume_job:
+        logger.info(f"Resuming index of source: {source_id} at {root_path} (job_id: {job_id}, already indexed: {initial_indexed_count} files)")
+        # Update job to reflect resume
+        db.update_index_job(job_id, status="running")  # Ensure it's marked as running
+        # Immediately update source status to indexing and current progress
+        db.update_source_stats(
+            source_id,
+            status="indexing",
+            files_indexed=initial_indexed_count,
+            bytes_indexed=initial_bytes_processed
+        )
+    else:
+        logger.info(f"Starting full index of source: {source_id} at {root_path} (job_id: {job_id})")
     
-    indexed_count = 0
+    indexed_count = initial_indexed_count
     skipped_count = 0
-    bytes_processed = 0
-    last_update = 0
+    bytes_processed = initial_bytes_processed
+    last_update = initial_indexed_count
     BATCH_SIZE = 10  # Update progress every N files
     
     try:
         # Walk the directory tree
+        # If resuming, index_file's idempotent check will skip already-indexed files
         for path in files_to_index:
             try:
-                if index_file(path, source.id, source_id):
-                    indexed_count += 1
-                    # Get file size for bytes tracking
-                    try:
-                        bytes_processed += path.stat().st_size
-                    except:
-                        pass
+                # Check if file was already indexed in this job (for resume tracking)
+                existing_file = db.get_file_by_path(source.id, str(path), source_id)
+                was_already_indexed = existing_file is not None
+                
+                # index_file is idempotent - it will skip files that are already indexed and unchanged
+                was_indexed = index_file(path, source.id, source_id)
+                
+                if was_indexed:
+                    if not was_already_indexed:
+                        # New file was indexed (or file was updated and re-indexed)
+                        indexed_count += 1
+                        try:
+                            bytes_processed += path.stat().st_size
+                        except:
+                            pass
+                    # else: file was already indexed and unchanged, skip counting (already in initial_indexed_count)
                 else:
                     skipped_count += 1
                 
@@ -329,7 +395,7 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
         )
         
         logger.info(f"Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id}")
-        return indexed_count, job_id, job_id
+        return indexed_count, bytes_processed, job_id
         
     except Exception as e:
         error_msg = str(e)
@@ -348,7 +414,7 @@ def index_source(source_id: str) -> Tuple[int, Optional[int]]:
             last_error=error_msg
         )
         
-        return 0, job_id
+        return 0, 0, job_id
 
 
 def delete_file(path: Path, source_db_id: int, source_id: str):

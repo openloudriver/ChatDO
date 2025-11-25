@@ -2225,11 +2225,16 @@ class UpdateMemorySourcesRequest(BaseModel):
 async def update_project_memory_sources(project_id: str, body: UpdateMemorySourcesRequest):
     """Update memory sources for a project"""
     from server.services import projects_config
+    from memory_service.config import sync_yaml_from_projects
     
     try:
         project = projects_config.update_project_memory_sources(
             project_id, body.memory_sources
         )
+        
+        # Auto-sync YAML file to reflect the new connections
+        sync_yaml_from_projects()
+        
         return {
             "project_id": project_id,
             "memory_sources": project.get("memory_sources") or [],

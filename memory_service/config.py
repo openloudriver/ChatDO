@@ -52,7 +52,10 @@ class SourceConfig:
 
 
 def load_sources() -> List[SourceConfig]:
-    """Load source configurations from memory_sources.yaml."""
+    """
+    Load source configurations from memory_sources.yaml.
+    Auto-detects project_id from projects.json if source is connected via UI.
+    """
     ensure_config_dir()
     
     if not MEMORY_SOURCES_YAML.exists():
@@ -61,8 +64,29 @@ def load_sources() -> List[SourceConfig]:
     with open(MEMORY_SOURCES_YAML, 'r') as f:
         config = yaml.safe_load(f)
     
+    # Load projects to auto-detect project_id from connections
+    projects_map = {}
+    try:
+        projects_path = BASE_DIR / "server" / "data" / "projects.json"
+        if projects_path.exists():
+            import json
+            with open(projects_path, 'r') as pf:
+                projects = json.load(pf)
+                for project in projects:
+                    for source_id in project.get("memory_sources", []):
+                        projects_map[source_id] = project["id"]
+    except Exception as e:
+        # If we can't load projects, continue with YAML project_id
+        pass
+    
     sources = []
     for source_data in config.get("sources", []):
+        source_id = source_data.get("id")
+        
+        # Auto-detect project_id from projects.json if source is connected
+        if source_id in projects_map:
+            source_data["project_id"] = projects_map[source_id]
+        
         sources.append(SourceConfig(source_data))
     
     return sources
@@ -71,4 +95,51 @@ def load_sources() -> List[SourceConfig]:
 def ensure_config_dir():
     """Ensure the config directory exists."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def sync_yaml_from_projects():
+    """
+    Sync project_id in memory_sources.yaml from projects.json connections.
+    This ensures the YAML stays in sync when sources are connected/disconnected via UI.
+    """
+    ensure_config_dir()
+    
+    if not MEMORY_SOURCES_YAML.exists():
+        return
+    
+    # Load current YAML
+    with open(MEMORY_SOURCES_YAML, 'r') as f:
+        config = yaml.safe_load(f) or {}
+    
+    # Build map of source_id -> project_id from projects.json
+    projects_map = {}
+    try:
+        projects_path = BASE_DIR / "server" / "data" / "projects.json"
+        if projects_path.exists():
+            import json
+            with open(projects_path, 'r') as pf:
+                projects = json.load(pf)
+                for project in projects:
+                    for source_id in project.get("memory_sources", []):
+                        projects_map[source_id] = project["id"]
+    except Exception as e:
+        # If we can't load projects, skip sync
+        return
+    
+    # Update project_id for each source in YAML if it's connected
+    updated = False
+    sources = config.get("sources", [])
+    for source in sources:
+        source_id = source.get("id")
+        if source_id in projects_map:
+            # Source is connected to a project - update project_id
+            new_project_id = projects_map[source_id]
+            if source.get("project_id") != new_project_id:
+                source["project_id"] = new_project_id
+                updated = True
+    
+    # Save YAML if updated
+    if updated:
+        with open(MEMORY_SOURCES_YAML, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 

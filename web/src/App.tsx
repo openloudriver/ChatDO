@@ -8,6 +8,7 @@ import ProjectChatList from './components/ProjectChatList';
 import TrashChatList from './components/TrashChatList';
 import SearchResults from './components/SearchResults';
 import MemoryDashboard from './components/MemoryDashboard';
+import ConnectProjectModal from './components/ConnectProjectModal';
 
 const App: React.FC = () => {
   const { 
@@ -19,7 +20,9 @@ const App: React.FC = () => {
     createNewChatInProject,
     setCurrentProject,
     setCurrentConversation,
-    loadChats
+    loadChats,
+    connectProjectModal,
+    closeConnectProjectModal
   } = useChatStore();
   
   // Use a ref to track if initialization has already run
@@ -162,6 +165,19 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {renderMainContent()}
       </div>
+      
+      {/* Connect Project Modal - rendered at root level */}
+      {connectProjectModal.open && connectProjectModal.projectId && connectProjectModal.projectName && (
+        <>
+          {console.log('Rendering ConnectProjectModal:', connectProjectModal)}
+          <ConnectProjectModal
+            projectId={connectProjectModal.projectId}
+            projectName={connectProjectModal.projectName}
+            isOpen={connectProjectModal.open}
+            onClose={closeConnectProjectModal}
+          />
+        </>
+      )}
     </div>
   );
 };

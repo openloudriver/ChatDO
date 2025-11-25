@@ -66,6 +66,12 @@ export interface Project {
 
 export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory';
 
+export interface ConnectProjectModalState {
+  open: boolean;
+  projectId?: string;
+  projectName?: string;
+}
+
 interface ChatStore {
   // State
   projects: Project[];
@@ -85,6 +91,7 @@ interface ChatStore {
   sources: Source[];  // Sources for current conversation
   ragFileIds: string[];  // RAG file IDs for current conversation (deprecated - use ragFilesByConversationId)
   ragFilesByConversationId: Record<string, RagFile[]>;  // RAG files scoped per conversation
+  connectProjectModal: ConnectProjectModalState;  // Connect Project modal state
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -112,6 +119,8 @@ interface ChatStore {
   searchChats: (query: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  openConnectProjectModal: (projectId: string, projectName: string) => void;
+  closeConnectProjectModal: () => void;
   editMessage: (messageId: string, newContent: string) => void;
   deleteMessage: (messageId: string) => void;
   removeMessagesAfter: (messageId: string) => void;
@@ -147,7 +156,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   searchResults: [],
   sources: [],
   ragFileIds: [],
-  ragFilesByConversationId: {},
+    ragFilesByConversationId: {},
+    connectProjectModal: { open: false },
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -1126,6 +1136,26 @@ export const useChatStore = create<ChatStore>((set) => ({
       console.error('Failed to search chats:', error);
       set({ searchResults: [] });
     }
+  },
+  
+  openConnectProjectModal: (projectId: string, projectName: string) => {
+    console.log('Opening Connect Project modal:', projectId, projectName);
+    set({ 
+      connectProjectModal: { 
+        open: true, 
+        projectId, 
+        projectName 
+      } 
+    });
+    console.log('Modal state set');
+  },
+  
+  closeConnectProjectModal: () => {
+    set({ 
+      connectProjectModal: { 
+        open: false 
+      } 
+    });
   }
 }));
 

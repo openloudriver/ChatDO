@@ -15,6 +15,40 @@ from memory_service.indexer import index_file, delete_file, should_index_file
 
 logger = logging.getLogger(__name__)
 
+# Store directory - watcher should ignore everything under here
+STORE_DIR = Path(__file__).resolve().parent / "store"
+
+# SQLite file patterns to ignore
+IGNORE_SUFFIXES = (".sqlite", ".sqlite-journal")
+IGNORE_ENDSWITH = ("-wal",)
+
+
+def _should_ignore_path(path: str) -> bool:
+    """Check if a path should be ignored by the watcher."""
+    try:
+        p = Path(path)
+        
+        # Ignore directories and files inside our own store directory
+        try:
+            if STORE_DIR in p.parents or p == STORE_DIR:
+                return True
+        except Exception:
+            # Be defensive; never break on path checks
+            pass
+        
+        # Ignore SQLite + temp files
+        if p.suffix in IGNORE_SUFFIXES:
+            return True
+        
+        for suffix in IGNORE_ENDSWITH:
+            if p.name.endswith(suffix):
+                return True
+        
+        return False
+    except Exception:
+        # Be defensive; if we can't check the path, ignore it to be safe
+        return True
+
 
 class IndexingHandler(FileSystemEventHandler):
     """Handler for file system events that triggers indexing."""
@@ -31,6 +65,9 @@ class IndexingHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         
+        if _should_ignore_path(event.src_path):
+            return
+        
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
             logger.info(f"File created, indexing: {path}")
@@ -41,6 +78,9 @@ class IndexingHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         
+        if _should_ignore_path(event.src_path):
+            return
+        
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
             logger.info(f"File modified, re-indexing: {path}")
@@ -49,6 +89,9 @@ class IndexingHandler(FileSystemEventHandler):
     def on_deleted(self, event: FileSystemEvent):
         """Handle file deletion."""
         if event.is_directory:
+            return
+        
+        if _should_ignore_path(event.src_path):
             return
         
         path = Path(event.src_path)

@@ -6,6 +6,7 @@ Provides REST API endpoints for health checks, source management, indexing, and 
 import logging
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import numpy as np
@@ -62,6 +63,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Memory Service", version="1.0.0", lifespan=lifespan)
+
+# Add CORS middleware to allow frontend connections
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Request/Response models
@@ -179,14 +189,15 @@ async def reindex(request: ReindexRequest):
         # Let's modify to return job_id - we'll need to refactor index_source slightly
         # For now, create job here and pass it through
         
-        # Reindex (this will create the job internally and return job_id)
-        count, job_id = index_source(request.source_id)
+        # Reindex (this will create the job internally and return files_indexed, bytes_indexed, job_id)
+        files_indexed, bytes_indexed, job_id = index_source(request.source_id)
         
         return {
             "status": "ok",
+            "files_indexed": files_indexed,
+            "bytes_indexed": bytes_indexed,
             "job_id": job_id,
-            "source_id": request.source_id,
-            "files_indexed": count
+            "source_id": request.source_id
         }
     except HTTPException:
         raise

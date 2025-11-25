@@ -33,6 +33,7 @@ interface SortableProjectItemProps {
   openMenuId: string | null;
   setOpenMenuId: (id: string | null) => void;
   handleEditProject: (id: string, name: string) => void;
+  handleConnectProject: (id: string, name: string) => void;
   handleDeleteProject: (id: string, name: string) => void;
   setViewMode: (mode: 'projectList' | 'chat' | 'trashList' | 'memory') => void;
 }
@@ -44,6 +45,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
   openMenuId,
   setOpenMenuId,
   handleEditProject,
+  handleConnectProject,
   handleDeleteProject,
   setViewMode,
 }) => {
@@ -92,8 +94,9 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
       </button>
       {openMenuId === project.id && (
         <div 
-          className="absolute right-0 mt-1 w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-10"
+          className="absolute right-0 mt-1 w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-50"
           onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           <button
             onClick={() => {
@@ -105,13 +108,16 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
             Rename Project
           </button>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Connect Project clicked for:', project.id, project.name);
               handleConnectProject(project.id, project.name);
               setOpenMenuId(null);
             }}
             className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f]"
           >
-            Connect project…
+            Connect Project
           </button>
           <button
             onClick={() => {
@@ -159,9 +165,7 @@ const Sidebar: React.FC = () => {
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
-  const [connectModal, setConnectModal] = useState<{ open: boolean; projectId?: string; projectName?: string }>({
-    open: false,
-  });
+  const { openConnectProjectModal } = useChatStore();
 
   // Load chats when project changes
   useEffect(() => {
@@ -225,7 +229,7 @@ const Sidebar: React.FC = () => {
   };
 
   const handleConnectProject = (projectId: string, projectName: string) => {
-    setConnectModal({ open: true, projectId, projectName });
+    openConnectProjectModal(projectId, projectName);
   };
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
@@ -325,6 +329,7 @@ const Sidebar: React.FC = () => {
                 openMenuId={openMenuId}
                 setOpenMenuId={setOpenMenuId}
                 handleEditProject={handleEditProject}
+                handleConnectProject={handleConnectProject}
                 handleDeleteProject={handleDeleteProject}
                 setViewMode={setViewMode}
               />
@@ -396,15 +401,7 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
       
-      {/* Connect Project Modal */}
-      {connectModal.open && connectModal.projectId && connectModal.projectName && (
-        <ConnectProjectModal
-          projectId={connectModal.projectId}
-          projectName={connectModal.projectName}
-          isOpen={connectModal.open}
-          onClose={() => setConnectModal({ open: false })}
-        />
-      )}
+      {/* Connect Project Modal - rendered via portal in App.tsx */}
     </div>
   );
 };
