@@ -65,6 +65,5 @@ models/
 data/tmp_audio/
 rag_files/*.json
 
-# Memory Service database
-memory_service/store/**/*.sqlite
-memory_service/store/*.sqlite
+# Memory Service (synced to pCloud)
+memory_service/
