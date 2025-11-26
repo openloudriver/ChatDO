@@ -337,6 +337,7 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
     indexed_count = initial_indexed_count
     skipped_count = 0
     bytes_processed = initial_bytes_processed
+    total_processed = initial_indexed_count  # Start from already-indexed count
     last_update = initial_indexed_count
     BATCH_SIZE = 10  # Update progress every N files
     
@@ -345,12 +346,15 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
         # If resuming, index_file's idempotent check will skip already-indexed files
         for path in files_to_index:
             try:
-                # Check if file was already indexed in this job (for resume tracking)
+                # Check if file was already indexed before this job started
                 existing_file = db.get_file_by_path(source.id, str(path), source_id)
                 was_already_indexed = existing_file is not None
                 
                 # index_file is idempotent - it will skip files that are already indexed and unchanged
                 was_indexed = index_file(path, source.id, source_id)
+                
+                # Always increment total_processed to show we're still working
+                total_processed += 1
                 
                 if was_indexed:
                     if not was_already_indexed:
@@ -364,34 +368,63 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
                 else:
                     skipped_count += 1
                 
-                # Update progress every BATCH_SIZE files
-                if indexed_count - last_update >= BATCH_SIZE:
-                    db.update_index_job(job_id, files_processed=indexed_count, bytes_processed=bytes_processed)
+                # Get actual totals from database (includes all indexed files, not just this job)
+                conn = db.get_db_connection(source_id)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+                row = cursor.fetchone()
+                actual_files = row[0] if row else 0
+                actual_bytes = row[1] if row and len(row) > 1 else 0
+                conn.close()
+                
+                # Update progress every BATCH_SIZE files processed
+                if total_processed - last_update >= BATCH_SIZE:
+                    db.update_index_job(job_id, files_processed=total_processed, bytes_processed=bytes_processed)
+                    db.update_source_stats(
+                        source_id,
+                        files_indexed=actual_files,  # Use actual database count
+                        bytes_indexed=actual_bytes    # Use actual database sum
+                    )
+                    last_update = total_processed
+                    
+            except Exception as e:
+                logger.error(f"Error indexing file {path}: {e}")
+                skipped_count += 1
+                total_processed += 1  # Count error as processed for progress tracking
+                
+                # Update progress even on errors to show we're still working
+                if total_processed - last_update >= BATCH_SIZE:
+                    db.update_index_job(job_id, files_processed=total_processed, bytes_processed=bytes_processed)
                     db.update_source_stats(
                         source_id,
                         files_indexed=indexed_count,
                         bytes_indexed=bytes_processed
                     )
-                    last_update = indexed_count
-                    
-            except Exception as e:
-                logger.error(f"Error indexing file {path}: {e}")
-                skipped_count += 1
+                    last_update = total_processed
+    
+        # Get final actual totals from database
+        conn = db.get_db_connection(source_id)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+        row = cursor.fetchone()
+        final_files = row[0] if row else 0
+        final_bytes = row[1] if row and len(row) > 1 else 0
+        conn.close()
         
         # Final update
         db.update_index_job(
             job_id,
             status="completed",
             completed_at=datetime.now(),
-            files_processed=indexed_count,
+            files_processed=total_processed,
             bytes_processed=bytes_processed
         )
         db.update_source_stats(
             source_id,
             status="idle",
             last_index_completed_at=datetime.now(),
-            files_indexed=indexed_count,
-            bytes_indexed=bytes_processed
+            files_indexed=final_files,  # Use actual database count
+            bytes_indexed=final_bytes    # Use actual database sum
         )
         
         logger.info(f"Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id}")

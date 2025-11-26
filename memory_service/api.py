@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import numpy as np
 from contextlib import asynccontextmanager
+import asyncio
+import threading
 
 from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sources
 from memory_service.store import db
@@ -183,20 +185,27 @@ async def reindex(request: ReindexRequest):
         )
         logger.info(f"Registered source {request.source_id} in database (db_id: {db_id})")
         
-        # Create index job (index_source will create it, but we need the job_id for response)
-        # Actually, index_source creates the job, so we'll get it after
-        # For now, trigger reindex in background or get job_id from index_source
-        # Let's modify to return job_id - we'll need to refactor index_source slightly
-        # For now, create job here and pass it through
+        # Run indexing in background thread to avoid blocking the API
+        def run_indexing():
+            try:
+                index_source(request.source_id)
+            except Exception as e:
+                logger.error(f"Background indexing failed for {request.source_id}: {e}", exc_info=True)
+                db.update_source_stats(
+                    request.source_id,
+                    status="error",
+                    last_error=str(e)
+                )
         
-        # Reindex (this will create the job internally and return files_indexed, bytes_indexed, job_id)
-        files_indexed, bytes_indexed, job_id = index_source(request.source_id)
+        thread = threading.Thread(target=run_indexing, daemon=True)
+        thread.start()
         
+        # Return immediately - client can poll /sources to get the job_id
         return {
             "status": "ok",
-            "files_indexed": files_indexed,
-            "bytes_indexed": bytes_indexed,
-            "job_id": job_id,
+            "files_indexed": 0,
+            "bytes_indexed": 0,
+            "job_id": 0,  # Will be available via /sources endpoint
             "source_id": request.source_id
         }
     except HTTPException:

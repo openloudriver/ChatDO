@@ -71,8 +71,8 @@ async def chat_with_smart_search(
             memory_result = get_project_memory_context(project_id, user_message, limit=8)
             if memory_result:
                 memory_context, has_memory = memory_result
-                if has_memory:
-                    logger.info(f"Retrieved memory context for project {project_id}")
+            if has_memory:
+                logger.info(f"Retrieved memory context for project {project_id}")
                     # Get source names from the actual sources used
                     from server.services.memory_service_client import get_memory_sources_for_project
                     from server.services import projects_config

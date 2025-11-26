@@ -11,6 +11,12 @@ sources:
     include_glob: "**/*"
     exclude_glob: "**/memory_service/store/**,**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal"
 
+  - id: privacypay-repo
+    project_id: privacypay
+    root_path: /Users/christopher.peck/privacypay
+    include_glob: "**/*"
+    exclude_glob: "**/.git/**"
+
   # Additional sources can be added here:
   # - id: privacy-pay
   #   project_id: privacypay

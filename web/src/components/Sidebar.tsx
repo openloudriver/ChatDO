@@ -372,33 +372,33 @@ const Sidebar: React.FC = () => {
               />
             </svg>
           </button>
-          <button
-            onClick={() => {
-              setViewMode('trashList');
-              setCurrentProject(null);
-            }}
-            className={`p-2 rounded transition-colors flex-shrink-0 ${
-              viewMode === 'trashList'
-                ? 'bg-[#343541] text-white'
-                : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
-            }`}
-            title="Trash"
+        <button
+          onClick={() => {
+            setViewMode('trashList');
+            setCurrentProject(null);
+          }}
+          className={`p-2 rounded transition-colors flex-shrink-0 ${
+            viewMode === 'trashList'
+              ? 'bg-[#343541] text-white'
+              : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+          }`}
+          title="Trash"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      </div>
       </div>
       
       {/* Connect Project Modal - rendered via portal in App.tsx */}

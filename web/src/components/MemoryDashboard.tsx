@@ -32,7 +32,9 @@ const MemoryDashboard: React.FC = () => {
 
   const fetchSources = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:5858/sources');
+      const response = await axios.get('http://127.0.0.1:5858/sources', {
+        timeout: 30000, // 30 second timeout (indexing can be slow)
+      });
       setSources(response.data.sources || []);
       setError(null);
       
@@ -42,12 +44,14 @@ const MemoryDashboard: React.FC = () => {
       );
       setIsPolling(hasIndexing);
     } catch (err: any) {
-      if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {
+      console.error('Error fetching memory sources:', err);
+      if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error') || err.code === 'ECONNABORTED') {
         setError('Memory Service is offline – continuing without index status.');
       } else {
-        setError(`Error loading sources: ${err.message}`);
+        setError(`Error loading sources: ${err.message || 'Unknown error'}`);
       }
       setIsPolling(false);
+      setSources([]); // Clear sources on error
     } finally {
       setIsLoading(false);
     }
@@ -58,23 +62,28 @@ const MemoryDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isPolling) return;
-
+    // Always poll - either for indexing progress or to detect when service comes back online
+    const pollInterval = isPolling ? 3000 : 5000; // Poll every 3 seconds when indexing, 5 seconds when idle/offline
+    
     const interval = setInterval(() => {
       fetchSources();
-    }, 3000); // Poll every 3 seconds when indexing
+    }, pollInterval);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPolling]);
 
   const handleReindex = async (sourceId: string) => {
     try {
-      await axios.post('http://127.0.0.1:5858/reindex', { source_id: sourceId });
+      await axios.post('http://127.0.0.1:5858/reindex', { source_id: sourceId }, {
+        timeout: 10000, // 10 second timeout for reindex trigger
+      });
       setIsPolling(true);
       // Refresh immediately
       setTimeout(() => fetchSources(), 500);
     } catch (err: any) {
-      alert(`Failed to trigger reindex: ${err.message}`);
+      console.error('Error triggering reindex:', err);
+      alert(`Failed to trigger reindex: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -146,8 +155,10 @@ const MemoryDashboard: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {sources.map((source) => {
-              const progress = source.latest_job?.files_total
-                ? (source.latest_job.files_processed / source.latest_job.files_total) * 100
+              // Progress should be based on files_processed vs files_total, but cap at 100%
+              // If files_processed > files_total, it means we found more files than expected
+              const progress = source.latest_job?.files_total && source.latest_job.files_total > 0
+                ? Math.min(100, (source.latest_job.files_processed / source.latest_job.files_total) * 100)
                 : null;
 
               return (

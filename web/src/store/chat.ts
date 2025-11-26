@@ -156,7 +156,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   searchResults: [],
   sources: [],
   ragFileIds: [],
-    ragFilesByConversationId: {},
+  ragFilesByConversationId: {},
     connectProjectModal: { open: false },
   
   // Actions

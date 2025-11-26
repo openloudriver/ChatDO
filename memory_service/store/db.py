@@ -20,7 +20,8 @@ def get_db_connection(source_id: str):
     db_path = get_db_path_for_source(source_id)
     # Ensure the directory exists
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(db_path), timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL")  # Enable WAL mode for concurrent access
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -333,7 +334,8 @@ def compute_file_hash(path: Path) -> str:
 def get_tracking_db_connection():
     """Get a connection to the global tracking database."""
     TRACKING_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(TRACKING_DB_PATH))
+    conn = sqlite3.connect(str(TRACKING_DB_PATH), timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL")  # Enable WAL mode for concurrent access
     conn.row_factory = sqlite3.Row
     return conn
 
