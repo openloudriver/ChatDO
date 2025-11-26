@@ -67,13 +67,17 @@ rag_files/*.json
 
 # --- Memory Service runtime data ---
 
-# Per-source index folders
+# Per-source index folders (both repo and dynamic sources)
 memory_service/store/*-repo/
+memory_service/store/*-dir/
 
-# SQLite databases + journals
+# SQLite databases + journals (in store root and subdirectories)
 memory_service/store/*.sqlite
 memory_service/store/*.sqlite-journal
 memory_service/store/*.sqlite-wal
+memory_service/store/**/*.sqlite
+memory_service/store/**/*.sqlite-journal
+memory_service/store/**/*.sqlite-wal
 
 # Python cache
 memory_service/store/__pycache__/
