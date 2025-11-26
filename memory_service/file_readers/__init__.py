@@ -1,6 +1,16 @@
 """
-File readers for extracting text from various file types.
+Unified file reader using Unstructured.io for maximum extraction quality.
 
-Each reader handles a specific file type or group of related file types.
+All file types are now handled by Unstructured, which provides:
+- Superior PDF extraction (especially tables)
+- High-quality Word/Excel/PowerPoint extraction
+- OCR for images
+- Support for many additional formats (HTML, XML, etc.)
+
+This replaces the previous multi-reader approach with a single,
+high-quality extraction pipeline.
 """
+from memory_service.file_readers.unstructured_reader import read_file
+
+__all__ = ['read_file']
 

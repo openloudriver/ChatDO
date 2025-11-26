@@ -30,7 +30,8 @@
     "default_target": "privacypay",
     "sort_index": 3,
     "memory_sources": [
-      "privacypay-repo"
+      "privacypay-repo",
+      "coin-dir"
     ]
   },
   {

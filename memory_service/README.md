@@ -180,11 +180,21 @@ The integration is transparent - if Memory Service is unavailable, ChatDO contin
 
 ## Supported File Types
 
-- **Text/Code**: .txt, .md, .json, .ts, .tsx, .js, .py, .yml, .yaml, .toml, etc.
-- **Documents**: .pdf, .docx, .rtf
-- **Spreadsheets**: .xlsx, .xls, .csv
-- **Presentations**: .pptx, .ppt
-- **Images**: .png, .jpg, .jpeg (via OCR)
+Memory Service uses **Unstructured.io** for maximum extraction quality across all file types:
+
+- **Text/Code**: .txt, .md, .json, .ts, .tsx, .js, .py, .yml, .yaml, .toml, .xml, .html, .css, etc.
+- **Documents**: .pdf (with superior table extraction), .docx, .doc, .rtf, .odt
+- **Spreadsheets**: .xlsx, .xls, .csv, .ods
+- **Presentations**: .pptx, .ppt, .odp
+- **Images**: .png, .jpg, .jpeg, .gif, .bmp, .tiff, .webp (via OCR)
+- **Email**: .eml, .msg
+- **E-books**: .epub, .mobi
+
+Unstructured provides the highest quality extraction, especially for:
+- PDFs with complex tables and layouts
+- Multi-column documents
+- Documents with embedded images
+- Structured data in spreadsheets
 
 ## Configuration
 

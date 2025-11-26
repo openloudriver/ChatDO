@@ -13,37 +13,55 @@ from memory_service.config import CHUNK_SIZE_CHARS, CHUNK_OVERLAP_CHARS
 from memory_service import store
 from memory_service.store import db
 from memory_service.embeddings import embed_texts
-from memory_service.file_readers import (
-    text_reader,
-    pdf_reader,
-    docx_reader,
-    xlsx_reader,
-    pptx_reader,
-    image_reader
-)
+from memory_service.file_readers import read_file
 
 logger = logging.getLogger(__name__)
 
-# Supported file extensions
-TEXT_EXTENSIONS = {'.txt', '.md', '.json', '.ts', '.tsx', '.js', '.jsx', '.py', 
-                   '.yml', '.yaml', '.toml', '.xml', '.html', '.css', '.scss',
-                   '.sh', '.bash', '.zsh', '.rs', '.go', '.java', '.cpp', '.c',
-                   '.h', '.hpp', '.cs', '.php', '.rb', '.swift', '.kt', '.scala',
-                   '.sql', '.r', '.m', '.pl', '.lua', '.vim', '.conf', '.ini',
-                   '.log', '.lock', '.lockb', '.jsonl', '.ndjson', '.geojson'}
+# Supported file extensions - expanded list for Unstructured
+# Unstructured supports many more formats than we previously handled
+TEXT_EXTENSIONS = {
+    # Code files
+    '.txt', '.md', '.json', '.ts', '.tsx', '.js', '.jsx', '.py', 
+    '.yml', '.yaml', '.toml', '.xml', '.html', '.css', '.scss',
+    '.sh', '.bash', '.zsh', '.rs', '.go', '.java', '.cpp', '.c',
+    '.h', '.hpp', '.cs', '.php', '.rb', '.swift', '.kt', '.scala',
+    '.sql', '.r', '.m', '.pl', '.lua', '.vim', '.conf', '.ini',
+    '.log', '.lock', '.lockb', '.jsonl', '.ndjson', '.geojson',
+    '.tsv', '.psv', '.tsv', '.psv'
+}
 
+# Document formats (Unstructured handles these with superior quality)
 PDF_EXTENSIONS = {'.pdf'}
-DOCX_EXTENSIONS = {'.docx', '.doc', '.rtf'}
-XLSX_EXTENSIONS = {'.xlsx', '.xls', '.csv'}
-PPTX_EXTENSIONS = {'.pptx', '.ppt'}
-IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.tif'}
+DOCX_EXTENSIONS = {'.docx', '.doc', '.rtf', '.odt'}  # Added OpenDocument
+XLSX_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.ods'}  # Added OpenDocument Spreadsheet
+PPTX_EXTENSIONS = {'.pptx', '.ppt', '.odp'}  # Added OpenDocument Presentation
 
-ALL_SUPPORTED = TEXT_EXTENSIONS | PDF_EXTENSIONS | DOCX_EXTENSIONS | XLSX_EXTENSIONS | PPTX_EXTENSIONS | IMAGE_EXTENSIONS
+# Images (Unstructured uses OCR)
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.heic', '.heif'}
+
+# Additional formats Unstructured supports
+EMAIL_EXTENSIONS = {'.eml', '.msg'}  # Email files
+ARCHIVE_EXTENSIONS = {'.epub', '.mobi'}  # E-books
+OTHER_EXTENSIONS = {'.rtf', '.odt', '.ods', '.odp'}  # Already covered but listed for clarity
+
+ALL_SUPPORTED = (
+    TEXT_EXTENSIONS | PDF_EXTENSIONS | DOCX_EXTENSIONS | 
+    XLSX_EXTENSIONS | PPTX_EXTENSIONS | IMAGE_EXTENSIONS |
+    EMAIL_EXTENSIONS | ARCHIVE_EXTENSIONS
+)
 
 
 def extract_text(path: Path) -> Optional[str]:
     """
-    Extract text from a file based on its extension.
+    Extract text from any file using Unstructured.io for maximum quality.
+    
+    Unstructured automatically detects file type and uses the best extraction
+    method for each format. This provides superior quality compared to
+    individual file readers, especially for:
+    - PDFs with tables
+    - Complex Word/Excel/PowerPoint documents
+    - Images with text (OCR)
+    - HTML/XML documents
     
     Args:
         path: Path to the file
@@ -51,31 +69,14 @@ def extract_text(path: Path) -> Optional[str]:
     Returns:
         Extracted text as string, or None if extraction fails or file type not supported
     """
-    ext = path.suffix.lower()
-    
-    if ext in TEXT_EXTENSIONS:
-        return text_reader.read_text_file(path)
-    elif ext in PDF_EXTENSIONS:
-        return pdf_reader.read_pdf(path)
-    elif ext in DOCX_EXTENSIONS:
-        return docx_reader.read_docx(path)
-    elif ext in XLSX_EXTENSIONS:
-        if ext == '.csv':
-            return xlsx_reader.read_csv(path)
-        else:
-            return xlsx_reader.read_xlsx(path)
-    elif ext in PPTX_EXTENSIONS:
-        return pptx_reader.read_pptx(path)
-    elif ext in IMAGE_EXTENSIONS:
-        return image_reader.read_image(path)
-    else:
-        logger.debug(f"Unsupported file type: {ext} for {path}")
-        return None
+    # Use Unstructured's unified extraction for all file types
+    # It handles file type detection and uses optimal extraction methods
+    return read_file(path)
 
 
 def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:
     """
-    Split text into chunks.
+    Split text into chunks with improved logic to avoid huge single chunks.
     
     Args:
         text: Text to chunk
@@ -90,6 +91,7 @@ def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:
     text_len = len(text)
     start = 0
     chunk_index = 0
+    seen_chunks = set()  # Track unique chunks to avoid duplicates
     
     while start < text_len:
         # Calculate end position
@@ -97,28 +99,38 @@ def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:
         
         # If not at the end, try to break at a paragraph or line boundary
         if end < text_len:
-            # Look for paragraph break (double newline)
+            # Look for paragraph break (double newline) - prefer this
             para_break = text.rfind('\n\n', start, end)
-            if para_break != -1:
+            if para_break != -1 and para_break > start + 100:  # Ensure meaningful chunk
                 end = para_break + 2
             else:
                 # Look for single newline
                 line_break = text.rfind('\n', start, end)
-                if line_break != -1:
+                if line_break != -1 and line_break > start + 100:
                     end = line_break + 1
                 else:
                     # Look for sentence end
                     sentence_end = text.rfind('. ', start, end)
-                    if sentence_end != -1:
+                    if sentence_end != -1 and sentence_end > start + 100:
                         end = sentence_end + 2
         
         chunk_text = text[start:end].strip()
-        if chunk_text:
-            chunks.append((chunk_index, chunk_text, start, end))
-            chunk_index += 1
         
-        # Move start position with overlap
-        start = max(start + 1, end - CHUNK_OVERLAP_CHARS)
+        # Skip empty chunks and duplicates
+        if chunk_text and len(chunk_text) > 10:  # Minimum meaningful chunk size
+            # Create a hash of the chunk to detect duplicates
+            chunk_hash = hash(chunk_text)
+            if chunk_hash not in seen_chunks:
+                chunks.append((chunk_index, chunk_text, start, end))
+                seen_chunks.add(chunk_hash)
+                chunk_index += 1
+        
+        # Move start position with overlap, but ensure we make progress
+        new_start = max(start + 1, end - CHUNK_OVERLAP_CHARS)
+        if new_start <= start:
+            # Prevent infinite loop - force progress
+            new_start = start + CHUNK_SIZE_CHARS // 2
+        start = new_start
     
     return chunks
 
@@ -339,7 +351,7 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
     bytes_processed = initial_bytes_processed
     total_processed = initial_indexed_count  # Start from already-indexed count
     last_update = initial_indexed_count
-    BATCH_SIZE = 10  # Update progress every N files
+    BATCH_SIZE = 1  # Update progress after every file for better visibility during slow extraction
     
     try:
         # Walk the directory tree

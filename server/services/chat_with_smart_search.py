@@ -73,17 +73,17 @@ async def chat_with_smart_search(
                 memory_context, has_memory = memory_result
             if has_memory:
                 logger.info(f"Retrieved memory context for project {project_id}")
-                    # Get source names from the actual sources used
-                    from server.services.memory_service_client import get_memory_sources_for_project
-                    from server.services import projects_config
-                    source_ids = get_memory_sources_for_project(project_id)
-                    # Get source display names from Memory Service
-                    client = get_memory_client()
-                    all_sources = client.get_sources()
-                    source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
-                    for source_id in source_ids:
-                        source_name = source_map.get(source_id, source_id)
-                        sources.append(f"Memory-{source_name}")
+                # Get source names from the actual sources used
+                from server.services.memory_service_client import get_memory_sources_for_project
+                from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
+                source_ids = get_memory_sources_for_project(project_id)
+                # Get source display names from Memory Service
+                client = get_memory_client()
+                all_sources = client.get_sources()
+                source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
+                for source_id in source_ids:
+                    source_name = source_map.get(source_id, source_id)
+                    sources.append(f"Memory-{source_name}")
         except Exception as e:
             logger.warning(f"Failed to get memory context: {e}")
     

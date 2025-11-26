@@ -447,14 +447,31 @@ async def search(request: SearchRequest):
     
     Returns top-N matches ordered by cosine similarity.
     If source_ids is not provided, returns empty results.
+    
+    Uses query expansion to improve recall for table-heavy documents.
     """
     try:
         # Require source_ids
         if not request.source_ids:
             return SearchResponse(results=[])
         
-        # Embed the query
-        query_embedding = embed_query(request.query)
+        # Query expansion: extract key terms and search for them individually
+        # This helps with table-heavy PDFs where the full query might not match well
+        query_terms = []
+        original_query = request.query.lower()
+        
+        # Extract potential key terms (words that look important)
+        words = original_query.split()
+        for word in words:
+            # Keep words that are likely meaningful (not common stop words)
+            if len(word) > 3 and word not in ['the', 'what', 'when', 'where', 'which', 'this', 'that', 'with', 'from']:
+                query_terms.append(word)
+        
+        # Also try the original query
+        all_queries = [request.query] + query_terms[:3]  # Limit to top 3 terms to avoid too many searches
+        
+        # Embed all query variations
+        query_embeddings = [embed_query(q) for q in all_queries]
         
         # Search across all specified sources
         all_embeddings = []
@@ -469,21 +486,22 @@ async def search(request: SearchRequest):
         if not all_embeddings:
             return SearchResponse(results=[])
         
-        # Compute cosine similarities
+        # Compute cosine similarities using best match across all query variations
         similarities = []
         for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char in all_embeddings:
-            # Cosine similarity
-            dot_product = np.dot(query_embedding, embedding)
-            norm_query = np.linalg.norm(query_embedding)
-            norm_embedding = np.linalg.norm(embedding)
-            
-            if norm_query > 0 and norm_embedding > 0:
-                similarity = dot_product / (norm_query * norm_embedding)
-            else:
-                similarity = 0.0
+            # Try all query embeddings and take the best match
+            best_similarity = 0.0
+            for query_embedding in query_embeddings:
+                dot_product = np.dot(query_embedding, embedding)
+                norm_query = np.linalg.norm(query_embedding)
+                norm_embedding = np.linalg.norm(embedding)
+                
+                if norm_query > 0 and norm_embedding > 0:
+                    similarity = dot_product / (norm_query * norm_embedding)
+                    best_similarity = max(best_similarity, similarity)
             
             similarities.append((
-                similarity,
+                best_similarity,
                 project_id,
                 source_id,
                 file_path,
@@ -517,6 +535,73 @@ async def search(request: SearchRequest):
         
     except Exception as e:
         logger.error(f"Error searching: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/sources/{source_id}/chunk-stats")
+async def get_chunk_stats(source_id: str):
+    """
+    Get chunking quality statistics for a source.
+    Useful for diagnosing indexing quality.
+    """
+    try:
+        # Initialize DB for this source
+        db.init_db(source_id)
+        conn = db.get_db_connection(source_id)
+        cursor = conn.cursor()
+        
+        # Get total chunks and unique chunks
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_chunks,
+                COUNT(DISTINCT text) as unique_chunks,
+                AVG(LENGTH(text)) as avg_chunk_size,
+                MIN(LENGTH(text)) as min_chunk_size,
+                MAX(LENGTH(text)) as max_chunk_size,
+                COUNT(DISTINCT file_id) as total_files
+            FROM chunks
+        """)
+        stats = cursor.fetchone()
+        
+        # Get chunk size distribution
+        cursor.execute("""
+            SELECT 
+                CASE 
+                    WHEN LENGTH(text) < 100 THEN '< 100'
+                    WHEN LENGTH(text) < 500 THEN '100-500'
+                    WHEN LENGTH(text) < 1000 THEN '500-1000'
+                    WHEN LENGTH(text) < 2000 THEN '1000-2000'
+                    ELSE '2000+'
+                END as size_range,
+                COUNT(*) as count
+            FROM chunks
+            GROUP BY size_range
+            ORDER BY 
+                CASE size_range
+                    WHEN '< 100' THEN 1
+                    WHEN '100-500' THEN 2
+                    WHEN '500-1000' THEN 3
+                    WHEN '1000-2000' THEN 4
+                    ELSE 5
+                END
+        """)
+        size_dist = [{"range": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return {
+            "source_id": source_id,
+            "total_chunks": stats[0],
+            "unique_chunks": stats[1],
+            "duplicate_rate": round((1 - stats[1] / stats[0]) * 100, 2) if stats[0] > 0 else 0,
+            "avg_chunk_size": round(stats[2], 1) if stats[2] else 0,
+            "min_chunk_size": stats[3] or 0,
+            "max_chunk_size": stats[4] or 0,
+            "total_files": stats[5] or 0,
+            "size_distribution": size_dist
+        }
+    except Exception as e:
+        logger.error(f"Error getting chunk stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
