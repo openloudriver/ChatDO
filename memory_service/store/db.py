@@ -424,6 +424,18 @@ def get_or_create_source(source_id: str, root_path: str, display_name: Optional[
     )
 
 
+def register_source_config(src) -> SourceStatus:
+    """
+    Ensure the given SourceConfig has a row in the SourceStatus table and return it.
+    """
+    return get_or_create_source(
+        source_id=src.id,
+        root_path=str(src.root_path),
+        display_name=getattr(src, 'display_name', src.id),  # Use display_name if available
+        project_id=src.project_id
+    )
+
+
 def update_source_stats(source_id: str, **fields) -> None:
     """Update source status fields."""
     conn = get_tracking_db_connection()
@@ -443,6 +455,45 @@ def update_source_stats(source_id: str, **fields) -> None:
         SET {', '.join(updates)}, updated_at = ?
         WHERE id = ?
     """, values)
+    
+    conn.commit()
+    conn.close()
+
+
+def get_source_status(source_id: str) -> Optional[SourceStatus]:
+    """Get source status by source_id."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM source_status WHERE id = ?", (source_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return SourceStatus(
+            id=row["id"],
+            display_name=row["display_name"],
+            root_path=row["root_path"],
+            status=row["status"],
+            files_indexed=row["files_indexed"],
+            bytes_indexed=row["bytes_indexed"],
+            last_index_started_at=datetime.fromisoformat(row["last_index_started_at"]) if row["last_index_started_at"] else None,
+            last_index_completed_at=datetime.fromisoformat(row["last_index_completed_at"]) if row["last_index_completed_at"] else None,
+            last_error=row["last_error"],
+            project_id=row["project_id"]
+        )
+    return None
+
+
+def delete_source_from_tracking(source_id: str) -> None:
+    """Delete a source from the tracking database (source_status and index_jobs)."""
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    # Delete index jobs first (foreign key constraint)
+    cursor.execute("DELETE FROM index_jobs WHERE source_id = ?", (source_id,))
+    # Delete source status
+    cursor.execute("DELETE FROM source_status WHERE id = ?", (source_id,))
     
     conn.commit()
     conn.close()

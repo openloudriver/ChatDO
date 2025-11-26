@@ -156,6 +156,55 @@ class MemoryServiceClient:
         except Exception as e:
             logger.warning(f"Memory Service trigger_reindex failed: {e}")
             return None
+    
+    def add_memory_source(self, root_path: str, display_name: Optional[str] = None,
+                          project_id: Optional[str] = "scratch") -> Dict:
+        """
+        Call the memory service to create a new memory source and start indexing it.
+        """
+        if not self.is_available():
+            raise requests.RequestException("Memory Service is not available")
+        
+        payload = {
+            "root_path": root_path,
+            "display_name": display_name,
+            "project_id": project_id or "scratch",
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/sources",
+                json=payload,
+                timeout=60
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            # Extract error detail from response if available
+            try:
+                detail = e.response.json().get("detail", str(e))
+            except:
+                detail = str(e)
+            raise requests.RequestException(f"Failed to add memory source: {detail}")
+
+    def delete_memory_source(self, source_id: str) -> dict:
+        """
+        Call the memory service to delete a memory source.
+        """
+        try:
+            response = requests.delete(
+                f"{self.base_url}/sources/{source_id}",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            # Extract error detail from response if available
+            try:
+                detail = e.response.json().get("detail", str(e))
+            except:
+                detail = str(e)
+            raise requests.RequestException(f"Failed to delete memory source: {detail}")
 
 
 # Global client instance

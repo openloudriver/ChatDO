@@ -1,0 +1,18 @@
+[
+  {
+    "id": "downloads-dir",
+    "project_id": "scratch",
+    "root_path": "/Volumes/iCPWeeaPWBXs/Downloads",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "Downloads"
+  },
+  {
+    "id": "coin-dir",
+    "project_id": "scratch",
+    "root_path": "/Users/christopher.peck/Coin",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "Coin"
+  }
+]

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import AddMemoryModal from './AddMemoryModal';
+import ConfirmDeleteMemoryModal from './ConfirmDeleteMemoryModal';
 
 interface Source {
   id: string;
@@ -11,7 +13,8 @@ interface Source {
   last_index_started_at: string | null;
   last_index_completed_at: string | null;
   last_error: string | null;
-  project_id: string | null;
+  project_id: string | null;  // Legacy field, kept for backward compatibility
+  connected_projects?: string[];  // New: list of project names this source is connected to
   latest_job: {
     id: number;
     status: string;
@@ -29,6 +32,12 @@ const MemoryDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    sourceId: string;
+    displayName: string;
+  } | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const fetchSources = async () => {
     try {
@@ -87,6 +96,15 @@ const MemoryDashboard: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (sourceId: string, displayName: string) => {
+    setDeleteTarget({
+      sourceId,
+      displayName,
+    });
+    setDeleteModalOpen(true);
+  };
+
+
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -134,10 +152,22 @@ const MemoryDashboard: React.FC = () => {
     );
   }
 
+  const loadSources = () => {
+    fetchSources();
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-[#343541] p-6">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-semibold text-white mb-6">Memory Dashboard</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-white">Memory Dashboard</h1>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-3 py-1.5 text-sm bg-[#565869] hover:bg-[#6e6f7f] text-white rounded transition-colors"
+          >
+            Add memory…
+          </button>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm">
@@ -184,13 +214,22 @@ const MemoryDashboard: React.FC = () => {
                         {source.root_path}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleReindex(source.id)}
-                      disabled={source.status === 'indexing'}
-                      className="px-3 py-1.5 text-sm bg-[#565869] hover:bg-[#6e6f7f] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
-                    >
-                      Reindex
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleReindex(source.id)}
+                        disabled={source.status === 'indexing'}
+                        className="px-3 py-1.5 text-sm bg-[#565869] hover:bg-[#6e6f7f] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+                      >
+                        Reindex
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(source.id, source.display_name)}
+                        disabled={source.status === 'indexing'}
+                        className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
 
                   {source.latest_job && (
@@ -249,11 +288,13 @@ const MemoryDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[#8e8ea0] mb-1">Project</div>
+                      <div className="text-[#8e8ea0] mb-1">Connected Projects</div>
                       <div className="text-white font-medium">
-                        {source.id.endsWith('-repo') 
-                          ? source.id.slice(0, -5) 
-                          : source.project_id || 'N/A'}
+                        {source.connected_projects && source.connected_projects.length > 0
+                          ? source.connected_projects.join(', ')
+                          : source.project_id === 'scratch' 
+                            ? 'None (scratch)' 
+                            : 'None'}
                       </div>
                     </div>
                   </div>
@@ -272,6 +313,26 @@ const MemoryDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      <AddMemoryModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdded={fetchSources}
+      />
+
+      <ConfirmDeleteMemoryModal
+        open={deleteModalOpen}
+        sourceId={deleteTarget?.sourceId ?? null}
+        displayName={deleteTarget?.displayName ?? null}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeleteTarget(null);
+        }}
+        onDeleted={() => {
+          // After a successful delete, refresh the source list
+          fetchSources();
+        }}
+      />
     </div>
   );
 };

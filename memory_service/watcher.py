@@ -142,6 +142,41 @@ class WatcherManager:
         self.observers[source_id] = observer
         logger.info(f"Started watching source: {source_id} at {root_path}")
     
+    def add_source_watch(self, source):
+        """
+        Start watching the given source's root_path for changes.
+        Safe to call after startup.
+        """
+        # Ensure source exists in database
+        db_id = db.upsert_source(
+            source.id,
+            source.project_id,
+            str(source.root_path),
+            source.include_glob,
+            source.exclude_glob
+        )
+        
+        # Start watching using existing method
+        self.start_watching(
+            source.id,
+            db_id,
+            source.root_path,
+            source.include_glob,
+            source.exclude_glob
+        )
+    
+    def stop_watching(self, source_id: str):
+        """Stop watching a specific source."""
+        if source_id not in self.observers:
+            logger.warning(f"Not watching source: {source_id}")
+            return
+        
+        observer = self.observers[source_id]
+        observer.stop()
+        observer.join()
+        del self.observers[source_id]
+        logger.info(f"Stopped watching source: {source_id}")
+    
     def stop_all(self):
         """Stop all watchers."""
         for source_id, observer in self.observers.items():

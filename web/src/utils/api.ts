@@ -33,3 +33,43 @@ export async function fetchMemorySources(): Promise<any[]> {
   return data.sources || [];
 }
 
+export async function addMemorySource(params: {
+  rootPath: string;
+  displayName?: string;
+  projectId?: string;
+}) {
+  const res = await fetch("http://localhost:8000/api/memory/sources", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      root_path: params.rootPath,
+      display_name: params.displayName,
+      project_id: params.projectId ?? "scratch",
+    }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.detail || "Failed to add memory source");
+  }
+  return res.json();
+}
+
+export async function deleteMemorySource(sourceId: string): Promise<void> {
+  const res = await fetch(
+    `http://localhost:8000/api/memory/sources/${encodeURIComponent(sourceId)}`,
+    {
+      method: 'DELETE',
+    },
+  );
+  if (!res.ok) {
+    let message = 'Failed to delete memory source';
+    try {
+      const data = await res.json().catch(() => null);
+      message = data?.detail || data?.message || message;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+}
+

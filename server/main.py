@@ -2221,6 +2221,12 @@ class UpdateMemorySourcesRequest(BaseModel):
     memory_sources: List[str]
 
 
+class AddMemorySourceRequest(BaseModel):
+    root_path: str
+    display_name: Optional[str] = None
+    project_id: Optional[str] = "scratch"
+
+
 @app.put("/api/projects/{project_id}/memory-sources")
 async def update_project_memory_sources(project_id: str, body: UpdateMemorySourcesRequest):
     """Update memory sources for a project"""
@@ -2241,6 +2247,42 @@ async def update_project_memory_sources(project_id: str, body: UpdateMemorySourc
         }
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.post("/api/memory/sources")
+async def api_add_memory_source(req: AddMemorySourceRequest):
+    """Proxy: UI → server → memory_service.add_source"""
+    from server.services import memory_service_client
+    
+    try:
+        client = memory_service_client.get_memory_client()
+        result = client.add_memory_source(
+            root_path=req.root_path,
+            display_name=req.display_name,
+            project_id=req.project_id,
+        )
+        return result
+    except Exception as e:
+        detail = str(e)
+        if "Memory Service is not available" in detail:
+            raise HTTPException(status_code=503, detail=detail)
+        raise HTTPException(status_code=400, detail=detail)
+
+
+@app.delete("/api/memory/sources/{source_id}")
+async def api_delete_memory_source(source_id: str):
+    """Proxy: UI → server → memory_service.delete_source"""
+    from server.services import memory_service_client
+    
+    try:
+        client = memory_service_client.get_memory_client()
+        result = client.delete_memory_source(source_id)
+        return result
+    except Exception as e:
+        detail = str(e)
+        if "Memory Service is not available" in detail:
+            raise HTTPException(status_code=503, detail=detail)
+        raise HTTPException(status_code=400, detail=detail)
 
 
 @app.post("/api/chats/purge_all_trashed")

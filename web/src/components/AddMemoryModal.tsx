@@ -1,0 +1,154 @@
+import React, { useState } from 'react';
+import { addMemorySource } from '../utils/api';
+
+type AddMemoryModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdded: () => void; // callback to refresh the dashboard
+};
+
+const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
+  isOpen,
+  onClose,
+  onAdded,
+}) => {
+  const [rootPath, setRootPath] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!rootPath.trim()) {
+      setError('Folder path is required');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      await addMemorySource({
+        rootPath: rootPath.trim(),
+        displayName: displayName.trim() || undefined,
+      });
+      
+      setSuccess(true);
+      // Refresh dashboard after a brief delay
+      setTimeout(() => {
+        onAdded();
+        onClose();
+        // Reset form
+        setRootPath('');
+        setDisplayName('');
+        setSuccess(false);
+      }, 1000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add memory source');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isLoading) {
+      setRootPath('');
+      setDisplayName('');
+      setError(null);
+      setSuccess(false);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-[#343541] border border-[#565869] rounded-lg w-full max-w-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-white">Add memory source</h2>
+          <button
+            onClick={handleClose}
+            disabled={isLoading}
+            className="text-[#8e8ea0] hover:text-white disabled:opacity-50"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="text-sm text-[#8e8ea0] mb-4">
+          Paste a folder path and I'll index it. Example: /Volumes/iCPWeeaPWBXs/Downloads
+        </p>
+        <p className="text-xs text-[#8e8ea0] mb-4">
+          You can connect it to a project later via right-click → "Connect project…"
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Folder path <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={rootPath}
+              onChange={(e) => setRootPath(e.target.value)}
+              placeholder="/path/to/folder"
+              disabled={isLoading}
+              className="w-full px-3 py-2 bg-[#40414f] border border-[#565869] rounded text-white placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Display name <span className="text-[#8e8ea0] text-xs">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Downloads"
+              disabled={isLoading}
+              className="w-full px-3 py-2 bg-[#40414f] border border-[#565869] rounded text-white placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] disabled:opacity-50"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-500/20 border border-green-500/30 rounded text-sm text-green-400">
+              Indexing started… The new source will appear on the dashboard shortly.
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isLoading}
+              className="px-4 py-2 text-sm bg-[#565869] hover:bg-[#6e6f7f] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !rootPath.trim()}
+              className="px-4 py-2 text-sm bg-[#10a37f] hover:bg-[#0d8f6e] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              {isLoading ? 'Adding...' : 'Add'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddMemoryModal;
+

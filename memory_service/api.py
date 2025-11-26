@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 import asyncio
 import threading
 
-from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sources
+from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sources, create_dynamic_source, BASE_DIR, BASE_STORE_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
 from memory_service.store import db
 from memory_service.indexer import index_source
 from memory_service.watcher import WatcherManager
@@ -38,13 +38,13 @@ async def lifespan(app: FastAPI):
     db.init_tracking_db()
     logger.info("Tracking database initialized")
     
-    # Register all sources from config into tracking DB
+    # Register all sources from config (static + dynamic) into tracking DB
     sources = load_sources()
     for source_config in sources:
         db.get_or_create_source(
             source_config.id,
             str(source_config.root_path),
-            source_config.id,
+            getattr(source_config, 'display_name', source_config.id),
             source_config.project_id
         )
     logger.info(f"Registered {len(sources)} sources in tracking database")
@@ -79,6 +79,12 @@ app.add_middleware(
 # Request/Response models
 class ReindexRequest(BaseModel):
     source_id: str
+
+
+class AddSourceRequest(BaseModel):
+    root_path: str
+    display_name: Optional[str] = None
+    project_id: Optional[str] = "scratch"
 
 
 class SearchRequest(BaseModel):
@@ -116,8 +122,29 @@ async def get_sources():
     """Get list of all sources with status and latest job."""
     sources_with_jobs = db.get_all_sources_with_latest_job()
     
+    # Load projects to find which projects are connected to each source
+    projects_map = {}  # source_id -> list of project names
+    try:
+        projects_path = BASE_DIR / "server" / "data" / "projects.json"
+        if projects_path.exists():
+            import json
+            with open(projects_path, 'r') as pf:
+                projects = json.load(pf)
+                for project in projects:
+                    project_name = project.get("name", project.get("id", "Unknown"))
+                    for source_id in project.get("memory_sources", []):
+                        if source_id not in projects_map:
+                            projects_map[source_id] = []
+                        projects_map[source_id].append(project_name)
+    except Exception as e:
+        logger.warning(f"Could not load projects.json for connected projects: {e}")
+        pass
+    
     result = []
     for source, latest_job in sources_with_jobs:
+        # Get connected project names for this source
+        connected_projects = projects_map.get(source.id, [])
+        
         source_dict = {
             "id": source.id,
             "display_name": source.display_name,
@@ -128,7 +155,8 @@ async def get_sources():
             "last_index_started_at": source.last_index_started_at.isoformat() if source.last_index_started_at else None,
             "last_index_completed_at": source.last_index_completed_at.isoformat() if source.last_index_completed_at else None,
             "last_error": source.last_error,
-            "project_id": source.project_id,
+            "project_id": source.project_id,  # Keep for backward compatibility
+            "connected_projects": connected_projects,  # New: list of project names
             "latest_job": None
         }
         
@@ -147,6 +175,145 @@ async def get_sources():
         result.append(source_dict)
     
     return {"sources": result}
+
+
+@app.post("/sources")
+async def add_source(request: AddSourceRequest):
+    """Create a new dynamic memory source and start indexing it."""
+    try:
+        # Create the source config
+        src = create_dynamic_source(
+            root_path=request.root_path,
+            display_name=request.display_name,
+            project_id=request.project_id or "scratch",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    # Register in tracking DB
+    status = db.register_source_config(src)
+    
+    # Start watching this path
+    watcher_manager.add_source_watch(src)
+    
+    # Kick off indexing in background thread
+    def run_indexing():
+        try:
+            index_source(src.id)
+        except Exception as e:
+            logger.error(f"Background indexing failed for {src.id}: {e}", exc_info=True)
+            db.update_source_stats(
+                src.id,
+                status="error",
+                last_error=str(e)
+            )
+    
+    thread = threading.Thread(target=run_indexing, daemon=True)
+    thread.start()
+    
+    return {
+        "status": "ok",
+        "source_id": src.id,
+        "display_name": getattr(src, 'display_name', src.id),
+        "root_path": str(src.root_path),
+        "project_id": src.project_id,
+        "files_indexed": 0,
+        "bytes_indexed": 0,
+        "job_id": 0,  # Will be available via /sources endpoint
+    }
+
+
+@app.delete("/sources/{source_id}")
+async def delete_source(source_id: str):
+    """Delete a memory source (both static and dynamic sources can be deleted)."""
+    import shutil
+    import json
+    import yaml
+    
+    # Check if it's a dynamic source
+    dynamic_sources = load_dynamic_sources()
+    is_dynamic = any(src.id == source_id for src in dynamic_sources)
+    
+    # Check if it's a static source
+    static_sources = load_static_sources()
+    is_static = any(src.id == source_id for src in static_sources)
+    
+    # Check if it exists in tracking DB (even if not in config files)
+    source_status = db.get_source_status(source_id)
+    exists_in_tracking = source_status is not None
+    
+    # If not found in config files or tracking DB, return 404
+    if not is_dynamic and not is_static and not exists_in_tracking:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Source '{source_id}' not found"
+        )
+    
+    # Remove from projects.json connections
+    try:
+        projects_path = BASE_DIR / "server" / "data" / "projects.json"
+        if projects_path.exists():
+            with open(projects_path, 'r') as pf:
+                projects = json.load(pf)
+            
+            updated = False
+            for project in projects:
+                if source_id in project.get("memory_sources", []):
+                    project["memory_sources"] = [s for s in project["memory_sources"] if s != source_id]
+                    updated = True
+            
+            if updated:
+                temp_path = projects_path.with_suffix('.json.tmp')
+                with open(temp_path, 'w') as pf:
+                    json.dump(projects, pf, indent=2)
+                temp_path.replace(projects_path)
+                logger.info(f"Removed {source_id} from project connections")
+    except Exception as e:
+        logger.warning(f"Could not update projects.json: {e}")
+    
+    # Stop watching this source
+    try:
+        watcher_manager.stop_watching(source_id)
+    except Exception as e:
+        logger.warning(f"Could not stop watcher for {source_id}: {e}")
+    
+    # Remove from dynamic_sources.json if it's a dynamic source
+    if is_dynamic:
+        dynamic_sources = [s for s in dynamic_sources if s.id != source_id]
+        save_dynamic_sources(dynamic_sources)
+        logger.info(f"Removed {source_id} from dynamic_sources.json")
+    
+    # Remove from memory_sources.yaml if it's a static source
+    if is_static:
+        if MEMORY_SOURCES_YAML.exists():
+            with open(MEMORY_SOURCES_YAML, 'r') as f:
+                config = yaml.safe_load(f) or {}
+            
+            sources = config.get("sources", [])
+            config["sources"] = [s for s in sources if s.get("id") != source_id]
+            
+            with open(MEMORY_SOURCES_YAML, 'w') as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+            logger.info(f"Removed {source_id} from memory_sources.yaml")
+    
+    # Always remove from tracking DB (even if not in config files)
+    if exists_in_tracking:
+        db.delete_source_from_tracking(source_id)
+        logger.info(f"Removed {source_id} from tracking database")
+    
+    # Delete the index directory (frees up disk space; can always re-index if source is re-added)
+    source_dir = BASE_STORE_PATH / source_id
+    if source_dir.exists():
+        try:
+            shutil.rmtree(source_dir, ignore_errors=True)
+            logger.info(f"Deleted index directory for source: {source_id}")
+        except Exception as e:
+            logger.warning(f"Could not delete index directory for {source_id}: {e}")
+    
+    return {
+        "status": "ok",
+        "message": f"Source '{source_id}' deleted successfully"
+    }
 
 
 @app.post("/reindex")
