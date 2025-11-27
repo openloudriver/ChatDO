@@ -2474,16 +2474,46 @@ async def upload_template(file: UploadFile = File(...)):
         file_content = await file.read()
         metadata = template_store.save_template(file_content, file.filename)
         
-        # Extract text using Unstructured
-        template_text = extract_template_text.extract_template_text(metadata.path)
-        if not template_text:
-            raise HTTPException(status_code=400, detail="Could not extract text from template")
+        # For PDFs, try to extract AcroForm fields first
+        fields = []
+        pages = None
+        if metadata.ext.lower() == '.pdf':
+            try:
+                # Extract PDF form fields
+                pdf_fields = extract_pdf_fields.extract_pdf_fields(metadata.path)
+                if pdf_fields:
+                    fields = pdf_fields
+                    
+                    # Count pages
+                    try:
+                        import PyPDF2
+                        with open(metadata.path, 'rb') as f:
+                            pdf_reader = PyPDF2.PdfReader(f)
+                            pages = len(pdf_reader.pages)
+                    except:
+                        pass
+            except Exception as e:
+                logger.warning(f"PDF field extraction failed, falling back to text analysis: {e}")
         
-        # Analyze template to identify fields
-        fields = analyze_template.analyze_template(template_text)
+        # If no PDF fields found, use text analysis
+        if not fields:
+            # Extract text using Unstructured
+            template_text = extract_template_text.extract_template_text(metadata.path)
+            if not template_text:
+                raise HTTPException(status_code=400, detail="Could not extract text from template")
+            
+            # Analyze template to identify fields (synchronous function)
+            fields = analyze_template.analyze_template(template_text)
         
-        # Update template metadata with fields
+        # Update template metadata with fields and pages
         template_store.update_template_fields(metadata.template_id, fields)
+        if pages:
+            # Update pages count
+            from server.services.template_engine.template_store import _load_metadata, _save_metadata
+            all_metadata = _load_metadata()
+            if metadata.template_id in all_metadata:
+                all_metadata[metadata.template_id]["pages"] = pages
+                _save_metadata(all_metadata)
         
         return TemplateUploadResponse(
             template_id=metadata.template_id,
@@ -2506,9 +2536,49 @@ def list_templates():
             "ext": t.ext,
             "fields": t.fields,
             "created_at": t.created_at.isoformat(),
+            "pages": t.pages,
         }
         for t in templates
     ]
+
+
+@app.get("/api/templates/{template_id}")
+def get_template(template_id: str):
+    """Get a specific template by ID."""
+    template = template_store.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {
+        "template_id": template.template_id,
+        "filename": template.filename,
+        "ext": template.ext,
+        "fields": template.fields,
+        "created_at": template.created_at.isoformat(),
+        "pages": template.pages,
+    }
+
+
+@app.delete("/api/templates/{template_id}")
+def delete_template(template_id: str):
+    """Delete a template and its file."""
+    template = template_store.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Delete the template directory (includes file and autofill outputs)
+    import shutil
+    template_dir = template.path.parent
+    if template_dir.exists():
+        shutil.rmtree(template_dir)
+    
+    # Remove from metadata - need to access internal functions
+    from server.services.template_engine.template_store import _load_metadata, _save_metadata
+    all_metadata = _load_metadata()
+    if template_id in all_metadata:
+        del all_metadata[template_id]
+        _save_metadata(all_metadata)
+    
+    return {"ok": True}
 
 
 class AutofillRequest(BaseModel):

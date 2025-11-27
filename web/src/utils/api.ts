@@ -162,11 +162,17 @@ export interface Template {
   filename: string;
   ext: string;
   fields: Array<{
-    field_id: string;
-    label: string;
-    instructions: string;
+    id?: string;  // PDF field ID
+    field_id?: string;  // GPT-analyzed field ID
+    name?: string;  // PDF field name
+    label?: string;  // GPT-analyzed label
+    instructions?: string;  // GPT-analyzed instructions
+    page?: number;  // PDF page number
+    type?: string;  // Field type (e.g., "text")
+    maxChars?: number;  // Character limit
   }>;
   created_at: string;
+  pages?: number;
 }
 
 export interface TemplateUploadResponse {
@@ -231,5 +237,18 @@ export async function getLatestAutofill(templateId: string): Promise<LatestAutof
   const res = await fetch(`http://localhost:8000/api/templates/${templateId}/autofill/latest`);
   if (!res.ok) throw new Error("Failed to get latest autofill");
   return res.json();
+}
+
+export async function getTemplate(templateId: string): Promise<Template> {
+  const res = await fetch(`http://localhost:8000/api/templates/${templateId}`);
+  if (!res.ok) throw new Error("Failed to get template");
+  return res.json();
+}
+
+export async function deleteTemplate(templateId: string): Promise<void> {
+  const res = await fetch(`http://localhost:8000/api/templates/${templateId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete template");
 }
 

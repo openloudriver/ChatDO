@@ -25,6 +25,7 @@ class TemplateMetadata:
         path: Path,
         fields: Optional[List[Dict[str, Any]]] = None,
         created_at: Optional[datetime] = None,
+        pages: Optional[int] = None,
     ):
         self.template_id = template_id
         self.filename = filename
@@ -32,6 +33,7 @@ class TemplateMetadata:
         self.path = path
         self.fields = fields or []
         self.created_at = created_at or datetime.utcnow()
+        self.pages = pages
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -41,6 +43,7 @@ class TemplateMetadata:
             "path": str(self.path),
             "fields": self.fields,
             "created_at": self.created_at.isoformat(),
+            "pages": self.pages,
         }
 
     @classmethod
@@ -52,6 +55,7 @@ class TemplateMetadata:
             path=Path(data["path"]),
             fields=data.get("fields", []),
             created_at=datetime.fromisoformat(data["created_at"]) if isinstance(data.get("created_at"), str) else data.get("created_at"),
+            pages=data.get("pages"),
         )
 
 

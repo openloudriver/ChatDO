@@ -332,7 +332,7 @@ const ChatMessages: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
-      {/* Breadcrumb/Header */}
+      {/* Breadcrumb/Header - only show in chat view mode, not in impact workspace */}
       {viewMode === 'chat' && (
         <div className="px-6 py-4 border-b border-[#565869] flex items-center gap-4">
           <button

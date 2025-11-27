@@ -108,5 +108,25 @@
     "updated_at": "2025-11-27T01:04:39.728663+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "d234bc6b-117b-41f3-8b16-558e4340b333",
+    "project_id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
+    "title": "New Chat",
+    "thread_id": "d234bc6b-117b-41f3-8b16-558e4340b333",
+    "created_at": "2025-11-27T03:29:47.155609+00:00",
+    "updated_at": "2025-11-27T03:29:47.155619+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "413decf4-5c36-4d07-af16-50f35bff4ea0",
+    "project_id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
+    "title": "New Chat",
+    "thread_id": "413decf4-5c36-4d07-af16-50f35bff4ea0",
+    "created_at": "2025-11-27T03:29:47.165413+00:00",
+    "updated_at": "2025-11-27T03:29:47.165430+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

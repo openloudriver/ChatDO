@@ -172,9 +172,10 @@ export const useChatStore = create<ChatStore>((set) => ({
     
     set((state) => ({
       currentProject: project,
-      // Only set viewMode to projectList if a project is selected
+      // Only set viewMode to projectList if a project is selected AND we're not in a special view mode
+      // Special view modes (impact, memory) should not be overridden
       // If project is null, keep the current viewMode (could be trashList, etc.)
-      viewMode: project ? 'projectList' : state.viewMode,
+      viewMode: project && !['impact', 'memory'].includes(state.viewMode) ? 'projectList' : state.viewMode,
       currentConversation: null
     }));
   },
@@ -699,9 +700,11 @@ export const useChatStore = create<ChatStore>((set) => ({
     }
     
     // Set conversation immediately
+    // Only change viewMode to 'chat' if we're not in a special view mode (like 'impact')
+    const currentState = useChatStore.getState();
     set({ 
       currentConversation: conversation,
-      viewMode: 'chat',
+      viewMode: ['impact', 'memory'].includes(currentState.viewMode) ? currentState.viewMode : 'chat',
       // Clear ragFileIds immediately when switching conversations
       ragFileIds: []
     });

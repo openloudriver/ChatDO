@@ -8,7 +8,7 @@ import ProjectChatList from './components/ProjectChatList';
 import TrashChatList from './components/TrashChatList';
 import SearchResults from './components/SearchResults';
 import MemoryDashboard from './components/MemoryDashboard';
-import ImpactWorkspace from './components/ImpactWorkspace';
+import { ImpactWorkspacePage } from './components/ImpactWorkspacePage';
 import ConnectProjectModal from './components/ConnectProjectModal';
 
 const App: React.FC = () => {
@@ -127,7 +127,7 @@ const App: React.FC = () => {
     }
     
     if (viewMode === 'impact') {
-      return <ImpactWorkspace />;
+      return <ImpactWorkspacePage />;
     }
     
     if (viewMode === 'search') {

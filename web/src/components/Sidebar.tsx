@@ -322,20 +322,22 @@ const Sidebar: React.FC = () => {
             items={filteredProjects.map((p: Project) => p.id)}
             strategy={verticalListSortingStrategy}
           >
-            {filteredProjects.map((project: Project) => (
-              <SortableProjectItem
-                key={project.id}
-                project={project}
-                currentProject={currentProject}
-                setCurrentProject={setCurrentProject}
-                openMenuId={openMenuId}
-                setOpenMenuId={setOpenMenuId}
-                handleEditProject={handleEditProject}
-                handleConnectProject={handleConnectProject}
-                handleDeleteProject={handleDeleteProject}
-                setViewMode={setViewMode}
-              />
-            ))}
+            {filteredProjects
+              .filter((project: Project) => project.name !== "Impact Workspace") // Filter out Impact Workspace from projects list
+              .map((project: Project) => (
+                <SortableProjectItem
+                  key={project.id}
+                  project={project}
+                  currentProject={currentProject}
+                  setCurrentProject={setCurrentProject}
+                  openMenuId={openMenuId}
+                  setOpenMenuId={setOpenMenuId}
+                  handleEditProject={handleEditProject}
+                  handleConnectProject={handleConnectProject}
+                  handleDeleteProject={handleDeleteProject}
+                  setViewMode={setViewMode}
+                />
+              ))}
           </SortableContext>
         </DndContext>
       </div>
