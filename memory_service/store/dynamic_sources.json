@@ -22,5 +22,21 @@
     "include_glob": "**/*",
     "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
     "display_name": "ChatDO"
+  },
+  {
+    "id": "drr-dir",
+    "project_id": "scratch",
+    "root_path": "/Users/christopher.peck/DRR",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "DRR"
+  },
+  {
+    "id": "privacypay-dir",
+    "project_id": "scratch",
+    "root_path": "/Users/christopher.peck/privacypay",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "PrivacyPay"
   }
 ]

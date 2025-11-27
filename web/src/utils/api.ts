@@ -156,3 +156,80 @@ export async function deleteImpactTemplate(id: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete template");
 }
 
+// Template Autofill Engine
+export interface Template {
+  template_id: string;
+  filename: string;
+  ext: string;
+  fields: Array<{
+    field_id: string;
+    label: string;
+    instructions: string;
+  }>;
+  created_at: string;
+}
+
+export interface TemplateUploadResponse {
+  template_id: string;
+  filename: string;
+  fields: Array<{
+    field_id: string;
+    label: string;
+    instructions: string;
+  }>;
+}
+
+export async function uploadTemplate(file: File): Promise<TemplateUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch("http://localhost:8000/api/templates/upload", {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) throw new Error("Failed to upload template");
+  return res.json();
+}
+
+export async function listTemplates(): Promise<Template[]> {
+  const res = await fetch("http://localhost:8000/api/templates");
+  if (!res.ok) throw new Error("Failed to load templates");
+  return res.json();
+}
+
+export interface AutofillRequest {
+  field_assignments: Record<string, string>; // field_id -> impact_id
+}
+
+export interface AutofillResponse {
+  template_id: string;
+  output_path: string;
+  output_text: string;
+}
+
+export async function autofillTemplate(
+  templateId: string,
+  fieldAssignments: Record<string, string>
+): Promise<AutofillResponse> {
+  const res = await fetch(`http://localhost:8000/api/templates/${templateId}/autofill`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ field_assignments: fieldAssignments }),
+  });
+  if (!res.ok) throw new Error("Failed to autofill template");
+  return res.json();
+}
+
+export interface LatestAutofillResponse {
+  template_id: string;
+  output_path: string;
+  output_text: string;
+  created_at: string;
+}
+
+export async function getLatestAutofill(templateId: string): Promise<LatestAutofillResponse> {
+  const res = await fetch(`http://localhost:8000/api/templates/${templateId}/autofill/latest`);
+  if (!res.ok) throw new Error("Failed to get latest autofill");
+  return res.json();
+}
+

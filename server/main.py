@@ -43,6 +43,8 @@ from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROM
 from server.services import impact_store, impact_templates_store
 from server.services.impact_store import ImpactEntry
 from server.services.impact_templates_store import ImpactTemplate, get_template_file_path
+from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
+from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -2455,6 +2457,117 @@ def download_impact_template_file(template_id: str):
     if not path or not path.exists():
         raise HTTPException(status_code=404, detail="Template file not found")
     return FileResponse(path)
+
+
+# Template Autofill Engine endpoints
+class TemplateUploadResponse(BaseModel):
+    template_id: str
+    filename: str
+    fields: List[Dict[str, Any]]
+
+
+@app.post("/api/templates/upload", response_model=TemplateUploadResponse)
+async def upload_template(file: UploadFile = File(...)):
+    """Upload a template, extract text, and analyze for fillable fields."""
+    try:
+        # Save template
+        file_content = await file.read()
+        metadata = template_store.save_template(file_content, file.filename)
+        
+        # Extract text using Unstructured
+        template_text = extract_template_text.extract_template_text(metadata.path)
+        if not template_text:
+            raise HTTPException(status_code=400, detail="Could not extract text from template")
+        
+        # Analyze template to identify fields
+        fields = analyze_template.analyze_template(template_text)
+        
+        # Update template metadata with fields
+        template_store.update_template_fields(metadata.template_id, fields)
+        
+        return TemplateUploadResponse(
+            template_id=metadata.template_id,
+            filename=metadata.filename,
+            fields=fields
+        )
+    except Exception as e:
+        logger.error(f"Template upload failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Template upload failed: {str(e)}")
+
+
+@app.get("/api/templates")
+def list_templates():
+    """List all uploaded templates with their fields."""
+    templates = template_store.list_templates()
+    return [
+        {
+            "template_id": t.template_id,
+            "filename": t.filename,
+            "ext": t.ext,
+            "fields": t.fields,
+            "created_at": t.created_at.isoformat(),
+        }
+        for t in templates
+    ]
+
+
+class AutofillRequest(BaseModel):
+    field_assignments: Dict[str, str]  # field_id -> impact_id
+
+
+@app.post("/api/templates/{template_id}/autofill")
+async def autofill_template_endpoint(template_id: str, request: AutofillRequest):
+    """Autofill a template using assigned impacts."""
+    try:
+        # Get template
+        template = template_store.get_template(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Extract template text
+        template_text = extract_template_text.extract_template_text(template.path)
+        if not template_text:
+            raise HTTPException(status_code=400, detail="Could not extract text from template")
+        
+        # Get all impacts
+        impacts = impact_store.list_impacts()
+        impacts_dict = [impact.model_dump() for impact in impacts]
+        
+        # Autofill template
+        output_text = autofill_template.autofill_template(
+            template_text=template_text,
+            fields=template.fields,
+            field_assignments=request.field_assignments,
+            impacts=impacts_dict,
+        )
+        
+        # Save autofilled output
+        output_path = template_store.save_autofilled_output(template_id, output_text)
+        
+        return {
+            "template_id": template_id,
+            "output_path": str(output_path),
+            "output_text": output_text,
+        }
+    except Exception as e:
+        logger.error(f"Template autofill failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Template autofill failed: {str(e)}")
+
+
+@app.get("/api/templates/{template_id}/autofill/latest")
+def get_latest_autofill(template_id: str):
+    """Get the latest autofilled output for a template."""
+    latest_path = template_store.get_latest_autofill(template_id)
+    if not latest_path or not latest_path.exists():
+        raise HTTPException(status_code=404, detail="No autofilled output found")
+    
+    output_text = latest_path.read_text(encoding="utf-8")
+    return {
+        "template_id": template_id,
+        "output_path": str(latest_path),
+        "output_text": output_text,
+        "created_at": datetime.fromtimestamp(latest_path.stat().st_mtime).isoformat(),
+    }
 
 
 @app.websocket("/api/chat/stream")

@@ -5,16 +5,25 @@ import {
   fetchImpactTemplates,
   uploadImpactTemplate,
   deleteImpactTemplate,
+  listTemplates,
+  uploadTemplate,
+  type Template,
+  type AutofillResponse,
 } from "../utils/api";
 import type { ImpactEntry, ImpactTemplate } from "../types/impact";
+import { TemplateAutoFillModal } from "./TemplateAutoFillModal";
 
 const ImpactWorkspace: React.FC = () => {
   const [impacts, setImpacts] = useState<ImpactEntry[]>([]);
   const [templates, setTemplates] = useState<ImpactTemplate[]>([]);
+  const [autofillTemplates, setAutofillTemplates] = useState<Template[]>([]);
   const [loadingImpacts, setLoadingImpacts] = useState(true);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [loadingAutofillTemplates, setLoadingAutofillTemplates] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [autofillModalOpen, setAutofillModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   // template upload state
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -50,8 +59,21 @@ const ImpactWorkspace: React.FC = () => {
       }
     };
 
+    const loadAutofillTemplates = async () => {
+      try {
+        setLoadingAutofillTemplates(true);
+        const data = await listTemplates();
+        setAutofillTemplates(data);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to load autofill templates");
+      } finally {
+        setLoadingAutofillTemplates(false);
+      }
+    };
+
     loadImpacts();
     loadTemplates();
+    loadAutofillTemplates();
   }, []);
 
   const handleFieldChange = (id: string, field: keyof ImpactEntry, value: string) => {
@@ -143,11 +165,81 @@ const ImpactWorkspace: React.FC = () => {
         </p>
       </div>
 
-      {/* Templates section */}
+      {/* Autofill Templates section */}
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-            Templates
+            Autofill Templates
+          </h2>
+          <button
+            type="button"
+            className="rounded border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs hover:bg-slate-800"
+            onClick={async () => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = ".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.md";
+              input.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                  try {
+                    setError(null);
+                    await uploadTemplate(file);
+                    // Reload templates
+                    const data = await listTemplates();
+                    setAutofillTemplates(data);
+                  } catch (e: any) {
+                    setError(e?.message ?? "Failed to upload template");
+                  }
+                }
+              };
+              input.click();
+            }}
+          >
+            Upload template…
+          </button>
+        </div>
+        {loadingAutofillTemplates && (
+          <div className="text-sm text-slate-400">Loading templates…</div>
+        )}
+        {!loadingAutofillTemplates && autofillTemplates.length === 0 && (
+          <div className="text-sm text-slate-400">
+            No templates uploaded yet. Use "Upload template…" to add PDF/DOCX/XLSX/etc. templates for autofilling.
+          </div>
+        )}
+        <div className="space-y-2">
+          {autofillTemplates.map((tpl) => (
+            <div
+              key={tpl.template_id}
+              className="flex items-center justify-between rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+            >
+              <div className="flex flex-col">
+                <span className="font-medium">{tpl.filename}</span>
+                <span className="text-xs text-slate-400">
+                  {tpl.fields.length} field{tpl.fields.length !== 1 ? "s" : ""} identified
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded border border-emerald-500/60 bg-slate-900 px-2 py-1 text-xs text-emerald-300 hover:bg-emerald-500/10"
+                  onClick={() => {
+                    setSelectedTemplate(tpl);
+                    setAutofillModalOpen(true);
+                  }}
+                >
+                  Auto-fill…
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Impact Templates section (for reference forms) */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+            Reference Templates
           </h2>
           <button
             type="button"
@@ -398,6 +490,20 @@ const ImpactWorkspace: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Template AutoFill Modal */}
+      <TemplateAutoFillModal
+        open={autofillModalOpen}
+        onClose={() => {
+          setAutofillModalOpen(false);
+          setSelectedTemplate(null);
+        }}
+        template={selectedTemplate}
+        onAutofilled={(response) => {
+          // Optionally reload templates or show success message
+          console.log("Template autofilled:", response);
+        }}
+      />
     </div>
   );
 };

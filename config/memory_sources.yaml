@@ -1,11 +1,1 @@
-sources:
-- id: drr-repo
-  project_id: drr
-  root_path: /Users/christopher.peck/DRR
-  include_glob: '**/*'
-  exclude_glob: '**/.git/**'
-- id: privacypay-repo
-  project_id: privacypay
-  root_path: /Users/christopher.peck/privacypay
-  include_glob: '**/*'
-  exclude_glob: '**/.git/**'
+sources: []
