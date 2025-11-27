@@ -63,5 +63,12 @@
     "default_target": "general",
     "sort_index": 7,
     "memory_sources": []
+  },
+  {
+    "id": "718c6805-92cd-4616-a2cf-7e693d5cf2f2",
+    "name": "History",
+    "default_target": "general",
+    "sort_index": 8,
+    "memory_sources": []
   }
 ]
