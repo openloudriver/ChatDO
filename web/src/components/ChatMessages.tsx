@@ -7,6 +7,223 @@ import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
 import type { RagFile } from '../types/rag';
 
+// Extract bullet options from message content
+const extractBulletOptionsFromMessage = (content: string): string[] => {
+  const bullets: string[] = [];
+  const lines = content.split('\n');
+  let inCodeBlock = false;
+  let codeBlockLanguage = '';
+  let currentBullet = '';
+  let codeBlockBullets: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Track code block state
+    if (trimmed.startsWith('```')) {
+      if (inCodeBlock) {
+        // End of code block - save current bullet if exists
+        if (currentBullet.trim()) {
+          codeBlockBullets.push(currentBullet.trim());
+          currentBullet = '';
+        }
+        // If we found bullets in code block, use those
+        if (codeBlockBullets.length > 0) {
+          bullets.push(...codeBlockBullets);
+          codeBlockBullets = [];
+        }
+      } else {
+        // Start of code block
+        codeBlockLanguage = trimmed.slice(3).trim();
+        codeBlockBullets = [];
+      }
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    
+    // Inside code block - collect bullet text
+    if (inCodeBlock) {
+      if (trimmed) {
+        // Check if this looks like a new bullet (starts with number, Option label, or bullet char)
+        const numberedMatch = trimmed.match(/^(\d+)[.)]\s*(.+)$/);
+        const optionMatch = trimmed.match(/^Option\s+[ABC\d]+[:\-]?\s*(.+)$/i);
+        const bulletCharMatch = trimmed.match(/^[•\-\*]\s*(.+)$/);
+        
+        if (numberedMatch || optionMatch || bulletCharMatch) {
+          // Save previous bullet
+          if (currentBullet.trim()) {
+            codeBlockBullets.push(currentBullet.trim());
+          }
+          // Start new bullet
+          currentBullet = numberedMatch ? numberedMatch[2] : 
+                         optionMatch ? optionMatch[1] : 
+                         bulletCharMatch![1];
+        } else if (currentBullet) {
+          // Continuation of current bullet
+          currentBullet += ' ' + trimmed;
+        } else {
+          // First line in code block - start new bullet
+          currentBullet = trimmed;
+        }
+      } else if (currentBullet.trim()) {
+        // Empty line in code block - end of current bullet
+        codeBlockBullets.push(currentBullet.trim());
+        currentBullet = '';
+      }
+      continue;
+    }
+    
+    // Outside code block - check for bullet patterns
+    // Look for numbered bullets (1., 2., 3., etc.) or Option labels
+    const numberedMatch = trimmed.match(/^(\d+)[.)]\s*(.+)$/);
+    const optionMatch = trimmed.match(/^Option\s+[ABC\d]+[:\-]?\s*(.+)$/i);
+    
+    if (numberedMatch || optionMatch) {
+      if (currentBullet.trim()) {
+        bullets.push(currentBullet.trim());
+      }
+      currentBullet = numberedMatch ? numberedMatch[2] : optionMatch![1];
+      continue;
+    }
+    
+    // Check if line starts with bullet character
+    if (trimmed.match(/^[•\-\*]\s*(.+)$/)) {
+      if (currentBullet.trim()) {
+        bullets.push(currentBullet.trim());
+      }
+      currentBullet = trimmed.replace(/^[•\-\*]\s*/, '');
+      continue;
+    }
+    
+    // Check for "Option A:", "Option B:", etc. headings followed by content
+    const optionHeadingMatch = trimmed.match(/^###\s+Option\s+([ABC\d])/i);
+    if (optionHeadingMatch) {
+      if (currentBullet.trim()) {
+        bullets.push(currentBullet.trim());
+      }
+      currentBullet = '';
+      // Next non-empty line should be the bullet content
+      continue;
+    }
+    
+    // If we have a current bullet and this line looks like continuation
+    if (currentBullet && trimmed && !trimmed.match(/^(Tip|💡|Options?|###)/i)) {
+      currentBullet += ' ' + trimmed;
+    } else if (currentBullet.trim()) {
+      // End of bullet
+      bullets.push(currentBullet.trim());
+      currentBullet = '';
+    }
+  }
+  
+  // Add last bullet if exists
+  if (currentBullet.trim()) {
+    bullets.push(currentBullet.trim());
+  }
+  
+  // Clean up bullets - remove markdown formatting, extra whitespace
+  return bullets
+    .filter(b => b.length > 0)
+    .map(b => b.replace(/^\*\s*/, '').replace(/^-\s*/, '').trim())
+    .filter(b => b.length > 0);
+};
+
+// Component to render bullet options with cards
+const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
+  const [bulletOptions, setBulletOptions] = useState<string[]>([]);
+  const [hasOptions, setHasOptions] = useState(false);
+  const [otherContent, setOtherContent] = useState<string>('');
+  
+  useEffect(() => {
+    // Check if content contains bullet options (look for "Options" or bullet patterns)
+    const hasBulletPattern = content.match(/Options|bullet|Option\s+[ABC\d]/i) || 
+                            content.match(/```[\s\S]*?```/) ||
+                            content.match(/^\d+[.)]\s+/m);
+    
+    if (hasBulletPattern) {
+      const extracted = extractBulletOptionsFromMessage(content);
+      if (extracted.length > 0) {
+        setBulletOptions(extracted.slice(0, 3)); // Only first 3
+        setHasOptions(true);
+        
+        // Remove bullet content from other content (keep only intro text before Options)
+        const lines = content.split('\n');
+        const otherLines: string[] = [];
+        let foundOptions = false;
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Stop at Options header or first bullet
+          if (trimmed.match(/^[✍️\s]*Options?/i) || trimmed.match(/^\d+[.)]\s+/) || trimmed.match(/^Option\s+[ABC\d]/i)) {
+            foundOptions = true;
+            break;
+          }
+          // Skip Tip sections
+          if (trimmed.match(/^[💡\s]*Tip/i)) {
+            break;
+          }
+          if (!foundOptions) {
+            otherLines.push(line);
+          }
+        }
+        
+        setOtherContent(otherLines.join('\n').trim());
+      } else {
+        setHasOptions(false);
+        setOtherContent(content);
+      }
+    } else {
+      setHasOptions(false);
+      setOtherContent(content);
+    }
+  }, [content]);
+  
+  const labels = ['A', 'B', 'C'];
+  
+  return (
+    <div className="prose prose-invert max-w-none">
+      {otherContent && (
+        <ReactMarkdown>{otherContent}</ReactMarkdown>
+      )}
+      {hasOptions && bulletOptions.length > 0 && (
+        <div className="mt-4">
+          <div className="text-sm font-semibold text-slate-200 mb-3">✍️ Bullet options</div>
+          <div className="space-y-3">
+            {bulletOptions.map((text, index) => {
+              const charCount = text.length;
+              const label = labels[index] ?? String(index + 1);
+              
+              return (
+                <div key={index} className="rounded-lg bg-slate-800/80 border border-slate-700 p-3">
+                  <div className="text-xs font-medium mb-2 text-slate-300">
+                    {`Option ${label} — ${charCount} chars`}
+                  </div>
+                  <pre 
+                    className="bullet-option text-xs text-slate-200 leading-snug m-0 p-0"
+                    style={{
+                      whiteSpace: 'normal',
+                      overflowWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowX: 'hidden',
+                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    }}
+                  >
+                    {text}
+                  </pre>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {!hasOptions && (
+        <ReactMarkdown>{content}</ReactMarkdown>
+      )}
+    </div>
+  );
+};
+
 const ChatMessages: React.FC = () => {
   const { 
     messages, 
@@ -43,6 +260,96 @@ const ChatMessages: React.FC = () => {
       return 'GPT-5';
     }
     return model;
+  };
+
+  // Process content to filter options and remove unwanted sections
+  const processOptionsContent = (content: string): string => {
+    // Check if content contains "Options" - if not, return as-is
+    if (!content.match(/Options/i)) {
+      return content;
+    }
+    
+    // Split content into lines
+    const lines = content.split('\n');
+    let processedLines: string[] = [];
+    let foundOptionsHeader = false;
+    let optionCount = 0;
+    let currentOptionLines: string[] = [];
+    let inCodeBlock = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmedLine = line.trim();
+      
+      // Track code block state
+      if (trimmedLine.startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+      }
+      
+      // Skip everything before "Options" header
+      if (!foundOptionsHeader) {
+        // Look for "Options" header (case-insensitive, may have emoji like ✍️)
+        if (trimmedLine.match(/^[✍️\s]*Options/i)) {
+          foundOptionsHeader = true;
+          processedLines.push('## Options');
+          continue;
+        }
+        // Skip all lines until we find "Options"
+        continue;
+      }
+      
+      // Once we've found Options header, process the content
+      // Check if this is a new option (Option 1, Option 2, etc. - may have colon or other formatting)
+      const optionMatch = trimmedLine.match(/^[✍️\s#]*Option\s+([0-9]+)/i);
+      if (optionMatch && !inCodeBlock) {
+        // Save previous option if we have one
+        if (optionCount > 0 && currentOptionLines.length > 0) {
+          const optionLabel = optionCount === 1 ? 'A' : optionCount === 2 ? 'B' : 'C';
+          processedLines.push(`### Option ${optionLabel}`);
+          // Add a special marker to indicate option content starts
+          processedLines.push('<!-- OPTION_CONTENT_START -->');
+          processedLines.push(...currentOptionLines);
+          processedLines.push('<!-- OPTION_CONTENT_END -->');
+          currentOptionLines = [];
+        }
+        
+        // Only process first 3 options
+        if (optionCount < 3) {
+          optionCount++;
+        } else {
+          // We've hit the 4th option, stop processing
+          break;
+        }
+      } else {
+        // Check if we've hit a Tip section or similar commentary (not in code block)
+        if (!inCodeBlock && (trimmedLine.match(/^[💡\s]*Tip/i) || trimmedLine.match(/^[💡\s]*Tips/i) || trimmedLine.match(/^[💡\s]*Note/i))) {
+          // Stop processing - we've hit commentary
+          break;
+        }
+        
+        // Add line to current option if we're still processing options
+        if (optionCount > 0 && optionCount <= 3) {
+          currentOptionLines.push(line);
+        }
+      }
+    }
+    
+    // Add the last option if we have one
+    if (optionCount > 0 && optionCount <= 3 && currentOptionLines.length > 0) {
+      const optionLabel = optionCount === 1 ? 'A' : optionCount === 2 ? 'B' : 'C';
+      processedLines.push(`### Option ${optionLabel}`);
+      // Add a special marker to indicate option content starts
+      processedLines.push('<!-- OPTION_CONTENT_START -->');
+      processedLines.push(...currentOptionLines);
+      processedLines.push('<!-- OPTION_CONTENT_END -->');
+    }
+    
+    // If we didn't find an Options section, return original content
+    if (!foundOptionsHeader) {
+      return content;
+    }
+    
+    return processedLines.join('\n');
   };
   
   // Get RAG files from store (conversation-scoped)
@@ -939,9 +1246,7 @@ const ChatMessages: React.FC = () => {
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
-                          <div className="prose prose-invert max-w-none">
-                            <ReactMarkdown>{content}</ReactMarkdown>
-                          </div>
+                          <OptionsRenderer content={processOptionsContent(content)} />
                         ) : (
                           <p className="whitespace-pre-wrap">{content}</p>
                         )
@@ -1053,9 +1358,7 @@ const ChatMessages: React.FC = () => {
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="flex-1 rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown>{streamingContent}</ReactMarkdown>
-            </div>
+            <OptionsRenderer content={processOptionsContent(streamingContent)} />
             <span className="animate-pulse">▊</span>
           </div>
         </div>

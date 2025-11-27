@@ -93,6 +93,22 @@ body {
   @apply bg-[#2b2d31] rounded-xl p-4 text-[13px] overflow-x-auto;
 }
 
+/* Bullet option text wrapping - no horizontal scroll */
+.bullet-option {
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-x: hidden !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Ensure parent containers don't force horizontal scroll for bullet options */
+.prose .bullet-option,
+.prose > div:has(.bullet-option) {
+  overflow-x: hidden !important;
+  max-width: 100%;
+}
+
 /* Links */
 .prose a {
   @apply text-sky-400 underline underline-offset-2;
