@@ -3,6 +3,7 @@ Impact entry storage using JSON-backed file system.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
@@ -27,6 +28,7 @@ class ImpactEntry(BaseModel):
     metrics: Optional[str] = None        # numbers / scope
     tags: list[str] = []                 # e.g. ["AF", "Northstead"]
     notes: Optional[str] = None          # extra detail
+    activeBullet: Optional[str] = None   # current working bullet text for this impact
 
 
 def _ensure_file():

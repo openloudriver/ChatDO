@@ -10,6 +10,7 @@ export interface ImpactEntry {
   metrics?: string | null;
   tags: string[];
   notes?: string | null;
+  activeBullet?: string | null;
 }
 
 export interface ImpactTemplate {

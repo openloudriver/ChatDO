@@ -49,21 +49,50 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     const parts: string[] = [];
     
     const modeMeta = BULLET_MODES.find((m) => m.id === bulletMode);
+    const maxChars = modeMeta?.maxChars ?? 230;
     const maxCharsInfo = modeMeta?.maxChars ? ` (target: ${modeMeta.maxChars} chars)` : '';
 
-    parts.push(`You are helping the user craft Air Force performance bullets. The user is currently working in Impact Workspace with bullet mode "${modeMeta?.label || 'Freeform'}"${maxCharsInfo}.`);
-    if (bulletText.trim()) {
-      parts.push(`The current draft bullet is: "${bulletText.trim()}"`);
+    // Determine if we have an activeBullet to iterate on
+    const primaryImpact = selectedImpacts[0]; // Use first selected impact
+    const hasActiveBullet = !!(primaryImpact?.activeBullet?.trim());
+    const baseText = hasActiveBullet 
+      ? primaryImpact!.activeBullet!.trim()
+      : (primaryImpact ? `${primaryImpact.actions}${primaryImpact.impact ? ` - ${primaryImpact.impact}` : ''}${primaryImpact.metrics ? ` - ${primaryImpact.metrics}` : ''}`.trim() : '');
+
+    if (hasActiveBullet) {
+      // Iterating on existing bullet
+      parts.push(`You are iterating on an existing Air Force performance bullet.`);
+      parts.push(`\nCurrent bullet:`);
+      parts.push(`"${baseText}"`);
+      parts.push(`\nReturn exactly three improved versions of this bullet, each <= ${maxChars} characters, preserving the same facts and metrics.`);
+      parts.push(`Focus on clarity, impact, and staying within the ${maxChars}-character limit.`);
     } else {
-      parts.push("The current draft bullet is empty.");
+      // Drafting new bullet from impact
+      parts.push(`You are drafting a new Air Force performance bullet from this impact description.`);
+      parts.push(`\nImpact description:`);
+      if (primaryImpact) {
+        if (primaryImpact.title) parts.push(`Title: ${primaryImpact.title}`);
+        if (primaryImpact.date) parts.push(`Date: ${new Date(primaryImpact.date).toLocaleDateString()}`);
+        if (primaryImpact.context) parts.push(`Context: ${primaryImpact.context}`);
+        if (primaryImpact.actions) parts.push(`Actions: ${primaryImpact.actions}`);
+        if (primaryImpact.impact) parts.push(`Impact: ${primaryImpact.impact}`);
+        if (primaryImpact.metrics) parts.push(`Metrics: ${primaryImpact.metrics}`);
+        if (primaryImpact.notes) parts.push(`Notes: ${primaryImpact.notes}`);
+        if (primaryImpact.tags && primaryImpact.tags.length > 0) {
+          parts.push(`Tags: ${primaryImpact.tags.join(", ")}`);
+        }
+      }
+      parts.push(`\nReturn exactly three bullets, each <= ${maxChars} characters.`);
     }
+    
+    parts.push(`\nBullet mode: "${modeMeta?.label || 'Freeform'}"${maxCharsInfo}.`);
     parts.push("Always keep suggestions within the character limit for the selected mode.");
     
-    // Add selected impacts
-    if (selectedImpacts.length > 0) {
-      parts.push("\n=== SELECTED IMPACTS ===");
-      selectedImpacts.forEach((impact, idx) => {
-        parts.push(`\nImpact ${idx + 1}:`);
+    // Add additional selected impacts if there are multiple
+    if (selectedImpacts.length > 1) {
+      parts.push("\n=== ADDITIONAL SELECTED IMPACTS ===");
+      selectedImpacts.slice(1).forEach((impact, idx) => {
+        parts.push(`\nImpact ${idx + 2}:`);
         if (impact.title) parts.push(`Title: ${impact.title}`);
         if (impact.date) parts.push(`Date: ${new Date(impact.date).toLocaleDateString()}`);
         if (impact.context) parts.push(`Context: ${impact.context}`);
@@ -82,8 +111,6 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       parts.push(`\n=== CONTEXT FILES ===`);
       parts.push(`${ragFileIds.length} context file(s) uploaded for this conversation. Use these files as reference when drafting bullets.`);
     }
-    
-    parts.push("\nUse the selected impacts and context files to help draft content for the bullet. Respect character limits when provided. Reference context files when you need more detail.");
     
     return parts.join("\n");
   };

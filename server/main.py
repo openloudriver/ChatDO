@@ -2331,6 +2331,7 @@ class ImpactCreate(BaseModel):
     metrics: Optional[str] = None
     tags: list[str] = []
     notes: Optional[str] = None
+    activeBullet: Optional[str] = None
     
     @field_validator('date', mode='before')
     @classmethod
@@ -2362,6 +2363,7 @@ class ImpactUpdate(BaseModel):
     metrics: Optional[str] = None
     tags: Optional[list[str]] = None
     notes: Optional[str] = None
+    activeBullet: Optional[str] = None
 
 
 @app.get("/api/impacts/", response_model=List[ImpactEntry])

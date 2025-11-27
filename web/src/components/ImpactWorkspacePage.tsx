@@ -40,6 +40,29 @@ export const ImpactWorkspacePage: React.FC = () => {
   // Get the selected impact (first selected, or null)
   const selectedImpact = impacts.find(i => selectedImpactIds.has(i.id)) || null;
   
+  // Sync bulletText with selectedImpact.activeBullet
+  useEffect(() => {
+    if (selectedImpact) {
+      setBulletText(selectedImpact.activeBullet ?? '');
+    } else {
+      setBulletText('');
+    }
+  }, [selectedImpact?.id, selectedImpact?.activeBullet]);
+  
+  // Handle active bullet text changes - update the impact
+  const handleActiveBulletChange = async (newText: string) => {
+    setBulletText(newText);
+    if (selectedImpact) {
+      try {
+        await updateImpact(selectedImpact.id, { activeBullet: newText || null });
+        // Reload impacts to get updated data
+        loadImpacts();
+      } catch (error) {
+        console.error('Failed to update activeBullet:', error);
+      }
+    }
+  };
+  
   // Chat state
   const {
     currentProject,
@@ -328,7 +351,7 @@ export const ImpactWorkspacePage: React.FC = () => {
             selectedImpact={selectedImpact}
             bulletMode={bulletMode}
             bulletText={bulletText}
-            onChangeText={setBulletText}
+            onChangeText={handleActiveBulletChange}
           />
 
           {/* Middle: chat messages list */}
