@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "8c03017c02a2401a9ad2b1fd512cbaa5",
+    "created_at": "2025-11-27 15:23:02.671502",
+    "updated_at": "2025-11-27 15:23:02.671502",
+    "title": "Acting Director of DAF CLOUDworks",
+    "date": "2025-11-14",
+    "context": "AFRL",
+    "actions": "During the government shutdown, all civilians, including our Director, were furloughed. As the ranking military member, I assumed leadership of all DAF CLOUDworks, the Department of the Air Force's premier cloud broker program office.",
+    "impact": "DAF CLOUDworks continued to run without any service interruptions. After the government shutdown ended, ABMS asked us what failed, what we had to cut back due to limited funding, and we didn't have to due to our pre-planning and execution for the prolonged shutdown. We did not fail.",
+    "metrics": "$156.85M program / 324 personnel / 188 mission partners",
+    "tags": [
+      "Air Force",
+      "Leadership"
+    ],
+    "notes": "I became the primary POC for both HAF AF/A2 (all AF ISR) and ABMS."
+  }
+]

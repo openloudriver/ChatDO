@@ -11,12 +11,20 @@ interface ImpactWorkspaceChatComposerProps {
   selectedImpacts: ImpactEntry[];
   activeTemplate: Template | null;
   templateFieldValues: Record<string, string>;
+  templateMode: 'none' | 'opb' | '1206';
+  opbTemplate: Record<string, string>;
+  form1206Text: string;
+  supportingDocIds: string[];
 }
 
 export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerProps> = ({
   selectedImpacts,
   activeTemplate,
   templateFieldValues,
+  templateMode,
+  opbTemplate,
+  form1206Text,
+  supportingDocIds,
 }) => {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -49,7 +57,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
   const buildContextMessage = (): string => {
     const parts: string[] = [];
     
-    parts.push("You are helping the user draft bullets for a template (e.g., 1206/OPB).");
+    parts.push("You are helping the user craft Air Force performance bullets. You have structured impact notes, an active OPB/1206 template, and supporting documents indexed in Memory Service. Use the Memory tool when you need more detail, but respect the template's character limits.");
     
     // Add selected impacts
     if (selectedImpacts.length > 0) {
@@ -69,12 +77,36 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       });
     }
     
-    // Add template context
+    // Add template mode context
+    if (templateMode === 'opb') {
+      parts.push("\n=== OPB TEMPLATE (Performance Report) ===");
+      parts.push("Current OPB sections with character limits:");
+      const OPB_SECTIONS = [
+        { key: 'dutyDescription', label: 'Duty Description', max: 450 },
+        { key: 'executingTheMission', label: 'Executing the Mission', max: 350 },
+        { key: 'leadingPeople', label: 'Leading People', max: 350 },
+        { key: 'managingResources', label: 'Managing Resources', max: 350 },
+        { key: 'improvingTheUnit', label: 'Improving the Unit', max: 350 },
+        { key: 'higherLevelReviewer', label: 'Higher Level Reviewer Assessment', max: 250 },
+      ];
+      OPB_SECTIONS.forEach(section => {
+        const value = opbTemplate[section.key] || "";
+        const count = value.length;
+        const over = count > section.max;
+        parts.push(`- ${section.label} (max ${section.max} chars, current: ${count}${over ? ' - OVER LIMIT' : ''}): ${value ? `"${value}"` : "[empty]"}`);
+      });
+    } else if (templateMode === '1206') {
+      parts.push("\n=== 1206 TEMPLATE (Award Package) ===");
+      parts.push(`Current 1206 bullet (soft limit: 230 chars, current: ${form1206Text.length}):`);
+      parts.push(form1206Text || "[empty]");
+    }
+    
+    // Add reference PDF template context (if uploaded)
     if (activeTemplate) {
-      parts.push("\n=== ACTIVE TEMPLATE ===");
-      parts.push(`Template: ${activeTemplate.filename}`);
+      parts.push("\n=== REFERENCE PDF TEMPLATE ===");
+      parts.push(`Reference PDF: ${activeTemplate.filename} (for visual reference only)`);
       if (activeTemplate.fields.length > 0) {
-        parts.push("\nTemplate Fields (with current values and character limits):");
+        parts.push("\nPDF Template Fields (with current values and character limits):");
         activeTemplate.fields.forEach(field => {
           const fieldId = field.id || field.field_id || "";
           const fieldName = field.name || field.label || fieldId;
@@ -86,7 +118,14 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       }
     }
     
-    parts.push("\nUse the selected impacts to help draft content for the template fields. Respect character limits when provided.");
+    // Add supporting docs context
+    if (supportingDocIds.length > 0) {
+      parts.push("\n=== SUPPORTING DOCUMENTS ===");
+      parts.push(`${supportingDocIds.length} supporting document(s) indexed in Memory Service. Use Memory tool to query these documents when you need additional context or evidence.`);
+      parts.push(`Document IDs: ${supportingDocIds.join(", ")}`);
+    }
+    
+    parts.push("\nUse the selected impacts to help draft content for the template fields. Respect character limits when provided. Query supporting documents via Memory tool when you need more detail.");
     
     return parts.join("\n");
   };
@@ -209,10 +248,12 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
           </svg>
         </button>
       </div>
-      {(selectedImpacts.length > 0 || activeTemplate) && (
+      {(selectedImpacts.length > 0 || templateMode !== 'none' || activeTemplate || supportingDocIds.length > 0) && (
         <div className="mt-2 text-xs text-slate-400">
           Context: {selectedImpacts.length} impact{selectedImpacts.length !== 1 ? "s" : ""} selected
-          {activeTemplate && ` • Template: ${activeTemplate.filename}`}
+          {templateMode !== 'none' && ` • Template: ${templateMode === 'opb' ? 'OPB' : '1206'}`}
+          {activeTemplate && ` • PDF: ${activeTemplate.filename}`}
+          {supportingDocIds.length > 0 && ` • ${supportingDocIds.length} supporting doc${supportingDocIds.length !== 1 ? 's' : ''}`}
         </div>
       )}
     </div>

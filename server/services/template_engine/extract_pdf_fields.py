@@ -33,11 +33,25 @@ def extract_pdf_fields(pdf_path: Path) -> List[Dict[str, Any]]:
     """
     if not PYPDF2_AVAILABLE:
         logger.warning("PyPDF2 not available, cannot extract PDF fields")
-        return []
+        # Return default field instead of empty list
+        return [{
+            "id": "main_content",
+            "name": "Main Content",
+            "page": 1,
+            "type": "text",
+            "maxChars": None
+        }]
     
     if not pdf_path.exists():
         logger.warning(f"PDF file does not exist: {pdf_path}")
-        return []
+        # Return default field instead of empty list
+        return [{
+            "id": "main_content",
+            "name": "Main Content",
+            "page": 1,
+            "type": "text",
+            "maxChars": None
+        }]
     
     fields = []
     

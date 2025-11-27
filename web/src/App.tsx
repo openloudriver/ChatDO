@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useChatStore } from './store/chat';
+import { useChatStore, type ViewMode } from './store/chat';
 import Sidebar from './components/Sidebar';
 import ChatMessages from './components/ChatMessages';
 import ChatComposer from './components/ChatComposer';
@@ -23,7 +23,8 @@ const App: React.FC = () => {
     setCurrentConversation,
     loadChats,
     connectProjectModal,
-    closeConnectProjectModal
+    closeConnectProjectModal,
+    setViewMode
   } = useChatStore();
   
   // Use a ref to track if initialization has already run
@@ -36,6 +37,17 @@ const App: React.FC = () => {
     // Startup sequence: restore session or create new chat
     const initializeApp = async () => {
       initializedRef.current = true;
+      
+      // First, restore viewMode from localStorage (before loading projects)
+      const savedViewMode = localStorage.getItem('chatdo:viewMode');
+      if (savedViewMode && ['projectList', 'chat', 'trashList', 'search', 'memory', 'impact'].includes(savedViewMode)) {
+        setViewMode(savedViewMode as ViewMode);
+        // If we're restoring to impact or memory view, skip the normal restore logic
+        if (savedViewMode === 'impact' || savedViewMode === 'memory') {
+          await loadProjects();
+          return;
+        }
+      }
       
       // First, load projects (this ensures General exists)
       await loadProjects();

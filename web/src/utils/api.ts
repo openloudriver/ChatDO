@@ -98,7 +98,36 @@ export async function createImpact(payload: ImpactCreatePayload): Promise<Impact
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Failed to create impact");
+  if (!res.ok) {
+    let errorMessage = "Failed to create impact";
+    try {
+      // Read response as text first, then try to parse as JSON
+      const errorText = await res.text();
+      try {
+        const errorData = JSON.parse(errorText);
+        // Handle FastAPI validation errors (422)
+        if (Array.isArray(errorData.detail)) {
+          const validationErrors = errorData.detail.map((err: any) => {
+            const field = err.loc ? err.loc.join('.') : 'field';
+            return `${field}: ${err.msg}`;
+          }).join(', ');
+          errorMessage = `Validation error: ${validationErrors}`;
+        } else if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = errorText || errorMessage;
+        }
+      } catch {
+        // Not JSON, use the text as-is
+        errorMessage = errorText || errorMessage;
+      }
+    } catch (e) {
+      errorMessage = `Server error: ${res.status} ${res.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
   return res.json();
 }
 
@@ -250,5 +279,36 @@ export async function deleteTemplate(templateId: string): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete template");
+}
+
+// 1206 Fit Test
+export async function test1206Fit(bullet: string): Promise<{ fits: boolean; reason?: string }> {
+  const res = await fetch('http://localhost:8000/api/impacts/test-1206-fit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bullet }),
+  });
+  if (!res.ok) throw new Error('Failed to test 1206 fit');
+  return res.json();
+}
+
+// Impact Supporting Docs
+export async function uploadImpactSupportingDoc(file: File): Promise<{ id: string; name: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const res = await fetch('http://localhost:8000/api/memory/impact-supporting-docs', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Failed to upload supporting doc');
+  return res.json();
+}
+
+export async function deleteImpactSupportingDoc(id: string): Promise<void> {
+  const res = await fetch(`http://localhost:8000/api/memory/impact-supporting-docs/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete supporting doc');
 }
 

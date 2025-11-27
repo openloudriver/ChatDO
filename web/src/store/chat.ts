@@ -151,7 +151,14 @@ export const useChatStore = create<ChatStore>((set) => ({
   streamingContent: '',
   isSummarizingArticle: false,
   isRagTrayOpen: false,
-  viewMode: 'projectList',
+  viewMode: (() => {
+    // Restore viewMode from localStorage on initialization
+    const saved = localStorage.getItem('chatdo:viewMode');
+    if (saved && ['projectList', 'chat', 'trashList', 'search', 'memory', 'impact'].includes(saved)) {
+      return saved as ViewMode;
+    }
+    return 'projectList';
+  })(),
   searchQuery: '',
   searchResults: [],
   sources: [],
@@ -180,7 +187,11 @@ export const useChatStore = create<ChatStore>((set) => ({
     }));
   },
   
-  setViewMode: (mode) => set({ viewMode: mode }),
+  setViewMode: (mode) => {
+    // Persist viewMode to localStorage
+    localStorage.setItem('chatdo:viewMode', mode);
+    set({ viewMode: mode });
+  },
   
   loadProjects: async () => {
     try {

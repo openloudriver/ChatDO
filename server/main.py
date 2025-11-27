@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form, WebSocket, Q
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List, Dict, Any
 import sys
 import json
@@ -16,7 +16,7 @@ import re
 import os
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone, date as date_type
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
@@ -2324,18 +2324,38 @@ async def purge_all_trashed():
 # Impact endpoints
 class ImpactCreate(BaseModel):
     title: str
-    date: Optional[date] = None
+    date: Optional[date_type] = None  # Accepts date string in YYYY-MM-DD format or None
     context: Optional[str] = None
     actions: str
     impact: Optional[str] = None
     metrics: Optional[str] = None
     tags: list[str] = []
     notes: Optional[str] = None
+    
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        """Parse date string to date object, or return None if empty/null."""
+        if v is None or v == "" or v == "null":
+            return None
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            try:
+                # Try parsing YYYY-MM-DD format
+                return datetime.strptime(v, "%Y-%m-%d").date()
+            except ValueError:
+                # Try parsing MM/DD/YYYY format
+                try:
+                    return datetime.strptime(v, "%m/%d/%Y").date()
+                except ValueError:
+                    raise ValueError(f"Invalid date format: {v}. Expected YYYY-MM-DD or MM/DD/YYYY")
+        return None
 
 
 class ImpactUpdate(BaseModel):
     title: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     context: Optional[str] = None
     actions: Optional[str] = None
     impact: Optional[str] = None
@@ -2351,9 +2371,13 @@ def get_impacts():
 
 @app.post("/api/impacts/", response_model=ImpactEntry)
 def create_impact(entry: ImpactCreate):
-    return impact_store.create_impact(
-        ImpactEntry(**entry.model_dump())
-    )
+    try:
+        return impact_store.create_impact(
+            ImpactEntry(**entry.model_dump())
+        )
+    except Exception as e:
+        logger.error(f"Failed to create impact: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create impact: {str(e)}")
 
 
 @app.put("/api/impacts/{impact_id}", response_model=ImpactEntry)
@@ -2370,6 +2394,106 @@ def delete_impact(impact_id: str):
     if not ok:
         raise HTTPException(status_code=404, detail="Impact not found")
     return {"ok": True}
+
+
+# 1206 Fit Test endpoint
+class Test1206FitRequest(BaseModel):
+    bullet: str
+
+
+class Test1206FitResponse(BaseModel):
+    fits: bool
+    reason: Optional[str] = None
+
+
+@app.post("/api/impacts/test-1206-fit", response_model=Test1206FitResponse)
+def test_1206_fit(req: Test1206FitRequest):
+    """
+    Test if a bullet text fits in a 1206 form field.
+    
+    TODO: Replace this heuristic with actual PDF fill + visual check.
+    For now, uses a simple character count heuristic.
+    """
+    text = req.bullet or ""
+    # Temporary heuristic: <= 230 chars → fits, else not.
+    fits = len(text) <= 230
+    reason = "" if fits else "Heuristic overflow: more than 230 characters."
+    return Test1206FitResponse(fits=fits, reason=reason)
+
+
+# Impact Supporting Docs endpoints (scoped RAG for Impact Workspace)
+@app.post("/api/memory/impact-supporting-docs")
+async def upload_impact_supporting_doc(file: UploadFile = File(...)):
+    """
+    Upload a supporting document for Impact Workspace.
+    Files are indexed via Memory Service with scope="impact_workspace".
+    Each file gets its own directory so Memory Service can index it.
+    """
+    try:
+        import tempfile
+        import shutil
+        from pathlib import Path
+        from server.services.memory_service_client import MemoryServiceClient
+        
+        # Read file content
+        content = await file.read()
+        
+        # Use a dedicated directory for impact workspace docs
+        impact_docs_base = Path(__file__).parent.parent / "data" / "impact_supporting_docs"
+        impact_docs_base.mkdir(parents=True, exist_ok=True)
+        
+        # Create a unique directory for this file (Memory Service needs a directory)
+        doc_id = uuid4().hex
+        doc_dir = impact_docs_base / doc_id
+        doc_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save file in its directory
+        file_ext = Path(file.filename).suffix if file.filename else ""
+        final_path = doc_dir / f"document{file_ext}"
+        final_path.write_bytes(content)
+        
+        # Create Memory Service source for this directory
+        memory_client = MemoryServiceClient()
+        source_result = memory_client.add_memory_source(
+            root_path=str(doc_dir),
+            display_name=f"Impact Doc: {file.filename or 'Untitled'}",
+            project_id="impact_workspace"
+        )
+        
+        # Return document ID and name
+        return {
+            "id": source_result.get("source_id", doc_id),
+            "name": file.filename or "Untitled"
+        }
+    except Exception as e:
+        logger.error(f"Failed to upload impact supporting doc: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to upload supporting doc: {str(e)}")
+
+
+@app.delete("/api/memory/impact-supporting-docs/{doc_id}")
+def delete_impact_supporting_doc(doc_id: str):
+    """
+    Delete an impact supporting document.
+    """
+    try:
+        from server.services.memory_service_client import MemoryServiceClient
+        from pathlib import Path
+        import shutil
+        
+        # Delete from Memory Service
+        memory_client = MemoryServiceClient()
+        memory_client.delete_memory_source(doc_id)
+        
+        # Also delete the local directory
+        impact_docs_base = Path(__file__).parent.parent / "data" / "impact_supporting_docs"
+        doc_dir = impact_docs_base / doc_id
+        if doc_dir.exists():
+            shutil.rmtree(doc_dir, ignore_errors=True)
+        
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"Failed to delete impact supporting doc: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete supporting doc: {str(e)}")
 
 
 # Impact template endpoints

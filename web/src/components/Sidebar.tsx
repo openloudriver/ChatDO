@@ -433,6 +433,15 @@ const Sidebar: React.FC = () => {
           setViewMode('impact');
           setCurrentProject(null);
         }}
+        onSaved={async (entry) => {
+          // If we're in impact view, the ImpactWorkspacePage will handle reloading
+          // Otherwise, navigate to impact workspace which will trigger a reload
+          if (viewMode !== 'impact') {
+            setViewMode('impact');
+            setCurrentProject(null);
+            // Give it a moment for the component to mount, then it will reload
+          }
+        }}
       />
     </div>
   );

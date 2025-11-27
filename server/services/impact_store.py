@@ -6,7 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
-from datetime import datetime, date
+from datetime import datetime, date as date_type
 from pydantic import BaseModel, Field
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -20,7 +20,7 @@ class ImpactEntry(BaseModel):
     
     # core fields
     title: str
-    date: Optional[date] = None          # when it happened
+    date: Optional[date_type] = None          # when it happened - accepts date object or None
     context: Optional[str] = None        # where / who / mission
     actions: str                         # what I did
     impact: Optional[str] = None         # why it mattered
@@ -41,23 +41,60 @@ def _load_raw() -> list[dict]:
     raw = IMPACTS_FILE.read_text(encoding="utf-8").strip()
     if not raw:
         return []
-    return json.loads(raw)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        # If JSON is corrupted, try to recover by reading up to the error position
+        logger = logging.getLogger(__name__)
+        logger.error(f"Corrupted JSON in impacts file: {e}")
+        # Try to find the last valid closing bracket
+        last_valid_bracket = raw.rfind(']')
+        if last_valid_bracket > 0:
+            try:
+                valid_json = raw[:last_valid_bracket + 1]
+                data = json.loads(valid_json)
+                logger.warning(f"Recovered {len(data)} impacts from corrupted file")
+                # Save the recovered data
+                _save_raw(data)
+                return data
+            except:
+                pass
+        # If recovery fails, return empty list and log error
+        logger.error("Could not recover impacts file, returning empty list")
+        return []
 
 
 def _save_raw(items: list[dict]) -> None:
     _ensure_file()
     import json
-    IMPACTS_FILE.write_text(
-        json.dumps(items, indent=2, default=str),
-        encoding="utf-8",
-    )
+    import tempfile
+    # Write to a temporary file first, then rename to prevent corruption
+    temp_file = IMPACTS_FILE.with_suffix('.json.tmp')
+    try:
+        temp_file.write_text(
+            json.dumps(items, indent=2, default=str),
+            encoding="utf-8",
+        )
+        # Atomic rename
+        temp_file.replace(IMPACTS_FILE)
+    except Exception as e:
+        # Clean up temp file on error
+        if temp_file.exists():
+            temp_file.unlink()
+        raise
 
 
 def list_impacts() -> List[ImpactEntry]:
     data = _load_raw()
     items = [ImpactEntry.model_validate(d) for d in data]
     # newest first, by date if present, else created_at
-    return sorted(items, key=lambda i: i.date or i.created_at, reverse=True)
+    # Convert date to datetime for consistent comparison
+    def sort_key(i: ImpactEntry):
+        if i.date:
+            # Convert date to datetime at midnight for comparison
+            return datetime.combine(i.date, datetime.min.time())
+        return i.created_at
+    return sorted(items, key=sort_key, reverse=True)
 
 
 def create_impact(entry: ImpactEntry) -> ImpactEntry:

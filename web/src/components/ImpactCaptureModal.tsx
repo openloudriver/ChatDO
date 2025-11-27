@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { createImpact } from "../utils/api";
+import React, { useState, useEffect } from "react";
+import { createImpact, updateImpact } from "../utils/api";
 import type { ImpactCreatePayload } from "../utils/api";
 import type { ImpactEntry } from "../types/impact";
 
@@ -8,6 +8,7 @@ interface ImpactCaptureModalProps {
   onClose: () => void;
   onSaved?: (entry: ImpactEntry) => void;
   onOpenWorkspace?: () => void;
+  initialImpact?: ImpactEntry | null;
 }
 
 export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
@@ -15,6 +16,7 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
   onClose,
   onSaved,
   onOpenWorkspace,
+  initialImpact,
 }) => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -26,6 +28,23 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Populate fields when editing
+  useEffect(() => {
+    if (open && initialImpact) {
+      setTitle(initialImpact.title || "");
+      setDate(initialImpact.date ? new Date(initialImpact.date).toISOString().split('T')[0] : "");
+      setContext(initialImpact.context || "");
+      setActions(initialImpact.actions || "");
+      setImpact(initialImpact.impact || "");
+      setMetrics(initialImpact.metrics || "");
+      setTags(initialImpact.tags?.join(", ") || "");
+      setNotes(initialImpact.notes || "");
+    } else if (open && !initialImpact) {
+      // Reset for new impact
+      reset();
+    }
+  }, [open, initialImpact]);
 
   if (!open) return null;
 
@@ -51,25 +70,68 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
     setError(null);
 
     try {
+      // Validate and convert date format if provided
+      let dateValue: string | null = null;
+      if (date && date.trim()) {
+        const trimmedDate = date.trim();
+        let dateStr = trimmedDate;
+        
+        // Check if it's in MM/DD/YYYY format and convert to YYYY-MM-DD
+        const mmddyyyyMatch = trimmedDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (mmddyyyyMatch) {
+          const [, month, day, year] = mmddyyyyMatch;
+          dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        
+        // Validate the date format (should be YYYY-MM-DD)
+        if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          setError("Invalid date format. Please use YYYY-MM-DD or MM/DD/YYYY format.");
+          setSaving(false);
+          return;
+        }
+        
+        // Validate the date is actually valid
+        const dateObj = new Date(dateStr + 'T00:00:00'); // Add time to avoid timezone issues
+        if (isNaN(dateObj.getTime())) {
+          setError("Invalid date. Please enter a valid date.");
+          setSaving(false);
+          return;
+        }
+        
+        // Use the validated YYYY-MM-DD format
+        dateValue = dateStr;
+      }
+
       const payload: ImpactCreatePayload = {
         title: title.trim() || "(untitled)",
-        date: date || undefined,
-        context: context.trim() || undefined,
+        date: dateValue || null, // Explicitly set to null if empty
+        context: context.trim() || null,
         actions: actions.trim() || "(no explicit actions provided)",
-        impact: impact.trim() || undefined,
-        metrics: metrics.trim() || undefined,
+        impact: impact.trim() || null,
+        metrics: metrics.trim() || null,
         tags: tags
           .split(",")
           .map(t => t.trim())
           .filter(Boolean),
-        notes: notes.trim() || undefined,
+        notes: notes.trim() || null,
       };
 
-      const entry = await createImpact(payload);
+      let entry: ImpactEntry;
+      if (initialImpact) {
+        // Update existing impact
+        entry = await updateImpact(initialImpact.id, payload);
+      } else {
+        // Create new impact
+        entry = await createImpact(payload);
+        // Dispatch custom event so ImpactWorkspacePage can reload impacts
+        window.dispatchEvent(new CustomEvent('impactSaved', { detail: entry }));
+      }
+      
       onSaved?.(entry);
       onClose();
       reset();
     } catch (e: any) {
+      console.error("Error creating impact:", e);
       setError(e?.message ?? "Failed to save impact");
     } finally {
       setSaving(false);
@@ -101,7 +163,23 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
                 type="date"
                 className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
                 value={date}
-                onChange={e => setDate(e.target.value)}
+                onChange={e => {
+                  const value = e.target.value;
+                  // HTML5 date input returns YYYY-MM-DD format
+                  setDate(value);
+                }}
+                onBlur={e => {
+                  // If user typed MM/DD/YYYY manually, convert it
+                  const value = e.target.value;
+                  if (value && !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    const mmddyyyyMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                    if (mmddyyyyMatch) {
+                      const [, month, day, year] = mmddyyyyMatch;
+                      const converted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                      setDate(converted);
+                    }
+                  }
+                }}
               />
             </div>
             <div className="flex-[2]">
@@ -198,11 +276,12 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
             }`}
             onClick={handleSave}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? (initialImpact ? "Updating…" : "Saving…") : (initialImpact ? "Update" : "Save")}
           </button>
         </div>
       </div>
     </div>
   );
 };
+
 
