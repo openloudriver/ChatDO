@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useChatStore, type ViewMode } from './store/chat';
-import Sidebar from './components/Sidebar';
+import { AppLayout } from './layout/AppLayout';
 import ChatMessages from './components/ChatMessages';
 import ChatComposer from './components/ChatComposer';
 import ProjectChatList from './components/ProjectChatList';
@@ -177,9 +177,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#343541] text-[#ececf1]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+    <AppLayout>
+      <div className="flex-1 flex flex-col min-w-0 h-full">
         {renderMainContent()}
       </div>
       
@@ -195,7 +194,7 @@ const App: React.FC = () => {
           />
         </>
       )}
-    </div>
+    </AppLayout>
   );
 };
 

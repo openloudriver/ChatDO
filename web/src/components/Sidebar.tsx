@@ -21,10 +21,29 @@ import { AiSpendIndicator } from './AiSpendIndicator';
 import ConnectProjectModal from './ConnectProjectModal';
 import { ImpactCaptureModal } from './ImpactCaptureModal';
 
-const PlusIcon = () => (
-  <span className="inline-flex h-4 w-4 items-center justify-center text-xs font-bold">
-    +
-  </span>
+const NewProjectIcon = () => (
+  <svg
+    className="w-5 h-5 flex-shrink-0"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    {/* Folder icon */}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+    />
+    {/* Plus sign overlay */}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M15 12h-3m0 0H9m3 0v-3m0 3v3"
+      className="opacity-90"
+    />
+  </svg>
 );
 
 interface SortableProjectItemProps {
@@ -85,13 +104,26 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
           e.stopPropagation();
           setOpenMenuId(openMenuId === project.id ? null : project.id);
         }}
-        className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-grab active:cursor-grabbing ${
+        className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-grab active:cursor-grabbing flex items-center gap-2 ${
           currentProject?.id === project.id
             ? 'bg-[#343541] text-white'
             : 'text-[#8e8ea0] hover:bg-[#343541]'
         }`}
       >
-        {project.name}
+        <svg
+          className="w-4 h-4 flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+          />
+        </svg>
+        <span className="truncate">{project.name}</span>
       </button>
       {openMenuId === project.id && (
         <div 
@@ -267,7 +299,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-[#202123] h-screen flex flex-col text-white overflow-hidden">
+    <div className="h-full bg-[#202123] flex flex-col text-white overflow-hidden">
       {/* Search Field */}
       <div className="p-2 flex-shrink-0">
         <div className="relative">
@@ -310,7 +342,7 @@ const Sidebar: React.FC = () => {
             className="rounded-md p-1 text-[#8e8ea0] hover:bg-[#343541] hover:text-white transition-colors"
             aria-label="New project"
           >
-            <PlusIcon />
+            <NewProjectIcon />
           </button>
         </div>
         <DndContext

@@ -1,30 +1,23 @@
 /**
  * Custom ChatComposer wrapper for Impact Workspace that adds context
- * from selected impacts and template fields to each message.
+ * from selected impacts and bullet draft to each message.
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chat';
 import type { ImpactEntry } from '../types/impact';
-import type { Template } from '../utils/api';
+import { BULLET_MODES, type BulletMode } from './ActiveBulletEditor';
+import RagContextTray from './RagContextTray';
 
 interface ImpactWorkspaceChatComposerProps {
   selectedImpacts: ImpactEntry[];
-  activeTemplate: Template | null;
-  templateFieldValues: Record<string, string>;
-  templateMode: 'none' | 'opb' | '1206';
-  opbTemplate: Record<string, string>;
-  form1206Text: string;
-  supportingDocIds: string[];
+  bulletMode: BulletMode;
+  bulletText: string;
 }
 
 export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerProps> = ({
   selectedImpacts,
-  activeTemplate,
-  templateFieldValues,
-  templateMode,
-  opbTemplate,
-  form1206Text,
-  supportingDocIds,
+  bulletMode,
+  bulletText,
 }) => {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -36,17 +29,15 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     setStreaming,
     updateStreamingContent,
     clearStreaming,
+    isRagTrayOpen,
+    setRagTrayOpen,
+    ragFileIds,
   } = useChatStore();
 
-  // Auto-resize textarea
+  // Auto-resize textarea - fixed to 2 rows
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const scrollHeight = textareaRef.current.scrollHeight;
-      const maxHeight = 300;
-      const minHeight = 88;
-      const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-      textareaRef.current.style.height = `${newHeight}px`;
+      textareaRef.current.style.height = '88px'; // Fixed to 2 rows
     }
   };
   
@@ -57,7 +48,16 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
   const buildContextMessage = (): string => {
     const parts: string[] = [];
     
-    parts.push("You are helping the user craft Air Force performance bullets. You have structured impact notes, an active OPB/1206 template, and supporting documents indexed in Memory Service. Use the Memory tool when you need more detail, but respect the template's character limits.");
+    const modeMeta = BULLET_MODES.find((m) => m.id === bulletMode);
+    const maxCharsInfo = modeMeta?.maxChars ? ` (target: ${modeMeta.maxChars} chars)` : '';
+
+    parts.push(`You are helping the user craft Air Force performance bullets. The user is currently working in Impact Workspace with bullet mode "${modeMeta?.label || 'Freeform'}"${maxCharsInfo}.`);
+    if (bulletText.trim()) {
+      parts.push(`The current draft bullet is: "${bulletText.trim()}"`);
+    } else {
+      parts.push("The current draft bullet is empty.");
+    }
+    parts.push("Always keep suggestions within the character limit for the selected mode.");
     
     // Add selected impacts
     if (selectedImpacts.length > 0) {
@@ -77,55 +77,13 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       });
     }
     
-    // Add template mode context
-    if (templateMode === 'opb') {
-      parts.push("\n=== OPB TEMPLATE (Performance Report) ===");
-      parts.push("Current OPB sections with character limits:");
-      const OPB_SECTIONS = [
-        { key: 'dutyDescription', label: 'Duty Description', max: 450 },
-        { key: 'executingTheMission', label: 'Executing the Mission', max: 350 },
-        { key: 'leadingPeople', label: 'Leading People', max: 350 },
-        { key: 'managingResources', label: 'Managing Resources', max: 350 },
-        { key: 'improvingTheUnit', label: 'Improving the Unit', max: 350 },
-        { key: 'higherLevelReviewer', label: 'Higher Level Reviewer Assessment', max: 250 },
-      ];
-      OPB_SECTIONS.forEach(section => {
-        const value = opbTemplate[section.key] || "";
-        const count = value.length;
-        const over = count > section.max;
-        parts.push(`- ${section.label} (max ${section.max} chars, current: ${count}${over ? ' - OVER LIMIT' : ''}): ${value ? `"${value}"` : "[empty]"}`);
-      });
-    } else if (templateMode === '1206') {
-      parts.push("\n=== 1206 TEMPLATE (Award Package) ===");
-      parts.push(`Current 1206 bullet (soft limit: 230 chars, current: ${form1206Text.length}):`);
-      parts.push(form1206Text || "[empty]");
+    // Add RAG context files info
+    if (ragFileIds.length > 0) {
+      parts.push(`\n=== CONTEXT FILES ===`);
+      parts.push(`${ragFileIds.length} context file(s) uploaded for this conversation. Use these files as reference when drafting bullets.`);
     }
     
-    // Add reference PDF template context (if uploaded)
-    if (activeTemplate) {
-      parts.push("\n=== REFERENCE PDF TEMPLATE ===");
-      parts.push(`Reference PDF: ${activeTemplate.filename} (for visual reference only)`);
-      if (activeTemplate.fields.length > 0) {
-        parts.push("\nPDF Template Fields (with current values and character limits):");
-        activeTemplate.fields.forEach(field => {
-          const fieldId = field.id || field.field_id || "";
-          const fieldName = field.name || field.label || fieldId;
-          const value = templateFieldValues[fieldId] || "";
-          const maxChars = field.maxChars;
-          const charInfo = maxChars ? ` (max ${maxChars} characters)` : " (no character limit)";
-          parts.push(`- ${fieldName}${charInfo}: ${value ? `"${value}"` : "[empty - needs to be filled]"}`);
-        });
-      }
-    }
-    
-    // Add supporting docs context
-    if (supportingDocIds.length > 0) {
-      parts.push("\n=== SUPPORTING DOCUMENTS ===");
-      parts.push(`${supportingDocIds.length} supporting document(s) indexed in Memory Service. Use Memory tool to query these documents when you need additional context or evidence.`);
-      parts.push(`Document IDs: ${supportingDocIds.join(", ")}`);
-    }
-    
-    parts.push("\nUse the selected impacts to help draft content for the template fields. Respect character limits when provided. Query supporting documents via Memory tool when you need more detail.");
+    parts.push("\nUse the selected impacts and context files to help draft content for the bullet. Respect character limits when provided. Reference context files when you need more detail.");
     
     return parts.join("\n");
   };
@@ -150,7 +108,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     // Clear input
     setInput('');
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = '88px';
     }
 
     try {
@@ -165,7 +123,14 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
           conversation_id: currentConversation.id,
           target_name: currentConversation.targetName,
           message: messageWithContext, // Send message with context
-          force_search: false
+          force_search: false,
+          context: {
+            origin: 'impact_workspace',
+            selectedImpactIds: selectedImpacts.map(i => i.id),
+            bulletDraft: bulletText,
+            bulletMode,
+            ragFileIds,
+          }
         };
         ws.send(JSON.stringify(payload));
       };
@@ -224,39 +189,61 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
   };
 
   return (
-    <div className="px-4 py-3 border-t border-slate-700 bg-[#343541]">
-      <div className="flex items-end gap-2">
-        <div className="flex-1 relative">
+    <>
+      <div className="px-4 py-3 border-t border-slate-700 bg-[#343541]">
+        <div className="relative flex items-end">
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight(); // This will now enforce min/max height
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Message ChatDO about your impacts and template..."
-            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            rows={1}
-            style={{ minHeight: '44px', maxHeight: '300px' }}
+            className="w-full p-3 pl-3 pr-24 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
+            style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }} // Fixed to 2 rows
           />
+          <div className="absolute right-2 bottom-2 flex items-center gap-1">
+            {/* RAG Tray Toggle Button (Lightbulb) */}
+            <button
+              onClick={() => setRagTrayOpen(!isRagTrayOpen)}
+              className={`p-2 rounded transition-colors ${
+                isRagTrayOpen
+                  ? 'text-[#19c37d] bg-[#19c37d]/20'
+                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+              }`}
+              title="RAG context tray (upload reference files)"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </button>
+            {/* Send button */}
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-400 text-white flex items-center justify-center transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-400 text-white flex items-center justify-center transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
-        </button>
+        {(selectedImpacts.length > 0 || bulletText.trim() || ragFileIds.length > 0) && (
+          <div className="mt-2 text-xs text-slate-400">
+            Context: {selectedImpacts.length} impact{selectedImpacts.length !== 1 ? "s" : ""} selected
+            {bulletText.trim() && ` • Bullet: ${bulletMode} (${bulletText.length}${BULLET_MODES.find(m => m.id === bulletMode)?.maxChars ? ` / ${BULLET_MODES.find(m => m.id === bulletMode)?.maxChars}` : ''} chars)`}
+            {ragFileIds.length > 0 && ` • ${ragFileIds.length} context file${ragFileIds.length !== 1 ? 's' : ''}`}
+          </div>
+        )}
       </div>
-      {(selectedImpacts.length > 0 || templateMode !== 'none' || activeTemplate || supportingDocIds.length > 0) && (
-        <div className="mt-2 text-xs text-slate-400">
-          Context: {selectedImpacts.length} impact{selectedImpacts.length !== 1 ? "s" : ""} selected
-          {templateMode !== 'none' && ` • Template: ${templateMode === 'opb' ? 'OPB' : '1206'}`}
-          {activeTemplate && ` • PDF: ${activeTemplate.filename}`}
-          {supportingDocIds.length > 0 && ` • ${supportingDocIds.length} supporting doc${supportingDocIds.length !== 1 ? 's' : ''}`}
-        </div>
-      )}
-    </div>
+      {/* RAG Context Tray */}
+      <RagContextTray 
+        isOpen={isRagTrayOpen} 
+        onClose={() => setRagTrayOpen(false)}
+      />
+    </>
   );
 };
-
