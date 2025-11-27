@@ -131,6 +131,7 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
   const [bulletOptions, setBulletOptions] = useState<string[]>([]);
   const [hasOptions, setHasOptions] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     // Try to detect bullet-style Award/OPB responses
@@ -182,8 +183,35 @@ const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
                 key={index}
                 className="rounded-lg bg-slate-800/80 border border-slate-700 p-3"
               >
-                <div className="text-xs font-medium mb-2 text-slate-300">
-                  {`Option ${label} — ${charCount} chars`}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-slate-300">
+                    {`Option ${label} — ${charCount} chars`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(text);
+                        setCopiedIndex(index);
+                        setTimeout(() => setCopiedIndex(null), 1500);
+                      } catch (err) {
+                        console.error('Failed to copy option text:', err);
+                      }
+                    }}
+                    className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center justify-center"
+                    title={`Copy ${label} bullet`}
+                    aria-label={`Copy ${label} bullet`}
+                  >
+                    {copiedIndex === index ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
                 <pre
                   className="bullet-option text-xs text-slate-200 leading-snug m-0 p-0"

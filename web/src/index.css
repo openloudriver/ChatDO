@@ -134,3 +134,8 @@ body {
 .assistant-source-link:hover {
   @apply text-sky-300;
 }
+
+/* Copy option button helper */
+.copy-option-button {
+  cursor: pointer;
+}
