@@ -114,7 +114,14 @@ def update_impact(entry_id: str, patch: dict) -> Optional[ImpactEntry]:
     found = None
     for idx, raw in enumerate(data):
         if raw.get("id") == entry_id:
-            raw.update({k: v for k, v in patch.items() if v is not None})
+            # Update all fields from patch, including None values for optional fields
+            # This allows clearing optional fields like activeBullet
+            for k, v in patch.items():
+                if v is None:
+                    # Explicitly set to None for optional fields
+                    raw[k] = None
+                else:
+                    raw[k] = v
             raw["updated_at"] = datetime.utcnow().isoformat()
             data[idx] = raw
             found = ImpactEntry.model_validate(raw)

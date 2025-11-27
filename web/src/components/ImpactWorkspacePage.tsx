@@ -53,12 +53,43 @@ export const ImpactWorkspacePage: React.FC = () => {
   const handleActiveBulletChange = async (newText: string) => {
     setBulletText(newText);
     if (selectedImpact) {
+      const impactId = selectedImpact.id;
+      const previousValue = selectedImpact.activeBullet;
+      // Use empty string if newText is empty, null only if explicitly cleared
+      const valueToSave = newText.trim() === '' ? null : newText;
+      
       try {
-        await updateImpact(selectedImpact.id, { activeBullet: newText || null });
-        // Reload impacts to get updated data
-        loadImpacts();
+        // Update local state immediately for responsive UI
+        setImpacts(prev => prev.map(impact => 
+          impact.id === impactId 
+            ? { ...impact, activeBullet: valueToSave }
+            : impact
+        ));
+        
+        // Persist to backend - explicitly send the value (even if null)
+        const updated = await updateImpact(impactId, { activeBullet: valueToSave });
+        
+        // Update local state with the response from backend to ensure consistency
+        if (updated) {
+          setImpacts(prev => prev.map(impact => 
+            impact.id === impactId 
+              ? { ...impact, activeBullet: updated.activeBullet ?? null }
+              : impact
+          ));
+          // Also update bulletText in case the backend normalized the value
+          if (updated.activeBullet) {
+            setBulletText(updated.activeBullet);
+          }
+        }
       } catch (error) {
         console.error('Failed to update activeBullet:', error);
+        // Revert local state on error
+        setImpacts(prev => prev.map(impact => 
+          impact.id === impactId 
+            ? { ...impact, activeBullet: previousValue ?? null }
+            : impact
+        ));
+        setBulletText(previousValue ?? '');
       }
     }
   };
@@ -149,6 +180,9 @@ export const ImpactWorkspacePage: React.FC = () => {
       setLoadingImpacts(true);
       const data = await fetchImpacts();
       setImpacts(data);
+      
+      // Preserve selected impact IDs after reload
+      // The selectedImpact will be recalculated from the new data
     } catch (e: any) {
       console.error("Failed to load impacts:", e);
     } finally {
