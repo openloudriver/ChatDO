@@ -21,7 +21,7 @@
     "default_target": "general",
     "sort_index": 2,
     "memory_sources": [
-      "chatdo-repo"
+      "chatdo-dir"
     ]
   },
   {

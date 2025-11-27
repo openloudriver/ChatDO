@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useChatStore, type Project } from '../store/chat';
 import { AiSpendIndicator } from './AiSpendIndicator';
 import ConnectProjectModal from './ConnectProjectModal';
+import { ImpactCaptureModal } from './ImpactCaptureModal';
 
 const PlusIcon = () => (
   <span className="inline-flex h-4 w-4 items-center justify-center text-xs font-bold">
@@ -165,6 +166,7 @@ const Sidebar: React.FC = () => {
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
+  const [impactModalOpen, setImpactModalOpen] = useState(false);
   const { openConnectProjectModal } = useChatStore();
 
   // Load chats when project changes
@@ -347,6 +349,25 @@ const Sidebar: React.FC = () => {
         </div>
         <div className="flex items-center gap-1">
           <button
+            onClick={() => setImpactModalOpen(true)}
+            className="p-2 rounded transition-colors flex-shrink-0 text-[#8e8ea0] hover:bg-[#343541] hover:text-white"
+            title="Capture impact"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+              />
+            </svg>
+          </button>
+          <button
             onClick={() => {
               setViewMode('memory');
               setCurrentProject(null);
@@ -364,11 +385,12 @@ const Sidebar: React.FC = () => {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
+              {/* Database/Server icon - represents memory storage */}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
               />
             </svg>
           </button>
@@ -402,6 +424,14 @@ const Sidebar: React.FC = () => {
       </div>
       
       {/* Connect Project Modal - rendered via portal in App.tsx */}
+      <ImpactCaptureModal
+        open={impactModalOpen}
+        onClose={() => setImpactModalOpen(false)}
+        onOpenWorkspace={() => {
+          setViewMode('impact');
+          setCurrentProject(null);
+        }}
+      />
     </div>
   );
 };

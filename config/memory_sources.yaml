@@ -1,32 +1,11 @@
 sources:
-  - id: drr-repo
-    project_id: drr
-    root_path: /Users/christopher.peck/DRR
-    include_glob: "**/*"
-    exclude_glob: "**/.git/**"
-
-  - id: chatdo-repo
-    project_id: 24a85d18-a1d3-43f7-86b3-48fa6c61177c  # Auto-synced from projects.json
-    root_path: /Users/christopher.peck/ChatDO
-    include_glob: "**/*"
-    exclude_glob: "**/memory_service/store/**,**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal"
-
-  - id: privacypay-repo
-    project_id: privacypay
-    root_path: /Users/christopher.peck/privacypay
-    include_glob: "**/*"
-    exclude_glob: "**/.git/**"
-
-  # Additional sources can be added here:
-  # - id: privacy-pay
-  #   project_id: privacypay
-  #   root_path: /Users/christopher.peck/PrivacyPay
-  #   include_glob: "**/*"
-  #   exclude_glob: "**/.git/**"
-  #
-  # - id: flywheel
-  #   project_id: flywheel
-  #   root_path: /Users/christopher.peck/Flywheel
-  #   include_glob: "**/*"
-  #   exclude_glob: "**/.git/**"
-
+- id: drr-repo
+  project_id: drr
+  root_path: /Users/christopher.peck/DRR
+  include_glob: '**/*'
+  exclude_glob: '**/.git/**'
+- id: privacypay-repo
+  project_id: privacypay
+  root_path: /Users/christopher.peck/privacypay
+  include_glob: '**/*'
+  exclude_glob: '**/.git/**'

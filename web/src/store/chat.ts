@@ -64,7 +64,7 @@ export interface Project {
   sort_index?: number;
 }
 
-export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory';
+export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory' | 'impact';
 
 export interface ConnectProjectModalState {
   open: boolean;

@@ -11,11 +11,12 @@ from typing import Optional, List, Dict, Any
 import sys
 import json
 import uuid
+from uuid import uuid4
 import re
 import os
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
@@ -39,6 +40,9 @@ from server.scraper import scrape_url
 from server.ws import websocket_endpoint
 from server.article_summary import extract_article
 from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT, FILE_SUMMARY_SYSTEM_PROMPT
+from server.services import impact_store, impact_templates_store
+from server.services.impact_store import ImpactEntry
+from server.services.impact_templates_store import ImpactTemplate, get_template_file_path
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -2313,6 +2317,144 @@ async def purge_all_trashed():
     save_chats(chats)
     
     return {"success": True, "purged_count": len(trashed_chat_ids)}
+
+
+# Impact endpoints
+class ImpactCreate(BaseModel):
+    title: str
+    date: Optional[date] = None
+    context: Optional[str] = None
+    actions: str
+    impact: Optional[str] = None
+    metrics: Optional[str] = None
+    tags: list[str] = []
+    notes: Optional[str] = None
+
+
+class ImpactUpdate(BaseModel):
+    title: Optional[str] = None
+    date: Optional[date] = None
+    context: Optional[str] = None
+    actions: Optional[str] = None
+    impact: Optional[str] = None
+    metrics: Optional[str] = None
+    tags: Optional[list[str]] = None
+    notes: Optional[str] = None
+
+
+@app.get("/api/impacts/", response_model=List[ImpactEntry])
+def get_impacts():
+    return impact_store.list_impacts()
+
+
+@app.post("/api/impacts/", response_model=ImpactEntry)
+def create_impact(entry: ImpactCreate):
+    return impact_store.create_impact(
+        ImpactEntry(**entry.model_dump())
+    )
+
+
+@app.put("/api/impacts/{impact_id}", response_model=ImpactEntry)
+def update_impact(impact_id: str, patch: ImpactUpdate):
+    updated = impact_store.update_impact(impact_id, patch.model_dump(exclude_unset=True))
+    if not updated:
+        raise HTTPException(status_code=404, detail="Impact not found")
+    return updated
+
+
+@app.delete("/api/impacts/{impact_id}")
+def delete_impact(impact_id: str):
+    ok = impact_store.delete_impact(impact_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Impact not found")
+    return {"ok": True}
+
+
+# Impact template endpoints
+class ImpactTemplateResponse(BaseModel):
+    id: str
+    created_at: datetime
+    name: str
+    description: Optional[str]
+    tags: list[str]
+    file_name: str
+    mime_type: Optional[str]
+
+
+@app.get("/api/impact-templates/", response_model=List[ImpactTemplateResponse])
+def list_impact_templates():
+    templates = impact_templates_store.list_templates()
+    return [
+        ImpactTemplateResponse(
+            id=t.id,
+            created_at=t.created_at,
+            name=t.name,
+            description=t.description,
+            tags=t.tags,
+            file_name=t.file_name,
+            mime_type=t.mime_type,
+        )
+        for t in templates
+    ]
+
+
+@app.post("/api/impact-templates/upload", response_model=ImpactTemplateResponse)
+async def upload_impact_template(
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),  # comma-separated string from UI
+):
+    impact_templates_store.ensure_paths()  # ensure dirs
+    safe_id = uuid4().hex
+    # keep extension
+    from pathlib import Path as P
+    ext = P(file.filename).suffix or ""
+    stored_name = f"{safe_id}{ext}"
+    dest = impact_templates_store.TEMPLATES_DIR / stored_name
+    content = await file.read()
+    dest.write_bytes(content)
+    
+    tag_list: list[str] = []
+    if tags:
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    
+    tpl = ImpactTemplate(
+        id=safe_id,
+        name=name,
+        description=description,
+        tags=tag_list,
+        file_name=file.filename,
+        stored_name=stored_name,
+        mime_type=file.content_type,
+    )
+    tpl = impact_templates_store.add_template(tpl)
+    return ImpactTemplateResponse(
+        id=tpl.id,
+        created_at=tpl.created_at,
+        name=tpl.name,
+        description=tpl.description,
+        tags=tpl.tags,
+        file_name=tpl.file_name,
+        mime_type=tpl.mime_type,
+    )
+
+
+@app.delete("/api/impact-templates/{template_id}")
+def delete_impact_template(template_id: str):
+    # For now, just remove from JSON. We can later also delete the file.
+    ok = impact_templates_store.delete_template(template_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"ok": True}
+
+
+@app.get("/api/impact-templates/{template_id}/file")
+def download_impact_template_file(template_id: str):
+    path = get_template_file_path(template_id)
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="Template file not found")
+    return FileResponse(path)
 
 
 @app.websocket("/api/chat/stream")
