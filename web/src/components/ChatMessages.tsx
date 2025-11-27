@@ -12,7 +12,6 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
   const bullets: string[] = [];
   const lines = content.split('\n');
   let inCodeBlock = false;
-  let codeBlockLanguage = '';
   let currentBullet = '';
   let codeBlockBullets: string[] = [];
   
@@ -35,7 +34,6 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
         }
       } else {
         // Start of code block
-        codeBlockLanguage = trimmed.slice(3).trim();
         codeBlockBullets = [];
       }
       inCodeBlock = !inCodeBlock;
