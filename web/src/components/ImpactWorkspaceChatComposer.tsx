@@ -72,7 +72,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     const parts: string[] = [];
     
     const modeMeta = BULLET_MODES.find((m) => m.id === bulletMode);
-    const maxChars = modeMeta?.maxChars ?? 230;
+    const maxChars = modeMeta?.maxChars ?? 215;
     const maxCharsInfo = modeMeta?.maxChars ? ` (target: ${modeMeta.maxChars} chars)` : '';
 
     // Determine if we have an activeBullet to iterate on
@@ -111,7 +111,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     parts.push(`\nBullet mode: "${modeMeta?.label || 'Freeform'}"${maxCharsInfo}.`);
     parts.push("Always keep suggestions within the character limit for the selected mode.");
     
-    // For Award (230) bullets, ensure they start with "- " prefix
+    // For Award (215) bullets, ensure they start with "- " prefix
     if (bulletMode === '1206_2LINE') {
       parts.push(`\nIMPORTANT: Each bullet option MUST start with "- " (dash followed by space). For example: "- Led DAF CLOUDworks..."`);
       parts.push(`The "- " prefix is part of the bullet format and should be included in the character count.`);

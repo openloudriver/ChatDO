@@ -7,7 +7,7 @@
  * 
  * Features:
  * - Single active bullet editor with mode selector (1206 2-line / OPB 350 / OPB 450 / Free)
- * - Character limits: 230, 350, 450 chars based on mode
+ * - Character limits: 215, 350, 250 chars based on mode
  * - RAG context tray: Lightbulb button opens right-side tray for uploading reference files
  * - Context-aware chat: Includes selected impacts, current bullet draft, and RAG files
  * - Per-impact scoping: Active Bullet, Chat messages, and RAG files are scoped to each impact

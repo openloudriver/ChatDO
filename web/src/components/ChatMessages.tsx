@@ -145,7 +145,7 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
     if (hasBulletPattern) {
       let extracted = extractBulletOptionsFromMessage(content);
       
-      // For Award (230) bullets, ensure each option starts with "- "
+      // For Award (215) bullets, ensure each option starts with "- "
       if (bulletMode === '1206_2LINE') {
         extracted = extracted.map(bullet => {
           const trimmed = bullet.trim();
