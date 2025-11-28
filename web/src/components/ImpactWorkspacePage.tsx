@@ -208,6 +208,18 @@ export const ImpactWorkspacePage: React.FC = () => {
   const selectedImpact = selectedImpactId ? impacts.find(i => i.id === selectedImpactId) || null : null;
   const selectedState = selectedImpactId ? impactState[selectedImpactId] : null;
   
+  // Debounce timer for backend saves
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cleanup timeout on unmount or impact change
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [selectedImpactId]);
+  
   // Initialize impact state when an impact is selected for the first time
   useEffect(() => {
     if (selectedImpactId && !impactState[selectedImpactId]) {
@@ -224,11 +236,12 @@ export const ImpactWorkspacePage: React.FC = () => {
     }
   }, [selectedImpactId, selectedImpact?.activeBullet]);
   
-  // Sync impact state with backend activeBullet when impact changes
+  // Sync impact state with backend activeBullet when impact changes (not on every state change)
   useEffect(() => {
     if (selectedImpactId && selectedImpact && impactState[selectedImpactId]) {
       const currentState = impactState[selectedImpactId];
       // If backend has activeBullet but state doesn't, sync it
+      // Only sync when the impact selection changes, not when state changes
       if (selectedImpact.activeBullet && currentState.activeBulletText !== selectedImpact.activeBullet) {
         setImpactState(prev => ({
           ...prev,
@@ -245,48 +258,58 @@ export const ImpactWorkspacePage: React.FC = () => {
         saveImpactState(selectedImpactId, updatedState);
       }
     }
-  }, [selectedImpactId, selectedImpact?.activeBullet, impactState]);
+    // Only run when selected impact changes, not when impactState changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedImpactId, selectedImpact?.activeBullet]);
   
   // Handle active bullet text changes - update the impact
   const handleActiveBulletChange = async (newText: string) => {
     if (!selectedImpactId) return;
     
-    const valueToSave = newText.trim() === '' ? null : newText;
     const previousState = impactState[selectedImpactId];
     
-    try {
-      // Update impact-scoped state immediately
-      const newState: ImpactScopedState = {
-        ...(previousState || { activeBulletText: '', chatMessages: [], ragFileIds: [] }),
-        activeBulletText: newText,
-      };
-      setImpactState(prev => ({
-        ...prev,
-        [selectedImpactId]: newState,
-      }));
-      saveImpactState(selectedImpactId, newState);
-      
-      // Also persist to backend (for activeBullet field)
-      const updated = await updateImpact(selectedImpactId, { activeBullet: valueToSave });
-      
-      // Update impacts list with backend response
-      if (updated) {
-        setImpacts(prev => prev.map(impact => 
-          impact.id === selectedImpactId 
-            ? { ...impact, activeBullet: updated.activeBullet ?? null }
-            : impact
-        ));
-      }
-    } catch (error) {
-      console.error('Failed to update activeBullet:', error);
-      // Revert state on error
-      if (previousState) {
-        setImpactState(prev => ({
-          ...prev,
-          [selectedImpactId]: previousState,
-        }));
-      }
+    // Update impact-scoped state immediately (for responsive UI)
+    const newState: ImpactScopedState = {
+      ...(previousState || { activeBulletText: '', chatMessages: [], ragFileIds: [] }),
+      activeBulletText: newText,
+    };
+    setImpactState(prev => ({
+      ...prev,
+      [selectedImpactId]: newState,
+    }));
+    saveImpactState(selectedImpactId, newState);
+    
+    // Debounce backend save to avoid cursor jumping
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      const valueToSave = newText.trim() === '' ? null : newText;
+      try {
+        // Persist to backend (for activeBullet field)
+        const updated = await updateImpact(selectedImpactId, { activeBullet: valueToSave });
+        
+        // Update impacts list with backend response
+        if (updated) {
+          setImpacts(prev => prev.map(impact => 
+            impact.id === selectedImpactId 
+              ? { ...impact, activeBullet: updated.activeBullet ?? null }
+              : impact
+          ));
+        }
+      } catch (error) {
+        console.error('Failed to update activeBullet:', error);
+        // Revert state on error
+        if (previousState) {
+          setImpactState(prev => ({
+            ...prev,
+            [selectedImpactId]: previousState,
+          }));
+          saveImpactState(selectedImpactId, previousState);
+        }
+      }
+    }, 500); // Wait 500ms after user stops typing
   };
   
   // Handle chat messages change
