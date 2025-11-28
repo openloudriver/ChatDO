@@ -20,7 +20,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
-  const [context, setContext] = useState("");
   const [actions, setActions] = useState("");
   const [impact, setImpact] = useState("");
   const [metrics, setMetrics] = useState("");
@@ -33,7 +32,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
     if (open && initialImpact) {
       setTitle(initialImpact.title || "");
       setDate(initialImpact.date ? new Date(initialImpact.date).toISOString().split('T')[0] : "");
-      setContext(initialImpact.context || "");
       setActions(initialImpact.actions || "");
       setImpact(initialImpact.impact || "");
       setMetrics(initialImpact.metrics || "");
@@ -52,7 +50,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
   const reset = () => {
     setTitle("");
     setDate("");
-    setContext("");
     setActions("");
     setImpact("");
     setMetrics("");
@@ -102,7 +99,7 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
       const payload: ImpactCreatePayload = {
         title: title.trim() || "(untitled)",
         date: dateValue || null, // Explicitly set to null if empty
-        context: context.trim() || null,
+        context: null,
         actions: actions.trim() || "(no explicit actions provided)",
         impact: impact.trim() || null,
         metrics: metrics.trim() || null,
@@ -148,45 +145,32 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
-                Date
-              </label>
-              <input
-                type="date"
-                className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
-                value={date}
-                onChange={e => {
-                  const value = e.target.value;
-                  // HTML5 date input returns YYYY-MM-DD format
-                  setDate(value);
-                }}
-                onBlur={e => {
-                  // If user typed MM/DD/YYYY manually, convert it
-                  const value = e.target.value;
-                  if (value && !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    const mmddyyyyMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-                    if (mmddyyyyMatch) {
-                      const [, month, day, year] = mmddyyyyMatch;
-                      const converted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                      setDate(converted);
-                    }
+          <div className="w-1/2">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+              Date
+            </label>
+            <input
+              type="date"
+              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              value={date}
+              onChange={e => {
+                const value = e.target.value;
+                // HTML5 date input returns YYYY-MM-DD format
+                setDate(value);
+              }}
+              onBlur={e => {
+                // If user typed MM/DD/YYYY manually, convert it
+                const value = e.target.value;
+                if (value && !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                  const mmddyyyyMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                  if (mmddyyyyMatch) {
+                    const [, month, day, year] = mmddyyyyMatch;
+                    const converted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    setDate(converted);
                   }
-                }}
-              />
-            </div>
-            <div className="flex-[2]">
-              <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
-                Context (where / who / mission)
-              </label>
-              <input
-                className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
-                placeholder="ex: AFRL / Joint Cloud / MAJCOM commanders"
-                value={context}
-                onChange={e => setContext(e.target.value)}
-              />
-            </div>
+                }
+              }}
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
