@@ -12,12 +12,22 @@ interface ImpactWorkspaceChatComposerProps {
   selectedImpacts: ImpactEntry[];
   bulletMode: BulletMode;
   bulletText: string;
+  ragFileIds?: string[];
+  onRagFileIdsChange?: (ragFileIds: string[]) => void;
+  onMessageSent?: (message: any) => void;
+  onToggleRagTray?: () => void;
+  isRagTrayOpen?: boolean;
 }
 
 export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerProps> = ({
   selectedImpacts,
   bulletMode,
   bulletText,
+  ragFileIds: propRagFileIds,
+  onRagFileIdsChange,
+  onMessageSent,
+  onToggleRagTray,
+  isRagTrayOpen: propIsRagTrayOpen,
 }) => {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -29,10 +39,23 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     setStreaming,
     updateStreamingContent,
     clearStreaming,
-    isRagTrayOpen,
+    isRagTrayOpen: storeIsRagTrayOpen,
     setRagTrayOpen,
-    ragFileIds,
+    ragFileIds: storeRagFileIds,
   } = useChatStore();
+  
+  // Use prop ragFileIds if provided, otherwise fall back to store
+  const ragFileIds = propRagFileIds ?? storeRagFileIds;
+  // Use prop isRagTrayOpen if provided, otherwise fall back to store
+  const isRagTrayOpen = propIsRagTrayOpen ?? storeIsRagTrayOpen;
+  
+  const handleToggleRagTray = () => {
+    if (onToggleRagTray) {
+      onToggleRagTray();
+    } else {
+      setRagTrayOpen(!isRagTrayOpen);
+    }
+  };
 
   // Auto-resize textarea - fixed to 2 rows
   const adjustTextareaHeight = () => {
@@ -126,11 +149,20 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       ? `${contextMessage}\n\n=== USER REQUEST ===\n${userMessage}`
       : userMessage;
 
-    // Add user message to chat
-    addMessage({
-      role: 'user',
+    // Create user message object
+    const userMessageObj = {
+      id: `msg-${Date.now()}-${Math.random()}`,
+      role: 'user' as const,
       content: userMessage,
-    });
+      timestamp: new Date(),
+    };
+
+    // Add user message - use onMessageSent if provided (impact-scoped), otherwise use store
+    if (onMessageSent) {
+      onMessageSent(userMessageObj);
+    } else {
+      addMessage(userMessageObj);
+    }
 
     // Clear input
     setInput('');
@@ -168,19 +200,39 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
           
           if (data.type === 'chunk') {
             streamedContent += data.content;
-            updateStreamingContent(streamedContent);
+            if (onMessageSent) {
+              // For impact-scoped, we'll update the last message when done
+              // For now, just update streaming content
+              updateStreamingContent(streamedContent);
+            } else {
+              updateStreamingContent(streamedContent);
+            }
           } else if (data.type === 'done') {
-            addMessage({
-              role: 'assistant',
+            const assistantMessageObj = {
+              id: `msg-${Date.now()}-${Math.random()}`,
+              role: 'assistant' as const,
               content: streamedContent,
-            });
+              timestamp: new Date(),
+            };
+            if (onMessageSent) {
+              onMessageSent(assistantMessageObj);
+            } else {
+              addMessage(assistantMessageObj);
+            }
             clearStreaming();
             ws.close();
           } else if (data.type === 'error') {
-            addMessage({
-              role: 'assistant',
+            const errorMessageObj = {
+              id: `msg-${Date.now()}-${Math.random()}`,
+              role: 'assistant' as const,
               content: `Error: ${data.content}`,
-            });
+              timestamp: new Date(),
+            };
+            if (onMessageSent) {
+              onMessageSent(errorMessageObj);
+            } else {
+              addMessage(errorMessageObj);
+            }
             clearStreaming();
             ws.close();
           }
@@ -234,7 +286,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
           <div className="absolute right-2 bottom-2 flex items-center gap-1">
             {/* RAG Tray Toggle Button (Lightbulb) */}
             <button
-              onClick={() => setRagTrayOpen(!isRagTrayOpen)}
+              onClick={handleToggleRagTray}
               className={`p-2 rounded transition-colors ${
                 isRagTrayOpen
                   ? 'text-[#19c37d] bg-[#19c37d]/20'

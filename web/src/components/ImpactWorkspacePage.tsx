@@ -10,17 +10,181 @@
  * - Character limits: 230, 350, 450 chars based on mode
  * - RAG context tray: Lightbulb button opens right-side tray for uploading reference files
  * - Context-aware chat: Includes selected impacts, current bullet draft, and RAG files
+ * - Per-impact scoping: Active Bullet, Chat messages, and RAG files are scoped to each impact
  */
-import React, { useEffect, useState } from "react";
-import { useChatStore } from "../store/chat";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useChatStore, type Message } from "../store/chat";
 import { fetchImpacts, updateImpact, deleteImpact } from "../utils/api";
 import type { ImpactEntry } from "../types/impact";
+import type { RagFile } from "../types/rag";
 import ChatMessages from "./ChatMessages";
 import { ImpactWorkspaceChatComposer } from "./ImpactWorkspaceChatComposer";
 import { ImpactCaptureModal } from "./ImpactCaptureModal";
 import { ActiveBulletEditor, type BulletMode, BULLET_MODES } from "./ActiveBulletEditor";
 
 const IMPACT_PROJECT_NAME = "Impact Workspace";
+
+// Per-impact scoped state
+type ImpactScopedState = {
+  activeBulletText: string;
+  chatMessages: Message[];
+  ragFileIds: string[];
+};
+
+// localStorage key prefix for impact-scoped data
+const IMPACT_STATE_PREFIX = 'chatdo:impact_state:';
+
+// Helper functions for localStorage persistence
+const loadImpactState = (impactId: string): ImpactScopedState => {
+  try {
+    const stored = localStorage.getItem(`${IMPACT_STATE_PREFIX}${impactId}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Convert timestamp strings back to Date objects for messages
+      if (parsed.chatMessages) {
+        parsed.chatMessages = parsed.chatMessages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+      }
+      return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load impact state:', e);
+  }
+  return {
+    activeBulletText: '',
+    chatMessages: [],
+    ragFileIds: [],
+  };
+};
+
+const saveImpactState = (impactId: string, state: ImpactScopedState): void => {
+  try {
+    localStorage.setItem(`${IMPACT_STATE_PREFIX}${impactId}`, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save impact state:', e);
+  }
+};
+
+const deleteImpactState = (impactId: string): void => {
+  try {
+    localStorage.removeItem(`${IMPACT_STATE_PREFIX}${impactId}`);
+  } catch (e) {
+    console.error('Failed to delete impact state:', e);
+  }
+};
+
+// Simple impact-scoped RAG tray component
+interface ImpactScopedRagTrayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  ragFileIds: string[];
+  onRagFileIdsChange: (ragFileIds: string[]) => void;
+  selectedImpactId: string;
+}
+
+const ImpactScopedRagTray: React.FC<ImpactScopedRagTrayProps> = ({
+  isOpen,
+  onClose,
+  ragFileIds,
+  onRagFileIdsChange,
+  selectedImpactId,
+}) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    // For now, we'll use a placeholder conversation ID
+    // TODO: Create a proper impact-scoped RAG endpoint
+    formData.append('chat_id', `impact_${selectedImpactId}`);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/rag/files', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      
+      // Add the new file ID to the impact's RAG file IDs
+      if (data.id) {
+        onRagFileIdsChange([...ragFileIds, data.id]);
+      }
+    } catch (error) {
+      console.error('Failed to upload RAG file:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveFile = (fileId: string) => {
+    onRagFileIdsChange(ragFileIds.filter(id => id !== fileId));
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed right-0 top-0 h-full w-80 bg-[#343541] border-l border-slate-700 z-50 flex flex-col shadow-2xl">
+      <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-slate-100">Context Files</h3>
+        <button
+          onClick={onClose}
+          className="text-slate-400 hover:text-white"
+          aria-label="Close tray"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4">
+        <div
+          className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-slate-500 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) {
+                Array.from(e.target.files).forEach(handleFileUpload);
+              }
+            }}
+          />
+          <p className="text-sm text-slate-300">
+            {isUploading ? 'Uploading...' : 'Drop files here or click to upload'}
+          </p>
+        </div>
+        
+        {ragFileIds.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {ragFileIds.map((fileId) => (
+              <div key={fileId} className="flex items-center justify-between p-2 bg-slate-800 rounded">
+                <span className="text-xs text-slate-300 truncate">{fileId}</span>
+                <button
+                  onClick={() => handleRemoveFile(fileId)}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const ImpactWorkspacePage: React.FC = () => {
   // Impact list state
@@ -30,69 +194,132 @@ export const ImpactWorkspacePage: React.FC = () => {
   const [impactModalOpen, setImpactModalOpen] = useState(false);
   const [editingImpact, setEditingImpact] = useState<ImpactEntry | null>(null);
   
+  // Per-impact scoped state
+  const [impactState, setImpactState] = useState<Record<string, ImpactScopedState>>({});
+  
   // Get RAG tray state for layout adjustment
-  const isRagTrayOpen = useChatStore((state) => state.isRagTrayOpen);
+  const [isRagTrayOpen, setIsRagTrayOpen] = useState(false);
   
   // Bullet editor state
   const [bulletMode, setBulletMode] = useState<BulletMode>('1206_2LINE');
-  const [bulletText, setBulletText] = useState('');
   
   // Get the selected impact (first selected, or null)
-  const selectedImpact = impacts.find(i => selectedImpactIds.has(i.id)) || null;
+  const selectedImpactId = selectedImpactIds.size > 0 ? Array.from(selectedImpactIds)[0] : null;
+  const selectedImpact = selectedImpactId ? impacts.find(i => i.id === selectedImpactId) || null : null;
+  const selectedState = selectedImpactId ? impactState[selectedImpactId] : null;
   
-  // Sync bulletText with selectedImpact.activeBullet
+  // Initialize impact state when an impact is selected for the first time
   useEffect(() => {
-    if (selectedImpact) {
-      setBulletText(selectedImpact.activeBullet ?? '');
-    } else {
-      setBulletText('');
+    if (selectedImpactId && !impactState[selectedImpactId]) {
+      // Load from localStorage or initialize empty
+      const loadedState = loadImpactState(selectedImpactId);
+      // Also load activeBullet from the impact's backend data
+      if (selectedImpact?.activeBullet) {
+        loadedState.activeBulletText = selectedImpact.activeBullet;
+      }
+      setImpactState(prev => ({
+        ...prev,
+        [selectedImpactId]: loadedState,
+      }));
     }
-  }, [selectedImpact?.id, selectedImpact?.activeBullet]);
+  }, [selectedImpactId, selectedImpact?.activeBullet]);
+  
+  // Sync impact state with backend activeBullet when impact changes
+  useEffect(() => {
+    if (selectedImpactId && selectedImpact && impactState[selectedImpactId]) {
+      const currentState = impactState[selectedImpactId];
+      // If backend has activeBullet but state doesn't, sync it
+      if (selectedImpact.activeBullet && currentState.activeBulletText !== selectedImpact.activeBullet) {
+        setImpactState(prev => ({
+          ...prev,
+          [selectedImpactId]: {
+            ...prev[selectedImpactId],
+            activeBulletText: selectedImpact.activeBullet!,
+          },
+        }));
+        // Also save to localStorage
+        const updatedState = {
+          ...currentState,
+          activeBulletText: selectedImpact.activeBullet!,
+        };
+        saveImpactState(selectedImpactId, updatedState);
+      }
+    }
+  }, [selectedImpactId, selectedImpact?.activeBullet, impactState]);
   
   // Handle active bullet text changes - update the impact
   const handleActiveBulletChange = async (newText: string) => {
-    setBulletText(newText);
-    if (selectedImpact) {
-      const impactId = selectedImpact.id;
-      const previousValue = selectedImpact.activeBullet;
-      // Use empty string if newText is empty, null only if explicitly cleared
-      const valueToSave = newText.trim() === '' ? null : newText;
+    if (!selectedImpactId) return;
+    
+    const valueToSave = newText.trim() === '' ? null : newText;
+    const previousState = impactState[selectedImpactId];
+    
+    try {
+      // Update impact-scoped state immediately
+      const newState: ImpactScopedState = {
+        ...(previousState || { activeBulletText: '', chatMessages: [], ragFileIds: [] }),
+        activeBulletText: newText,
+      };
+      setImpactState(prev => ({
+        ...prev,
+        [selectedImpactId]: newState,
+      }));
+      saveImpactState(selectedImpactId, newState);
       
-      try {
-        // Update local state immediately for responsive UI
+      // Also persist to backend (for activeBullet field)
+      const updated = await updateImpact(selectedImpactId, { activeBullet: valueToSave });
+      
+      // Update impacts list with backend response
+      if (updated) {
         setImpacts(prev => prev.map(impact => 
-          impact.id === impactId 
-            ? { ...impact, activeBullet: valueToSave }
+          impact.id === selectedImpactId 
+            ? { ...impact, activeBullet: updated.activeBullet ?? null }
             : impact
         ));
-        
-        // Persist to backend - explicitly send the value (even if null)
-        const updated = await updateImpact(impactId, { activeBullet: valueToSave });
-        
-        // Update local state with the response from backend to ensure consistency
-        if (updated) {
-          setImpacts(prev => prev.map(impact => 
-            impact.id === impactId 
-              ? { ...impact, activeBullet: updated.activeBullet ?? null }
-              : impact
-          ));
-          // Also update bulletText in case the backend normalized the value
-          if (updated.activeBullet) {
-            setBulletText(updated.activeBullet);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to update activeBullet:', error);
-        // Revert local state on error
-        setImpacts(prev => prev.map(impact => 
-          impact.id === impactId 
-            ? { ...impact, activeBullet: previousValue ?? null }
-            : impact
-        ));
-        setBulletText(previousValue ?? '');
+      }
+    } catch (error) {
+      console.error('Failed to update activeBullet:', error);
+      // Revert state on error
+      if (previousState) {
+        setImpactState(prev => ({
+          ...prev,
+          [selectedImpactId]: previousState,
+        }));
       }
     }
   };
+  
+  // Handle chat messages change
+  const handleMessagesChange = useCallback((newMessages: Message[]) => {
+    if (!selectedImpactId) return;
+    
+    const currentState = impactState[selectedImpactId] || { activeBulletText: '', chatMessages: [], ragFileIds: [] };
+    const newState: ImpactScopedState = {
+      ...currentState,
+      chatMessages: newMessages,
+    };
+    setImpactState(prev => ({
+      ...prev,
+      [selectedImpactId]: newState,
+    }));
+    saveImpactState(selectedImpactId, newState);
+  }, [selectedImpactId, impactState]);
+  
+  // Handle RAG file IDs change
+  const handleRagFileIdsChange = useCallback((newRagFileIds: string[]) => {
+    if (!selectedImpactId) return;
+    
+    const currentState = impactState[selectedImpactId] || { activeBulletText: '', chatMessages: [], ragFileIds: [] };
+    const newState: ImpactScopedState = {
+      ...currentState,
+      ragFileIds: newRagFileIds,
+    };
+    setImpactState(prev => ({
+      ...prev,
+      [selectedImpactId]: newState,
+    }));
+    saveImpactState(selectedImpactId, newState);
+  }, [selectedImpactId, impactState]);
   
   // Chat state
   const {
@@ -209,15 +436,15 @@ export const ImpactWorkspacePage: React.FC = () => {
     };
   }, []);
 
-  // Handle impact selection
+  // Handle impact selection - only allow one impact selected at a time
   const toggleImpactSelection = (impactId: string) => {
     setSelectedImpactIds(prev => {
-      const next = new Set(prev);
-      if (next.has(impactId)) {
-        next.delete(impactId);
-      } else {
+      const next = new Set<string>();
+      if (!prev.has(impactId)) {
+        // Selecting this impact (deselect others)
         next.add(impactId);
       }
+      // If already selected, deselect it (empty set)
       return next;
     });
   };
@@ -239,8 +466,20 @@ export const ImpactWorkspacePage: React.FC = () => {
     if (!confirm(`Delete ${selectedImpactIds.size} impact${selectedImpactIds.size > 1 ? 's' : ''}?`)) return;
     
     try {
-      const deletePromises = Array.from(selectedImpactIds).map(id => deleteImpact(id));
+      const idsToDelete = Array.from(selectedImpactIds);
+      const deletePromises = idsToDelete.map(id => deleteImpact(id));
       await Promise.all(deletePromises);
+      
+      // Clean up impact-scoped state for deleted impacts
+      idsToDelete.forEach(id => {
+        deleteImpactState(id);
+        setImpactState(prev => {
+          const copy = { ...prev };
+          delete copy[id];
+          return copy;
+        });
+      });
+      
       setSelectedImpactIds(new Set());
       loadImpacts();
       // Dispatch event so other components know impacts were deleted
@@ -381,27 +620,72 @@ export const ImpactWorkspacePage: React.FC = () => {
         {/* Right column: Bullet editor + Chat */}
         <div className={`flex-1 flex flex-col overflow-hidden min-h-0 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
           {/* Top: Active bullet editor */}
-          <ActiveBulletEditor
-            selectedImpact={selectedImpact}
-            bulletMode={bulletMode}
-            bulletText={bulletText}
-            onChangeText={handleActiveBulletChange}
-          />
+          {selectedImpactId && selectedState ? (
+            <ActiveBulletEditor
+              selectedImpact={selectedImpact}
+              bulletMode={bulletMode}
+              bulletText={selectedState.activeBulletText}
+              onChangeText={handleActiveBulletChange}
+            />
+          ) : (
+            <div className="px-6 py-8 border-b border-slate-700 bg-[#343541]">
+              <div className="text-sm text-white/70">
+                No impact selected — select one on the left to ground the bullet.
+              </div>
+            </div>
+          )}
 
           {/* Middle: chat messages list */}
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-            <ChatMessages />
+            {selectedImpactId && selectedState ? (
+              <ChatMessages
+                impactScopedMessages={selectedState.chatMessages}
+                onMessagesChange={handleMessagesChange}
+                selectedImpactId={selectedImpactId}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-sm text-white/60">
+                  Select an impact to start drafting bullets.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom: composer */}
           <div className="flex-shrink-0 border-t border-slate-700">
-            <ImpactWorkspaceChatComposer
-              selectedImpacts={impacts.filter(i => selectedImpactIds.has(i.id))}
-              bulletMode={bulletMode}
-              bulletText={bulletText}
-            />
+            {selectedImpactId && selectedState ? (
+              <ImpactWorkspaceChatComposer
+                selectedImpacts={selectedImpact ? [selectedImpact] : []}
+                bulletMode={bulletMode}
+                bulletText={selectedState.activeBulletText}
+                ragFileIds={selectedState.ragFileIds}
+                onRagFileIdsChange={handleRagFileIdsChange}
+                onMessageSent={(message) => {
+                  // Add new message to impact-scoped messages
+                  handleMessagesChange([...selectedState.chatMessages, message]);
+                }}
+                onToggleRagTray={() => setIsRagTrayOpen(!isRagTrayOpen)}
+                isRagTrayOpen={isRagTrayOpen}
+              />
+            ) : (
+              <div className="px-6 py-4 text-sm text-white/50">
+                Select an impact to start chatting.
+              </div>
+            )}
           </div>
         </div>
+        
+        {/* RAG Context Tray - Impact-scoped */}
+        {selectedImpactId && selectedState && (
+          <ImpactScopedRagTray
+            isOpen={isRagTrayOpen}
+            onClose={() => setIsRagTrayOpen(false)}
+            ragFileIds={selectedState.ragFileIds}
+            onRagFileIdsChange={handleRagFileIdsChange}
+            selectedImpactId={selectedImpactId}
+          />
+        )}
       </div>
 
       {/* Impact Capture Modal */}

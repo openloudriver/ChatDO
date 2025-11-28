@@ -235,9 +235,22 @@ const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
   );
 };
 
-const ChatMessages: React.FC = () => {
+interface ChatMessagesProps {
+  impactScopedMessages?: Message[];
+  onMessagesChange?: (messages: Message[]) => void;
+  selectedImpactId?: string | null;
+}
+
+const ChatMessages: React.FC<ChatMessagesProps> = ({ 
+  impactScopedMessages,
+  // onMessagesChange and selectedImpactId are reserved for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onMessagesChange: _onMessagesChange,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  selectedImpactId: _selectedImpactId,
+}) => {
   const { 
-    messages, 
+    messages: storeMessages, 
     isStreaming, 
     streamingContent, 
     currentConversation, 
@@ -251,6 +264,9 @@ const ChatMessages: React.FC = () => {
     ragFileIds, // Get ragFileIds to match backend order
     getRagFilesForConversation, // Get conversation-scoped RAG files
   } = useChatStore();
+  
+  // Use impact-scoped messages if provided, otherwise use store messages
+  const messages = impactScopedMessages ?? storeMessages;
   
   // Track which articles are being summarized or have been summarized
   const [articleStates, setArticleStates] = useState<Record<string, 'idle' | 'summarizing' | 'summarized'>>({});
