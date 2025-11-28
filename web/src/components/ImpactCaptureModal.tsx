@@ -24,7 +24,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
   const [actions, setActions] = useState("");
   const [impact, setImpact] = useState("");
   const [metrics, setMetrics] = useState("");
-  const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +37,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
       setActions(initialImpact.actions || "");
       setImpact(initialImpact.impact || "");
       setMetrics(initialImpact.metrics || "");
-      setTags(initialImpact.tags?.join(", ") || "");
       setNotes(initialImpact.notes || "");
     } else if (open && !initialImpact) {
       // Reset for new impact
@@ -58,7 +56,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
     setActions("");
     setImpact("");
     setMetrics("");
-    setTags("");
     setNotes("");
     setError(null);
   };
@@ -109,10 +106,7 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
         actions: actions.trim() || "(no explicit actions provided)",
         impact: impact.trim() || null,
         metrics: metrics.trim() || null,
-        tags: tags
-          .split(",")
-          .map(t => t.trim())
-          .filter(Boolean),
+        tags: [],
         notes: notes.trim() || null,
       };
 
@@ -225,17 +219,6 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
               placeholder="ex: 8 MAJCOMs / $27M portfolio / 1200 Airmen / 3 yr roadmap"
               value={metrics}
               onChange={e => setMetrics(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
-              Tags (optional, comma-separated)
-            </label>
-            <input
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
-              placeholder="ex: AF, Northstead, PrivacyPay"
-              value={tags}
-              onChange={e => setTags(e.target.value)}
             />
           </div>
           <div>
