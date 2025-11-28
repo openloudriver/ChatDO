@@ -665,6 +665,7 @@ export const ImpactWorkspacePage: React.FC = () => {
                 impactScopedMessages={selectedState.chatMessages}
                 onMessagesChange={handleMessagesChange}
                 selectedImpactId={selectedImpactId}
+                bulletMode={bulletMode}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center">

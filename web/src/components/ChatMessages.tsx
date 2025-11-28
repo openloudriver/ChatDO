@@ -128,7 +128,7 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 };
 
 // Component to render bullet options with cards
-const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
+const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE' }> = ({ content, bulletMode }) => {
   const [bulletOptions, setBulletOptions] = useState<string[]>([]);
   const [hasOptions, setHasOptions] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -143,7 +143,20 @@ const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
       content.match(/ops—?0\s+outages?|0\s+cuts/i);
 
     if (hasBulletPattern) {
-      const extracted = extractBulletOptionsFromMessage(content);
+      let extracted = extractBulletOptionsFromMessage(content);
+      
+      // For Award (230) bullets, ensure each option starts with "- "
+      if (bulletMode === '1206_2LINE') {
+        extracted = extracted.map(bullet => {
+          const trimmed = bullet.trim();
+          // If it doesn't start with "- ", add it
+          if (!trimmed.startsWith('- ')) {
+            return `- ${trimmed}`;
+          }
+          return trimmed;
+        });
+      }
+      
       if (extracted.length > 0) {
         setBulletOptions(extracted.slice(0, 3)); // Only first 3 options
         setHasOptions(true);
@@ -153,7 +166,7 @@ const OptionsRenderer: React.FC<{ content: string }> = ({ content }) => {
 
     setBulletOptions([]);
     setHasOptions(false);
-  }, [content]);
+  }, [content, bulletMode]);
 
   const labels = ['A', 'B', 'C'];
 
@@ -239,6 +252,7 @@ interface ChatMessagesProps {
   impactScopedMessages?: Message[];
   onMessagesChange?: (messages: Message[]) => void;
   selectedImpactId?: string | null;
+  bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE';
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ 
@@ -248,6 +262,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   onMessagesChange: _onMessagesChange,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   selectedImpactId: _selectedImpactId,
+  bulletMode,
 }) => {
   const { 
     messages: storeMessages, 
@@ -1184,7 +1199,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
-                          <OptionsRenderer content={content} />
+                          <OptionsRenderer content={content} bulletMode={bulletMode} />
                         ) : (
                           <p className="whitespace-pre-wrap">{content}</p>
                         )
@@ -1296,7 +1311,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="flex-1 rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
-            <OptionsRenderer content={streamingContent} />
+            <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
             <span className="animate-pulse">▊</span>
           </div>
         </div>

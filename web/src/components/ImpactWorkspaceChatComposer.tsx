@@ -111,6 +111,12 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
     parts.push(`\nBullet mode: "${modeMeta?.label || 'Freeform'}"${maxCharsInfo}.`);
     parts.push("Always keep suggestions within the character limit for the selected mode.");
     
+    // For Award (230) bullets, ensure they start with "- " prefix
+    if (bulletMode === '1206_2LINE') {
+      parts.push(`\nIMPORTANT: Each bullet option MUST start with "- " (dash followed by space). For example: "- Led DAF CLOUDworks..."`);
+      parts.push(`The "- " prefix is part of the bullet format and should be included in the character count.`);
+    }
+    
     // Add additional selected impacts if there are multiple
     if (selectedImpacts.length > 1) {
       parts.push("\n=== ADDITIONAL SELECTED IMPACTS ===");
