@@ -6,6 +6,7 @@ import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
+import { AssistantCard } from './shared/AssistantCard';
 import type { RagFile } from '../types/rag';
 
 // Extract bullet options from message content
@@ -131,7 +132,7 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 // Component to render GPT messages with proper markdown formatting
 const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
   return (
-    <div className="bg-[#2B2D31] rounded-2xl border border-white/5 shadow-md px-5 py-4">
+    <AssistantCard>
       <div className="prose prose-invert max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -193,7 +194,7 @@ const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
           {content}
         </ReactMarkdown>
       </div>
-    </div>
+    </AssistantCard>
   );
 };
 
@@ -1067,7 +1068,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       
                       {/* Display web_search_results if message type is web_search_results */}
                       {message.type === 'web_search_results' && message.data && (
-                        <div className="space-y-4">
+                        <AssistantCard footer="Model: Brave Search">
                           <div className="font-semibold text-lg mb-3 text-center">
                             Top Results
                           </div>
@@ -1208,13 +1209,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             })}
                           </div>
                           
-                          {/* Footer */}
-                          <div className="border-t border-[#565869] pt-3 mt-4">
-                            <div className="text-xs text-[#8e8ea0] text-right">
-                              Model: Brave Search
-                            </div>
-                          </div>
-                          
                           {message.data.summary && (
                             <div className="mt-6 pt-6 border-t border-[#565869]">
                               <div className="font-semibold text-lg mb-4 text-center">Summary</div>
@@ -1235,7 +1229,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               </div>
                             </div>
                           )}
-                        </div>
+                        </AssistantCard>
                       )}
                       
                       {/* Display document_card if message type is document_card */}

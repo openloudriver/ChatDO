@@ -1,5 +1,6 @@
 import React from "react";
 import SectionHeading from "./shared/SectionHeading";
+import { AssistantCard } from "./shared/AssistantCard";
 import { formatPublishedDate } from "../utils/formatDate";
 
 interface ArticleCardProps {
@@ -66,7 +67,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const formattedDate = formatPublishedDate(published);
 
   return (
-    <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
+    <AssistantCard
+      footer={model ? `Model: ${model}` : undefined}
+    >
       {/* Header Row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -152,16 +155,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           </div>
         )}
       </div>
-
-      {/* Model attribution footer */}
-      {model && (
-        <div className="border-t border-[#565869] pt-4">
-          <div className="text-xs text-[#8e8ea0] text-right">
-            Model: {model}
-          </div>
-        </div>
-      )}
-    </div>
+    </AssistantCard>
   );
 };
 

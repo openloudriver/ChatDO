@@ -1,4 +1,5 @@
 import React from "react";
+import { AssistantCard } from "./shared/AssistantCard";
 
 interface DocumentCardProps {
   fileName: string;
@@ -74,7 +75,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   const readTime = estimatedReadTimeMinutes || estimateReadTime(summary, keyPoints, whyMatters, wordCount);
 
   return (
-    <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
+    <AssistantCard>
       {/* Header Row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -150,8 +151,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </div>
         )}
       </div>
-
-    </div>
+    </AssistantCard>
   );
 };
 

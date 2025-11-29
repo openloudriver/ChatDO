@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import SectionHeading from "./shared/SectionHeading";
+import { AssistantCard } from "./shared/AssistantCard";
 import type { RagFile } from "../types/rag";
 
 export interface RagResponseCardProps {
@@ -252,7 +253,9 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   }, [content]);
 
   return (
-    <div className="rounded-xl bg-[#1a1a1a] border border-[#565869] p-6 space-y-4">
+    <AssistantCard
+      footer={model ? `Model: ${model}` : undefined}
+    >
       {/* Header */}
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded bg-[#19c37d] flex items-center justify-center">
@@ -396,17 +399,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
           </ReactMarkdown>
         </div>
       </div>
-
-
-      {/* Model attribution footer */}
-      {model && (
-        <div className="border-t border-[#565869] pt-4">
-          <div className="text-xs text-[#8e8ea0] text-right">
-            Model: {model}
-          </div>
-        </div>
-      )}
-    </div>
+    </AssistantCard>
   );
 };
 
