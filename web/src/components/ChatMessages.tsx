@@ -649,19 +649,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         return (
           <div
             key={message.id}
-            className={`group flex items-start ${
-              message.role === 'user' ? 'justify-end gap-2' : 'gap-2'
-            } mb-4`}
+            className="group relative mb-3"
           >
-            {/* Assistant: Avatar on left */}
+            {/* Assistant: Avatar floats outside left edge */}
             {message.role === 'assistant' && (
-              <div className="shrink-0 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center">
+              <div className="absolute -left-10 top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center">
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
             
+            {/* User: Avatar floats outside right edge */}
+            {message.role === 'user' && (
+              <div className="absolute -right-10 top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
+                <span className="text-white text-sm font-bold">U</span>
+              </div>
+            )}
+            
             {/* Bubble content container */}
-            <div className={`flex flex-col ${message.role === 'assistant' ? 'max-w-[640px]' : 'max-w-[640px]'}`}>
+            <div className={`flex flex-col ${message.role === 'assistant' ? 'w-full' : 'max-w-[70%] ml-auto'}`}>
               <>
                 {/* Display images outside the message bubble for user messages */}
                 {message.role === 'user' && (() => {
@@ -1295,13 +1300,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 </div>
               </>
             </div>
-            
-            {/* User: Avatar on right */}
-            {message.role === 'user' && (
-              <div className="shrink-0 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
-                <span className="text-white text-sm font-bold">U</span>
-              </div>
-            )}
           </div>
         );
       })}
