@@ -590,6 +590,645 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
 
+  // Helper function to render the message body content (inside the bubble)
+  // This function can access all component state via closure
+  const renderMessageBody = (message: Message, isCopied: boolean) => {
+    return (
+      <>
+        {/* Display images outside the message bubble for user messages */}
+        {message.role === 'user' && (() => {
+          const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
+          const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
+          const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
+          const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
+          
+          if (imageMatchesOld.length > 0 || imageMatchesNew.length > 0) {
+            return (
+              <div className="mb-2 space-y-2 flex flex-col items-end">
+                {imageMatchesOld.map((match, idx) => {
+                  const cleanPath = match[3].startsWith('uploads/') ? match[3].substring(8) : match[3];
+                  const imageSrc = match[2] || `http://localhost:8000/uploads/${cleanPath}`;
+                  return (
+                    <div 
+                      key={idx} 
+                      className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
+                      onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
+                      title="Click to view full size"
+                    >
+                      <img 
+                        src={imageSrc}
+                        alt={match[1]}
+                        className="w-full h-auto object-contain"
+                        loading="lazy"
+                      />
+                      <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
+                        {match[1]}
+                      </div>
+                    </div>
+                  );
+                })}
+                {imageMatchesNew.map((match, idx) => {
+                  const cleanPath = match[2].startsWith('uploads/') ? match[2].substring(8) : match[2];
+                  const imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
+                  return (
+                    <div 
+                      key={`new-${idx}`} 
+                      className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
+                      onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
+                      title="Click to view full size"
+                    >
+                      <img 
+                        src={imageSrc}
+                        alt={match[1]}
+                        className="w-full h-auto object-contain"
+                        loading="lazy"
+                      />
+                      <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
+                        {match[1]}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+          return null;
+        })()}
+        {(() => {
+          // Parse content first to determine if we should show the bubble
+          const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
+          const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
+          const docPatternOld = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\]/g;
+          const docPatternNew = /\[File: ([^\]]+)\]\n\n([\s\S]*?)(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
+          
+          let content = message.content;
+          const files: Array<{name: string, type: 'image' | 'doc', data?: string, path: string, mimeType?: string}> = [];
+          
+          // Extract images
+          const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
+          imageMatchesOld.forEach(match => {
+            if (!files.some(f => f.name === match[1] && f.type === 'image')) {
+              files.push({
+                name: match[1],
+                type: 'image',
+                data: match[2],
+                path: match[3]
+              });
+              content = content.replace(match[0], '');
+            }
+          });
+          
+          const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
+          imageMatchesNew.forEach(match => {
+            if (!files.some(f => f.name === match[1] && f.type === 'image')) {
+              files.push({
+                name: match[1],
+                type: 'image',
+                data: undefined,
+                path: match[2]
+              });
+              content = content.replace(match[0], '');
+            }
+          });
+          
+          // Extract documents
+          const docPatternNewWithPath = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\](?:\n\n([\s\S]*?))?(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
+          const docMatchesNewWithPath = [...message.content.matchAll(docPatternNewWithPath)];
+          docMatchesNewWithPath.forEach(match => {
+            files.push({
+              name: match[1],
+              type: 'doc',
+              path: match[2],
+              mimeType: match[3]
+            });
+            const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const fileSectionPattern = new RegExp(
+              `\\[File: ${escapedName}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](?:\\n\\n[\\s\\S]*?)?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
+              'g'
+            );
+            content = content.replace(fileSectionPattern, '');
+          });
+          
+          const docMatchesNew = [...message.content.matchAll(docPatternNew)];
+          docMatchesNew.forEach(match => {
+            if (!files.some(f => f.name === match[1])) {
+              const fileName = match[1];
+              let mimeType = '';
+              if (fileName.toLowerCase().endsWith('.pdf')) {
+                mimeType = 'application/pdf';
+              } else if (fileName.toLowerCase().endsWith('.pptx') || fileName.toLowerCase().endsWith('.ppt')) {
+                mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+              } else if (fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc')) {
+                mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+              }
+              
+              files.push({
+                name: match[1],
+                type: 'doc',
+                path: '',
+                mimeType: mimeType
+              });
+              const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const fileSectionPattern = new RegExp(
+                `\\[File: ${escapedName}\\]\\n\\n[\\s\\S]*?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
+                'g'
+              );
+              content = content.replace(fileSectionPattern, '');
+            }
+          });
+          
+          const docMatchesOld = [...message.content.matchAll(docPatternOld)];
+          docMatchesOld.forEach(match => {
+            if (!files.some(f => f.name === match[1])) {
+              files.push({
+                name: match[1],
+                type: 'doc',
+                path: match[2],
+                mimeType: match[3]
+              });
+              const fileSectionPattern = new RegExp(
+                `\\[File: ${match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](\\n\\n--- File Content ---[\\s\\S]*?--- End File Content ---)?`,
+                'g'
+              );
+              content = content.replace(fileSectionPattern, '');
+            }
+          });
+          
+          content = content.replace(/\[File uploaded: [^\]]+\]/g, '');
+          content = content.replace(/\[File path: [^\]]+\]/g, '');
+          content = content.trim();
+          
+          const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
+          // For web_search_results, always show (has structured data)
+          const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'document_card' || message.type === 'rag_response';
+          
+          if (!hasContent) {
+            return null;
+          }
+          
+          return (
+            <div
+              className={`rounded-lg px-4 py-3 ${
+                message.role === 'user'
+                  ? 'bg-[#19c37d] text-white inline-flex max-w-[70%] w-auto'
+                  : 'bg-[#444654] text-[#ececf1] w-full'
+              }`}
+            >
+              {/* Display files (documents, or all files for assistant) inside the message bubble */}
+              {filesToShow.length > 0 && (
+                <div className={`mb-3 space-y-2 ${message.role === 'user' ? '' : ''}`}>
+                  {filesToShow.map((file, idx) => (
+                    file.type === 'image' ? (
+                      <div 
+                        key={idx} 
+                        className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[25%] bg-transparent"
+                        onClick={() => {
+                          // Use file path to load image if base64 not available
+                          let imageSrc = file.data;
+                          if (!imageSrc && file.path) {
+                            const cleanPath = file.path.startsWith('uploads/') ? file.path.substring(8) : file.path;
+                            imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
+                          }
+                          if (imageSrc) {
+                            setPreviewFile({name: file.name, data: imageSrc, type: 'image', mimeType: file.mimeType || ''});
+                          }
+                        }}
+                        title="Click to view full size"
+                      >
+                        {file.data ? (
+                          <img 
+                            src={file.data} 
+                            alt={file.name}
+                            className="w-full h-auto object-contain"
+                            loading="lazy"
+                          />
+                        ) : file.path ? (
+                          <img 
+                            src={`http://localhost:8000/uploads/${file.path.startsWith('uploads/') ? file.path.substring(8) : file.path}`}
+                            alt={file.name}
+                            className="w-full h-auto object-contain"
+                            loading="lazy"
+                          />
+                        ) : null}
+                        <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
+                          {file.name}
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        key={idx} 
+                        className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors"
+                        onClick={() => {
+                          // Get path from file object
+                          const filePath = file.path || '';
+                          const fileName = file.name.toLowerCase();
+                          
+                          // The path from server is relative to project root (includes 'uploads/')
+                          // Server returns: uploads/project_id/conversation_id/filename
+                          // Endpoint expects: /uploads/project_id/conversation_id/filename
+                          // But endpoint adds 'uploads/' itself, so we need to strip it
+                          let previewPath = '';
+                          if (filePath) {
+                            // Strip 'uploads/' prefix if present
+                            const cleanPath = filePath.startsWith('uploads/') ? filePath.substring(8) : filePath;
+                            previewPath = `http://localhost:8000/uploads/${cleanPath}`;
+                          }
+                          
+                          if (file.mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
+                            setPreviewFile({name: file.name, data: previewPath, type: 'pdf', mimeType: file.mimeType || 'application/pdf'});
+                          } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
+                            setPreviewFile({name: file.name, data: previewPath, type: 'pptx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+                          } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                            // Convert path for Excel preview API
+                            // previewPath is already http://localhost:8000/uploads/... so strip that prefix
+                            let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                            // If it still has uploads/ prefix, strip it
+                            if (cleanPath.startsWith('uploads/')) {
+                              cleanPath = cleanPath.substring(8);
+                            }
+                            setPreviewFile({name: file.name, data: `http://localhost:8000/api/xlsx-preview/${cleanPath}`, type: 'xlsx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                          } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+                            // Convert path for Word preview API
+                            let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
+                            if (cleanPath.startsWith('uploads/')) {
+                              cleanPath = cleanPath.substring(8);
+                            }
+                            setPreviewFile({name: file.name, data: `http://localhost:8000/api/docx-preview/${cleanPath}`, type: 'docx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+                          } else if (fileName.endsWith('.mp4') || fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.webm') || fileName.endsWith('.mkv') || file.mimeType?.startsWith('video/')) {
+                            // Video files - use HTML5 video player
+                            setPreviewFile({name: file.name, data: previewPath, type: 'video', mimeType: file.mimeType || 'video/mp4'});
+                          } else {
+                            setPreviewFile({name: file.name, data: previewPath, type: 'other', mimeType: file.mimeType || ''});
+                          }
+                        }}
+                      >
+                        <div className="flex-shrink-0">
+                          {file.mimeType === 'application/pdf' ? (
+                            <svg className="w-10 h-10 text-red-300" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-10 h-10 text-white/70" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs opacity-75 mt-1">
+                            {(() => {
+                              // Get file extension from filename
+                              const ext = file.name.split('.').pop()?.toUpperCase() || '';
+                              // Map common extensions to clean names (fallback to extension itself)
+                              const extMap: Record<string, string> = {
+                                'PDF': 'PDF',
+                                'DOC': 'DOC',
+                                'DOCX': 'DOCX',
+                                'PPT': 'PPT',
+                                'PPTX': 'PPTX',
+                                'XLS': 'XLS',
+                                'XLSX': 'XLSX',
+                                'TXT': 'TXT',
+                                'PNG': 'PNG',
+                                'JPG': 'JPG',
+                                'JPEG': 'JPEG',
+                                'GIF': 'GIF',
+                                'SVG': 'SVG',
+                                'WEBP': 'WEBP',
+                                'ZIP': 'ZIP',
+                                'RAR': 'RAR',
+                                '7Z': '7Z',
+                                'CSV': 'CSV',
+                                'JSON': 'JSON',
+                                'XML': 'XML',
+                                'HTML': 'HTML',
+                                'MP4': 'MP4',
+                                'MP3': 'MP3',
+                                'MOV': 'MOV',
+                                'AVI': 'AVI'
+                              };
+                              // If extension is in map, use it; otherwise use the extension itself; fallback to 'FILE'
+                              return extMap[ext] || ext || 'FILE';
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
+              
+              {/* Display web_search_results if message type is web_search_results */}
+              {message.type === 'web_search_results' && message.data && (
+                <div className="space-y-4">
+                  <div className="font-semibold text-lg mb-3 text-center">
+                    Top Results
+                  </div>
+                  <div className="space-y-3">
+                    {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
+                      const articleState = articleStates[result.url] || 'idle';
+                      // Brave Search button only shows spinner for its own article state
+                      const isSummarizing = articleState === 'summarizing';
+                      const isSummarized = articleState === 'summarized';
+                      
+                      // Extract domain from URL
+                      const getDomain = (url: string) => {
+                        try {
+                          const u = new URL(url);
+                          return u.hostname.replace(/^www\./, "");
+                        } catch {
+                          return url;
+                        }
+                      };
+                      
+                      const getFaviconUrl = (url: string) => {
+                        try {
+                          const u = new URL(url);
+                          return `${u.protocol}//${u.hostname}/favicon.ico`;
+                        } catch {
+                          return undefined;
+                        }
+                      };
+                      
+                      const domain = getDomain(result.url);
+                      const faviconUrl = getFaviconUrl(result.url);
+                      
+                      return (
+                        <div key={index} className={index > 0 ? "pt-3 border-t border-[#565869]/30" : ""}>
+                          {/* Domain + Favicon */}
+                          <div className="flex items-center gap-2 mb-1">
+                            {faviconUrl && (
+                              <img
+                                src={faviconUrl}
+                                alt={domain}
+                                className="h-4 w-4 rounded-sm"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <span className="text-xs text-[#8e8ea0]">{domain}</span>
+                          </div>
+                          
+                          {/* Title + Summarize Button */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 font-semibold flex-1"
+                            >
+                              {result.title}
+                            </a>
+                            <button
+                              onClick={async () => {
+                                if (!currentProject || !currentConversation || isSummarizing || isSummarized) return;
+                                setArticleStates(prev => ({ ...prev, [result.url]: 'summarizing' }));
+                                setSummarizingArticle(true);
+                                try {
+                                  const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
+                                  setStoreLoading(true);
+                                  
+                                  // Add user message
+                                  addStoreMessage({
+                                    role: 'user',
+                                    content: `Summarize: ${result.url}`,
+                                  });
+                                  
+                                  const response = await axios.post('http://localhost:8000/api/article/summary', {
+                                    url: result.url,
+                                    conversation_id: currentConversation.id,
+                                    project_id: currentProject.id,
+                                  });
+                                  if (response.data.message_type === 'article_card' && response.data.message_data) {
+                                    addStoreMessage({
+                                      role: 'assistant',
+                                      content: '',
+                                      type: 'article_card',
+                                      data: response.data.message_data,
+                                      model: response.data.model || 'Trafilatura + GPT-5',
+                                      provider: response.data.provider || 'trafilatura-gpt5',
+                                    });
+                                    setArticleStates(prev => ({ ...prev, [result.url]: 'summarized' }));
+                                  }
+                                  setStoreLoading(false);
+                                } catch (error: any) {
+                                  console.error('Error summarizing article:', error);
+                                  const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
+                                  addStoreMessage({
+                                    role: 'assistant',
+                                    content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize URL.'}`,
+                                  });
+                                  setStoreLoading(false);
+                                  setArticleStates(prev => ({ ...prev, [result.url]: 'idle' }));
+                                } finally {
+                                  setSummarizingArticle(false);
+                                }
+                              }}
+                              disabled={isSummarizing || isSummarized}
+                              className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+                                isSummarized 
+                                  ? 'text-green-400 cursor-default' 
+                                  : isSummarizing
+                                  ? 'text-blue-400 cursor-wait'
+                                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                              }`}
+                              title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this URL"}
+                            >
+                              {isSummarizing ? (
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : isSummarized ? (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Snippet */}
+                          <div className="text-sm text-[#8e8ea0] line-clamp-2">
+                            {result.snippet}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="border-t border-[#565869] pt-3 mt-4">
+                    <div className="text-xs text-[#8e8ea0] text-right">
+                      Model: Brave Search
+                    </div>
+                  </div>
+                  
+                  {message.data.summary && (
+                    <div className="mt-6 pt-6 border-t border-[#565869]">
+                      <div className="font-semibold text-lg mb-4 text-center">Summary</div>
+                      <div className="prose prose-invert prose-sm max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ol>,
+                            li: ({ children }) => <li className="ml-4 text-[#ececf1]">{children}</li>,
+                            strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
+                            em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+                          }}
+                        >
+                          {message.data.summary}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Display document_card if message type is document_card */}
+              {message.type === 'document_card' && message.data && (
+                <DocumentCard
+                  fileName={message.data.fileName || 'Document'}
+                  fileType={message.data.fileType}
+                  filePath={message.data.filePath}
+                  summary={message.data.summary || ''}
+                  keyPoints={message.data.keyPoints || []}
+                  whyMatters={message.data.whyMatters}
+                  estimatedReadTimeMinutes={message.data.estimatedReadTimeMinutes}
+                  wordCount={message.data.wordCount}
+                  pageCount={message.data.pageCount}
+                />
+              )}
+              
+              {/* Display article_card if message type is article_card */}
+              {message.type === 'article_card' && message.data && (
+                <ArticleCard
+                  url={message.data.url || ''}
+                  title={message.data.title || 'Untitled'}
+                  siteName={message.data.siteName}
+                  published={message.data.published}
+                  summary={message.data.summary || ''}
+                  keyPoints={message.data.keyPoints || []}
+                  whyMatters={message.data.whyMatters}
+                  model={message.model}
+                />
+              )}
+              
+              {/* Display rag_response if message type is rag_response */}
+              {message.type === 'rag_response' && (
+                <RagResponseCard
+                  content={message.data?.content || message.content || ''}
+                  ragFiles={ragFilesWithIndex}
+                  model={message.model}
+                  onOpenRagFile={handleOpenRagFile}
+                />
+              )}
+              
+              {/* Display text content if any (and not structured message types) */}
+              {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
+                message.role === 'assistant' ? (
+                  <OptionsRenderer content={content} bulletMode={bulletMode} />
+                ) : (
+                  <p className="whitespace-pre-wrap">{content}</p>
+                )
+              )}
+              
+              {/* Display sources and model attribution for assistant messages (only once, at the end) */}
+              {/* Don't show for article_card, document_card, rag_response, or web_search_results as they handle their own model display */}
+              {message.role === 'assistant' && 
+               message.type !== 'article_card' && 
+               message.type !== 'document_card' && 
+               message.type !== 'rag_response' &&
+               message.type !== 'web_search_results' && (
+                <div className="text-xs text-[#8e8ea0] mt-2 text-right leading-tight">
+                  {message.sources && message.sources.length > 0 && (
+                    <div>
+                      Sources: {message.sources.join(', ')}
+                    </div>
+                  )}
+                  {message.model && (
+                    <div>
+                      Model: {formatModelName(message.model)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+        {/* Action buttons - positioned below message */}
+        <div className={`flex gap-2 mt-1 ${
+          message.role === 'user' ? 'justify-end' : 'justify-start'
+        } opacity-0 group-hover:opacity-100 transition-opacity`}>
+        {message.role === 'user' ? (
+          <>
+            <button
+              onClick={() => handleCopyMessage(message.content, message.id)}
+              className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
+              title="Copy message"
+            >
+              {isCopied ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-xs">Copied!</span>
+                </>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={() => handleEditMessage(message.id, message.content)}
+              className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+              title="Edit message"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleDeleteMessage(message.id)}
+              className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+              title="Delete message"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => handleCopyMessage(message.content, message.id, message.data)}
+            className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
+            title="Copy message"
+          >
+            {isCopied ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-xs">Copied!</span>
+              </>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
+          </button>
+        )}
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#343541]">
       {/* Breadcrumb/Header - only show in chat view mode, not in impact workspace */}
@@ -645,660 +1284,31 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           <div className="max-w-4xl mx-auto">
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
+        const isAssistant = message.role === 'assistant';
+        const body = renderMessageBody(message, isCopied);
         
-        return (
-          <div
-            key={message.id}
-            className="group relative mb-3"
-          >
-            {/* Assistant: Avatar floats outside left edge */}
-            {message.role === 'assistant' && (
+        if (isAssistant) {
+          // ASSISTANT WRAPPER (full-width bubble)
+          return (
+            <div key={message.id} className="group relative mb-3">
               <div className="absolute -left-10 top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center">
                 <span className="text-white text-sm font-bold">C</span>
               </div>
-            )}
-            
-            {/* User: Avatar floats outside right edge */}
-            {message.role === 'user' && (
-              <div className="absolute -right-10 top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
-                <span className="text-white text-sm font-bold">U</span>
+              <div className="flex flex-col w-full">
+                {body}
               </div>
-            )}
-            
-            {/* Bubble content container */}
-            <div className={`flex flex-col ${message.role === 'assistant' ? 'w-full' : 'max-w-[70%] ml-auto'}`}>
-              <>
-                {/* Display images outside the message bubble for user messages */}
-                {message.role === 'user' && (() => {
-                  const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
-                  const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
-                  const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
-                  const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
-                  
-                  if (imageMatchesOld.length > 0 || imageMatchesNew.length > 0) {
-                    return (
-                      <div className="mb-2 space-y-2 flex flex-col items-end">
-                        {imageMatchesOld.map((match, idx) => {
-                          const cleanPath = match[3].startsWith('uploads/') ? match[3].substring(8) : match[3];
-                          const imageSrc = match[2] || `http://localhost:8000/uploads/${cleanPath}`;
-                          return (
-                            <div 
-                              key={idx} 
-                              className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
-                              onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
-                              title="Click to view full size"
-                            >
-                              <img 
-                                src={imageSrc}
-                                alt={match[1]}
-                                className="w-full h-auto object-contain"
-                                loading="lazy"
-                              />
-                              <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
-                                {match[1]}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {imageMatchesNew.map((match, idx) => {
-                          const cleanPath = match[2].startsWith('uploads/') ? match[2].substring(8) : match[2];
-                          const imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
-                          return (
-                            <div 
-                              key={`new-${idx}`} 
-                              className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[20%] bg-transparent"
-                              onClick={() => setPreviewFile({name: match[1], data: imageSrc, type: 'image', mimeType: ''})}
-                              title="Click to view full size"
-                            >
-                              <img 
-                                src={imageSrc}
-                                alt={match[1]}
-                                className="w-full h-auto object-contain"
-                                loading="lazy"
-                              />
-                              <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
-                                {match[1]}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                {(() => {
-                  // Parse content first to determine if we should show the bubble
-                  const imagePatternOld = /\[Image: ([^\]]+)\]\n(data:image\/[^;]+;base64[^\n]*)\n\[File path: ([^\]]+)\]/g;
-                  const imagePatternNew = /\[Image: ([^\]]+)\]\n\[File path: ([^\]]+)\]/g;
-                  const docPatternOld = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\]/g;
-                  const docPatternNew = /\[File: ([^\]]+)\]\n\n([\s\S]*?)(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
-                  
-                  let content = message.content;
-                  const files: Array<{name: string, type: 'image' | 'doc', data?: string, path: string, mimeType?: string}> = [];
-                  
-                  // Extract images
-                  const imageMatchesOld = [...message.content.matchAll(imagePatternOld)];
-                  imageMatchesOld.forEach(match => {
-                    if (!files.some(f => f.name === match[1] && f.type === 'image')) {
-                      files.push({
-                        name: match[1],
-                        type: 'image',
-                        data: match[2],
-                        path: match[3]
-                      });
-                      content = content.replace(match[0], '');
-                    }
-                  });
-                  
-                  const imageMatchesNew = [...message.content.matchAll(imagePatternNew)];
-                  imageMatchesNew.forEach(match => {
-                    if (!files.some(f => f.name === match[1] && f.type === 'image')) {
-                      files.push({
-                        name: match[1],
-                        type: 'image',
-                        data: undefined,
-                        path: match[2]
-                      });
-                      content = content.replace(match[0], '');
-                    }
-                  });
-                  
-                  // Extract documents
-                  const docPatternNewWithPath = /\[File: ([^\]]+)\]\n\[File path: ([^\]]+)\]\n\[MIME type: ([^\]]+)\](?:\n\n([\s\S]*?))?(?=\n\n\[File: |\n\n\[Image: |$|$)/g;
-                  const docMatchesNewWithPath = [...message.content.matchAll(docPatternNewWithPath)];
-                  docMatchesNewWithPath.forEach(match => {
-                    files.push({
-                      name: match[1],
-                      type: 'doc',
-                      path: match[2],
-                      mimeType: match[3]
-                    });
-                    const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const fileSectionPattern = new RegExp(
-                      `\\[File: ${escapedName}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](?:\\n\\n[\\s\\S]*?)?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
-                      'g'
-                    );
-                    content = content.replace(fileSectionPattern, '');
-                  });
-                  
-                  const docMatchesNew = [...message.content.matchAll(docPatternNew)];
-                  docMatchesNew.forEach(match => {
-                    if (!files.some(f => f.name === match[1])) {
-                      const fileName = match[1];
-                      let mimeType = '';
-                      if (fileName.toLowerCase().endsWith('.pdf')) {
-                        mimeType = 'application/pdf';
-                      } else if (fileName.toLowerCase().endsWith('.pptx') || fileName.toLowerCase().endsWith('.ppt')) {
-                        mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-                      } else if (fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc')) {
-                        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-                      }
-                      
-                      files.push({
-                        name: match[1],
-                        type: 'doc',
-                        path: '',
-                        mimeType: mimeType
-                      });
-                      const escapedName = match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                      const fileSectionPattern = new RegExp(
-                        `\\[File: ${escapedName}\\]\\n\\n[\\s\\S]*?(?=\\n\\n\\[File: |\\n\\n\\[Image: |$)`,
-                        'g'
-                      );
-                      content = content.replace(fileSectionPattern, '');
-                    }
-                  });
-                  
-                  const docMatchesOld = [...message.content.matchAll(docPatternOld)];
-                  docMatchesOld.forEach(match => {
-                    if (!files.some(f => f.name === match[1])) {
-                      files.push({
-                        name: match[1],
-                        type: 'doc',
-                        path: match[2],
-                        mimeType: match[3]
-                      });
-                      const fileSectionPattern = new RegExp(
-                        `\\[File: ${match[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\n\\[File path: [^\\]]+\\]\\n\\[MIME type: [^\\]]+\\](\\n\\n--- File Content ---[\\s\\S]*?--- End File Content ---)?`,
-                        'g'
-                      );
-                      content = content.replace(fileSectionPattern, '');
-                    }
-                  });
-                  
-                  content = content.replace(/\[File uploaded: [^\]]+\]/g, '');
-                  content = content.replace(/\[File path: [^\]]+\]/g, '');
-                  content = content.trim();
-                  
-                  const filesToShow = message.role === 'user' ? files.filter(f => f.type !== 'image') : files;
-                  // For web_search_results, always show (has structured data)
-                  const hasContent = content.trim().length > 0 || filesToShow.length > 0 || message.type === 'web_search_results' || message.type === 'article_card' || message.type === 'document_card' || message.type === 'rag_response';
-                  
-                  if (!hasContent) {
-                    return null;
-                  }
-                  
-                  return (
-                    <div
-                      className={`rounded-lg px-4 py-3 ${
-                        message.role === 'user'
-                          ? 'bg-[#19c37d] text-white'
-                          : 'bg-[#444654] text-[#ececf1]'
-                      }`}
-                    >
-                      {/* Display files (documents, or all files for assistant) inside the message bubble */}
-                      {filesToShow.length > 0 && (
-                        <div className={`mb-3 space-y-2 ${message.role === 'user' ? '' : ''}`}>
-                          {filesToShow.map((file, idx) => (
-                            file.type === 'image' ? (
-                              <div 
-                                key={idx} 
-                                className="inline-block rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors max-w-[25%] bg-transparent"
-                                onClick={() => {
-                                  // Use file path to load image if base64 not available
-                                  let imageSrc = file.data;
-                                  if (!imageSrc && file.path) {
-                                    const cleanPath = file.path.startsWith('uploads/') ? file.path.substring(8) : file.path;
-                                    imageSrc = `http://localhost:8000/uploads/${cleanPath}`;
-                                  }
-                                  if (imageSrc) {
-                                    setPreviewFile({name: file.name, data: imageSrc, type: 'image', mimeType: file.mimeType || ''});
-                                  }
-                                }}
-                                title="Click to view full size"
-                              >
-                                {file.data ? (
-                                  <img 
-                                    src={file.data} 
-                                    alt={file.name}
-                                    className="w-full h-auto object-contain"
-                                    loading="lazy"
-                                  />
-                                ) : file.path ? (
-                                  <img 
-                                    src={`http://localhost:8000/uploads/${file.path.startsWith('uploads/') ? file.path.substring(8) : file.path}`}
-                                    alt={file.name}
-                                    className="w-full h-auto object-contain"
-                                    loading="lazy"
-                                  />
-                                ) : null}
-                                <div className="px-2 py-1 bg-black/30 text-xs truncate text-white">
-                                  {file.name}
-                                </div>
-                              </div>
-                            ) : (
-                              <div 
-                                key={idx} 
-                                className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/20 cursor-pointer hover:border-[#19c37d] transition-colors"
-                                onClick={() => {
-                                  // Get path from file object
-                                  const filePath = file.path || '';
-                                  const fileName = file.name.toLowerCase();
-                                  
-                                  // The path from server is relative to project root (includes 'uploads/')
-                                  // Server returns: uploads/project_id/conversation_id/filename
-                                  // Endpoint expects: /uploads/project_id/conversation_id/filename
-                                  // But endpoint adds 'uploads/' itself, so we need to strip it
-                                  let previewPath = '';
-                                  if (filePath) {
-                                    // Strip 'uploads/' prefix if present
-                                    const cleanPath = filePath.startsWith('uploads/') ? filePath.substring(8) : filePath;
-                                    previewPath = `http://localhost:8000/uploads/${cleanPath}`;
-                                  }
-                                  
-                                  if (file.mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-                                    setPreviewFile({name: file.name, data: previewPath, type: 'pdf', mimeType: file.mimeType || 'application/pdf'});
-                                  } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
-                                    setPreviewFile({name: file.name, data: previewPath, type: 'pptx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
-                                  } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                                    // Convert path for Excel preview API
-                                    // previewPath is already http://localhost:8000/uploads/... so strip that prefix
-                                    let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
-                                    // If it still has uploads/ prefix, strip it
-                                    if (cleanPath.startsWith('uploads/')) {
-                                      cleanPath = cleanPath.substring(8);
-                                    }
-                                    setPreviewFile({name: file.name, data: `http://localhost:8000/api/xlsx-preview/${cleanPath}`, type: 'xlsx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-                                  } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
-                                    // Convert path for Word preview API
-                                    let cleanPath = previewPath.replace('http://localhost:8000/uploads/', '');
-                                    if (cleanPath.startsWith('uploads/')) {
-                                      cleanPath = cleanPath.substring(8);
-                                    }
-                                    setPreviewFile({name: file.name, data: `http://localhost:8000/api/docx-preview/${cleanPath}`, type: 'docx', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-                                  } else if (fileName.endsWith('.mp4') || fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.webm') || fileName.endsWith('.mkv') || file.mimeType?.startsWith('video/')) {
-                                    // Video files - use HTML5 video player
-                                    setPreviewFile({name: file.name, data: previewPath, type: 'video', mimeType: file.mimeType || 'video/mp4'});
-                                  } else {
-                                    setPreviewFile({name: file.name, data: previewPath, type: 'other', mimeType: file.mimeType || ''});
-                                  }
-                                }}
-                              >
-                                <div className="flex-shrink-0">
-                                  {file.mimeType === 'application/pdf' ? (
-                                    <svg className="w-10 h-10 text-red-300" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                                    </svg>
-                                  ) : (
-                                    <svg className="w-10 h-10 text-white/70" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                                    </svg>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{file.name}</p>
-                                  <p className="text-xs opacity-75 mt-1">
-                                    {(() => {
-                                      // Get file extension from filename
-                                      const ext = file.name.split('.').pop()?.toUpperCase() || '';
-                                      // Map common extensions to clean names (fallback to extension itself)
-                                      const extMap: Record<string, string> = {
-                                        'PDF': 'PDF',
-                                        'DOC': 'DOC',
-                                        'DOCX': 'DOCX',
-                                        'PPT': 'PPT',
-                                        'PPTX': 'PPTX',
-                                        'XLS': 'XLS',
-                                        'XLSX': 'XLSX',
-                                        'TXT': 'TXT',
-                                        'PNG': 'PNG',
-                                        'JPG': 'JPG',
-                                        'JPEG': 'JPEG',
-                                        'GIF': 'GIF',
-                                        'SVG': 'SVG',
-                                        'WEBP': 'WEBP',
-                                        'ZIP': 'ZIP',
-                                        'RAR': 'RAR',
-                                        '7Z': '7Z',
-                                        'CSV': 'CSV',
-                                        'JSON': 'JSON',
-                                        'XML': 'XML',
-                                        'HTML': 'HTML',
-                                        'MP4': 'MP4',
-                                        'MP3': 'MP3',
-                                        'MOV': 'MOV',
-                                        'AVI': 'AVI'
-                                      };
-                                      // If extension is in map, use it; otherwise use the extension itself; fallback to 'FILE'
-                                      return extMap[ext] || ext || 'FILE';
-                                    })()}
-                                  </p>
-                                </div>
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Display web_search_results if message type is web_search_results */}
-                      {message.type === 'web_search_results' && message.data && (
-                        <div className="space-y-4">
-                          <div className="font-semibold text-lg mb-3 text-center">
-                            Top Results
-                          </div>
-                          <div className="space-y-3">
-                            {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
-                              const articleState = articleStates[result.url] || 'idle';
-                              // Brave Search button only shows spinner for its own article state
-                              const isSummarizing = articleState === 'summarizing';
-                              const isSummarized = articleState === 'summarized';
-                              
-                              // Extract domain from URL
-                              const getDomain = (url: string) => {
-                                try {
-                                  const u = new URL(url);
-                                  return u.hostname.replace(/^www\./, "");
-                                } catch {
-                                  return url;
-                                }
-                              };
-                              
-                              const getFaviconUrl = (url: string) => {
-                                try {
-                                  const u = new URL(url);
-                                  return `${u.protocol}//${u.hostname}/favicon.ico`;
-                                } catch {
-                                  return undefined;
-                                }
-                              };
-                              
-                              const domain = getDomain(result.url);
-                              const faviconUrl = getFaviconUrl(result.url);
-                              
-                              return (
-                                <div key={index} className={index > 0 ? "pt-3 border-t border-[#565869]/30" : ""}>
-                                  {/* Domain + Favicon */}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {faviconUrl && (
-                                      <img
-                                        src={faviconUrl}
-                                        alt={domain}
-                                        className="h-4 w-4 rounded-sm"
-                                        onError={(e) => {
-                                          (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                      />
-                                    )}
-                                    <span className="text-xs text-[#8e8ea0]">{domain}</span>
-                                  </div>
-                                  
-                                  {/* Title + Summarize Button */}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <a
-                                      href={result.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-400 hover:text-blue-300 font-semibold flex-1"
-                                    >
-                                      {result.title}
-                                    </a>
-                                    <button
-                                      onClick={async () => {
-                                        if (!currentProject || !currentConversation || isSummarizing || isSummarized) return;
-                                        setArticleStates(prev => ({ ...prev, [result.url]: 'summarizing' }));
-                                        setSummarizingArticle(true);
-                                        try {
-                                          const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
-                                          setStoreLoading(true);
-                                          
-                                          // Add user message
-                                          addStoreMessage({
-                                            role: 'user',
-                                            content: `Summarize: ${result.url}`,
-                                          });
-                                          
-                                          const response = await axios.post('http://localhost:8000/api/article/summary', {
-                                            url: result.url,
-                                            conversation_id: currentConversation.id,
-                                            project_id: currentProject.id,
-                                          });
-                                          if (response.data.message_type === 'article_card' && response.data.message_data) {
-                                            addStoreMessage({
-                                              role: 'assistant',
-                                              content: '',
-                                              type: 'article_card',
-                                              data: response.data.message_data,
-                                              model: response.data.model || 'Trafilatura + GPT-5',
-                                              provider: response.data.provider || 'trafilatura-gpt5',
-                                            });
-                                            setArticleStates(prev => ({ ...prev, [result.url]: 'summarized' }));
-                                          }
-                                          setStoreLoading(false);
-                                        } catch (error: any) {
-                                          console.error('Error summarizing article:', error);
-                                          const { addMessage: addStoreMessage, setLoading: setStoreLoading } = useChatStore.getState();
-                                          addStoreMessage({
-                                            role: 'assistant',
-                                            content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize URL.'}`,
-                                          });
-                                          setStoreLoading(false);
-                                          setArticleStates(prev => ({ ...prev, [result.url]: 'idle' }));
-                                        } finally {
-                                          setSummarizingArticle(false);
-                                        }
-                                      }}
-                                      disabled={isSummarizing || isSummarized}
-                                      className={`p-1.5 rounded transition-colors flex-shrink-0 ${
-                                        isSummarized 
-                                          ? 'text-green-400 cursor-default' 
-                                          : isSummarizing
-                                          ? 'text-blue-400 cursor-wait'
-                                          : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
-                                      }`}
-                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this URL"}
-                                    >
-                                      {isSummarizing ? (
-                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                      ) : isSummarized ? (
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      ) : (
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                      )}
-                                    </button>
-                                  </div>
-                                  
-                                  {/* Snippet */}
-                                  <div className="text-sm text-[#8e8ea0] line-clamp-2">
-                                    {result.snippet}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          
-                          {/* Footer */}
-                          <div className="border-t border-[#565869] pt-3 mt-4">
-                            <div className="text-xs text-[#8e8ea0] text-right">
-                              Model: Brave Search
-                            </div>
-                          </div>
-                          
-                          {message.data.summary && (
-                            <div className="mt-6 pt-6 border-t border-[#565869]">
-                              <div className="font-semibold text-lg mb-4 text-center">Summary</div>
-                              <div className="prose prose-invert prose-sm max-w-none">
-                                <ReactMarkdown
-                                  components={{
-                                    p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
-                                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ul>,
-                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ol>,
-                                    li: ({ children }) => <li className="ml-4 text-[#ececf1]">{children}</li>,
-                                    strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
-                                    em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
-                                  }}
-                                >
-                                  {message.data.summary}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Display document_card if message type is document_card */}
-                      {message.type === 'document_card' && message.data && (
-                        <DocumentCard
-                          fileName={message.data.fileName || 'Document'}
-                          fileType={message.data.fileType}
-                          filePath={message.data.filePath}
-                          summary={message.data.summary || ''}
-                          keyPoints={message.data.keyPoints || []}
-                          whyMatters={message.data.whyMatters}
-                          estimatedReadTimeMinutes={message.data.estimatedReadTimeMinutes}
-                          wordCount={message.data.wordCount}
-                          pageCount={message.data.pageCount}
-                        />
-                      )}
-                      
-                      {/* Display article_card if message type is article_card */}
-                      {message.type === 'article_card' && message.data && (
-                        <ArticleCard
-                          url={message.data.url || ''}
-                          title={message.data.title || 'Untitled'}
-                          siteName={message.data.siteName}
-                          published={message.data.published}
-                          summary={message.data.summary || ''}
-                          keyPoints={message.data.keyPoints || []}
-                          whyMatters={message.data.whyMatters}
-                          model={message.model}
-                        />
-                      )}
-                      
-                      {/* Display rag_response if message type is rag_response */}
-                      {message.type === 'rag_response' && (
-                        <RagResponseCard
-                          content={message.data?.content || message.content || ''}
-                          ragFiles={ragFilesWithIndex}
-                          model={message.model}
-                          onOpenRagFile={handleOpenRagFile}
-                        />
-                      )}
-                      
-                      {/* Display text content if any (and not structured message types) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
-                        message.role === 'assistant' ? (
-                          <OptionsRenderer content={content} bulletMode={bulletMode} />
-                        ) : (
-                          <p className="whitespace-pre-wrap">{content}</p>
-                        )
-                      )}
-                      
-                      {/* Display sources and model attribution for assistant messages (only once, at the end) */}
-                      {/* Don't show for article_card, document_card, rag_response, or web_search_results as they handle their own model display */}
-                      {message.role === 'assistant' && 
-                       message.type !== 'article_card' && 
-                       message.type !== 'document_card' && 
-                       message.type !== 'rag_response' &&
-                       message.type !== 'web_search_results' && (
-                        <div className="text-xs text-[#8e8ea0] mt-2 text-right leading-tight">
-                          {message.sources && message.sources.length > 0 && (
-                            <div>
-                              Sources: {message.sources.join(', ')}
-                            </div>
-                          )}
-                          {message.model && (
-                            <div>
-                              Model: {formatModelName(message.model)}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                {/* Action buttons - positioned below message */}
-                <div className={`flex gap-2 mt-1 ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                } opacity-0 group-hover:opacity-100 transition-opacity`}>
-                {message.role === 'user' ? (
-                  <>
-                    <button
-                      onClick={() => handleCopyMessage(message.content, message.id)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
-                      title="Copy message"
-                    >
-                      {isCopied ? (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-xs">Copied!</span>
-                        </>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleEditMessage(message.id, message.content)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
-                      title="Edit message"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMessage(message.id)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
-                      title="Delete message"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => handleCopyMessage(message.content, message.id, message.data)}
-                    className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
-                    title="Copy message"
-                  >
-                    {isCopied ? (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-xs">Copied!</span>
-                      </>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </button>
-                )}
-                </div>
-              </>
+            </div>
+          );
+        }
+        
+        // USER WRAPPER (dynamic width, right-aligned)
+        return (
+          <div key={message.id} className="group relative mb-3">
+            <div className="absolute -right-10 top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
+              <span className="text-white text-sm font-bold">U</span>
+            </div>
+            <div className="flex w-full justify-end">
+              {body}
             </div>
           </div>
         );
@@ -1316,11 +1326,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           </div>
         </div>
       )}
+      
+      {/* Streaming content */}
+      {isStreaming && (
+        <div className="flex gap-4 justify-start">
+          <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm font-bold">C</span>
+          </div>
+          <div className="flex-1 rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
+            <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
+            <span className="animate-pulse">▊</span>
+          </div>
+        </div>
+      )}
           {/* Invisible element at the bottom to scroll to */}
       <div ref={messagesEndRef} />
           </div>
         </div>
-        
       </div>
       
       {/* File Preview Modal */}

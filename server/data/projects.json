@@ -37,38 +37,45 @@
     ]
   },
   {
+    "id": "975a7513-9e4d-4df4-967f-6ad1ad149319",
+    "name": "TraderBot",
+    "default_target": "general",
+    "sort_index": 4,
+    "memory_sources": []
+  },
+  {
     "id": "5585082f-f02f-4da3-9894-661513a6eb9c",
     "name": "Flywheel",
     "default_target": "general",
-    "sort_index": 4,
+    "sort_index": 5,
     "memory_sources": []
   },
   {
     "id": "0eb7031c-765d-4547-8cd8-7f497af91952",
     "name": "Retirement",
     "default_target": "general",
-    "sort_index": 5,
+    "sort_index": 6,
     "memory_sources": []
   },
   {
     "id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
     "name": "Impact Workspace",
     "default_target": "general",
-    "sort_index": 6,
+    "sort_index": 7,
     "memory_sources": []
   },
   {
     "id": "4e175041-7e26-43d6-8a9f-761043e75cad",
     "name": "Impact Workspace",
     "default_target": "general",
-    "sort_index": 7,
+    "sort_index": 8,
     "memory_sources": []
   },
   {
     "id": "718c6805-92cd-4616-a2cf-7e693d5cf2f2",
-    "name": "History",
+    "name": "Real History",
     "default_target": "general",
-    "sort_index": 8,
+    "sort_index": 9,
     "memory_sources": []
   }
 ]
