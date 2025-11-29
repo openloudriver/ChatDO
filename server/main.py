@@ -873,7 +873,13 @@ async def summarize_article(request: ArticleSummaryRequest):
                 article_text = get_youtube_transcript(request.url)
                 parsed = urlparse(request.url)
                 article_site_name = "Video"
-                article_title = f"Video from {parsed.netloc}"
+                # Try to get actual video title
+                from server.services.video_source import get_video_title
+                video_title = await get_video_title(request.url)
+                if video_title:
+                    article_title = video_title
+                else:
+                    article_title = f"Video from {parsed.netloc}"
                 model_label = "YouTube transcript + GPT-5"
             except YouTubeTranscriptError as e:
                 # Explicitly do NOT fall back to audio pipeline
@@ -897,7 +903,13 @@ async def summarize_article(request: ArticleSummaryRequest):
                 article_text = await get_transcript_from_url(request.url)
                 parsed = urlparse(request.url)
                 article_site_name = "Video"
-                article_title = f"Video from {parsed.netloc}"
+                # Try to get actual video title
+                from server.services.video_source import get_video_title
+                video_title = await get_video_title(request.url)
+                if video_title:
+                    article_title = video_title
+                else:
+                    article_title = f"Video from {parsed.netloc}"
                 model_label = "yt-dlp + Whisper-small-FP16 + GPT-5"
             except ValueError as ve:
                 raise HTTPException(status_code=400, detail=str(ve))

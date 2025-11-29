@@ -55,6 +55,49 @@ def get_ffmpeg_path() -> str:
     return os.getenv("FFMPEG_PATH", "ffmpeg")
 
 
+async def get_video_title(url: str) -> Optional[str]:
+    """
+    Extract video title from URL using yt-dlp (without downloading).
+    Works for YouTube, Rumble, and other supported video hosts.
+    
+    Args:
+        url: Video URL
+        
+    Returns:
+        Video title string, or None if extraction fails
+    """
+    loop = asyncio.get_event_loop()
+    
+    def _extract_title() -> Optional[str]:
+        logger.info("get_video_title: extracting title for url=%s", url)
+        
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,  # Don't download, just get metadata
+        }
+        
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                title = info.get("title") if info else None
+                if title:
+                    logger.info("get_video_title: success url=%s title=%s", url, title[:50])
+                    return title
+                else:
+                    logger.warning("get_video_title: no title in metadata url=%s", url)
+                    return None
+        except Exception as e:
+            logger.warning("get_video_title: failed to extract title url=%s error=%s", url, str(e))
+            return None
+    
+    try:
+        return await loop.run_in_executor(None, _extract_title)
+    except Exception:
+        logger.exception("get_video_title: error extracting title for %s", url)
+        return None
+
+
 async def download_video_audio(url: str) -> Path:
     """
     Download audio from the given video URL using yt-dlp.
