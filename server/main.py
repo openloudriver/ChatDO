@@ -830,12 +830,14 @@ async def summarize_article(request: ArticleSummaryRequest):
        → NO FALLBACK: If audio pipeline fails, return error
     
     3. Else
-       → Web page: Trafilatura + GPT-5
+       → Web page: Trafilatura → (if fail/too short) Readability → GPT-5
+       → Tries Trafilatura first, falls back to Readability-based Speedreader extractor
     
     Model labels:
     - "YouTube transcript + GPT-5" (Tier 1)
     - "yt-dlp + Whisper-small-FP16 + GPT-5" (Tier 2, M1-optimized)
-    - "Trafilatura + GPT-5" (Web pages)
+    - "Trafilatura + GPT-5" (Web pages, when Trafilatura succeeds)
+    - "Readability + GPT-5" (Web pages, when Readability fallback is used)
     
     Returns a structured article_card message.
     """
@@ -912,21 +914,27 @@ async def summarize_article(request: ArticleSummaryRequest):
                 ) from e
         else:
             # --- Web page ---
-            # Trafilatura + GPT-5
+            # Trafilatura → (if fail/too short) Readability → GPT-5
             logging.info(f"[Summary] Processing as web page: {request.url}")
-            article_data = extract_article(request.url)
+            from server.services.article_extraction import get_article_text_with_fallback
             
-            if article_data.get("error"):
-                raise HTTPException(status_code=400, detail=article_data["error"])
-            
-            if not article_data.get("text"):
-                raise HTTPException(status_code=400, detail="Could not extract article content.")
-            
-            article_text = article_data["text"]
-            article_title = article_data.get("title")
-            article_site_name = article_data.get("site_name")
-            article_published = article_data.get("published")  # Extract published date
-            model_label = "Trafilatura + GPT-5"
+            try:
+                extraction_result = get_article_text_with_fallback(request.url)
+                article_text = extraction_result["text"]
+                article_title = extraction_result.get("title")
+                article_site_name = extraction_result.get("site_name")
+                article_published = extraction_result.get("published")
+                extractor_name = extraction_result["extractor"]  # "Trafilatura" or "Readability"
+                model_label = f"{extractor_name} + GPT-5"
+            except ValueError as ve:
+                # Both extractors failed
+                raise HTTPException(status_code=400, detail=str(ve))
+            except Exception as e:
+                logger.exception("Article extraction failed unexpectedly: url=%s", request.url)
+                raise HTTPException(
+                    status_code=500,
+                    detail="Unexpected error while extracting article content."
+                ) from e
         
         if not article_text:
             raise HTTPException(status_code=502, detail="Content could not be processed.")
