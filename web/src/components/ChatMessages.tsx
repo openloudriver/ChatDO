@@ -649,17 +649,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         return (
           <div
             key={message.id}
-            className={`group flex ${
-              message.role === 'user' ? 'gap-4 w-full' : 'gap-6'
-            } ${message.role === 'assistant' ? 'w-full' : ''}`}
+            className={`group flex items-start ${
+              message.role === 'user' ? 'justify-end gap-2' : 'gap-2'
+            } mb-4`}
           >
+            {/* Assistant: Avatar on left */}
             {message.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0 -ml-12 relative z-10">
+              <div className="shrink-0 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center">
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
             
-            <div className={`flex flex-col ${message.role === 'assistant' ? 'flex-1 min-w-0 w-full' : message.role === 'user' ? 'flex-1 min-w-0 w-full' : ''}`}>
+            {/* Bubble content container */}
+            <div className={`flex flex-col ${message.role === 'assistant' ? 'max-w-[640px]' : 'max-w-[640px]'}`}>
               <>
                 {/* Display images outside the message bubble for user messages */}
                 {message.role === 'user' && (() => {
@@ -836,10 +838,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white w-full ml-[55px]'
+                          ? 'bg-[#19c37d] text-white'
                           : 'bg-[#444654] text-[#ececf1]'
                       }`}
-                      style={message.role === 'assistant' ? { width: 'calc(100% + 6px)' } : undefined}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
                       {filesToShow.length > 0 && (
@@ -1295,8 +1296,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               </>
             </div>
             
+            {/* User: Avatar on right */}
             {message.role === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center flex-shrink-0">
+              <div className="shrink-0 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
                 <span className="text-white text-sm font-bold">U</span>
               </div>
             )}
