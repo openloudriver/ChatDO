@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
+import ConfirmDialog from './ConfirmDialog';
 
 // Helper to format date
 const formatDate = (date: Date | string): string => {
@@ -47,6 +48,12 @@ const TrashChatList: React.FC = () => {
     loadTrashedChats
   } = useChatStore();
 
+  const [purgeConfirm, setPurgeConfirm] = useState<{ open: boolean; chatId: string | null; isBulk: boolean }>({
+    open: false,
+    chatId: null,
+    isBulk: false,
+  });
+
   // Load trashed chats when component mounts
   useEffect(() => {
     loadTrashedChats();
@@ -61,33 +68,50 @@ const TrashChatList: React.FC = () => {
     }
   };
 
-  const handlePurge = async (e: React.MouseEvent, chatId: string) => {
+  const handlePurge = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to permanently delete this chat? This cannot be undone.')) {
-      try {
-        await purgeChat(chatId);
-      } catch (error) {
-        console.error('Failed to purge chat:', error);
-        alert('Failed to delete chat. Please try again.');
-      }
+    setPurgeConfirm({
+      open: true,
+      chatId,
+      isBulk: false,
+    });
+  };
+
+  const confirmPurge = async () => {
+    if (!purgeConfirm.chatId) return;
+    
+    try {
+      await purgeChat(purgeConfirm.chatId);
+      setPurgeConfirm({ open: false, chatId: null, isBulk: false });
+    } catch (error) {
+      console.error('Failed to purge chat:', error);
+      alert('Failed to delete chat. Please try again.');
+      setPurgeConfirm({ open: false, chatId: null, isBulk: false });
     }
   };
 
-  const handlePurgeAll = async () => {
+  const handlePurgeAll = () => {
     const count = trashedChats.length;
     if (count === 0) return;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete all ${count} chat${count > 1 ? 's' : ''} in Trash? This cannot be undone.`
-    );
-    
-    if (!confirmed) return;
+    setPurgeConfirm({
+      open: true,
+      chatId: null,
+      isBulk: true,
+    });
+  };
+
+  const confirmPurgeAll = async () => {
+    const count = trashedChats.length;
+    if (count === 0) return;
     
     try {
       await purgeAllTrashedChats();
+      setPurgeConfirm({ open: false, chatId: null, isBulk: false });
     } catch (error) {
       console.error('Failed to purge all chats:', error);
       alert('Failed to delete all chats. Please try again.');
+      setPurgeConfirm({ open: false, chatId: null, isBulk: false });
     }
   };
 
@@ -180,6 +204,21 @@ const TrashChatList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Purge Confirmation Dialog */}
+      <ConfirmDialog
+        open={purgeConfirm.open}
+        title={purgeConfirm.isBulk ? 'Delete all chats permanently' : 'Delete chat permanently'}
+        message={
+          purgeConfirm.isBulk
+            ? `Are you sure you want to permanently delete all ${trashedChats.length} chat${trashedChats.length > 1 ? 's' : ''} in Trash? This cannot be undone.`
+            : 'Are you sure you want to permanently delete this chat? This cannot be undone.'
+        }
+        confirmLabel="OK"
+        cancelLabel="Cancel"
+        onConfirm={purgeConfirm.isBulk ? confirmPurgeAll : confirmPurge}
+        onCancel={() => setPurgeConfirm({ open: false, chatId: null, isBulk: false })}
+      />
     </div>
   );
 };

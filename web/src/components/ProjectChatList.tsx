@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
+import ConfirmDialog from './ConfirmDialog';
 
 // Helper to format date
 const formatDate = (date: Date | string): string => {
@@ -65,6 +66,12 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; chatId: string | null; chatTitle: string | null; isBulk: boolean }>({
+    open: false,
+    chatId: null,
+    chatTitle: null,
+    isBulk: false,
+  });
 
   const handleNewChat = async () => {
     if (!currentProject) return;
@@ -114,15 +121,24 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
   const handleDeleteChat = async (chatId: string, chatTitle: string) => {
     setOpenMenuId(null);
     setMenuPosition(null);
-    const confirmed = window.confirm(
-      `Delete "${chatTitle}"? It will move to Trash and be permanently removed after 30 days.`
-    );
-    if (!confirmed) return;
+    setDeleteConfirm({
+      open: true,
+      chatId,
+      chatTitle,
+      isBulk: false,
+    });
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!deleteConfirm.chatId) return;
+    
     try {
-      await deleteChat(chatId);
+      await deleteChat(deleteConfirm.chatId);
+      setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false });
     } catch (error) {
       console.error('Failed to delete chat:', error);
       alert('Failed to delete chat. Please try again.');
+      setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false });
     }
   };
 
@@ -139,23 +155,31 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedChats.size === 0) return;
     
     const count = selectedChats.size;
-    const confirmed = window.confirm(
-      `Delete ${count} chat${count > 1 ? 's' : ''}? They will move to Trash and be permanently removed after 30 days.`
-    );
-    if (!confirmed) return;
+    setDeleteConfirm({
+      open: true,
+      chatId: null,
+      chatTitle: `${count} chat${count > 1 ? 's' : ''}`,
+      isBulk: true,
+    });
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedChats.size === 0) return;
 
     try {
       // Delete all selected chats
       const deletePromises = Array.from(selectedChats).map(chatId => deleteChat(chatId));
       await Promise.all(deletePromises);
       setSelectedChats(new Set());
+      setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false });
     } catch (error) {
       console.error('Failed to delete chats:', error);
       alert('Failed to delete some chats. Please try again.');
+      setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false });
     }
   };
 
@@ -305,6 +329,21 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title={deleteConfirm.isBulk ? 'Delete chats' : 'Delete chat'}
+        message={
+          deleteConfirm.isBulk
+            ? `Delete ${deleteConfirm.chatTitle}? They will move to Trash and be permanently removed after 30 days.`
+            : `Delete "${deleteConfirm.chatTitle}"? It will move to Trash and be permanently removed after 30 days.`
+        }
+        confirmLabel="OK"
+        cancelLabel="Cancel"
+        onConfirm={deleteConfirm.isBulk ? confirmBulkDelete : confirmDeleteChat}
+        onCancel={() => setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false })}
+      />
     </div>
   );
 };
