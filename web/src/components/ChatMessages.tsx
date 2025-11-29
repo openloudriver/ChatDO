@@ -134,6 +134,14 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    // Only show bullet options card inside the Impact Workspace
+    // where bulletMode is explicitly one of the constrained modes.
+    if (!bulletMode || bulletMode === 'FREE') {
+      setBulletOptions([]);
+      setHasOptions(false);
+      return;
+    }
+
     // Try to detect bullet-style Award/OPB responses
     const hasBulletPattern =
       content.match(/Options?|bullet options?/i) ||
