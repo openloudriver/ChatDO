@@ -91,31 +91,32 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               }}
             />
           )}
-          <div className="text-xs uppercase tracking-wide text-[#8e8ea0] font-medium">
+          <div className="text-xs uppercase tracking-[0.5px] text-white/45 font-medium">
             {displaySiteName}
           </div>
         </div>
       </div>
 
       {/* Article Title */}
-      <div>
+      <div className="mt-2">
         <a
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="text-base font-semibold text-blue-400 hover:text-blue-300 underline block"
+          className="text-lg font-semibold text-[#4EA1FF] hover:underline cursor-pointer block leading-[1.4] max-sm:text-base"
         >
           {title}
         </a>
-        {formattedDate && (
-          <div className="text-xs text-[#8e8ea0] mt-1">
-            Published: {formattedDate}
-          </div>
-        )}
       </div>
 
       {/* Subheader: Read time and last updated */}
-      <div className="text-xs text-[#8e8ea0] flex items-center gap-2">
+      <div className="text-[13px] text-white/45 flex items-center gap-3">
+        {formattedDate && (
+          <>
+            <span>Published: {formattedDate}</span>
+            <span>•</span>
+          </>
+        )}
         <span>{readTime} min read</span>
         {lastUpdated && (
           <>
@@ -126,12 +127,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       </div>
       
       {/* Content Section */}
-      <div className="border-t border-[#565869] pt-4 space-y-4">
+      <div className="space-y-8">
         {/* Summary */}
         {summary && (
           <div>
             <SectionHeading>SUMMARY</SectionHeading>
-            <p className="text-sm text-[#ececf1] leading-relaxed">{summary}</p>
+            <p className="text-[15px] text-white/82 leading-[1.65]">{summary}</p>
           </div>
         )}
         
@@ -139,9 +140,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {keyPoints && keyPoints.length > 0 && (
           <div>
             <SectionHeading>KEY POINTS</SectionHeading>
-            <ul className="list-disc list-inside space-y-1 text-[#ececf1] ml-2">
+            <ul className="list-disc ml-4 mt-2 mb-5 space-y-[6px]">
               {keyPoints.map((point, index) => (
-                <li key={index} className="text-sm text-[#ececf1] leading-relaxed">{point}</li>
+                <li key={index} className="text-[15px] text-white/82 leading-[1.65]">{point}</li>
               ))}
             </ul>
           </div>
@@ -151,7 +152,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {whyMatters && (
           <div>
             <SectionHeading>WHY THIS MATTERS</SectionHeading>
-            <p className="text-sm text-[#ececf1] leading-relaxed">{whyMatters}</p>
+            <p className="text-[15px] text-white/82 leading-[1.65]">{whyMatters}</p>
           </div>
         )}
       </div>

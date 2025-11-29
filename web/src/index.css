@@ -139,3 +139,16 @@ body {
 .copy-option-button {
   cursor: pointer;
 }
+
+/* ChatGPT-style link styling for assistant cards */
+.assistant-card a:not(.text-\[#4EA1FF\]):not(.hover\:underline) {
+  color: #4EA1FF;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.assistant-card a:not(.text-\[#4EA1FF\]):not(.hover\:underline):hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
