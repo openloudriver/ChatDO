@@ -666,7 +666,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             )}
             
             {/* Bubble content container */}
-            <div className={`flex flex-col ${message.role === 'assistant' ? 'w-full' : 'max-w-[70%] ml-auto'}`}>
+            <div className="flex flex-col w-full">
               <>
                 {/* Display images outside the message bubble for user messages */}
                 {message.role === 'user' && (() => {
@@ -843,8 +843,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white'
-                          : 'bg-[#444654] text-[#ececf1]'
+                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto'
+                          : 'bg-[#444654] text-[#ececf1] w-full'
                       }`}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
