@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useChatStore, type Message } from '../store/chat';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
@@ -127,6 +128,75 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
     .filter(b => b.length > 0);
 };
 
+// Component to render GPT messages with proper markdown formatting
+const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
+  return (
+    <div className="bg-[#2B2D31] rounded-2xl border border-white/5 shadow-md px-5 py-4">
+      <div className="prose prose-invert max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-[#ececf1]">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-3 text-[#ececf1]">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[#ececf1]">{children}</h3>,
+            h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[#ececf1]">{children}</h4>,
+            p: ({ children }) => <p className="my-2 text-[#ececf1] leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[#ececf1]">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[#ececf1]">{children}</ol>,
+            li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+            table: ({ children }) => (
+              <div className="overflow-x-auto my-4">
+                <table className="w-full border-collapse table-fixed">
+                  {children}
+                </table>
+              </div>
+            ),
+            thead: ({ children }) => <thead className="bg-[#343541]">{children}</thead>,
+            tbody: ({ children }) => <tbody>{children}</tbody>,
+            tr: ({ children }) => <tr className="border-b border-[#565869]">{children}</tr>,
+            th: ({ children }) => (
+              <th className="border-b border-[#565869] px-3 py-2 font-medium text-left text-[#ececf1]">
+                {children}
+              </th>
+            ),
+            td: ({ children }) => (
+              <td className="border-b border-[#565869] px-3 py-2 align-top text-[#ececf1]">
+                {children}
+              </td>
+            ),
+            code: ({ className, children, ...props }) => {
+              const isInline = !className;
+              return isInline ? (
+                <code className="bg-black/40 rounded px-1.5 py-0.5 font-mono text-[0.85em] text-[#ececf1]" {...props}>
+                  {children}
+                </code>
+              ) : (
+                <code className="font-mono text-sm" {...props}>
+                  {children}
+                </code>
+              );
+            },
+            pre: ({ children }) => (
+              <pre className="bg-black/30 rounded-lg p-3 font-mono text-sm overflow-x-auto my-3 text-[#ececf1]">
+                {children}
+              </pre>
+            ),
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-4 border-[#565869] pl-4 ml-1 my-3 italic text-[#ececf1]">
+                {children}
+              </blockquote>
+            ),
+            strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
+            em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+};
+
 // Component to render bullet options with cards
 const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE' }> = ({ content, bulletMode }) => {
   const [bulletOptions, setBulletOptions] = useState<string[]>([]);
@@ -178,13 +248,9 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
 
   const labels = ['A', 'B', 'C'];
 
-  // If we didn't detect structured bullet options, just render the markdown normally
+  // If we didn't detect structured bullet options, use GPTMessageRenderer for proper formatting
   if (!hasOptions || bulletOptions.length === 0) {
-    return (
-      <div className="prose prose-invert max-w-none">
-        <ReactMarkdown>{content}</ReactMarkdown>
-      </div>
-    );
+    return <GPTMessageRenderer content={content} />;
   }
 
   // Otherwise, render only the clean bullet options card (no extra intro text or tips)
@@ -1154,6 +1220,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               <div className="font-semibold text-lg mb-4 text-center">Summary</div>
                               <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
                                   components={{
                                     p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
                                     ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ul>,
@@ -1215,7 +1282,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         message.role === 'assistant' ? (
                           <OptionsRenderer content={content} bulletMode={bulletMode} />
                         ) : (
-                          <p className="whitespace-pre-wrap">{content}</p>
+                          <p className="whitespace-pre-wrap text-[#ececf1]">{content}</p>
                         )
                       )}
                       
