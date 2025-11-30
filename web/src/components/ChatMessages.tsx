@@ -735,8 +735,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             
             {/* User: Avatar floats outside right edge */}
             {message.role === 'user' && (
-              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center transition-colors" style={{ right: 'calc(-2.5rem - 6px)' }}>
-                <span className="text-white text-sm font-bold">U</span>
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[var(--user-bubble-bg)] flex items-center justify-center transition-colors" style={{ right: 'calc(-2.5rem - 6px)' }}>
+                <span className="text-[var(--user-bubble-text)] text-sm font-bold">U</span>
               </div>
             )}
             
@@ -918,7 +918,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 box-border transition-colors ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto mr-[-6px]'
+                          ? 'bg-[var(--user-bubble-bg)] text-[var(--user-bubble-text)] max-w-[70%] ml-auto mr-[-6px]'
                           : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px]'
                       }`}
                     >
@@ -1377,7 +1377,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {isStreaming && (
         <div className="group relative mb-3">
           {/* Assistant: Avatar floats outside left edge */}
-          <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center" style={{ left: 'calc(-2.5rem + 6px)' }}>
+          <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="flex flex-col w-full">
@@ -1484,7 +1484,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       href={previewFile.data} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="mt-4 inline-block px-4 py-2 bg-[#19c37d] text-white rounded hover:bg-[#15a06a] transition-colors"
+                      className="mt-4 inline-block px-4 py-2 bg-[var(--user-bubble-bg)] text-[var(--user-bubble-text)] rounded hover:opacity-90 transition-colors"
                     >
                       Download File
                     </a>

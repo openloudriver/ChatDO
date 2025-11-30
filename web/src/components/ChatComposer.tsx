@@ -1002,7 +1002,7 @@ const ChatComposer: React.FC = () => {
                 onClick={() => setRagTrayOpen(!isRagTrayOpen)}
                 className={`p-2 rounded transition-colors ${
                   isRagTrayOpen
-                    ? 'text-[#19c37d] bg-[#19c37d]/20'
+                    ? 'text-[var(--user-bubble-bg)] bg-[var(--user-bubble-bg)]/20'
                     : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
                 }`}
                 title="RAG context tray (upload reference files)"
@@ -1030,7 +1030,7 @@ const ChatComposer: React.FC = () => {
             <button
               onClick={() => handleSend()}
               disabled={(!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation || isUploading}
-              className="absolute right-2 bottom-4 w-8 h-8 rounded-full bg-[#19c37d] hover:bg-[#15a06a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+              className="absolute right-2 bottom-4 w-8 h-8 rounded-full bg-[var(--user-bubble-bg)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               title={editingMessageId ? "Save & send" : "Send"}
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -1153,7 +1153,7 @@ const ChatComposer: React.FC = () => {
                 setShowRestoreFullscreenPrompt(false);
                 wasFullscreenBeforeFileDialog.current = false;
               }}
-              className="px-3 py-1.5 bg-[#19c37d] hover:bg-[#15a06a] text-white text-sm rounded transition-colors"
+              className="px-3 py-1.5 bg-[var(--user-bubble-bg)] hover:opacity-90 text-[var(--user-bubble-text)] text-sm rounded transition-colors"
             >
               Restore Fullscreen
             </button>

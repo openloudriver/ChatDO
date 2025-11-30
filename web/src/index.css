@@ -9,7 +9,7 @@
   --text-secondary: #6e6e80;
   --border-color: #e5e5e5;
   --assistant-bubble-bg: #f7f7f8;
-  --user-bubble-bg: #19c37d;
+  --user-bubble-bg: #c9c9c9;
   --code-bg: #f0f0f0;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.1);
@@ -24,7 +24,8 @@
   --text-secondary: #8e8ea0;
   --border-color: #565869;
   --assistant-bubble-bg: #444654;
-  --user-bubble-bg: #19c37d;
+  --user-bubble-bg: #8C8C8C;
+  --user-bubble-text: #000000;
   --code-bg: #2b2d31;
   --card-bg: #0D0D0D;
   --card-border: rgba(255, 255, 255, 0.08);

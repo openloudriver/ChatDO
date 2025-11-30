@@ -43,8 +43,9 @@ const PanelLeftOpenIcon = () => (
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarOpen, toggleSidebar } = useAppLayout();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, accentColor, setAccentColor } = useTheme();
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
+  const [isAccentColorOpen, setIsAccentColorOpen] = useState(false);
 
   // Browser fullscreen toggle functionality
   const toggleBrowserFullscreen = () => {
@@ -149,6 +150,74 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Spacer flex to push anything else (e.g. model indicator) to the right */}
           <div className="ml-auto flex items-center gap-2">
+            {/* Accent color dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAccentColorOpen(!isAccentColorOpen)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors"
+                aria-label="Accent color"
+                title="Accent color"
+              >
+                <div 
+                  className="h-3 w-3 rounded-full" 
+                  style={{ backgroundColor: `var(--user-bubble-bg)` }}
+                />
+              </button>
+              
+              {isAccentColorOpen && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsAccentColorOpen(false)}
+                  />
+                  {/* Dropdown menu */}
+                  <div className="absolute right-0 top-10 z-50 w-48 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-lg transition-colors">
+                    <div className="p-2">
+                      <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                        Accent color
+                      </div>
+                      {(['default', 'orange', 'yellow', 'green', 'blue', 'pink', 'purple'] as const).map((color) => {
+                        const colors: Record<typeof color, { name: string; value: string }> = {
+                          default: { name: 'Default', value: '#8C8C8C' }, // Graphite gray (ChatGPT's default)
+                          orange: { name: 'Orange', value: '#F7821B' },
+                          yellow: { name: 'Yellow', value: '#FFC600' },
+                          green: { name: 'Green', value: '#62BA46' },
+                          blue: { name: 'Blue', value: '#007AFF' },
+                          pink: { name: 'Pink', value: '#F74F9E' },
+                          purple: { name: 'Purple', value: '#A550A7' },
+                        };
+                        const isSelected = accentColor === color;
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              setAccentColor(color);
+                              setIsAccentColorOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                          >
+                            <div 
+                              className="h-3 w-3 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: colors[color].value }}
+                            />
+                            <span className="flex-1 text-left">{colors[color].name}</span>
+                            {isSelected && (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            
             {/* Theme toggle button */}
             <button
               type="button"
