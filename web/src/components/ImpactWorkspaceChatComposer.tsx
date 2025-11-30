@@ -7,6 +7,7 @@ import { useChatStore } from '../store/chat';
 import type { ImpactEntry } from '../types/impact';
 import { BULLET_MODES, type BulletMode } from './ActiveBulletEditor';
 import RagContextTray from './RagContextTray';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ImpactWorkspaceChatComposerProps {
   selectedImpacts: ImpactEntry[];
@@ -29,6 +30,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
   onToggleRagTray,
   isRagTrayOpen: propIsRagTrayOpen,
 }) => {
+  const { theme } = useTheme();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -286,21 +288,44 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
             }}
             onKeyDown={handleKeyDown}
             placeholder="Message ChatDO about your impacts and template..."
-            className="w-full p-3 pl-3 pr-24 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto transition-colors"
-            style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }} // Fixed to 2 rows
+            className="w-full p-3 pl-3 pr-24 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none overflow-y-auto transition-colors"
+            style={{ 
+              minHeight: '88px', 
+              maxHeight: '300px', 
+              height: '88px',
+              '--tw-ring-color': 'var(--user-bubble-bg)'
+            } as React.CSSProperties & { '--tw-ring-color': string }}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 2px var(--user-bubble-bg)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = '';
+            }}
           />
           <div className="absolute right-2 bottom-2 flex items-center gap-1">
             {/* RAG Tray Toggle Button (Lightbulb) */}
             <button
               onClick={handleToggleRagTray}
-              className={`p-2 rounded transition-colors ${
+              className={`p-2 rounded transition-colors relative ${
                 isRagTrayOpen
-                  ? 'text-[#19c37d] bg-[#19c37d]/20'
+                  ? ''
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
               }`}
+              style={isRagTrayOpen ? {
+                color: 'var(--user-bubble-bg)'
+              } : undefined}
               title="RAG context tray (upload reference files)"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isRagTrayOpen && (
+                <div 
+                  className="absolute inset-0 rounded"
+                  style={{
+                    backgroundColor: 'var(--user-bubble-bg)',
+                    opacity: 0.2
+                  }}
+                />
+              )}
+              <svg className="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </button>
@@ -308,7 +333,19 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-400 text-white flex items-center justify-center transition-colors"
+              className="flex-shrink-0 w-8 h-8 rounded-lg disabled:bg-slate-700 disabled:text-slate-400 flex items-center justify-center transition-colors"
+              style={{ 
+                backgroundColor: 'var(--user-bubble-bg)',
+                color: 'var(--user-bubble-text)'
+              }}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.opacity = '0.9';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '';
+              }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

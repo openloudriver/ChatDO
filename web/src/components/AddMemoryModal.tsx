@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { addMemorySource } from '../utils/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 type AddMemoryModalProps = {
   isOpen: boolean;
@@ -12,6 +13,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   onClose,
   onAdded,
 }) => {
+  const { theme } = useTheme();
   const [rootPath, setRootPath] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -139,7 +141,19 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
             <button
               type="submit"
               disabled={isLoading || !rootPath.trim()}
-              className="px-4 py-2 text-sm bg-[#10a37f] hover:bg-[#0d8f6e] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+              className="px-4 py-2 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: 'var(--user-bubble-bg)',
+                color: 'var(--user-bubble-text)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && rootPath.trim()) {
+                  e.currentTarget.style.opacity = '0.9';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '';
+              }}
             >
               {isLoading ? 'Adding...' : 'Add'}
             </button>

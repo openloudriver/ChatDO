@@ -21,6 +21,7 @@ import ChatMessages from "./ChatMessages";
 import { ImpactWorkspaceChatComposer } from "./ImpactWorkspaceChatComposer";
 import { ImpactCaptureModal } from "./ImpactCaptureModal";
 import { ActiveBulletEditor, type BulletMode, BULLET_MODES } from "./ActiveBulletEditor";
+import { useTheme } from "../contexts/ThemeContext";
 
 const IMPACT_PROJECT_NAME = "Impact Workspace";
 
@@ -187,6 +188,7 @@ const ImpactScopedRagTray: React.FC<ImpactScopedRagTrayProps> = ({
 };
 
 export const ImpactWorkspacePage: React.FC = () => {
+  const { theme } = useTheme();
   // Impact list state
   const [impacts, setImpacts] = useState<ImpactEntry[]>([]);
   const [selectedImpactIds, setSelectedImpactIds] = useState<Set<string>>(new Set());
@@ -529,21 +531,29 @@ export const ImpactWorkspacePage: React.FC = () => {
           <h1 className="text-xl font-semibold text-slate-100">Impact Workspace</h1>
           {/* Mode toggle (small segmented buttons) */}
           <div className="flex gap-1 flex-wrap">
-            {BULLET_MODES.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                onClick={() => setBulletMode(mode.id)}
-                className={`px-2 py-1 rounded-full border text-[11px] transition-colors ${
-                  bulletMode === mode.id
-                    ? 'bg-emerald-500 text-white border-emerald-500'
-                    : 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
-                }`}
-                title={mode.description}
-              >
-                {mode.label}
-              </button>
-            ))}
+            {BULLET_MODES.map((mode) => {
+              const isSelected = bulletMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setBulletMode(mode.id)}
+                  className={`px-2 py-1 rounded-full border text-[11px] transition-colors ${
+                    isSelected
+                      ? ''
+                      : 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
+                  }`}
+                  style={isSelected ? {
+                    backgroundColor: 'var(--user-bubble-bg)',
+                    color: 'var(--user-bubble-text)',
+                    borderColor: 'var(--user-bubble-bg)'
+                  } : undefined}
+                  title={mode.description}
+                >
+                  {mode.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
