@@ -14,7 +14,6 @@ interface ArticleCardProps {
   whyMatters?: string;
   estimatedReadTimeMinutes?: number;
   wordCount?: number;
-  model?: string;
 }
 
 const getDomain = (url: string) => {
@@ -58,7 +57,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   whyMatters,
   estimatedReadTimeMinutes,
   wordCount,
-  model,
 }) => {
   const domain = getDomain(url);
   const faviconUrl = getFaviconUrl(url);
@@ -67,9 +65,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const formattedDate = formatPublishedDate(published);
 
   return (
-    <AssistantCard
-      footer={model ? `Model: ${model}` : undefined}
-    >
+    <AssistantCard>
       {/* Header Row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">

@@ -1068,7 +1068,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       
                       {/* Display web_search_results if message type is web_search_results */}
                       {message.type === 'web_search_results' && message.data && (
-                        <AssistantCard footer="Model: Brave Search">
+                        <AssistantCard>
                           <div className="font-semibold text-lg mb-3 text-center">
                             Top Results
                           </div>
@@ -1257,7 +1257,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           summary={message.data.summary || ''}
                           keyPoints={message.data.keyPoints || []}
                           whyMatters={message.data.whyMatters}
-                          model={message.model}
                         />
                       )}
                       
@@ -1266,7 +1265,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         <RagResponseCard
                           content={message.data?.content || message.content || ''}
                           ragFiles={ragFilesWithIndex}
-                          model={message.model}
                           onOpenRagFile={handleOpenRagFile}
                         />
                       )}
@@ -1281,19 +1279,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       )}
                       
                       {/* Display sources and model attribution for assistant messages (only once, at the end) */}
-                      {/* Don't show for article_card, document_card, rag_response, or web_search_results as they handle their own model display */}
+                      {/* Show model tag for all assistant messages, including card types */}
                       {message.role === 'assistant' && 
-                       message.type !== 'article_card' && 
-                       message.type !== 'document_card' && 
-                       message.type !== 'rag_response' &&
-                       message.type !== 'web_search_results' && (
+                       message.type !== 'document_card' && (
                         <div className="text-xs text-[#8e8ea0] mt-2 text-right leading-tight">
                           {message.sources && message.sources.length > 0 && (
                             <div>
                               Sources: {message.sources.join(', ')}
                             </div>
                           )}
-                          {message.model && (
+                          {message.type === 'web_search_results' && (
+                            <div>
+                              Model: Brave Search
+                            </div>
+                          )}
+                          {message.type !== 'web_search_results' && message.model && (
                             <div>
                               Model: {formatModelName(message.model)}
                             </div>

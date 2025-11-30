@@ -7,7 +7,6 @@ import type { RagFile } from "../types/rag";
 export interface RagResponseCardProps {
   content: string;
   ragFiles: RagFile[]; // Indexed RAG files (single source of truth)
-  model?: string;
   onOpenRagFile: (file: RagFile) => void;
 }
 
@@ -241,7 +240,6 @@ function renderTextWithCitations(
 export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   content,
   ragFiles,
-  model,
   onOpenRagFile,
 }) => {
   // Build lookup map: index -> RagFile (single source of truth)
@@ -253,9 +251,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   }, [content]);
 
   return (
-    <AssistantCard
-      footer={model ? `Model: ${model}` : undefined}
-    >
+    <AssistantCard>
       {/* Header */}
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded bg-[#19c37d] flex items-center justify-center">
