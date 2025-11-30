@@ -279,20 +279,20 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
 
   return (
     <div 
-      className="rag-tray fixed right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#565869] flex flex-col z-50 pointer-events-auto"
+      className="rag-tray fixed right-0 top-0 h-full w-80 bg-[var(--bg-secondary)] border-l border-[var(--border-color)] flex flex-col z-50 pointer-events-auto transition-colors"
       data-rag-tray="true"
     >
       {/* Header */}
-      <div className="p-4 border-b border-[#565869] flex items-center justify-between">
+      <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between transition-colors">
         <div>
-          <h2 className="text-lg font-semibold text-[#ececf1]">Context Files</h2>
-          <p className="text-xs text-[#8e8ea0] mt-1">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Context Files</h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Files here are used as reference for ChatDO's answers in this chat.
           </p>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+          className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           title="Close"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,10 +302,10 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
       </div>
 
       {/* Upload Area */}
-      <div className="p-4 border-b border-[#565869]">
+      <div className="p-4 border-b border-[var(--border-color)] transition-colors">
         <label className="block">
           <div 
-            className="border-2 border-dashed border-[#565869] rounded-lg p-4 text-center cursor-pointer hover:border-[#19c37d] transition-colors"
+            className="border-2 border-dashed border-[var(--border-color)] rounded-lg p-4 text-center cursor-pointer hover:border-[#19c37d] transition-colors"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -316,12 +316,12 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
             }}
           >
             {isUploading ? (
-              <div className="flex items-center justify-center gap-2 text-[#8e8ea0]">
+              <div className="flex items-center justify-center gap-2 text-[var(--text-secondary)]">
                 <div className="animate-spin h-4 w-4 border-2 border-[#19c37d] border-t-transparent rounded-full"></div>
                 <span className="text-sm">Uploading...</span>
               </div>
             ) : (
-              <div className="text-[#8e8ea0]">
+              <div className="text-[var(--text-secondary)]">
                 <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -345,7 +345,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
       {/* File List */}
       <div className="flex-1 overflow-y-auto p-4">
         {ragFiles.length === 0 ? (
-          <div className="text-center text-[#8e8ea0] py-8">
+          <div className="text-center text-[var(--text-secondary)] py-8">
             <p className="text-sm">No context files yet.</p>
             <p className="text-xs mt-1">Upload files to use them as reference.</p>
           </div>

@@ -167,10 +167,10 @@ const App: React.FC = () => {
     
     // Default: show empty state or project list if no project selected
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#343541]">
+      <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)] transition-colors">
         <div className="text-center px-4">
-          <p className="text-[#8e8ea0] text-lg mb-2">Select a project to view its chats</p>
-          <p className="text-[#8e8ea0] text-sm">or click the trash icon to view deleted chats</p>
+          <p className="text-[var(--text-secondary)] text-lg mb-2">Select a project to view its chats</p>
+          <p className="text-[var(--text-secondary)] text-sm">or click the trash icon to view deleted chats</p>
         </div>
       </div>
     );

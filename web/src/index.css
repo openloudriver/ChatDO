@@ -1,12 +1,40 @@
 @import "tailwindcss";
 
+/* Light theme (default) */
 :root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f8;
+  --bg-tertiary: #f0f0f0;
+  --text-primary: #353740;
+  --text-secondary: #6e6e80;
+  --border-color: #e5e5e5;
+  --assistant-bubble-bg: #f7f7f8;
+  --user-bubble-bg: #19c37d;
+  --code-bg: #f0f0f0;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme */
+.dark {
   --bg-primary: #343541;
   --bg-secondary: #202123;
   --bg-tertiary: #444654;
   --text-primary: #ececf1;
   --text-secondary: #8e8ea0;
   --border-color: #565869;
+  --assistant-bubble-bg: #444654;
+  --user-bubble-bg: #19c37d;
+  --code-bg: #2b2d31;
+  --card-bg: #0D0D0D;
+  --card-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Ensure smooth transitions */
+* {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 body {
@@ -18,6 +46,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
@@ -35,11 +64,13 @@ body {
 
 /* Bubbles */
 .assistant-bubble {
-  @apply w-full rounded-xl bg-[#1e1f23] px-5 py-4 leading-relaxed text-[15px] max-w-none;
+  @apply w-full rounded-xl px-5 py-4 leading-relaxed text-[15px] max-w-none;
+  background-color: var(--assistant-bubble-bg);
 }
 
 .user-bubble {
-  @apply inline-block max-w-[65%] rounded-xl bg-emerald-500 px-4 py-2 text-[15px] leading-relaxed text-white;
+  @apply inline-block max-w-[65%] rounded-xl px-4 py-2 text-[15px] leading-relaxed text-white;
+  background-color: var(--user-bubble-bg);
 }
 
 /* Markdown typography (GPT-ish) */
@@ -81,16 +112,20 @@ body {
 }
 
 .prose blockquote {
-  @apply border-l-2 border-white/20 pl-4 italic my-3 text-white/80;
+  @apply border-l-2 pl-4 italic my-3;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 /* Inline code + code blocks */
 .prose code {
-  @apply bg-[#2b2d31] rounded px-1.5 py-0.5 text-[13px];
+  @apply rounded px-1.5 py-0.5 text-[13px];
+  background-color: var(--code-bg);
 }
 
 .prose pre {
-  @apply bg-[#2b2d31] rounded-xl p-4 text-[13px] overflow-x-auto;
+  @apply rounded-xl p-4 text-[13px] overflow-x-auto;
+  background-color: var(--code-bg);
 }
 
 /* Bullet option text wrapping - no horizontal scroll */

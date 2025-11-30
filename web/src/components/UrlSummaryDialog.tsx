@@ -37,8 +37,8 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-[#202123] border border-[#565869] p-4 shadow-xl">
-        <h2 className="text-sm font-medium text-[#ececf1] mb-2">
+      <div className="w-full max-w-md rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] p-4 shadow-xl transition-colors">
+        <h2 className="text-sm font-medium text-[var(--text-primary)] mb-2">
           Enter URL to summarize (web page or video):
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -47,7 +47,7 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full rounded-lg bg-[#343541] border border-[#565869] px-3 py-2 text-sm text-[#ececf1] outline-none focus:ring-1 focus:ring-[#10a37f]"
+            className="w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[#10a37f] transition-colors"
             placeholder="https://example.com or https://www.youtube.com/..."
           />
 
@@ -56,7 +56,7 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-3 py-1 rounded-lg text-xs text-[#ececf1] bg-transparent border border-[#565869] hover:bg-[#343541]"
+                className="px-3 py-1 rounded-lg text-xs text-[var(--text-primary)] bg-transparent border border-[var(--border-color)] hover:bg-[var(--bg-primary)] transition-colors"
               >
                 Cancel
               </button>

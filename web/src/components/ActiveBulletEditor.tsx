@@ -66,7 +66,7 @@ export function ActiveBulletEditor({
   };
 
   return (
-    <div className="border-b border-slate-700 pb-3 mb-3 flex flex-col gap-2 flex-shrink-0 bg-[#343541] px-4 pt-3">
+    <div className="border-b border-[var(--border-color)] pb-3 mb-3 flex flex-col gap-2 flex-shrink-0 bg-[var(--bg-primary)] px-4 pt-3 transition-colors">
       {/* Top row: impact title */}
       <div className="flex flex-col flex-1 min-w-0">
         <span className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">
@@ -114,7 +114,7 @@ export function ActiveBulletEditor({
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center justify-center"
+            className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center"
             title="Copy active bullet"
             aria-label="Copy active bullet"
           >

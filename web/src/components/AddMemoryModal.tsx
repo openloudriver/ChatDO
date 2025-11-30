@@ -67,19 +67,19 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-[#343541] border border-[#565869] rounded-lg w-full max-w-lg p-6">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg w-full max-w-lg p-6 transition-colors">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">Add memory source</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Add memory source</h2>
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="text-[#8e8ea0] hover:text-white disabled:opacity-50"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
           >
             ✕
           </button>
         </div>
 
-        <p className="text-sm text-[#8e8ea0] mb-4">
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
           Paste a folder path and I'll index it. Example: /Volumes/iCPWeeaPWBXs/Downloads
         </p>
         <p className="text-xs text-[#8e8ea0] mb-4">
@@ -88,7 +88,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               Folder path <span className="text-red-400">*</span>
             </label>
             <input
@@ -97,13 +97,13 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               onChange={(e) => setRootPath(e.target.value)}
               placeholder="/path/to/folder"
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-[#40414f] border border-[#565869] rounded text-white placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] disabled:opacity-50"
+              className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--text-secondary)] disabled:opacity-50 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              Display name <span className="text-[#8e8ea0] text-xs">(optional)</span>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              Display name <span className="text-[var(--text-secondary)] text-xs">(optional)</span>
             </label>
             <input
               type="text"
@@ -111,7 +111,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Downloads"
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-[#40414f] border border-[#565869] rounded text-white placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] disabled:opacity-50"
+              className="w-full px-3 py-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--text-secondary)] disabled:opacity-50 transition-colors"
             />
           </div>
 
@@ -132,7 +132,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               type="button"
               onClick={handleClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm bg-[#565869] hover:bg-[#6e6f7f] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+              className="px-4 py-2 text-sm bg-[var(--border-color)] hover:bg-[var(--bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-primary)] rounded transition-colors"
             >
               Cancel
             </button>

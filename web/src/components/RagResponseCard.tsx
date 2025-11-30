@@ -84,13 +84,13 @@ const CitationChip: React.FC<CitationChipProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         title={titleText}
-        className="ml-1 inline-flex items-center rounded-full border border-[#565869] px-1.5 py-0.5 text-[10px] leading-none text-[#8e8ea0] hover:bg-[#3a3b45] hover:text-[#ececf1] hover:border-[#565869] transition-colors cursor-pointer"
+        className="ml-1 inline-flex items-center rounded-full border border-[var(--border-color)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)] transition-colors cursor-pointer"
       >
         {label}
       </button>
       {showTooltip && tooltipPosition && (
         <div
-          className="fixed px-2 py-1 rounded bg-[#2a2b32] text-[10px] text-[#ececf1] whitespace-nowrap pointer-events-none shadow-lg border border-[#565869] z-[99999]"
+          className="fixed px-2 py-1 rounded bg-[var(--bg-secondary)] text-[10px] text-[var(--text-primary)] whitespace-nowrap pointer-events-none shadow-lg border border-[var(--border-color)] z-[99999] transition-colors"
           style={{
             left: `${tooltipPosition.x}px`,
             top: `${tooltipPosition.y}px`,
@@ -269,14 +269,14 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
             />
           </svg>
         </div>
-        <div className="text-xs uppercase tracking-wide text-[#8e8ea0] font-medium">
+        <div className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-medium">
           RAG Response
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="border-t border-[#565869] pt-4">
-        <div className="prose prose-invert max-w-none text-sm text-[#ececf1] leading-relaxed">
+      <div className="border-t border-[var(--border-color)] pt-4 transition-colors">
+        <div className="prose prose-invert max-w-none text-sm text-[var(--text-primary)] leading-relaxed">
           <ReactMarkdown
             components={{
               h1: ({ children }) => <SectionHeading>{children}</SectionHeading>,
@@ -286,10 +286,10 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
               h5: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               h6: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               ul: ({ children }) => (
-                <ul className="list-none mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ul>
+                <ul className="list-none mb-4 space-y-1 text-[var(--text-primary)] ml-2">{children}</ul>
               ),
               ol: ({ children }) => (
-                <ol className="list-none mb-4 space-y-1 text-[#ececf1] ml-2">{children}</ol>
+                <ol className="list-none mb-4 space-y-1 text-[var(--text-primary)] ml-2">{children}</ol>
               ),
               li: ({ children }) => {
                 const text = React.Children.toArray(children)
@@ -308,7 +308,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
                 if (!hasCitations) {
                   return (
-                    <li className="ml-4 text-sm text-[#ececf1] mb-1 before:content-['•'] before:mr-2">
+                    <li className="ml-4 text-sm text-[var(--text-primary)] mb-1 before:content-['•'] before:mr-2">
                       {children}
                     </li>
                   );
@@ -324,10 +324,10 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 );
               },
               strong: ({ children }) => (
-                <strong className="font-semibold text-[#ececf1]">{children}</strong>
+                <strong className="font-semibold text-[var(--text-primary)]">{children}</strong>
               ),
               em: ({ children }) => (
-                <em className="italic text-[#ececf1]">{children}</em>
+                <em className="italic text-[var(--text-primary)]">{children}</em>
               ),
               code: ({ children, className }) => {
                 // Check if this is inline code (not a code block)
@@ -372,7 +372,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 
                 if (!hasCitations) {
                   return (
-                    <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
+                    <p className="mb-3 text-sm leading-relaxed text-[var(--text-primary)]">
                       {isSubSectionHeading && <span className="mr-2">-</span>}
                       {children}
                     </p>

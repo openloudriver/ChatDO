@@ -136,22 +136,22 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-xl rounded-lg bg-slate-900 p-6 shadow-xl border border-slate-700">
-        <h2 className="mb-4 text-lg font-semibold text-slate-100">Quick Impact Capture</h2>
-        <div className="space-y-3 text-sm text-slate-100">
+      <div className="w-full max-w-xl rounded-lg bg-[var(--bg-primary)] p-6 shadow-xl border border-[var(--border-color)] transition-colors">
+        <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Quick Impact Capture</h2>
+        <div className="space-y-3 text-sm text-[var(--text-primary)]">
           <input
-            className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+            className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
             placeholder="Short title (e.g., 'Led Joint Cloud brief to MAJCOMs')"
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
           <div className="w-1/2">
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--text-secondary)]">
               Date
             </label>
             <input
               type="date"
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
               value={date}
               onChange={e => {
                 const value = e.target.value;
@@ -173,44 +173,44 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--text-secondary)]">
               What did you do? (Actions)
             </label>
             <textarea
-              className="h-16 w-full resize-none rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              className="h-16 w-full resize-none rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
               placeholder="Quickly jot what you actually did, in your own words…"
               value={actions}
               onChange={e => setActions(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--text-secondary)]">
               Why did it matter? (Impact / result)
             </label>
             <textarea
-              className="h-16 w-full resize-none rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              className="h-16 w-full resize-none rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
               placeholder="Who benefited? What changed? What did you unlock/prevent/save?"
               value={impact}
               onChange={e => setImpact(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--text-secondary)]">
               Numbers / scope (optional)
             </label>
             <input
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
               placeholder="ex: 8 MAJCOMs / $27M portfolio / 1200 Airmen / 3 yr roadmap"
               value={metrics}
               onChange={e => setMetrics(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--text-secondary)]">
               Notes (optional)
             </label>
             <textarea
-              className="h-16 w-full resize-none rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm"
+              className="h-16 w-full resize-none rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"
               placeholder="Any extra details we might want later for narratives/1206s…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -221,14 +221,14 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
-            className="rounded px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+            className="rounded px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 border border-slate-600"
+            className="rounded px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] transition-colors"
             onClick={handleWorkspace}
           >
             Workspace
@@ -236,10 +236,10 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
           <button
             type="button"
             disabled={!canSave || saving}
-            className={`rounded px-3 py-2 text-sm font-semibold ${
+            className={`rounded px-3 py-2 text-sm font-semibold transition-colors ${
               canSave && !saving
-                ? "bg-emerald-500 text-slate-900 hover:bg-emerald-400"
-                : "bg-slate-700 text-slate-400 cursor-not-allowed"
+                ? "bg-emerald-500 text-white hover:bg-emerald-400"
+                : "bg-[var(--bg-tertiary)] text-[var(--text-secondary)] cursor-not-allowed"
             }`}
             onClick={handleSave}
           >

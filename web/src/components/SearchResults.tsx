@@ -53,13 +53,13 @@ const SearchResults: React.FC = () => {
   }, {} as Record<string, Conversation[]>);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#343541]">
+    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#565869]">
-        <h2 className="text-xl font-semibold text-[#ececf1]">
+      <div className="px-6 py-4 border-b border-[var(--border-color)] transition-colors">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">
           Search Results
         </h2>
-        <p className="text-sm text-[#8e8ea0] mt-1">
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
           {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
         </p>
       </div>
@@ -68,7 +68,7 @@ const SearchResults: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {searchResults.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[#8e8ea0] text-sm">No results found</p>
+            <p className="text-[var(--text-secondary)] text-sm">No results found</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -77,7 +77,7 @@ const SearchResults: React.FC = () => {
               return (
                 <div key={projectId} className="space-y-2">
                   {project && (
-                    <h3 className="text-sm font-semibold text-[#8e8ea0] uppercase mb-2">
+                    <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase mb-2">
                       {project.name}
                     </h3>
                   )}
@@ -93,19 +93,19 @@ const SearchResults: React.FC = () => {
                         }}
                         className={`w-full text-left p-4 rounded-lg transition-colors ${
                           isSelected
-                            ? 'bg-[#444654] border border-[#565869]'
-                            : 'bg-[#40414f] hover:bg-[#444654] border border-transparent'
+                            ? 'bg-[var(--assistant-bubble-bg)] border border-[var(--border-color)]'
+                            : 'bg-[var(--bg-tertiary)] hover:bg-[var(--assistant-bubble-bg)] border border-transparent'
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-[#ececf1]'}`}>
+                          <h3 className={`font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>
                             {chat.title}
                           </h3>
-                          <span className="text-xs text-[#8e8ea0] ml-4 flex-shrink-0">
+                          <span className="text-xs text-[var(--text-secondary)] ml-4 flex-shrink-0">
                             {formatDate(chat.createdAt)}
                           </span>
                         </div>
-                        <p className="text-sm text-[#8e8ea0] line-clamp-2">
+                        <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
                           {getPreview(chat)}
                         </p>
                       </button>

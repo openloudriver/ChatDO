@@ -87,7 +87,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               }}
             />
           )}
-          <div className="text-xs uppercase tracking-[0.5px] text-white/45 font-medium">
+          <div className="text-xs uppercase tracking-[0.5px] text-[var(--text-secondary)] font-medium">
             {displaySiteName}
           </div>
         </div>
@@ -106,7 +106,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       </div>
 
       {/* Subheader: Read time and last updated */}
-      <div className="text-[13px] text-white/45 flex items-center gap-3">
+      <div className="text-[13px] text-[var(--text-secondary)] flex items-center gap-3">
         {formattedDate && (
           <>
             <span>Published: {formattedDate}</span>
@@ -128,7 +128,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {summary && (
           <div>
             <SectionHeading>SUMMARY</SectionHeading>
-            <p className="text-[15px] text-white/82 leading-[1.65]">{summary}</p>
+            <p className="text-[15px] text-[var(--text-primary)] leading-[1.65]">{summary}</p>
           </div>
         )}
         
@@ -138,7 +138,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             <SectionHeading>KEY POINTS</SectionHeading>
             <ul className="list-disc ml-4 mt-2 mb-5 space-y-[6px]">
               {keyPoints.map((point, index) => (
-                <li key={index} className="text-[15px] text-white/82 leading-[1.65]">{point}</li>
+                <li key={index} className="text-[15px] text-[var(--text-primary)] leading-[1.65]">{point}</li>
               ))}
             </ul>
           </div>
@@ -148,7 +148,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         {whyMatters && (
           <div>
             <SectionHeading>WHY THIS MATTERS</SectionHeading>
-            <p className="text-[15px] text-white/82 leading-[1.65]">{whyMatters}</p>
+            <p className="text-[15px] text-[var(--text-primary)] leading-[1.65]">{whyMatters}</p>
           </div>
         )}
       </div>

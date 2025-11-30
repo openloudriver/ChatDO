@@ -146,8 +146,8 @@ const MemoryDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#343541]">
-        <div className="text-[#8e8ea0]">Loading memory sources...</div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)] transition-colors">
+        <div className="text-[var(--text-secondary)]">Loading memory sources...</div>
       </div>
     );
   }
@@ -157,13 +157,13 @@ const MemoryDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#343541] p-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--bg-primary)] p-6 transition-colors">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-white">Memory Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Memory Dashboard</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-3 py-1.5 text-sm bg-[#565869] hover:bg-[#6e6f7f] text-white rounded transition-colors"
+            className="px-3 py-1.5 text-sm bg-[var(--border-color)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded transition-colors"
           >
             Add memory…
           </button>
@@ -177,8 +177,8 @@ const MemoryDashboard: React.FC = () => {
 
         {sources.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[#8e8ea0] text-lg">No sources configured</p>
-            <p className="text-[#8e8ea0] text-sm mt-2">
+            <p className="text-[var(--text-secondary)] text-lg">No sources configured</p>
+            <p className="text-[var(--text-secondary)] text-sm mt-2">
               Add sources in config/memory_sources.yaml
             </p>
           </div>
@@ -194,12 +194,12 @@ const MemoryDashboard: React.FC = () => {
               return (
                 <div
                   key={source.id}
-                  className="bg-[#40414f] border border-[#565869] rounded-lg p-4"
+                  className="bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg p-4 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-medium text-white">
+                        <h3 className="text-lg font-medium text-[var(--text-primary)]">
                           {source.display_name}
                         </h3>
                         <span
@@ -210,7 +210,7 @@ const MemoryDashboard: React.FC = () => {
                           {source.status}
                         </span>
                       </div>
-                      <p className="text-sm text-[#8e8ea0] font-mono">
+                      <p className="text-sm text-[var(--text-secondary)] font-mono">
                         {source.root_path}
                       </p>
                     </div>
@@ -218,7 +218,7 @@ const MemoryDashboard: React.FC = () => {
                       <button
                         onClick={() => handleReindex(source.id)}
                         disabled={source.status === 'indexing'}
-                        className="px-3 py-1.5 text-sm bg-[#565869] hover:bg-[#6e6f7f] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+                        className="px-3 py-1.5 text-sm bg-[var(--border-color)] hover:bg-[var(--bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-primary)] rounded transition-colors"
                       >
                         Reindex
                       </button>
@@ -236,7 +236,7 @@ const MemoryDashboard: React.FC = () => {
                     <div className="mb-3">
                       {source.latest_job.status === 'running' && (
                         <div>
-                          <div className="flex justify-between text-sm text-[#8e8ea0] mb-1">
+                          <div className="flex justify-between text-sm text-[var(--text-secondary)] mb-1">
                             <span>
                               Processing {source.latest_job.files_processed}
                               {source.latest_job.files_total
@@ -248,7 +248,7 @@ const MemoryDashboard: React.FC = () => {
                               <span>{Math.round(progress)}%</span>
                             )}
                           </div>
-                          <div className="w-full bg-[#343541] rounded-full h-2">
+                          <div className="w-full bg-[var(--bg-primary)] rounded-full h-2 transition-colors">
                             <div
                               className={`h-2 rounded-full transition-all ${
                                 progress !== null
@@ -270,25 +270,25 @@ const MemoryDashboard: React.FC = () => {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <div className="text-[#8e8ea0] mb-1">Files</div>
-                      <div className="text-white font-medium">
+                      <div className="text-[var(--text-secondary)] mb-1">Files</div>
+                      <div className="text-[var(--text-primary)] font-medium">
                         {source.files_indexed.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[#8e8ea0] mb-1">Size</div>
+                      <div className="text-[var(--text-secondary)] mb-1">Size</div>
                       <div className="text-white font-medium">
                         {formatBytes(source.bytes_indexed)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[#8e8ea0] mb-1">Last Index</div>
+                      <div className="text-[var(--text-secondary)] mb-1">Last Index</div>
                       <div className="text-white font-medium">
                         {formatDate(source.last_index_completed_at)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[#8e8ea0] mb-1">Connected Projects</div>
+                      <div className="text-[var(--text-secondary)] mb-1">Connected Projects</div>
                       <div className="text-white font-medium">
                         {source.connected_projects && source.connected_projects.length > 0
                           ? source.connected_projects.join(', ')

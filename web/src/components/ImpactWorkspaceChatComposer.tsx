@@ -275,7 +275,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
 
   return (
     <>
-      <div className="px-4 py-3 border-t border-slate-700 bg-[#343541]">
+      <div className="px-4 py-3 border-t border-[var(--border-color)] bg-[var(--bg-primary)] transition-colors">
         <div className="relative flex items-end">
           <textarea
             ref={textareaRef}
@@ -286,7 +286,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
             }}
             onKeyDown={handleKeyDown}
             placeholder="Message ChatDO about your impacts and template..."
-            className="w-full p-3 pl-3 pr-24 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
+            className="w-full p-3 pl-3 pr-24 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto transition-colors"
             style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }} // Fixed to 2 rows
           />
           <div className="absolute right-2 bottom-2 flex items-center gap-1">
@@ -296,7 +296,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
               className={`p-2 rounded transition-colors ${
                 isRagTrayOpen
                   ? 'text-[#19c37d] bg-[#19c37d]/20'
-                  : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
               }`}
               title="RAG context tray (upload reference files)"
             >

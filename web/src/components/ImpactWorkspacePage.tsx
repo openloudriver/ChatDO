@@ -131,7 +131,7 @@ const ImpactScopedRagTray: React.FC<ImpactScopedRagTrayProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-[#343541] border-l border-slate-700 z-50 flex flex-col shadow-2xl">
+    <div className="fixed right-0 top-0 h-full w-80 bg-[var(--bg-primary)] border-l border-[var(--border-color)] z-50 flex flex-col shadow-2xl transition-colors">
       <div className="flex items-center justify-between p-4 border-b border-slate-700">
         <h3 className="text-sm font-semibold text-slate-100">Context Files</h3>
         <button
@@ -522,9 +522,9 @@ export const ImpactWorkspacePage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#343541] overflow-hidden">
+    <div className="flex h-full flex-col bg-[var(--bg-primary)] overflow-hidden transition-colors">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-slate-700 bg-[#343541] px-6 py-4">
+      <div className="flex-shrink-0 border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-6 py-4 transition-colors">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl font-semibold text-slate-100">Impact Workspace</h1>
           {/* Mode toggle (small segmented buttons) */}
@@ -551,7 +551,7 @@ export const ImpactWorkspacePage: React.FC = () => {
       {/* Main content: 2-column layout (impacts + bullet editor/chat) */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left pane: Impact list */}
-        <div className="w-80 flex flex-col border-r border-slate-700 bg-[#343541] overflow-hidden">
+        <div className="w-80 flex flex-col border-r border-[var(--border-color)] bg-[var(--bg-primary)] overflow-hidden transition-colors">
           <div className="px-4 py-3 border-b border-slate-700 flex-shrink-0 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-100">Captured Impacts</h2>
             <div className="flex items-center gap-1.5">
@@ -651,7 +651,7 @@ export const ImpactWorkspacePage: React.FC = () => {
               onChangeText={handleActiveBulletChange}
             />
           ) : (
-            <div className="px-6 py-8 border-b border-slate-700 bg-[#343541]">
+            <div className="px-6 py-8 border-b border-[var(--border-color)] bg-[var(--bg-primary)] transition-colors">
               <div className="text-sm text-white/70">
                 No impact selected — select one on the left to ground the bullet.
               </div>

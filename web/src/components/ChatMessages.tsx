@@ -137,13 +137,13 @@ const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-[#ececf1]">{children}</h1>,
-            h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-3 text-[#ececf1]">{children}</h2>,
-            h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[#ececf1]">{children}</h3>,
-            h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[#ececf1]">{children}</h4>,
-            p: ({ children }) => <p className="my-2 text-[#ececf1] leading-relaxed">{children}</p>,
-            ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[#ececf1]">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[#ececf1]">{children}</ol>,
+            h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-[var(--text-primary)]">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-3 text-[var(--text-primary)]">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[var(--text-primary)]">{children}</h3>,
+            h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--text-primary)]">{children}</h4>,
+            p: ({ children }) => <p className="my-2 text-[var(--text-primary)] leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ol>,
             li: ({ children }) => <li className="leading-relaxed">{children}</li>,
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
@@ -152,23 +152,23 @@ const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
                 </table>
               </div>
             ),
-            thead: ({ children }) => <thead className="bg-[#343541]">{children}</thead>,
+            thead: ({ children }) => <thead className="bg-[var(--bg-primary)]">{children}</thead>,
             tbody: ({ children }) => <tbody>{children}</tbody>,
-            tr: ({ children }) => <tr className="border-b border-[#565869]">{children}</tr>,
+            tr: ({ children }) => <tr className="border-b border-[var(--border-color)]">{children}</tr>,
             th: ({ children }) => (
-              <th className="border-b border-[#565869] px-3 py-2 font-medium text-left text-[#ececf1]">
+              <th className="border-b border-[var(--border-color)] px-3 py-2 font-medium text-left text-[var(--text-primary)]">
                 {children}
               </th>
             ),
             td: ({ children }) => (
-              <td className="border-b border-[#565869] px-3 py-2 align-top text-[#ececf1]">
+              <td className="border-b border-[var(--border-color)] px-3 py-2 align-top text-[var(--text-primary)]">
                 {children}
               </td>
             ),
             code: ({ className, children, ...props }) => {
               const isInline = !className;
               return isInline ? (
-                <code className="bg-black/40 rounded px-1.5 py-0.5 font-mono text-[0.85em] text-[#ececf1]" {...props}>
+                <code className="bg-[var(--code-bg)] rounded px-1.5 py-0.5 font-mono text-[0.85em] text-[var(--text-primary)]" {...props}>
                   {children}
                 </code>
               ) : (
@@ -178,17 +178,17 @@ const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
               );
             },
             pre: ({ children }) => (
-              <pre className="bg-black/30 rounded-lg p-3 font-mono text-sm overflow-x-auto my-3 text-[#ececf1]">
+              <pre className="bg-[var(--code-bg)] rounded-lg p-3 font-mono text-sm overflow-x-auto my-3 text-[var(--text-primary)]">
                 {children}
               </pre>
             ),
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-[#565869] pl-4 ml-1 my-3 italic text-[#ececf1]">
+              <blockquote className="border-l-4 border-[var(--border-color)] pl-4 ml-1 my-3 italic text-[var(--text-primary)]">
                 {children}
               </blockquote>
             ),
-            strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
-            em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+            strong: ({ children }) => <strong className="font-semibold text-[var(--text-primary)]">{children}</strong>,
+            em: ({ children }) => <em className="italic text-[var(--text-primary)]">{children}</em>,
           }}
         >
           {content}
@@ -286,7 +286,7 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
                         console.error('Failed to copy option text:', err);
                       }
                     }}
-                    className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center justify-center"
+                    className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center"
                     title={`Copy ${label} bullet`}
                     aria-label={`Copy ${label} bullet`}
                   >
@@ -666,13 +666,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#343541]">
+    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
       {/* Breadcrumb/Header - only show in chat view mode, not in impact workspace */}
       {viewMode === 'chat' && (
-        <div className="px-6 py-4 border-b border-[#565869] flex items-center gap-4">
+        <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center gap-4 transition-colors">
           <button
             onClick={handleBack}
-            className="text-[#8e8ea0] hover:text-white transition-colors flex items-center gap-2"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -696,12 +696,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   onChange={(e) => setEditTitleValue(e.target.value)}
                   onBlur={handleTitleSave}
                   onKeyDown={handleTitleKeyDown}
-                  className="text-lg font-semibold text-[#ececf1] bg-[#40414f] border border-[#565869] rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#19c37d] min-w-[200px] max-w-[400px]"
+                  className="text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#19c37d] min-w-[200px] max-w-[400px] transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <h2 
-                  className="text-lg font-semibold text-[#ececf1] cursor-pointer hover:text-white transition-colors"
+                  className="text-lg font-semibold text-[var(--text-primary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                   onClick={handleTitleClick}
                   title="Click to edit chat name"
                 >
@@ -728,14 +728,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           >
             {/* Assistant: Avatar floats outside left edge */}
             {message.role === 'assistant' && (
-              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center" style={{ left: 'calc(-2.5rem + 6px)' }}>
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
             
             {/* User: Avatar floats outside right edge */}
             {message.role === 'user' && (
-              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center" style={{ right: 'calc(-2.5rem - 6px)' }}>
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center transition-colors" style={{ right: 'calc(-2.5rem - 6px)' }}>
                 <span className="text-white text-sm font-bold">U</span>
               </div>
             )}
@@ -916,10 +916,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   
                   return (
                     <div
-                      className={`rounded-lg px-4 py-3 box-border ${
+                      className={`rounded-lg px-4 py-3 box-border transition-colors ${
                         message.role === 'user'
                           ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto mr-[-6px]'
-                          : 'bg-[#444654] text-[#ececf1] w-full ml-[6px]'
+                          : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px]'
                       }`}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
@@ -1102,7 +1102,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               const faviconUrl = getFaviconUrl(result.url);
                               
                               return (
-                                <div key={index} className={index > 0 ? "pt-3 border-t border-[#565869]/30" : ""}>
+                                <div key={index} className={index > 0 ? "pt-3 border-t border-[var(--border-color)]/30" : ""}>
                                   {/* Domain + Favicon */}
                                   <div className="flex items-center gap-2 mb-1">
                                     {faviconUrl && (
@@ -1115,7 +1115,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                         }}
                                       />
                                     )}
-                                    <span className="text-xs text-[#8e8ea0]">{domain}</span>
+                                    <span className="text-xs text-[var(--text-secondary)]">{domain}</span>
                                   </div>
                                   
                                   {/* Title + Summarize Button */}
@@ -1179,7 +1179,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                           ? 'text-green-400 cursor-default' 
                                           : isSummarizing
                                           ? 'text-blue-400 cursor-wait'
-                                          : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                                       }`}
                                       title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this URL"}
                                     >
@@ -1201,7 +1201,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                   </div>
                                   
                                   {/* Snippet */}
-                                  <div className="text-sm text-[#8e8ea0] line-clamp-2">
+                                  <div className="text-sm text-[var(--text-secondary)] line-clamp-2">
                                     {result.snippet}
                                   </div>
                                 </div>
@@ -1210,7 +1210,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           </div>
                           
                           {message.data.summary && (
-                            <div className="mt-6 pt-6 border-t border-[#565869]">
+                            <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
                               <div className="font-semibold text-lg mb-4 text-center">Summary</div>
                               <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown
@@ -1274,7 +1274,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         message.role === 'assistant' ? (
                           <OptionsRenderer content={content} bulletMode={bulletMode} />
                         ) : (
-                          <p className="whitespace-pre-wrap text-[#ececf1]">{content}</p>
+                          <p className="whitespace-pre-wrap text-[var(--text-primary)]">{content}</p>
                         )
                       )}
                       
@@ -1282,7 +1282,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       {/* Show model tag for all assistant messages, including card types */}
                       {message.role === 'assistant' && 
                        message.type !== 'document_card' && (
-                        <div className="text-xs text-[#8e8ea0] mt-2 text-right leading-tight">
+                        <div className="text-xs text-[var(--text-secondary)] mt-2 text-right leading-tight">
                           {message.sources && message.sources.length > 0 && (
                             <div>
                               Sources: {message.sources.join(', ')}
@@ -1311,7 +1311,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   <>
                     <button
                       onClick={() => handleCopyMessage(message.content, message.id)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex items-center gap-1"
+                      className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1"
                       title="Copy message"
                     >
                       {isCopied ? (
@@ -1329,7 +1329,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     </button>
                     <button
                       onClick={() => handleEditMessage(message.id, message.content)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+                      className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       title="Edit message"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1338,7 +1338,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(message.id)}
-                      className="p-1.5 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white"
+                      className="p-1.5 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       title="Delete message"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1381,7 +1381,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             <span className="text-white text-sm font-bold">C</span>
           </div>
           <div className="flex flex-col w-full">
-            <div className="rounded-lg px-4 py-3 box-border bg-[#444654] text-[#ececf1] w-full ml-[6px]">
+            <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px] transition-colors">
               <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
               <span className="animate-pulse">▊</span>
             </div>
@@ -1403,15 +1403,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         >
           <div 
             ref={previewModalRef}
-            className={`bg-[#343541] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col ${isFullscreen ? '!max-w-none !max-h-none !rounded-none !h-screen !w-screen' : ''}`}
+            className={`bg-[var(--bg-primary)] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col transition-colors ${isFullscreen ? '!max-w-none !max-h-none !rounded-none !h-screen !w-screen' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b border-[#565869]">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)] transition-colors">
               <h3 className="text-lg font-semibold text-white truncate">{previewFile.name}</h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={toggleFullscreen}
-                  className="p-2 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+                  className="p-2 hover:bg-[var(--border-color)] rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 >
                   {isFullscreen ? (
@@ -1426,7 +1426,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 </button>
                 <button
                   onClick={() => setPreviewFile(null)}
-                  className="p-2 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+                  className="p-2 hover:bg-[var(--border-color)] rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   title="Close preview"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1445,25 +1445,25 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               ) : previewFile.type === 'pdf' ? (
                 <iframe
                   src={previewFile.data}
-                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  className={`w-full border border-[var(--border-color)] rounded transition-colors ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'pptx' ? (
                 <iframe
                   src={previewFile.data}
-                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  className={`w-full border border-[var(--border-color)] rounded transition-colors ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'xlsx' ? (
                 <iframe
                   src={previewFile.data}
-                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  className={`w-full border border-[var(--border-color)] rounded transition-colors ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'docx' ? (
                 <iframe
                   src={previewFile.data}
-                  className={`w-full border border-[#565869] rounded ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
+                  className={`w-full border border-[var(--border-color)] rounded transition-colors ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[80vh]'}`}
                   title={previewFile.name}
                 />
               ) : previewFile.type === 'video' ? (
@@ -1476,7 +1476,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   Your browser does not support the video tag.
                 </video>
               ) : (
-                <div className="text-center text-[#8e8ea0] py-8">
+                <div className="text-center text-[var(--text-secondary)] py-8">
                   <p>Preview not available for this file type.</p>
                   <p className="text-sm mt-2">File: {previewFile.name}</p>
                   {previewFile.data && (

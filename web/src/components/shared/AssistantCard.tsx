@@ -19,14 +19,14 @@ export function AssistantCard({ children, className = "", footer }: AssistantCar
   return (
     <div className={`mt-[5px] w-full ${className}`}>
       <div 
-        className="assistant-card rounded-[14px] bg-[#0D0D0D] border border-white/8 shadow-lg px-8 py-7 space-y-4 max-sm:px-5"
+        className="assistant-card rounded-[14px] bg-[var(--card-bg)] border border-[var(--card-border)] shadow-lg px-8 py-7 space-y-4 max-sm:px-5 transition-colors"
         style={{ boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' }}
       >
         {children}
         {footer ? (
           <div className="pt-[18px]">
-            <div className="w-full h-px bg-white/6 mb-[14px]"></div>
-            <div className="text-xs text-white/35 text-right">
+            <div className="w-full h-px border-[var(--border-color)]/30 mb-[14px]"></div>
+            <div className="text-xs text-[var(--text-secondary)] text-right">
               {footer}
             </div>
           </div>

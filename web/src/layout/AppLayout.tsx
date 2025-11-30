@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAppLayout } from "../hooks/useAppLayout";
+import { useTheme } from "../contexts/ThemeContext";
 import Sidebar from "../components/Sidebar";
 
 type AppLayoutProps = {
@@ -42,6 +43,7 @@ const PanelLeftOpenIcon = () => (
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarOpen, toggleSidebar } = useAppLayout();
+  const { theme, toggleTheme } = useTheme();
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
 
   // Browser fullscreen toggle functionality
@@ -113,13 +115,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [toggleBrowserFullscreen]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#343541] text-[#ececf1]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
       {/* Sidebar column */}
       <div
         className={
           isSidebarOpen
-            ? "w-64 shrink-0 border-r border-[#565869] bg-[#202123] transition-all duration-150"
-            : "w-0 shrink-0 overflow-hidden border-r border-[#565869] transition-all duration-150"
+            ? "w-64 shrink-0 border-r border-[var(--border-color)] bg-[var(--bg-secondary)] transition-all duration-150"
+            : "w-0 shrink-0 overflow-hidden border-r border-[var(--border-color)] transition-all duration-150"
         }
       >
         {/* Only render content when open to avoid weird focus/tab issues */}
@@ -129,29 +131,49 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Global header */}
-        <header className="flex items-center gap-3 border-b border-[#565869] px-4 py-2 bg-[#343541]">
+        <header className="flex items-center gap-3 border-b border-[var(--border-color)] px-4 py-2 bg-[var(--bg-primary)] transition-colors">
           {/* Sidebar toggle button – always visible */}
           <button
             type="button"
             onClick={toggleSidebar}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#565869] bg-[#40414f] text-[#8e8ea0] hover:bg-[#565869] hover:text-white transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors"
             aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
             {isSidebarOpen ? <PanelLeftIcon /> : <PanelLeftOpenIcon />}
           </button>
 
           {/* Optional: current view / breadcrumbs placeholder */}
-          <div className="text-xs font-medium uppercase tracking-wide text-[#8e8ea0]">
+          <div className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
             ChatDO
           </div>
 
           {/* Spacer flex to push anything else (e.g. model indicator) to the right */}
           <div className="ml-auto flex items-center gap-2">
+            {/* Theme toggle button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors"
+              aria-label={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === 'dark' ? (
+                // Sun icon (light mode)
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                // Moon icon (dark mode)
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
             {/* Fullscreen toggle button */}
             <button
               type="button"
               onClick={toggleBrowserFullscreen}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-gray-200 hover:bg-white/10 hover:border-white/20 transition"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors"
               aria-label={isBrowserFullscreen ? "Exit full screen" : "Enter full screen"}
               title={isBrowserFullscreen ? "Exit full screen (F9)" : "Enter full screen (F9)"}
             >

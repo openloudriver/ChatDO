@@ -779,7 +779,7 @@ const ChatComposer: React.FC = () => {
   return (
     <div 
       ref={dropZoneRef}
-      className={`border-t border-[#565869] p-4 bg-[#343541] ${isDragging ? 'bg-[#40414f] border-[#19c37d] border-2' : ''}`}
+      className={`border-t border-[var(--border-color)] p-4 bg-[var(--bg-primary)] transition-colors ${isDragging ? 'bg-[var(--bg-tertiary)] border-[#19c37d] border-2' : ''}`}
       onDragOver={isRagTrayOpen ? undefined : handleDragOver}
       onDragLeave={isRagTrayOpen ? undefined : handleDragLeave}
       onDrop={isRagTrayOpen ? undefined : handleDrop}
@@ -787,10 +787,10 @@ const ChatComposer: React.FC = () => {
       <div className="max-w-[1000px] mx-auto">
         {editingMessageId && (
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-[#8e8ea0]">Editing message</span>
+            <span className="text-sm text-[var(--text-secondary)]">Editing message</span>
             <button
               onClick={handleCancelEdit}
-              className="p-1 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+              className="p-1 hover:bg-[var(--border-color)] rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               title="Cancel editing"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -830,7 +830,7 @@ const ChatComposer: React.FC = () => {
                 ) : (
                   // Document preview (PDF, etc.) - clickable
                   <div 
-                    className="relative bg-[#40414f] border border-[#565869] rounded-lg p-3 min-w-[200px] max-w-[300px] cursor-pointer hover:border-[#19c37d] transition-colors"
+                    className="relative bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg p-3 min-w-[200px] max-w-[300px] cursor-pointer hover:border-[#19c37d] transition-colors"
                     onClick={() => {
                       // Construct preview path - server returns path relative to project root (includes 'uploads/')
                       // Format: uploads/project_id/conversation_id/filename
@@ -880,14 +880,14 @@ const ChatComposer: React.FC = () => {
                             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                           </svg>
                         ) : (
-                          <svg className="w-10 h-10 text-[#8e8ea0]" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 text-[var(--text-secondary)]" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                           </svg>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate">{file.name}</p>
-                        <p className="text-xs text-[#8e8ea0] mt-1">
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">
                           {(() => {
                             // Get file extension from filename
                             const ext = file.name.split('.').pop()?.toUpperCase() || '';
@@ -944,7 +944,7 @@ const ChatComposer: React.FC = () => {
           </div>
         )}
         {isDragging && (
-          <div className="mb-2 text-center text-[#19c37d] text-sm">
+          <div className="mb-2 text-center text-[#19c37d] text-sm transition-colors">
             Drop files here to upload
           </div>
         )}
@@ -961,7 +961,7 @@ const ChatComposer: React.FC = () => {
                   // The fullscreen check will happen in handleFileUpload when dialog closes
                   fileInputRef.current?.click();
                 }}
-                className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
+                className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
                 title="Upload file"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -970,7 +970,7 @@ const ChatComposer: React.FC = () => {
               </button>
               <button
                 onClick={handleSearchWebClick}
-                className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
+                className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
                 title="Search the web"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1022,7 +1022,7 @@ const ChatComposer: React.FC = () => {
               }}
               onKeyPress={handleKeyPress}
               placeholder={editingMessageId ? "Edit your message..." : "Message ChatDO..."}
-              className="w-full p-3 pl-3 pr-12 bg-[#40414f] text-white rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto"
+              className="w-full p-3 pl-3 pr-12 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#19c37d] overflow-y-auto transition-colors"
               style={{ minHeight: '88px', maxHeight: '300px', height: '88px' }}
             />
             
@@ -1055,7 +1055,7 @@ const ChatComposer: React.FC = () => {
         >
           <div 
             ref={previewModalRef}
-            className={`bg-[#343541] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col ${isFullscreen ? '!max-w-none !max-h-none !rounded-none !h-screen !w-screen' : ''}`}
+            className={`bg-[var(--bg-primary)] rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col transition-colors ${isFullscreen ? '!max-w-none !max-h-none !rounded-none !h-screen !w-screen' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-[#565869]">
@@ -1141,7 +1141,7 @@ const ChatComposer: React.FC = () => {
       {/* Restore Fullscreen Prompt */}
       {showRestoreFullscreenPrompt && (
         <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-[#343541] border border-[#565869] rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 transition-colors">
             <span className="text-sm text-[#ececf1]">
               Fullscreen was exited. Click to restore:
             </span>
@@ -1162,7 +1162,7 @@ const ChatComposer: React.FC = () => {
                 setShowRestoreFullscreenPrompt(false);
                 wasFullscreenBeforeFileDialog.current = false;
               }}
-              className="p-1 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+              className="p-1 hover:bg-[var(--border-color)] rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               title="Dismiss"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

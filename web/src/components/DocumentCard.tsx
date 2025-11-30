@@ -80,7 +80,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {getFileIcon(fileName)}
-          <div className="text-xs uppercase tracking-wide text-[#8e8ea0] font-medium">
+          <div className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-medium">
             Document
           </div>
         </div>
@@ -88,18 +88,18 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
 
       {/* Document Title */}
       <div>
-        <div className="text-base font-semibold text-[#ececf1]">
+        <div className="text-base font-semibold text-[var(--text-primary)]">
           {fileName}
         </div>
         {fileType && (
-          <div className="text-xs text-[#8e8ea0] mt-0.5">
+          <div className="text-xs text-[var(--text-secondary)] mt-0.5">
             {fileType.toUpperCase()}
           </div>
         )}
       </div>
 
       {/* Subheader: Read time and metadata */}
-      <div className="text-xs text-[#8e8ea0] flex items-center gap-2">
+      <div className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
         <span>{readTime} min read</span>
         {pageCount && (
           <>
@@ -116,26 +116,26 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       </div>
       
       {/* Content Section */}
-      <div className="border-t border-[#565869] pt-4 space-y-4">
+      <div className="border-t border-[var(--border-color)] pt-4 space-y-4 transition-colors">
         {/* Summary */}
         {summary && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">
               Summary
             </h3>
-            <p className="text-sm text-[#ececf1] leading-relaxed">{summary}</p>
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed">{summary}</p>
           </div>
         )}
         
         {/* Key points */}
         {keyPoints && keyPoints.length > 0 && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">
               Key Points
             </h3>
-            <ul className="list-disc list-inside space-y-1 text-[#ececf1] ml-2">
+            <ul className="list-disc list-inside space-y-1 text-[var(--text-primary)] ml-2">
               {keyPoints.map((point, index) => (
-                <li key={index} className="text-sm text-[#ececf1] leading-relaxed">{point}</li>
+                <li key={index} className="text-sm text-[var(--text-primary)] leading-relaxed">{point}</li>
               ))}
             </ul>
           </div>
@@ -144,10 +144,10 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         {/* Why this matters */}
         {whyMatters && (
           <div>
-            <h3 className="text-base font-semibold text-[#8e8ea0] mb-2 uppercase tracking-wide">
+            <h3 className="text-base font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">
               Why This Matters
             </h3>
-            <p className="text-sm text-[#ececf1] leading-relaxed">{whyMatters}</p>
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed">{whyMatters}</p>
           </div>
         )}
       </div>

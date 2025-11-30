@@ -53,7 +53,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
   if (sources.length === 0) {
     return (
-      <div className="p-4 text-center text-[#8e8ea0] text-sm">
+      <div className="p-4 text-center text-[var(--text-secondary)] text-sm">
         No sources yet. Sources will appear here when you summarize URLs or upload files.
       </div>
     );
@@ -64,33 +64,33 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       {sources.map((source) => (
         <div
           key={source.id}
-          className="p-3 bg-[#1a1a1a] border border-[#565869] rounded-lg hover:bg-[#252525] transition-colors"
+          className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
         >
           <div className="flex items-start gap-3">
-            <div className="text-[#8e8ea0] flex-shrink-0 mt-0.5">
+            <div className="text-[var(--text-secondary)] flex-shrink-0 mt-0.5">
               {getSourceIcon(source.kind)}
             </div>
             <div className="flex-1 min-w-0">
               <div
-                className="font-medium text-[#ececf1] cursor-pointer hover:text-white transition-colors"
+                className="font-medium text-[var(--text-primary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                 onClick={() => handleSourceClick(source)}
                 title={source.url || source.fileName || 'Click to open'}
               >
                 {source.title}
               </div>
               {source.description && (
-                <div className="text-sm text-[#8e8ea0] mt-1 line-clamp-2">
+                <div className="text-sm text-[var(--text-secondary)] mt-1 line-clamp-2">
                   {source.description}
                 </div>
               )}
               <div className="flex items-center gap-2 mt-2">
                 {source.url && (
-                  <span className="text-xs text-[#8e8ea0] truncate">
+                  <span className="text-xs text-[var(--text-secondary)] truncate">
                     {new URL(source.url).hostname.replace(/^www\./, '')}
                   </span>
                 )}
                 {source.fileName && (
-                  <span className="text-xs text-[#8e8ea0] truncate">
+                  <span className="text-xs text-[var(--text-secondary)] truncate">
                     {source.fileName}
                   </span>
                 )}

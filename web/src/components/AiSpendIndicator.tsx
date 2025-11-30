@@ -93,14 +93,14 @@ export const AiSpendIndicator: React.FC = () => {
       <div
         ref={amountRef}
         onClick={(e) => e.stopPropagation()}
-        className="text-[#8e8ea0] hover:text-white cursor-default select-none text-sm px-2 py-1 whitespace-nowrap"
+        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-default select-none text-sm px-2 py-1 whitespace-nowrap transition-colors"
         style={{ minWidth: 'fit-content' }}
       >
         {`$${total.toFixed(2)}`}
       </div>
       {menuOpen && menuPosition && (
         <div
-          className="spend-menu fixed bg-[#202123] border border-[#565869] rounded-lg p-2 z-[9999] min-w-[200px] max-w-[250px] shadow-lg"
+          className="spend-menu fixed bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-2 z-[9999] min-w-[200px] max-w-[250px] shadow-lg transition-colors"
           style={{
             top: `${menuPosition.top}px`,
             left: `${menuPosition.left}px`,
@@ -115,7 +115,7 @@ export const AiSpendIndicator: React.FC = () => {
               {sortedProviders.map((p) => (
                 <div
                   key={p.id}
-                  className="flex justify-between px-2 py-1 text-sm text-[#ececf1]"
+                  className="flex justify-between px-2 py-1 text-sm text-[var(--text-primary)]"
                 >
                   <span>{p.label}</span>
                   <span>${p.usd.toFixed(2)}</span>
@@ -123,7 +123,7 @@ export const AiSpendIndicator: React.FC = () => {
               ))}
               {sortedProviders.length > 0 && (
                 <>
-                  <hr className="border-[#565869] my-2" />
+                  <hr className="border-[var(--border-color)] my-2" />
                   <div className="flex justify-between px-2 py-1 text-sm font-semibold text-[#ececf1]">
                     <span>Total</span>
                     <span>${data.totalUsd.toFixed(2)}</span>
@@ -131,7 +131,7 @@ export const AiSpendIndicator: React.FC = () => {
                 </>
               )}
               {sortedProviders.length === 0 && (
-                <div className="text-sm text-[#8e8ea0] px-2 py-1">
+                <div className="text-sm text-[var(--text-secondary)] px-2 py-1">
                   No spend recorded yet
                 </div>
               )}

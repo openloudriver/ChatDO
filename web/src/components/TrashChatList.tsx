@@ -116,13 +116,13 @@ const TrashChatList: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#343541]">
+    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#565869]">
+      <div className="px-6 py-4 border-b border-[var(--border-color)] transition-colors">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-[#ececf1]">Trash</h2>
-            <p className="text-sm text-[#8e8ea0] mt-1">Deleted chats are kept for 30 days</p>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Trash</h2>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Deleted chats are kept for 30 days</p>
           </div>
           {trashedChats.length > 0 && (
             <button
@@ -139,7 +139,7 @@ const TrashChatList: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {trashedChats.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[#8e8ea0] text-sm">Trash is empty</p>
+            <p className="text-[var(--text-secondary)] text-sm">Trash is empty</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -153,8 +153,8 @@ const TrashChatList: React.FC = () => {
                   key={chat.id}
                   className={`w-full p-4 rounded-lg transition-colors ${
                     isSelected
-                      ? 'bg-[#444654] border border-[#565869]'
-                      : 'bg-[#40414f] hover:bg-[#444654] border border-transparent'
+                      ? 'bg-[var(--assistant-bubble-bg)] border border-[var(--border-color)]'
+                      : 'bg-[var(--bg-tertiary)] hover:bg-[var(--assistant-bubble-bg)] border border-transparent'
                   }`}
                 >
                   <button
@@ -165,26 +165,26 @@ const TrashChatList: React.FC = () => {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-[#ececf1]'}`}>
+                        <h3 className={`font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>
                           {chat.title}
                         </h3>
                         {project && (
-                          <p className="text-xs text-[#8e8ea0] mt-1">
+                          <p className="text-xs text-[var(--text-secondary)] mt-1">
                             From: {project.name}
                           </p>
                         )}
                       </div>
-                      <span className="text-xs text-[#8e8ea0] ml-4 flex-shrink-0">
+                      <span className="text-xs text-[var(--text-secondary)] ml-4 flex-shrink-0">
                         {formatDate(updatedDate)}
                       </span>
                     </div>
-                    <p className="text-sm text-[#8e8ea0] line-clamp-2">
+                    <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
                       {getPreview(chat)}
                     </p>
                   </button>
                   
                   {/* Actions */}
-                  <div className="flex gap-2 mt-3 pt-3 border-t border-[#565869]">
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-[var(--border-color)] transition-colors">
                     <button
                       onClick={(e) => handleRestore(e, chat.id)}
                       className="px-3 py-1.5 text-sm bg-[#19c37d] hover:bg-[#16a86b] text-white rounded transition-colors"

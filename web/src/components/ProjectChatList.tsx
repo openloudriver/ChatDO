@@ -197,11 +197,11 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
   const projectChats = conversations.filter(c => c.projectId === projectId);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#343541]">
+    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#565869]">
+        <div className="px-6 py-4 border-b border-[var(--border-color)] transition-colors">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[#ececf1]">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {currentProject?.name || 'Project'}
             </h2>
             <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                   </button>
                   <button
                     onClick={() => setSelectedChats(new Set())}
-                    className="px-4 py-2 bg-[#565869] hover:bg-[#6e6f7f] text-white rounded-lg text-sm font-medium transition-colors"
+                    className="px-4 py-2 bg-[var(--border-color)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -235,15 +235,15 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {projectChats.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[#8e8ea0] text-sm">No chats yet. Start a new conversation!</p>
+            <p className="text-[var(--text-secondary)] text-sm">No chats yet. Start a new conversation!</p>
           </div>
         ) : (
           <div className="space-y-2">
             {projectChats.length > 0 && (
-              <div className="mb-2 pb-2 border-b border-[#565869]">
+              <div className="mb-2 pb-2 border-b border-[var(--border-color)] transition-colors">
                 <button
                   onClick={handleSelectAll}
-                  className="text-sm text-[#8e8ea0] hover:text-[#ececf1] transition-colors"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   {selectedChats.size === projectChats.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -259,8 +259,8 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                   <div
                     className={`flex items-center gap-3 p-4 rounded-lg transition-colors ${
                       isSelected
-                        ? 'bg-[#444654] border border-[#565869]'
-                        : 'bg-[#40414f] hover:bg-[#444654] border border-transparent'
+                        ? 'bg-[var(--assistant-bubble-bg)] border border-[var(--border-color)]'
+                        : 'bg-[var(--bg-tertiary)] hover:bg-[var(--assistant-bubble-bg)] border border-transparent'
                     } ${isChecked ? 'ring-2 ring-[#19c37d]' : ''}`}
                   >
                     {/* Checkbox */}
@@ -269,7 +269,7 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                       checked={isChecked}
                       onChange={() => {}}
                       onClick={(e) => handleToggleSelect(chat.id, e)}
-                      className="w-4 h-4 text-[#19c37d] bg-[#343541] border-[#565869] rounded focus:ring-[#19c37d] focus:ring-2 cursor-pointer flex-shrink-0"
+                      className="w-4 h-4 text-[#19c37d] bg-[var(--bg-primary)] border-[var(--border-color)] rounded focus:ring-[#19c37d] focus:ring-2 cursor-pointer flex-shrink-0 transition-colors"
                     />
                     
                     {/* Chat content */}
@@ -288,21 +288,21 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                       className="flex-1 text-left"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-[#ececf1]'}`}>
+                        <h3 className={`font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>
                           {chat.title}
                         </h3>
-                        <span className="text-xs text-[#8e8ea0] ml-4 flex-shrink-0">
+                        <span className="text-xs text-[var(--text-secondary)] ml-4 flex-shrink-0">
                           {formatDate(updatedDate)}
                         </span>
                       </div>
-                      <p className="text-sm text-[#8e8ea0] line-clamp-2">
+                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
                         {getPreview(chat)}
                       </p>
                     </button>
                   </div>
                   {openMenuId === chat.id && menuPosition && (
                     <div 
-                      className="fixed w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-50"
+                      className="fixed w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-50 transition-colors"
                       style={{
                         left: `${menuPosition.x}px`,
                         top: `${menuPosition.y}px`,
@@ -311,13 +311,13 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                     >
                       <button
                         onClick={() => handleRenameChat(chat.id, chat.title)}
-                        className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-t-lg"
+                        className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-t-lg transition-colors"
                       >
                         Rename Chat
                       </button>
                       <button
                         onClick={() => handleDeleteChat(chat.id, chat.title)}
-                        className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-b-lg"
+                        className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-b-lg transition-colors"
                       >
                         Delete Chat
                       </button>

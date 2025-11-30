@@ -53,11 +53,11 @@ const ConfirmDeleteMemoryModal: React.FC<ConfirmDeleteMemoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-[#343541] border border-[#565869] rounded-lg w-full max-w-md p-6 flex flex-col">
-        <h2 className="text-xl font-semibold text-white mb-2">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg w-full max-w-md p-6 flex flex-col transition-colors">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
           Delete memory source
         </h2>
-        <p className="text-sm text-[#8e8ea0] mb-3">
+        <p className="text-sm text-[var(--text-secondary)] mb-3">
           This will remove{' '}
           <span className="font-mono font-semibold text-red-400">
             {nameToType}
@@ -71,7 +71,7 @@ const ConfirmDeleteMemoryModal: React.FC<ConfirmDeleteMemoryModalProps> = ({
         </p>
         <input
           autoFocus
-          className="w-full p-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-1 focus:ring-blue-500 mb-3"
+          className="w-full p-2 rounded bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] focus:outline-none focus:ring-1 focus:ring-blue-500 mb-3 transition-colors"
           placeholder={nameToType}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -90,7 +90,7 @@ const ConfirmDeleteMemoryModal: React.FC<ConfirmDeleteMemoryModalProps> = ({
         <div className="flex justify-end gap-2 mt-auto">
           <button
             type="button"
-            className="px-4 py-2 rounded text-white border border-[#565869] hover:bg-[#565869] disabled:opacity-50"
+            className="px-4 py-2 rounded text-[var(--text-primary)] border border-[var(--border-color)] hover:bg-[var(--border-color)] disabled:opacity-50 transition-colors"
             onClick={onClose}
             disabled={loading}
           >

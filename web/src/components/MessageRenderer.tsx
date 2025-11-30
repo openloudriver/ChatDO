@@ -37,7 +37,7 @@ export function MessageRenderer({ content }: MessageRendererProps) {
             </h3>
           ),
           p: ({ children }) => (
-            <p className="my-2 text-gray-200 whitespace-pre-wrap">{children}</p>
+            <p className="my-2 text-[var(--text-primary)] whitespace-pre-wrap">{children}</p>
           ),
           ul: ({ children }) => (
             <ul className="list-disc ml-5 my-2 space-y-1">{children}</ul>
@@ -47,14 +47,14 @@ export function MessageRenderer({ content }: MessageRendererProps) {
           ),
           li: ({ children }) => <li className="leading-snug">{children}</li>,
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-slate-500 pl-3 ml-1 my-3 italic text-slate-200">
+            <blockquote className="border-l-4 border-[var(--border-color)] pl-3 ml-1 my-3 italic text-[var(--text-primary)] transition-colors">
               {children}
             </blockquote>
           ),
           code: ({ className, children, ...props }) => {
             const isInline = !className;
             return isInline ? (
-              <code className="bg-slate-800/80 px-1 py-0.5 rounded text-xs sm:text-[13px] font-mono" {...props}>
+              <code className="bg-[var(--code-bg)] px-1 py-0.5 rounded text-xs sm:text-[13px] font-mono text-[var(--code-text)] transition-colors" {...props}>
                 {children}
               </code>
             ) : (
@@ -64,12 +64,12 @@ export function MessageRenderer({ content }: MessageRendererProps) {
             );
           },
           pre: ({ children }) => (
-            <pre className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 my-3 overflow-x-auto text-xs sm:text-[13px]">
+            <pre className="bg-[var(--code-bg)] border border-[var(--border-color)] rounded-lg p-3 my-3 overflow-x-auto text-xs sm:text-[13px] text-[var(--code-text)] transition-colors">
               {children}
             </pre>
           ),
           strong: ({ children }) => (
-            <strong className="font-semibold text-gray-100">
+            <strong className="font-semibold text-[var(--text-primary)]">
               {children}
             </strong>
           ),

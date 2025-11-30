@@ -106,8 +106,8 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
         }}
         className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-grab active:cursor-grabbing flex items-center gap-2 ${
           currentProject?.id === project.id
-            ? 'bg-[#343541] text-white'
-            : 'text-[#8e8ea0] hover:bg-[#343541]'
+            ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
         }`}
       >
         <svg
@@ -127,7 +127,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
       </button>
       {openMenuId === project.id && (
         <div 
-          className="absolute right-0 mt-1 w-48 bg-[#343541] border border-[#565869] rounded-lg shadow-lg z-50"
+          className="absolute right-0 mt-1 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-50 transition-colors"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
@@ -136,7 +136,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleEditProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-t-lg"
+            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-t-lg transition-colors"
           >
             Rename Project
           </button>
@@ -148,7 +148,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleConnectProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f]"
+            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
           >
             Connect Project
           </button>
@@ -157,7 +157,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleDeleteProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[#ececf1] hover:bg-[#40414f] rounded-b-lg"
+            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-b-lg transition-colors"
           >
             Delete Project
           </button>
@@ -299,12 +299,12 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-[#202123] flex flex-col text-white overflow-hidden">
+    <div className="h-full bg-[var(--bg-secondary)] flex flex-col text-[var(--text-primary)] overflow-hidden transition-colors">
       {/* Search Field */}
       <div className="p-2 flex-shrink-0">
         <div className="relative">
           <svg
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#8e8ea0]"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -327,7 +327,7 @@ const Sidebar: React.FC = () => {
                 setViewMode('search');
               }
             }}
-            className="w-full pl-8 pr-3 py-2 text-sm bg-[#343541] border border-[#565869] rounded-md text-[#ececf1] placeholder-[#8e8ea0] focus:outline-none focus:border-[#8e8ea0] transition-colors"
+            className="w-full pl-8 pr-3 py-2 text-sm bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--text-secondary)] transition-colors"
           />
         </div>
       </div>
@@ -335,11 +335,11 @@ const Sidebar: React.FC = () => {
       {/* Projects List */}
       <div className="px-2 mb-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-xs text-[#8e8ea0] uppercase">Projects</div>
+          <div className="text-xs text-[var(--text-secondary)] uppercase">Projects</div>
           <button
             type="button"
             onClick={handleNewProject}
-            className="rounded-md p-1 text-[#8e8ea0] hover:bg-[#343541] hover:text-white transition-colors"
+            className="rounded-md p-1 text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-colors"
             aria-label="New project"
           >
             <NewProjectIcon />
@@ -377,14 +377,14 @@ const Sidebar: React.FC = () => {
       {/* Chats section removed - chats are now shown in main area via ProjectChatList */}
 
       {/* Bottom Status Bar - AI Spend Indicator, Memory, and Trash Button */}
-      <div className="px-2 py-2 border-t border-[#565869] flex items-center justify-between flex-shrink-0 bg-[#202123]">
+      <div className="px-2 py-2 border-t border-[var(--border-color)] flex items-center justify-between flex-shrink-0 bg-[var(--bg-secondary)] transition-colors">
         <div className="flex-1 min-w-0">
           <AiSpendIndicator />
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setImpactModalOpen(true)}
-            className="p-2 rounded transition-colors flex-shrink-0 text-[#8e8ea0] hover:bg-[#343541] hover:text-white"
+            className="p-2 rounded transition-colors flex-shrink-0 text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
             title="Capture impact"
           >
             <svg
@@ -408,8 +408,8 @@ const Sidebar: React.FC = () => {
             }}
             className={`p-2 rounded transition-colors flex-shrink-0 ${
               viewMode === 'memory'
-                ? 'bg-[#343541] text-white'
-                : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+                ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
             }`}
             title="Memory Dashboard"
           >
@@ -435,8 +435,8 @@ const Sidebar: React.FC = () => {
           }}
           className={`p-2 rounded transition-colors flex-shrink-0 ${
             viewMode === 'trashList'
-              ? 'bg-[#343541] text-white'
-              : 'text-[#8e8ea0] hover:bg-[#343541] hover:text-white'
+              ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
           }`}
           title="Trash"
         >
