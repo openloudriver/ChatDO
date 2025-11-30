@@ -373,7 +373,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
               return indexed.map((file) => (
                 <div
                   key={file.id}
-                  className="w-full bg-[#2a2a2a] rounded-lg p-3 border border-[#565869] hover:border-[#19c37d] transition-colors"
+                  className="w-full bg-[var(--bg-tertiary)] rounded-lg p-3 border border-[var(--border-color)] hover:border-[#19c37d] transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     {getFileIcon(file.mime_type)}
@@ -387,7 +387,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
                           <span className="text-xs font-semibold text-[#19c37d] flex-shrink-0">
                             {file.index}.
                           </span>
-                          <p className="text-sm font-medium text-[#ececf1] truncate">{file.filename}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">{file.filename}</p>
                         </button>
                         <button
                           type="button"
@@ -397,7 +397,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
                             console.log('[RAG] Delete button clicked for file:', file.id, 'for chat:', currentConversation?.id);
                             await handleDeleteFile(file.id);
                           }}
-                          className="p-1 hover:bg-[#565869]/50 rounded transition-colors text-[#8e8ea0] hover:text-white flex-shrink-0"
+                          className="p-1 hover:bg-[var(--border-color)]/50 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex-shrink-0"
                           title="Remove"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,7 +407,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
                       </div>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded">Ready</span>
-                        <span className="text-xs text-[#8e8ea0]">
+                        <span className="text-xs text-[var(--text-secondary)]">
                           {(file.size / 1024).toFixed(1)} KB
                         </span>
                       </div>
@@ -422,10 +422,10 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
 
       {/* Footer */}
       {ragFiles.length > 0 && (
-        <div className="p-4 border-t border-[#565869]">
+        <div className="p-4 border-t border-[var(--border-color)] transition-colors">
           <button
             onClick={handleClearAll}
-            className="w-full px-4 py-2 text-sm text-[#8e8ea0] hover:text-white hover:bg-[#565869]/50 rounded transition-colors"
+            className="w-full px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]/50 rounded transition-colors"
           >
             Clear all
           </button>

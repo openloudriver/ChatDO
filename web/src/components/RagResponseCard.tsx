@@ -84,7 +84,7 @@ const CitationChip: React.FC<CitationChipProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         title={titleText}
-        className="ml-1 inline-flex items-center rounded-full border border-[var(--border-color)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)] transition-colors cursor-pointer"
+        className="ml-1 inline-flex items-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)] transition-colors cursor-pointer"
       >
         {label}
       </button>
@@ -337,7 +337,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                   const text = String(children);
                   if (text.includes('.pdf') || text.includes('.docx') || text.includes('.pptx') || text.includes('.xlsx') || text.includes(';')) {
                     return (
-                      <code className="text-[#6b7280] text-xs font-normal bg-transparent px-0">
+                      <code className="text-[var(--text-secondary)] text-xs font-normal bg-transparent px-0">
                         {children}
                       </code>
                     );

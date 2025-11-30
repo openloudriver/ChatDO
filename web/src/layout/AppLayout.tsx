@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAppLayout } from "../hooks/useAppLayout";
 import { useTheme } from "../contexts/ThemeContext";
+import { useChatStore } from "../store/chat";
 import Sidebar from "../components/Sidebar";
 
 type AppLayoutProps = {
@@ -44,6 +45,7 @@ const PanelLeftOpenIcon = () => (
 export function AppLayout({ children }: AppLayoutProps) {
   const { isSidebarOpen, toggleSidebar } = useAppLayout();
   const { theme, toggleTheme, accentColor, setAccentColor } = useTheme();
+  const { isRagTrayOpen } = useChatStore();
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [isAccentColorOpen, setIsAccentColorOpen] = useState(false);
 
@@ -158,7 +160,12 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
 
           {/* Spacer flex to push anything else (e.g. model indicator) to the right */}
-          <div className="ml-auto flex items-center gap-2">
+          <div 
+            className="ml-auto flex items-center gap-2 transition-transform duration-300"
+            style={{ 
+              transform: isRagTrayOpen ? 'translateX(-320px)' : 'translateX(0)'
+            }}
+          >
             {/* Accent color dropdown */}
             <div className="relative">
               <button
