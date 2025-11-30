@@ -17,7 +17,7 @@ type AssistantCardProps = {
  */
 export function AssistantCard({ children, className = "", footer }: AssistantCardProps) {
   return (
-    <div className={`mt-8 w-full ${className}`}>
+    <div className={`mt-[5px] w-full ${className}`}>
       <div 
         className="assistant-card rounded-[14px] bg-[#0D0D0D] border border-white/8 shadow-lg px-8 py-7 space-y-4 max-sm:px-5"
         style={{ boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' }}
