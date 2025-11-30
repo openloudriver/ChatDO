@@ -92,6 +92,26 @@ export function AppLayout({ children }: AppLayoutProps) {
     return () => window.removeEventListener("keydown", handler);
   }, [toggleSidebar]);
 
+  // Keyboard shortcut: F9 for fullscreen toggle
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Only trigger if not typing in an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement;
+      const isInputElement = 
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable;
+      
+      if (e.key === 'F9' && !isInputElement) {
+        e.preventDefault();
+        toggleBrowserFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [toggleBrowserFullscreen]);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#343541] text-[#ececf1]">
       {/* Sidebar column */}
@@ -133,7 +153,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               onClick={toggleBrowserFullscreen}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-gray-200 hover:bg-white/10 hover:border-white/20 transition"
               aria-label={isBrowserFullscreen ? "Exit full screen" : "Enter full screen"}
-              title={isBrowserFullscreen ? "Exit full screen" : "Enter full screen"}
+              title={isBrowserFullscreen ? "Exit full screen (F9)" : "Enter full screen (F9)"}
             >
               {isBrowserFullscreen ? (
                 // Minimize icon (exit fullscreen)
