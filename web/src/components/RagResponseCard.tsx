@@ -21,7 +21,13 @@ const buildRagFilesByIndex = (ragFiles: RagFile[]): Record<number, RagFile> => {
   return map;
 };
 
-// CitationChip component for inline citations like [1] or [1, 3]
+// Convert number to superscript (¹, ², ³, etc.)
+const toSuperscript = (num: number): string => {
+  const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+  return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
+};
+
+// CitationChip component for inline citations like [1] or [1, 3] - ChatGPT style with superscript numbers
 type CitationChipProps = {
   indices: number[]; // e.g. [1] or [1, 3]
   ragFilesByIndex: Record<number, RagFile>;
@@ -33,21 +39,19 @@ const CitationChip: React.FC<CitationChipProps> = ({
   ragFilesByIndex,
   onOpenFile,
 }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
-
   if (!indices.length) return null;
 
   // Pick the first index as the file we open on click
   const primaryIndex = indices[0];
   const primaryFile = ragFilesByIndex[primaryIndex];
 
-  // Tooltip: join all file names we have for the indices (no brackets)
+  // Tooltip: join all file names we have for the indices
   const tooltipText = indices
     .map((i) => ragFilesByIndex[i]?.filename || `Source ${i}`)
     .join(", ");
 
-  const label = '[' + indices.join(', ') + ']';
+  // Display citation numbers as superscript (e.g., ¹²³)
+  const citationNumbers = indices.map(i => toSuperscript(i)).join('');
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -57,50 +61,14 @@ const CitationChip: React.FC<CitationChipProps> = ({
     }
   };
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setTooltipPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 4,
-    });
-    setShowTooltip(true);
-  };
-  
-  // Build tooltip text for title attribute (fallback)
-  const titleText = tooltipText || (primaryFile ? primaryFile.filename : '');
-
-  const handleMouseLeave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowTooltip(false);
-    setTooltipPosition(null);
-  };
-
   return (
-    <span className="relative inline-block">
-      <button
-        type="button"
-        onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        title={titleText}
-        className="ml-1 inline-flex items-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)] transition-colors cursor-pointer"
-      >
-        {label}
-      </button>
-      {showTooltip && tooltipPosition && (
-        <div
-          className="fixed px-2 py-1 rounded bg-[var(--bg-secondary)] text-[10px] text-[var(--text-primary)] whitespace-nowrap pointer-events-none shadow-lg border border-[var(--border-color)] z-[99999] transition-colors"
-          style={{
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y}px`,
-            transform: 'translate(-50%, -100%)',
-          }}
-        >
-          {tooltipText}
-        </div>
-      )}
-    </span>
+    <sup
+      onClick={handleClick}
+      className="text-[10px] text-[var(--text-secondary)] align-super ml-0.5 cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+      title={tooltipText}
+    >
+      {citationNumbers}
+    </sup>
   );
 };
 
