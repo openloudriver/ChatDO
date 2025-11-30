@@ -132,7 +132,12 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Global header */}
-        <header className="flex items-center gap-3 border-b border-[var(--border-color)] px-4 py-2 bg-[var(--bg-primary)] transition-colors">
+        <header 
+          className="flex items-center gap-3 border-b border-[var(--border-color)] px-4 py-2 transition-colors"
+          style={{ 
+            backgroundColor: theme === 'dark' ? 'var(--bg-secondary)' : 'var(--bg-primary)'
+          }}
+        >
           {/* Sidebar toggle button – always visible */}
           <button
             type="button"
