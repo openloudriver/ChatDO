@@ -7,9 +7,7 @@ import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
 import { AssistantCard } from './shared/AssistantCard';
-import { SourcesChips } from './SourcesChips';
 import type { RagFile } from '../types/rag';
-import type { Source } from '../types/sources';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Extract bullet options from message content
@@ -133,101 +131,8 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
     .filter(b => b.length > 0);
 };
 
-// Convert number to superscript (¹, ², ³, etc.)
-const toSuperscript = (num: number): string => {
-  const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-  return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
-};
-
-// Process text to replace [n] or [n, m] patterns with inline citations
-const processCitations = (text: string, sources?: Source[]): React.ReactNode[] => {
-  if (!sources || sources.length === 0) {
-    return [text];
-  }
-
-
-  // Sort sources by rank
-  const sortedSources = [...sources].sort((a, b) => {
-    const rankA = a.rank ?? Infinity;
-    const rankB = b.rank ?? Infinity;
-    return rankA - rankB;
-  });
-
-  // Create a map of original rank to sorted index
-  const rankToSortedIndex = new Map<number, number>();
-  sortedSources.forEach((source, sortedIndex) => {
-    const originalRank = source.rank ?? sortedIndex;
-    rankToSortedIndex.set(originalRank, sortedIndex);
-  });
-
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(text)) !== null) {
-    const matchStart = match.index;
-    const matchEnd = match.index + match[0].length;
-
-    // Plain text before the citation
-    if (matchStart > lastIndex) {
-      parts.push(text.slice(lastIndex, matchStart));
-    }
-
-    // Parse citation numbers and map to sorted indices
-    const numbers = match[1]
-      .split(',')
-      .map((n) => parseInt(n.trim(), 10))
-      .filter((n) => !Number.isNaN(n) && n > 0)
-      .map((n) => rankToSortedIndex.get(n))
-      .filter((n) => n !== undefined) as number[];
-
-    if (numbers.length > 0) {
-      // Display all citation numbers as superscript
-      const citationNumbers = numbers.map(i => toSuperscript(i + 1)).join('');
-      parts.push(
-        <sup
-          key={`cite-${matchStart}`}
-          className="text-[10px] text-[var(--text-secondary)] align-super ml-0.5"
-          title={numbers.map(i => sortedSources[i]?.title).filter(Boolean).join(', ')}
-        >
-          {citationNumbers}
-        </sup>
-      );
-    }
-
-    lastIndex = matchEnd;
-  }
-
-  // Remaining text after the last match
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
-  }
-
-  return parts.length > 0 ? parts : [text];
-};
-
-// Helper to recursively process React children for citations
-const processChildrenForCitations = (children: React.ReactNode, sources?: Source[]): React.ReactNode => {
-  return React.Children.map(children, (child, idx) => {
-    if (typeof child === 'string') {
-      return <React.Fragment key={idx}>{processCitations(child, sources)}</React.Fragment>;
-    }
-    if (React.isValidElement(child)) {
-      const props = child.props as { children?: React.ReactNode };
-      if (props && props.children) {
-        return React.cloneElement(child, {
-          key: idx,
-          children: processChildrenForCitations(props.children, sources)
-        } as any);
-      }
-    }
-    return child;
-  });
-};
-
 // Component to render GPT messages with proper markdown formatting
-const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({ content, sources }) => {
+const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
   return (
     <AssistantCard>
       <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
@@ -239,12 +144,12 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
             h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[var(--text-primary)]">{children}</h3>,
             h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--text-primary)]">{children}</h4>,
             p: ({ children }) => {
-              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{processChildrenForCitations(children, sources)}</p>;
+              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{children}</p>;
             },
             ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ul>,
             ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ol>,
             li: ({ children }) => {
-              return <li className="leading-relaxed">{processChildrenForCitations(children, sources)}</li>;
+              return <li className="leading-relaxed">{children}</li>;
             },
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
@@ -300,7 +205,7 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
 };
 
 // Component to render bullet options with cards
-const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE'; sources?: Source[] }> = ({ content, bulletMode, sources }) => {
+const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE' }> = ({ content, bulletMode }) => {
   const [bulletOptions, setBulletOptions] = useState<string[]>([]);
   const [hasOptions, setHasOptions] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -352,7 +257,7 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
 
   // If we didn't detect structured bullet options, use GPTMessageRenderer for proper formatting
   if (!hasOptions || bulletOptions.length === 0) {
-    return <GPTMessageRenderer content={content} sources={sources} />;
+    return <GPTMessageRenderer content={content} />;
   }
 
   // Otherwise, render only the clean bullet options card (no extra intro text or tips)
@@ -1416,41 +1321,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
-                          <OptionsRenderer content={content} bulletMode={bulletMode} sources={message.sources} />
+                          <OptionsRenderer content={content} bulletMode={bulletMode} />
                         ) : (
                           <p className="whitespace-pre-wrap" style={{ color: 'var(--user-bubble-text)' }}>{content}</p>
                         )
                       )}
                       
-                      {/* Unified footer: Sources chips (left) + Model tag (right) for web_search_results and article_card only */}
+                      {/* Model tag for all assistant messages */}
                       {message.role === 'assistant' && 
-                       (message.type === 'web_search_results' || message.type === 'article_card') && (
-                        <div className="flex justify-between items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
-                          {/* Left: Sources chips */}
-                          <div className="flex-1">
-                            <SourcesChips sources={message.sources} />
-                          </div>
-                          {/* Right: Model tag */}
-                          <div className="text-right">
-                            {message.type === 'web_search_results' ? (
-                              <div>Model: Brave Search</div>
-                            ) : message.model ? (
-                              <div>Model: {formatModelName(message.model)}</div>
-                            ) : null}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Model tag only for other assistant messages (no sources) */}
-                      {message.role === 'assistant' && 
-                       message.type !== 'web_search_results' && 
-                       message.type !== 'article_card' && 
                        message.type !== 'document_card' && 
                        message.type !== 'rag_response' && (
                         <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
-                          {message.model && (
+                          {message.type === 'web_search_results' ? (
+                            <div>Model: Brave Search</div>
+                          ) : message.model ? (
                             <div>Model: {formatModelName(message.model)}</div>
-                          )}
+                          ) : null}
                         </div>
                       )}
                     </div>
@@ -1535,7 +1421,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           </div>
           <div className="flex flex-col w-full">
             <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px] transition-colors">
-              <OptionsRenderer content={streamingContent} bulletMode={bulletMode} sources={undefined} />
+              <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
               <span className="animate-pulse">▊</span>
             </div>
           </div>
