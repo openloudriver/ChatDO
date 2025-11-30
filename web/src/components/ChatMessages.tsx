@@ -717,7 +717,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Messages */}
         <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
-          <div className="max-w-[1000px] mx-auto px-4 py-4 space-y-4">
+          <div className="max-w-[1000px] mx-auto px-0 py-4 space-y-4">
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
         
@@ -728,14 +728,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           >
             {/* Assistant: Avatar floats outside left edge */}
             {message.role === 'assistant' && (
-              <div className="absolute -left-10 top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center">
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center" style={{ left: 'calc(-2.5rem + 6px)' }}>
                 <span className="text-white text-sm font-bold">C</span>
               </div>
             )}
             
             {/* User: Avatar floats outside right edge */}
             {message.role === 'user' && (
-              <div className="absolute -right-10 top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center">
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center" style={{ right: 'calc(-2.5rem - 6px)' }}>
                 <span className="text-white text-sm font-bold">U</span>
               </div>
             )}
@@ -916,10 +916,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   
                   return (
                     <div
-                      className={`rounded-lg px-4 py-3 ${
+                      className={`rounded-lg px-4 py-3 box-border ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto'
-                          : 'bg-[#444654] text-[#ececf1] w-full'
+                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto mr-[12px]'
+                          : 'bg-[#444654] text-[#ececf1] w-full ml-[6px]'
                       }`}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
@@ -1375,13 +1375,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       
       {/* Streaming content */}
       {isStreaming && (
-        <div className="flex gap-4 justify-start">
-          <div className="w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center flex-shrink-0">
+        <div className="group relative mb-3">
+          {/* Assistant: Avatar floats outside left edge */}
+          <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center" style={{ left: 'calc(-2.5rem + 6px)' }}>
             <span className="text-white text-sm font-bold">C</span>
           </div>
-          <div className="flex-1 rounded-lg px-4 py-3 bg-[#444654] text-[#ececf1]">
-            <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
-            <span className="animate-pulse">▊</span>
+          <div className="flex flex-col w-full">
+            <div className="rounded-lg px-4 py-3 box-border bg-[#444654] text-[#ececf1] w-full ml-[6px]">
+              <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
+              <span className="animate-pulse">▊</span>
+            </div>
           </div>
         </div>
       )}

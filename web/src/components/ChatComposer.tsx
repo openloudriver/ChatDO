@@ -18,6 +18,8 @@ const ChatComposer: React.FC = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const wasFullscreenBeforeFileDialog = useRef(false);
+  const [showRestoreFullscreenPrompt, setShowRestoreFullscreenPrompt] = useState(false);
   
   // Auto-resize textarea based on content
   const adjustTextareaHeight = () => {
@@ -35,6 +37,36 @@ const ChatComposer: React.FC = () => {
   useEffect(() => {
     adjustTextareaHeight();
   }, [input]);
+
+  // Listen for window focus to detect when file dialog closes
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      // Small delay to ensure fullscreen state has updated
+      setTimeout(() => {
+        if (wasFullscreenBeforeFileDialog.current && !document.fullscreenElement) {
+          // Try to restore fullscreen automatically
+          document.documentElement.requestFullscreen().catch(() => {
+            // If automatic restoration fails (browser security), show prompt
+            setShowRestoreFullscreenPrompt(true);
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+              setShowRestoreFullscreenPrompt(false);
+              wasFullscreenBeforeFileDialog.current = false;
+            }, 5000);
+          });
+          // Reset flag if restoration succeeds
+          if (document.fullscreenElement) {
+            wasFullscreenBeforeFileDialog.current = false;
+          }
+        }
+      }, 100);
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
   
   const {
     currentProject,
@@ -385,7 +417,36 @@ const ChatComposer: React.FC = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    
+    // Check if fullscreen was lost after file dialog closes
+    // Use a small delay to ensure the fullscreen exit has been processed
+    setTimeout(() => {
+      if (wasFullscreenBeforeFileDialog.current && !document.fullscreenElement) {
+        // Try to restore fullscreen automatically
+        document.documentElement.requestFullscreen().catch(() => {
+          // If automatic restoration fails (browser security), show prompt
+          setShowRestoreFullscreenPrompt(true);
+          // Auto-hide after 5 seconds
+          setTimeout(() => {
+            setShowRestoreFullscreenPrompt(false);
+            wasFullscreenBeforeFileDialog.current = false;
+          }, 5000);
+        });
+        // Reset flag if restoration succeeds
+        if (document.fullscreenElement) {
+          wasFullscreenBeforeFileDialog.current = false;
+        }
+      } else {
+        wasFullscreenBeforeFileDialog.current = false;
+      }
+    }, 100);
+    
+    // Process the file if one was selected
+    if (!file) {
+      return;
+    }
+    
+    // Process the file
     await processFile(file);
   };
 
@@ -892,7 +953,14 @@ const ChatComposer: React.FC = () => {
             {/* Left side icons - positioned with one icon space gap from send button */}
             <div className="absolute right-[80px] bottom-2.5 flex gap-1 z-10">
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  // Store fullscreen state before opening file dialog
+                  wasFullscreenBeforeFileDialog.current = Boolean(document.fullscreenElement);
+                  
+                  // Open the file dialog
+                  // The fullscreen check will happen in handleFileUpload when dialog closes
+                  fileInputRef.current?.click();
+                }}
                 className="p-2 rounded transition-colors text-[#8e8ea0] hover:text-white hover:bg-[#565869]"
                 title="Upload file"
               >
@@ -1066,6 +1134,41 @@ const ChatComposer: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Restore Fullscreen Prompt */}
+      {showRestoreFullscreenPrompt && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-[#343541] border border-[#565869] rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
+            <span className="text-sm text-[#ececf1]">
+              Fullscreen was exited. Click to restore:
+            </span>
+            <button
+              onClick={() => {
+                document.documentElement.requestFullscreen().catch(() => {
+                  // Silently handle errors
+                });
+                setShowRestoreFullscreenPrompt(false);
+                wasFullscreenBeforeFileDialog.current = false;
+              }}
+              className="px-3 py-1.5 bg-[#19c37d] hover:bg-[#15a06a] text-white text-sm rounded transition-colors"
+            >
+              Restore Fullscreen
+            </button>
+            <button
+              onClick={() => {
+                setShowRestoreFullscreenPrompt(false);
+                wasFullscreenBeforeFileDialog.current = false;
+              }}
+              className="p-1 hover:bg-[#565869] rounded transition-colors text-[#8e8ea0] hover:text-white"
+              title="Dismiss"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
