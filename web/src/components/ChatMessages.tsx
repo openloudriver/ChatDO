@@ -736,7 +736,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             {/* User: Avatar floats outside right edge */}
             {message.role === 'user' && (
               <div className="absolute top-1 w-8 h-8 rounded-full bg-[var(--user-bubble-bg)] flex items-center justify-center transition-colors" style={{ right: 'calc(-2.5rem - 6px)' }}>
-                <span className="text-[var(--user-bubble-text)] text-sm font-bold">U</span>
+                <span className="text-sm font-bold" style={{ color: 'var(--user-bubble-text)' }}>U</span>
               </div>
             )}
             
@@ -918,9 +918,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 box-border transition-colors ${
                         message.role === 'user'
-                          ? 'bg-[var(--user-bubble-bg)] text-[var(--user-bubble-text)] max-w-[70%] ml-auto mr-[-6px]'
+                          ? 'bg-[var(--user-bubble-bg)] max-w-[70%] ml-auto mr-[-6px]'
                           : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px]'
                       }`}
+                      style={message.role === 'user' ? { color: 'var(--user-bubble-text)' } : undefined}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
                       {filesToShow.length > 0 && (

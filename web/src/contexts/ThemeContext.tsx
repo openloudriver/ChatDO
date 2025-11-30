@@ -113,18 +113,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }).join('');
     };
 
-    // Soften color: +12% lightness, -8% saturation (applied twice for extra softness)
+    // Soften color: total +30% lightness, -20% saturation (divided across 3 passes)
     const softenColor = (hex: string): string => {
       const [r, g, b] = hexToRgb(hex);
       let [h, s, l] = rgbToHsl(r, g, b);
       
-      // Apply softening twice: +12% lightness, -8% saturation each time
-      for (let i = 0; i < 2; i++) {
-        // Increase lightness by 12%
-        l = Math.min(100, l + 12);
+      // Apply softening three times: +10% lightness, -6.67% saturation each time
+      // Total effect: +30% lightness, -20% saturation
+      for (let i = 0; i < 3; i++) {
+        // Increase lightness by 10% per pass (30% total)
+        l = Math.min(100, l + 10);
         
-        // Decrease saturation by 8%
-        s = Math.max(0, s - 8);
+        // Decrease saturation by 6.67% per pass (20% total)
+        s = Math.max(0, s - 6.67);
       }
       
       const [newR, newG, newB] = hslToRgb(h, s, l);
@@ -139,7 +140,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       yellow: '#FFC600',
       green: '#62BA46',
       blue: '#007AFF',
-      pink: '#F74F9E',
+      pink: '#F51E83', // Darkened by 10%
       purple: '#A550A7',
     };
     
@@ -155,13 +156,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
     
     const accentTextColors: Record<AccentColor, string> = {
-      default: '#000000', // Black text for graphite
-      orange: '#000000', // Black text for orange
-      yellow: '#000000', // Black text for yellow
-      green: '#000000', // Black text for green
-      blue: '#FFFFFF', // White text for blue
-      pink: '#FFFFFF', // White text for pink
-      purple: '#FFFFFF', // White text for purple
+      default: '#000000', // Black text for all colors
+      orange: '#000000', // Black text for all colors
+      yellow: '#000000', // Black text for all colors
+      green: '#000000', // Black text for all colors
+      blue: '#000000', // Black text for all colors
+      pink: '#000000', // Black text for all colors
+      purple: '#000000', // Black text for all colors
     };
     
     root.style.setProperty('--user-bubble-bg', softenedColors[accentColor]);
