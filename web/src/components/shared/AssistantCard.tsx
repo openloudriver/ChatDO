@@ -17,10 +17,12 @@ type AssistantCardProps = {
  */
 export function AssistantCard({ children, className = "", footer }: AssistantCardProps) {
   return (
-    <div className={`mt-[5px] w-full ${className}`}>
+    <div className={`mt-4 w-full ${className}`}>
       <div 
-        className="assistant-card rounded-[14px] bg-[var(--card-bg)] border border-[var(--card-border)] shadow-lg px-8 py-7 space-y-4 max-sm:px-5 transition-colors"
-        style={{ boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' }}
+        className="assistant-card rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] px-5 py-5 space-y-4 max-sm:px-5 transition-colors"
+        style={{ 
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)'
+        }}
       >
         {children}
         {footer ? (

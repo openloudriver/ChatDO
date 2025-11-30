@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-/* Light theme (default) */
+/* Light theme (default) - ChatGPT-style clean layout */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f8;
-  --bg-tertiary: #f0f0f0;
-  --text-primary: #353740;
-  --text-secondary: #6e6e80;
-  --border-color: #e5e5e5;
-  --assistant-bubble-bg: #f7f7f8;
-  --user-bubble-bg: #d9d9d9;
-  --code-bg: #f0f0f0;
-  --card-bg: #ffffff;
-  --card-border: rgba(0, 0, 0, 0.1);
+  --bg-primary: #FFFFFF; /* Main chat/page background - true white */
+  --bg-secondary: #F5F5F7; /* Sidebar and header - light Apple gray */
+  --bg-mid: #D2D2D2; /* Mid-way gray (same ratio from white as dark mid from black: 45 units) */
+  --bg-tertiary: #E0E0E0; /* Lighter gray for tertiary elements */
+  --text-primary: #000000; /* Black text in light mode */
+  --text-secondary: #4B5563; /* Darker gray text */
+  --border-color: #C0C0C0; /* Medium gray border */
+  --assistant-bubble-bg: #F0F0F3; /* Assistant card background - slightly darker, neutral */
+  --user-bubble-bg: #d9d9d9; /* Will be overridden by accent color */
+  --user-bubble-text: #000000; /* Will be overridden by accent color */
+  --code-bg: #E0E0E0; /* Light gray for code blocks */
+  --card-bg: #F0F0F3; /* Assistant card background - slightly darker, neutral */
+  --card-border: #D1D1D6; /* Assistant card border - thin gray border */
   --assistant-avatar-bg: #000000;
   --assistant-avatar-text: #ffffff;
 }
@@ -41,6 +43,14 @@
   transition-property: background-color, border-color, color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+/* Placeholder styling - prevent fading during theme transitions */
+textarea::placeholder,
+input::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+  transition: none !important;
 }
 
 body {

@@ -1030,18 +1030,13 @@ const ChatComposer: React.FC = () => {
               }}
               onKeyPress={handleKeyPress}
               placeholder={editingMessageId ? "Edit your message..." : "Message ChatDO..."}
-              className="w-full p-3 pl-3 pr-12 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none overflow-y-auto transition-all"
+              className="w-full p-3 pl-3 pr-12 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg resize-none focus:outline-none overflow-y-auto transition-colors"
               style={{ 
                 minHeight: '88px', 
                 maxHeight: '300px', 
-                height: '88px'
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 0 2px var(--user-bubble-bg)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = '';
-              }}
+                height: '88px',
+                '--tw-placeholder-opacity': '1'
+              } as React.CSSProperties & { '--tw-placeholder-opacity': string }}
             />
             
             {/* Send button - circular with arrow, inside input box on the right */}

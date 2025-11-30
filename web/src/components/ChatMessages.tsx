@@ -134,7 +134,7 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
   return (
     <AssistantCard>
-      <div className="prose prose-invert max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
+      <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -257,9 +257,9 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
 
   // Otherwise, render only the clean bullet options card (no extra intro text or tips)
   return (
-    <div className="prose prose-invert max-w-none">
+    <div className="prose max-w-none">
       <div className="mt-1">
-        <div className="text-sm font-semibold text-slate-200 mb-3">
+        <div className="text-sm font-semibold text-[var(--text-primary)] mb-3">
           ✍️ Bullet options
         </div>
         <div className="space-y-3">
@@ -1220,17 +1220,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           
                           {message.data.summary && (
                             <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
-                              <div className="font-semibold text-lg mb-4 text-center">Summary</div>
-                              <div className="prose prose-invert prose-sm max-w-none">
+                              <div className="font-semibold text-lg mb-4 text-center text-[var(--text-primary)]">Summary</div>
+                              <div className="prose prose-sm max-w-none">
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    p: ({ children }) => <p className="mb-3 text-[#ececf1] leading-relaxed">{children}</p>,
-                                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ul>,
-                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[#ececf1]">{children}</ol>,
-                                    li: ({ children }) => <li className="ml-4 text-[#ececf1]">{children}</li>,
-                                    strong: ({ children }) => <strong className="font-semibold text-[#ececf1]">{children}</strong>,
-                                    em: ({ children }) => <em className="italic text-[#ececf1]">{children}</em>,
+                                    p: ({ children }) => <p className="mb-3 text-[var(--text-primary)] leading-relaxed">{children}</p>,
+                                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[var(--text-primary)]">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[var(--text-primary)]">{children}</ol>,
+                                    li: ({ children }) => <li className="ml-4 text-[var(--text-primary)]">{children}</li>,
+                                    strong: ({ children }) => <strong className="font-semibold text-[var(--text-primary)]">{children}</strong>,
+                                    em: ({ children }) => <em className="italic text-[var(--text-primary)]">{children}</em>,
                                   }}
                                 >
                                   {message.data.summary}

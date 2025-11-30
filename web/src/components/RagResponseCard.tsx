@@ -276,7 +276,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
 
       {/* Content Section */}
       <div className="border-t border-[var(--border-color)] pt-4 transition-colors">
-        <div className="prose prose-invert max-w-none text-sm text-[var(--text-primary)] leading-relaxed">
+        <div className="prose max-w-none text-sm text-[var(--text-primary)] leading-relaxed">
           <ReactMarkdown
             components={{
               h1: ({ children }) => <SectionHeading>{children}</SectionHeading>,

@@ -135,7 +135,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <header 
           className="flex items-center gap-3 border-b border-[var(--border-color)] px-4 py-2 transition-colors"
           style={{ 
-            backgroundColor: theme === 'dark' ? 'var(--bg-secondary)' : 'var(--bg-primary)'
+            backgroundColor: 'var(--bg-secondary)'
           }}
         >
           {/* Sidebar toggle button – always visible */}
