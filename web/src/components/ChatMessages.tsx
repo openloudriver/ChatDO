@@ -1275,7 +1275,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         message.role === 'assistant' ? (
                           <OptionsRenderer content={content} bulletMode={bulletMode} />
                         ) : (
-                          <p className="whitespace-pre-wrap text-[var(--text-primary)]">{content}</p>
+                          <p className="whitespace-pre-wrap" style={{ color: 'var(--user-bubble-text)' }}>{content}</p>
                         )
                       )}
                       
