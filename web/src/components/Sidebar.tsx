@@ -20,6 +20,7 @@ import { useChatStore, type Project } from '../store/chat';
 import { AiSpendIndicator } from './AiSpendIndicator';
 import ConnectProjectModal from './ConnectProjectModal';
 import { ImpactCaptureModal } from './ImpactCaptureModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 const NewProjectIcon = () => (
   <svg
@@ -69,6 +70,9 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
   handleDeleteProject,
   setViewMode,
 }) => {
+  const { theme } = useTheme();
+  const sidebarTextColor = theme === 'dark' ? '#ffffff' : '#000000';
+  
   const {
     attributes,
     listeners,
@@ -106,9 +110,10 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
         }}
         className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-grab active:cursor-grabbing flex items-center gap-2 ${
           currentProject?.id === project.id
-            ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
-            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
+            ? 'bg-[var(--bg-primary)]'
+            : 'hover:bg-[var(--bg-primary)]'
         }`}
+        style={{ color: sidebarTextColor }}
       >
         <svg
           className="w-4 h-4 flex-shrink-0"
@@ -136,7 +141,8 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleEditProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-t-lg transition-colors"
+            className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg-tertiary)] rounded-t-lg transition-colors"
+            style={{ color: sidebarTextColor }}
           >
             Rename Project
           </button>
@@ -148,7 +154,8 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleConnectProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+            className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg-tertiary)] transition-colors"
+            style={{ color: sidebarTextColor }}
           >
             Connect Project
           </button>
@@ -157,7 +164,8 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
               handleDeleteProject(project.id, project.name);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-b-lg transition-colors"
+            className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg-tertiary)] rounded-b-lg transition-colors"
+            style={{ color: sidebarTextColor }}
           >
             Delete Project
           </button>
@@ -168,6 +176,7 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
 };
 
 const Sidebar: React.FC = () => {
+  const { theme } = useTheme();
   const {
     projects,
     currentProject,
@@ -298,13 +307,19 @@ const Sidebar: React.FC = () => {
     }
   };
 
+  const sidebarTextColor = theme === 'dark' ? '#ffffff' : '#000000';
+  
   return (
-    <div className="h-full bg-[var(--bg-secondary)] flex flex-col text-[var(--text-primary)] overflow-hidden transition-colors">
+    <div 
+      className="h-full bg-[var(--bg-secondary)] flex flex-col overflow-hidden transition-colors"
+      style={{ color: sidebarTextColor }}
+    >
       {/* Search Field */}
       <div className="p-2 flex-shrink-0">
         <div className="relative">
           <svg
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4"
+            style={{ color: sidebarTextColor }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -327,7 +342,17 @@ const Sidebar: React.FC = () => {
                 setViewMode('search');
               }
             }}
-            className="w-full pl-8 pr-3 py-2 text-sm bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--text-secondary)] transition-colors"
+            className="w-full pl-8 pr-3 py-2 text-sm bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md focus:outline-none transition-colors"
+            style={{ 
+              color: sidebarTextColor,
+              '--tw-placeholder-color': sidebarTextColor
+            } as React.CSSProperties & { '--tw-placeholder-color': string }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = sidebarTextColor;
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = '';
+            }}
           />
         </div>
       </div>
@@ -335,11 +360,12 @@ const Sidebar: React.FC = () => {
       {/* Projects List */}
       <div className="px-2 mb-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-xs text-[var(--text-secondary)] uppercase">Projects</div>
+          <div className="text-xs uppercase" style={{ color: sidebarTextColor }}>Projects</div>
           <button
             type="button"
             onClick={handleNewProject}
-            className="rounded-md p-1 text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-colors"
+            className="rounded-md p-1 hover:bg-[var(--bg-primary)] transition-colors"
+            style={{ color: sidebarTextColor }}
             aria-label="New project"
           >
             <NewProjectIcon />
@@ -384,7 +410,8 @@ const Sidebar: React.FC = () => {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setImpactModalOpen(true)}
-            className="p-2 rounded transition-colors flex-shrink-0 text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
+            className="p-2 rounded transition-colors flex-shrink-0 hover:bg-[var(--bg-primary)]"
+            style={{ color: sidebarTextColor }}
             title="Capture impact"
           >
             <svg
@@ -408,9 +435,10 @@ const Sidebar: React.FC = () => {
             }}
             className={`p-2 rounded transition-colors flex-shrink-0 ${
               viewMode === 'memory'
-                ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
+                ? 'bg-[var(--bg-primary)]'
+                : 'hover:bg-[var(--bg-primary)]'
             }`}
+            style={{ color: sidebarTextColor }}
             title="Memory Dashboard"
           >
             <svg
@@ -435,9 +463,10 @@ const Sidebar: React.FC = () => {
           }}
           className={`p-2 rounded transition-colors flex-shrink-0 ${
             viewMode === 'trashList'
-              ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
-              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
+              ? 'bg-[var(--bg-primary)]'
+              : 'hover:bg-[var(--bg-primary)]'
           }`}
+          style={{ color: sidebarTextColor }}
           title="Trash"
         >
           <svg

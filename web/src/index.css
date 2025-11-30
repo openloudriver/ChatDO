@@ -21,6 +21,7 @@
 .dark {
   --bg-primary: #343541;
   --bg-secondary: #202123;
+  --bg-mid: #2A2B32; /* Mid-way between sidebar and main content */
   --bg-tertiary: #444654;
   --text-primary: #ececf1;
   --text-secondary: #8e8ea0;

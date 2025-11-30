@@ -8,6 +8,7 @@ import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
 import { AssistantCard } from './shared/AssistantCard';
 import type { RagFile } from '../types/rag';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Extract bullet options from message content
 const extractBulletOptionsFromMessage = (content: string): string[] => {
@@ -355,6 +356,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     getRagFilesForConversation, // Get conversation-scoped RAG files
   } = useChatStore();
   
+  const { theme } = useTheme();
+  
   // Use impact-scoped messages if provided, otherwise use store messages
   const messages = impactScopedMessages ?? storeMessages;
   
@@ -666,7 +669,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
+    <div 
+      className="flex-1 flex flex-col h-full transition-colors"
+      style={{ 
+        backgroundColor: theme === 'dark' ? 'var(--bg-mid)' : 'var(--bg-primary)'
+      }}
+    >
       {/* Breadcrumb/Header - only show in chat view mode, not in impact workspace */}
       {viewMode === 'chat' && (
         <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center gap-4 transition-colors">

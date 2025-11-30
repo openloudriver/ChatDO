@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface ProviderEntry {
   id: string;
@@ -14,6 +15,8 @@ interface MonthlySpendResponse {
 }
 
 export const AiSpendIndicator: React.FC = () => {
+  const { theme } = useTheme();
+  const sidebarTextColor = theme === 'dark' ? '#ffffff' : '#000000';
   const [data, setData] = useState<MonthlySpendResponse | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
@@ -93,8 +96,11 @@ export const AiSpendIndicator: React.FC = () => {
       <div
         ref={amountRef}
         onClick={(e) => e.stopPropagation()}
-        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-default select-none text-sm px-2 py-1 whitespace-nowrap transition-colors"
-        style={{ minWidth: 'fit-content' }}
+        className="cursor-default select-none text-sm px-2 py-1 whitespace-nowrap transition-colors"
+        style={{ 
+          minWidth: 'fit-content',
+          color: sidebarTextColor
+        }}
       >
         {`$${total.toFixed(2)}`}
       </div>

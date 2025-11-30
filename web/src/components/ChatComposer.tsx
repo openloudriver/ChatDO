@@ -5,6 +5,7 @@ import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
 import UrlSummaryDialog from './UrlSummaryDialog';
 import WebSearchDialog from './WebSearchDialog';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -84,6 +85,8 @@ const ChatComposer: React.FC = () => {
     isRagTrayOpen,
     setRagTrayOpen,
   } = useChatStore();
+  
+  const { theme } = useTheme();
   
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
@@ -779,7 +782,12 @@ const ChatComposer: React.FC = () => {
   return (
     <div 
       ref={dropZoneRef}
-      className={`border-t border-[var(--border-color)] p-4 bg-[var(--bg-primary)] transition-colors ${isDragging ? 'bg-[var(--bg-tertiary)] border-[#19c37d] border-2' : ''}`}
+      className={`border-t border-[var(--border-color)] p-4 transition-colors ${isDragging ? 'bg-[var(--bg-tertiary)] border-[#19c37d] border-2' : ''}`}
+      style={{ 
+        backgroundColor: isDragging 
+          ? 'var(--bg-tertiary)' 
+          : (theme === 'dark' ? 'var(--bg-mid)' : 'var(--bg-primary)')
+      }}
       onDragOver={isRagTrayOpen ? undefined : handleDragOver}
       onDragLeave={isRagTrayOpen ? undefined : handleDragLeave}
       onDrop={isRagTrayOpen ? undefined : handleDrop}

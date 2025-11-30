@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
 import ConfirmDialog from './ConfirmDialog';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Helper to format date
 const formatDate = (date: Date | string): string => {
@@ -51,6 +52,7 @@ interface ProjectChatListProps {
 }
 
 const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
+  const { theme } = useTheme();
   const {
     conversations,
     currentConversation,
@@ -197,7 +199,12 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
   const projectChats = conversations.filter(c => c.projectId === projectId);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)] transition-colors">
+    <div 
+      className="flex-1 flex flex-col h-full transition-colors"
+      style={{ 
+        backgroundColor: theme === 'dark' ? 'var(--bg-mid)' : 'var(--bg-primary)'
+      }}
+    >
         {/* Header */}
         <div className="px-6 py-4 border-b border-[var(--border-color)] transition-colors">
           <div className="flex items-center justify-between">
@@ -223,7 +230,17 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
               )}
               <button
                 onClick={handleNewChat}
-                className="px-4 py-2 bg-[#19c37d] hover:bg-[#16a86b] text-white rounded-lg text-sm font-medium transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ 
+                  backgroundColor: 'var(--user-bubble-bg)',
+                  color: 'var(--user-bubble-text)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.9';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
               >
                 New Chat
               </button>
@@ -261,7 +278,10 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                       isSelected
                         ? 'bg-[var(--assistant-bubble-bg)] border border-[var(--border-color)]'
                         : 'bg-[var(--bg-tertiary)] hover:bg-[var(--assistant-bubble-bg)] border border-transparent'
-                    } ${isChecked ? 'ring-2 ring-[#19c37d]' : ''}`}
+                    }`}
+                    style={isChecked ? { 
+                      boxShadow: '0 0 0 2px var(--user-bubble-bg)'
+                    } : undefined}
                   >
                     {/* Checkbox */}
                     <input
@@ -269,7 +289,16 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                       checked={isChecked}
                       onChange={() => {}}
                       onClick={(e) => handleToggleSelect(chat.id, e)}
-                      className="w-4 h-4 text-[#19c37d] bg-[var(--bg-primary)] border-[var(--border-color)] rounded focus:ring-[#19c37d] focus:ring-2 cursor-pointer flex-shrink-0 transition-colors"
+                      className="w-4 h-4 bg-[var(--bg-primary)] border-[var(--border-color)] rounded cursor-pointer flex-shrink-0 transition-colors"
+                      style={{ 
+                        accentColor: 'var(--user-bubble-bg)'
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.boxShadow = '0 0 0 2px var(--user-bubble-bg)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.boxShadow = '';
+                      }}
                     />
                     
                     {/* Chat content */}
