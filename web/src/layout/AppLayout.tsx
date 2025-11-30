@@ -121,9 +121,10 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div
         className={
           isSidebarOpen
-            ? "w-64 shrink-0 border-r border-[var(--border-color)] bg-[var(--bg-secondary)] transition-all duration-150"
-            : "w-0 shrink-0 overflow-hidden border-r border-[var(--border-color)] transition-all duration-150"
+            ? "w-64 shrink-0 border-r bg-[var(--bg-secondary)] transition-all duration-150"
+            : "w-0 shrink-0 overflow-hidden border-r transition-all duration-150"
         }
+        style={{ borderRightColor: 'var(--user-bubble-bg)', borderRightWidth: '1px', borderRightStyle: 'solid' }}
       >
         {/* Only render content when open to avoid weird focus/tab issues */}
         {isSidebarOpen && <Sidebar />}
@@ -133,9 +134,12 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Global header */}
         <header 
-          className="flex items-center gap-3 border-b border-[var(--border-color)] px-4 py-2 transition-colors"
+          className="flex items-center gap-3 border-b px-4 py-2 transition-colors"
           style={{ 
-            backgroundColor: 'var(--bg-secondary)'
+            backgroundColor: 'var(--bg-secondary)',
+            borderBottomColor: 'var(--user-bubble-bg)',
+            borderBottomWidth: '1px',
+            borderBottomStyle: 'solid'
           }}
         >
           {/* Sidebar toggle button – always visible */}

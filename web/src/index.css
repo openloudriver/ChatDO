@@ -3,7 +3,7 @@
 /* Light theme (default) - ChatGPT-style clean layout */
 :root {
   --bg-primary: #FFFFFF; /* Main chat/page background - true white */
-  --bg-secondary: #F5F5F7; /* Sidebar and header - light Apple gray */
+  --bg-secondary: #E0E0E0; /* Sidebar and header - matches composer gray */
   --bg-mid: #D2D2D2; /* Mid-way gray (same ratio from white as dark mid from black: 45 units) */
   --bg-tertiary: #E0E0E0; /* Lighter gray for tertiary elements */
   --text-primary: #000000; /* Black text in light mode */

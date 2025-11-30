@@ -318,7 +318,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
 
                 return (
-                  <li className="ml-4 text-sm text-[#ececf1] mb-1 before:content-['•'] before:mr-2">
+                  <li className="ml-4 text-sm text-[var(--text-primary)] mb-1 before:content-['•'] before:mr-2">
                     {rendered}
                   </li>
                 );
@@ -383,7 +383,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
 
                 return (
-                  <p className="mb-3 text-sm leading-relaxed text-[#ececf1]">
+                  <p className="mb-3 text-sm leading-relaxed text-[var(--text-primary)]">
                     {isSubSectionHeading && <span className="mr-2">-</span>}
                     {rendered}
                   </p>

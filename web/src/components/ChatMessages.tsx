@@ -373,6 +373,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const previousConversationIdRef = useRef<string | null>(null);
+  const hasScrolledToBottomRef = useRef(false);
   
   // Helper function to format model names for display
   const formatModelName = (model: string): string => {
@@ -498,10 +500,43 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
   
   
+  // Track conversation changes to detect initial load
+  useEffect(() => {
+    const currentId = currentConversation?.id || null;
+    if (currentId !== previousConversationIdRef.current) {
+      // Conversation changed - reset scroll flag for instant scroll on initial load
+      hasScrolledToBottomRef.current = false;
+      previousConversationIdRef.current = currentId;
+      
+      // Immediately scroll to bottom on conversation change (no animation)
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      });
+    }
+  }, [currentConversation?.id]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (messagesEndRef.current && !isStreaming) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (!isStreaming && messages.length > 0) {
+      // Use instant scroll for initial load, smooth scroll for subsequent updates
+      const isInitialLoad = !hasScrolledToBottomRef.current;
+      
+      if (isInitialLoad) {
+        // For initial load, set scroll position directly (no animation)
+        // Use requestAnimationFrame to ensure messages are rendered
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+            hasScrolledToBottomRef.current = true;
+          }
+        });
+      } else if (messagesEndRef.current) {
+        // For subsequent updates, use smooth scroll
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }, [messages, isStreaming]);
 
