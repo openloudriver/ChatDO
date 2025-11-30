@@ -373,7 +373,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
               return indexed.map((file) => (
                 <div
                   key={file.id}
-                  className="w-full bg-[var(--bg-tertiary)] rounded-lg p-3 border border-[var(--border-color)] hover:border-[#19c37d] transition-colors"
+                  className="w-full bg-[var(--bg-primary)] rounded-lg p-3 border border-[var(--border-color)] hover:border-[#19c37d] transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     {getFileIcon(file.mime_type)}
