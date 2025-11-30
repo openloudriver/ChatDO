@@ -918,7 +918,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 box-border ${
                         message.role === 'user'
-                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto mr-[12px]'
+                          ? 'bg-[#19c37d] text-white max-w-[70%] ml-auto mr-[-6px]'
                           : 'bg-[#444654] text-[#ececf1] w-full ml-[6px]'
                       }`}
                     >
