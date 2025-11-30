@@ -47,7 +47,16 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[#10a37f] transition-colors"
+            className="w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition-colors"
+            style={{ 
+              boxShadow: '0 0 0 1px var(--user-bubble-bg)'
+            } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 1px var(--user-bubble-bg)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = '';
+            }}
             placeholder="https://example.com or https://www.youtube.com/..."
           />
 
@@ -62,7 +71,15 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-3 py-1 rounded-lg text-xs text-white bg-[#10a37f] hover:bg-[#19c37d]"
+                className="px-3 py-1 rounded-lg text-xs text-[var(--user-bubble-text)] transition-colors"
+                style={{ backgroundColor: 'var(--user-bubble-bg)' }}
+                onMouseEnter={(e) => {
+                  const bg = getComputedStyle(document.documentElement).getPropertyValue('--user-bubble-bg').trim();
+                  e.currentTarget.style.opacity = '0.9';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
               >
                 OK
               </button>

@@ -13,6 +13,8 @@
   --code-bg: #f0f0f0;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.1);
+  --assistant-avatar-bg: #000000;
+  --assistant-avatar-text: #ffffff;
 }
 
 /* Dark theme */
@@ -29,6 +31,8 @@
   --code-bg: #2b2d31;
   --card-bg: #0D0D0D;
   --card-border: rgba(255, 255, 255, 0.08);
+  --assistant-avatar-bg: #ffffff;
+  --assistant-avatar-text: #000000;
 }
 
 /* Ensure smooth transitions */

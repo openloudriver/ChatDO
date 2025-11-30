@@ -135,7 +135,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Apply accent color as CSS variable - using ChatGPT's exact macOS accent colors, softened
     const root = document.documentElement;
     const accentColors: Record<AccentColor, string> = {
-      default: '#8C8C8C', // Graphite gray (ChatGPT's default)
+      default: '#737373', // Graphite gray darkened by 10%
       orange: '#F7821B',
       yellow: '#FFC600',
       green: '#62BA46',

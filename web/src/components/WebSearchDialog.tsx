@@ -52,7 +52,16 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[#10a37f] transition-colors"
+            className="w-full rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition-colors"
+            style={{ 
+              boxShadow: '0 0 0 1px var(--user-bubble-bg)'
+            } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 0 1px var(--user-bubble-bg)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = '';
+            }}
             placeholder="Enter your search query..."
           />
 
@@ -68,7 +77,16 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
               <button
                 type="submit"
                 disabled={!query.trim()}
-                className="px-3 py-1 rounded-lg text-xs text-white bg-[#10a37f] hover:bg-[#19c37d] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 rounded-lg text-xs text-[var(--user-bubble-text)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ backgroundColor: 'var(--user-bubble-bg)' }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.opacity = '0.9';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
               >
                 Search
               </button>

@@ -728,8 +728,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           >
             {/* Assistant: Avatar floats outside left edge */}
             {message.role === 'assistant' && (
-              <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
-                <span className="text-white text-sm font-bold">C</span>
+              <div className="absolute top-1 w-8 h-8 rounded-full bg-[var(--assistant-avatar-bg)] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
+                <span className="text-sm font-bold" style={{ color: 'var(--assistant-avatar-text)' }}>C</span>
               </div>
             )}
             
@@ -1378,8 +1378,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {isStreaming && (
         <div className="group relative mb-3">
           {/* Assistant: Avatar floats outside left edge */}
-          <div className="absolute top-1 w-8 h-8 rounded-full bg-[#19c37d] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
-            <span className="text-white text-sm font-bold">C</span>
+          <div className="absolute top-1 w-8 h-8 rounded-full bg-[var(--assistant-avatar-bg)] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
+            <span className="text-sm font-bold" style={{ color: 'var(--assistant-avatar-text)' }}>C</span>
           </div>
           <div className="flex flex-col w-full">
             <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px] transition-colors">
