@@ -1043,7 +1043,7 @@ const ChatComposer: React.FC = () => {
               className="absolute right-2 bottom-4 w-8 h-8 rounded-full bg-[var(--user-bubble-bg)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               title={editingMessageId ? "Save & send" : "Send"}
             >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <svg className="w-4 h-4" style={{ color: 'var(--user-bubble-text)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
               </svg>
             </button>
