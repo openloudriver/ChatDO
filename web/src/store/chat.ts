@@ -12,7 +12,7 @@ export interface Message {
   type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card' | 'rag_response';  // Message types
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
-  sources?: string[];  // Source tags (e.g., ["Memory-DRR", "Brave Search", "RAG-Upload"])
+  sources?: Source[];  // Source objects for citations (ChatGPT-style)
   data?: {
     query?: string;
     provider?: string;
@@ -795,6 +795,66 @@ export const useChatStore = create<ChatStore>((set) => ({
           });
         }
         
+        // Convert legacy string[] sources to Source[] if needed
+        let sources: Source[] | undefined = undefined;
+        if (msg.sources) {
+          if (Array.isArray(msg.sources) && msg.sources.length > 0) {
+            // Check if already Source[] format
+            if (typeof msg.sources[0] === 'object' && 'title' in msg.sources[0]) {
+              sources = msg.sources as Source[];
+            } else {
+              // Convert string[] to Source[]
+              sources = (msg.sources as string[]).map((source, index) => ({
+                id: `legacy-${index}`,
+                title: source,
+                rank: index,
+              }));
+            }
+          }
+        }
+        
+        // For web_search_results, convert results to sources if not already done
+        if (msg.type === 'web_search_results' && msg.data?.results && (!sources || sources.length === 0)) {
+          sources = msg.data.results.map((result: { title: string; url: string; snippet: string }, index: number) => {
+            const extractDomain = (url: string): string => {
+              try {
+                const u = new URL(url);
+                return u.hostname.replace(/^www\./, '');
+              } catch {
+                return url;
+              }
+            };
+            return {
+              id: `web-${index}`,
+              url: result.url,
+              title: result.title || result.url,
+              siteName: extractDomain(result.url),
+              description: result.snippet,
+              rank: index,
+              sourceType: 'web' as const,
+            };
+          });
+        }
+        
+        // For rag_response, convert RAG files to sources if not already done
+        if (msg.type === 'rag_response' && (!sources || sources.length === 0)) {
+          const state = useChatStore.getState();
+          const ragFiles = state.ragFilesByConversationId[conversation.id] || [];
+          const readyFiles = ragFiles.filter((f: RagFile) => f.text_extracted);
+          if (readyFiles.length > 0) {
+            sources = readyFiles.map((file: RagFile, index: number) => ({
+              id: file.id || `rag-${index}`,
+              url: file.file_path ? `file://${file.file_path}` : undefined,
+              title: file.filename || 'Document',
+              siteName: 'My documents',
+              description: 'Ready',
+              rank: index,
+              sourceType: 'rag' as const,
+              fileName: file.filename,
+            }));
+          }
+        }
+        
         messages.push({
           id: `${conversation.id}-${messages.length}`,
           role: msg.role,
@@ -803,7 +863,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           data: msg.data || undefined, // Preserve structured message data
           model: msg.model || undefined, // Preserve model attribution
           provider: msg.provider || undefined, // Preserve provider attribution
-          sources: msg.sources || undefined, // Preserve source tags
+          sources: sources, // Use converted sources
           timestamp: new Date() // Backend doesn't provide timestamps, use current time
         });
       }

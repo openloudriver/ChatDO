@@ -44,7 +44,7 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] p-4 shadow-xl transition-colors">
         <h2 className="text-sm font-medium text-[var(--text-primary)] mb-2">
-          Search the web:
+          Web Search:
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input

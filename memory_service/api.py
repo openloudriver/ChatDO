@@ -492,12 +492,12 @@ async def search(request: SearchRequest):
             # Try all query embeddings and take the best match
             best_similarity = 0.0
             for query_embedding in query_embeddings:
-                dot_product = np.dot(query_embedding, embedding)
-                norm_query = np.linalg.norm(query_embedding)
-                norm_embedding = np.linalg.norm(embedding)
-                
-                if norm_query > 0 and norm_embedding > 0:
-                    similarity = dot_product / (norm_query * norm_embedding)
+            dot_product = np.dot(query_embedding, embedding)
+            norm_query = np.linalg.norm(query_embedding)
+            norm_embedding = np.linalg.norm(embedding)
+            
+            if norm_query > 0 and norm_embedding > 0:
+                similarity = dot_product / (norm_query * norm_embedding)
                     best_similarity = max(best_similarity, similarity)
             
             similarities.append((

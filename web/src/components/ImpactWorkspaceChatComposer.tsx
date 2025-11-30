@@ -314,7 +314,7 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
               style={isRagTrayOpen ? {
                 color: 'var(--user-bubble-bg)'
               } : undefined}
-              title="RAG context tray (upload reference files)"
+              title="RAG"
             >
               {isRagTrayOpen && (
                 <div 

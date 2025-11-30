@@ -3,9 +3,63 @@ import { useChatStore } from '../store/chat';
 import axios from 'axios';
 import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
+import type { Source } from '../types/sources';
 import UrlSummaryDialog from './UrlSummaryDialog';
 import WebSearchDialog from './WebSearchDialog';
 import { useTheme } from '../contexts/ThemeContext';
+
+// Helper: Convert web search result to Source
+const webResultToSource = (result: { title: string; url: string; snippet: string }, index: number): Source => {
+  const extractDomain = (url: string): string => {
+    try {
+      const u = new URL(url);
+      return u.hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  };
+
+  return {
+    id: `web-${index}`,
+    url: result.url,
+    title: result.title || result.url,
+    siteName: extractDomain(result.url),
+    description: result.snippet,
+    rank: index,
+    sourceType: 'web',
+  };
+};
+
+// Helper: Convert RAG file to Source
+const ragFileToSource = (file: RagFile, index: number): Source => {
+  return {
+    id: file.id || `rag-${index}`,
+    url: file.file_path ? `file://${file.file_path}` : undefined,
+    title: file.filename || 'Document',
+    siteName: 'My documents',
+    description: file.text_extracted ? 'Ready' : 'Processing...',
+    rank: index,
+    sourceType: 'rag',
+    fileName: file.filename,
+  };
+};
+
+// Helper: Convert legacy string[] sources to Source[]
+const convertLegacySources = (sources?: string[] | Source[]): Source[] | undefined => {
+  if (!sources || sources.length === 0) return undefined;
+  
+  // If already Source[], return as-is
+  if (typeof sources[0] === 'object' && 'title' in sources[0]) {
+    return sources as Source[];
+  }
+  
+  // Convert string[] to Source[]
+  return (sources as string[]).map((source, index) => ({
+    id: `legacy-${index}`,
+    title: source,
+    rank: index,
+  }));
+};
 
 const ChatComposer: React.FC = () => {
   const [input, setInput] = useState('');
@@ -212,13 +266,19 @@ const ChatComposer: React.FC = () => {
             updateStreamingContent(streamedContent);
           } else if (data.type === 'web_search_results') {
             // Handle structured web search results
+            // Convert web search results to Source[]
+            const sources: Source[] = data.data?.results?.map((result: { title: string; url: string; snippet: string }, index: number) =>
+              webResultToSource(result, index)
+            ) || [];
+            
             addMessage({ 
               role: 'assistant', 
               content: '',
               type: 'web_search_results',
               data: data.data,
               model: data.model,
-              provider: data.provider
+              provider: data.provider,
+              sources: sources.length > 0 ? sources : undefined
             });
             clearStreaming();
             setLoading(false);
@@ -238,6 +298,12 @@ const ChatComposer: React.FC = () => {
             ws.close();
           } else if (data.type === 'rag_response') {
             // Handle structured RAG response
+            // Get RAG files from store and convert to Source[]
+            const ragFiles = useChatStore.getState().ragFilesByConversationId[currentConversation.id] || [];
+            const sources: Source[] = ragFiles
+              .filter((f: RagFile) => f.text_extracted)
+              .map((file: RagFile, index: number) => ragFileToSource(file, index));
+            
             addMessage({ 
               role: 'assistant', 
               content: data.data?.content || '',
@@ -245,7 +311,7 @@ const ChatComposer: React.FC = () => {
               data: data.data,
               model: data.model,
               provider: data.provider,
-              sources: data.sources || (data.data?.sources ? ["RAG-Upload"] : undefined)
+              sources: sources.length > 0 ? sources : undefined
             });
             clearStreaming();
             setLoading(false);
@@ -315,6 +381,11 @@ const ChatComposer: React.FC = () => {
       
       // Check if response is structured (web_search_results or article_card)
       if (response.data.message_type === 'web_search_results' && response.data.message_data) {
+        // Convert web search results to Source[]
+        const sources: Source[] = response.data.message_data?.results?.map((result: { title: string; url: string; snippet: string }, index: number) =>
+          webResultToSource(result, index)
+        ) || [];
+        
         addMessage({ 
           role: 'assistant', 
           content: '',
@@ -322,7 +393,7 @@ const ChatComposer: React.FC = () => {
           data: response.data.message_data,
           model: response.data.model_used,
           provider: response.data.provider,
-          sources: response.data.sources
+          sources: sources.length > 0 ? sources : undefined
         });
       } else if (response.data.message_type === 'article_card' && response.data.message_data) {
         addMessage({ 
@@ -334,6 +405,12 @@ const ChatComposer: React.FC = () => {
           provider: response.data.provider || 'trafilatura-gpt5'
         });
       } else if (response.data.message_type === 'rag_response' && response.data.message_data) {
+        // Get RAG files from store and convert to Source[]
+        const ragFiles = useChatStore.getState().ragFilesByConversationId[currentConversation.id] || [];
+        const sources: Source[] = ragFiles
+          .filter((f: RagFile) => f.text_extracted)
+          .map((file: RagFile, index: number) => ragFileToSource(file, index));
+        
         addMessage({ 
           role: 'assistant', 
           content: response.data.message_data.content || response.data.reply || '',
@@ -341,15 +418,27 @@ const ChatComposer: React.FC = () => {
           data: response.data.message_data,
           model: response.data.model_used,
           provider: response.data.provider,
-          sources: response.data.sources
+          sources: sources.length > 0 ? sources : undefined
         });
       } else {
         // Normal chat message - may include meta for web search sources
+        // Convert legacy string[] sources to Source[] if needed
+        let sources: Source[] | undefined = undefined;
+        if (response.data.sources) {
+          sources = convertLegacySources(response.data.sources);
+          // If meta has webResultsPreview, use those as sources
+          if (response.data.message_data?.meta?.webResultsPreview && !sources) {
+            sources = response.data.message_data.meta.webResultsPreview.map((result: { title: string; url: string; snippet: string }, index: number) =>
+              webResultToSource(result, index)
+            );
+          }
+        }
+        
         addMessage({ 
           role: 'assistant', 
           content: response.data.reply,
           model: response.data.model_used,
-          sources: response.data.sources,
+          sources: sources,
           provider: response.data.provider,
           meta: response.data.message_data?.meta || undefined
         });
@@ -726,13 +815,19 @@ const ChatComposer: React.FC = () => {
             updateStreamingContent(streamedContent);
           } else if (data.type === 'web_search_results') {
             // Handle structured web search results
+            // Convert web search results to Source[]
+            const sources: Source[] = data.data?.results?.map((result: { title: string; url: string; snippet: string }, index: number) =>
+              webResultToSource(result, index)
+            ) || [];
+            
             addMessage({ 
               role: 'assistant', 
               content: '',
               type: 'web_search_results',
               data: data.data,
               model: data.model,
-              provider: data.provider
+              provider: data.provider,
+              sources: sources.length > 0 ? sources : undefined
             });
             clearStreaming();
             setLoading(false);
@@ -970,7 +1065,7 @@ const ChatComposer: React.FC = () => {
                   fileInputRef.current?.click();
                 }}
                 className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
-                title="Upload file"
+                title="Upload File"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -979,7 +1074,7 @@ const ChatComposer: React.FC = () => {
               <button
                 onClick={handleSearchWebClick}
                 className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
-                title="Search the web"
+                title="Web Search"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -1013,7 +1108,7 @@ const ChatComposer: React.FC = () => {
                     ? 'text-[var(--user-bubble-bg)] bg-[var(--user-bubble-bg)]/20'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                 }`}
-                title="RAG context tray (upload reference files)"
+                title="RAG"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

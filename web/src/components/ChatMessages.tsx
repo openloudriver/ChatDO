@@ -7,10 +7,12 @@ import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
 import { AssistantCard } from './shared/AssistantCard';
+import { SourcesChips } from './SourcesChips';
 import type { RagFile } from '../types/rag';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Extract bullet options from message content
+
 const extractBulletOptionsFromMessage = (content: string): string[] => {
   const bullets: string[] = [];
   const lines = content.split('\n');
@@ -1322,25 +1324,34 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         )
                       )}
                       
-                      {/* Display sources and model attribution for assistant messages (only once, at the end) */}
-                      {/* Show model tag for all assistant messages, including card types */}
+                      {/* Unified footer: Sources chips (left) + Model tag (right) for web_search_results and article_card only */}
                       {message.role === 'assistant' && 
-                       message.type !== 'document_card' && (
-                        <div className="text-xs text-[var(--text-secondary)] mt-2 text-right leading-tight">
-                          {message.sources && message.sources.length > 0 && (
-                            <div>
-                              Sources: {message.sources.join(', ')}
-                            </div>
-                          )}
-                          {message.type === 'web_search_results' && (
-                            <div>
-                              Model: Brave Search
-                            </div>
-                          )}
-                          {message.type !== 'web_search_results' && message.model && (
-                            <div>
-                              Model: {formatModelName(message.model)}
-                            </div>
+                       (message.type === 'web_search_results' || message.type === 'article_card') && (
+                        <div className="flex justify-between items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
+                          {/* Left: Sources chips */}
+                          <div className="flex-1">
+                            <SourcesChips sources={message.sources} />
+                          </div>
+                          {/* Right: Model tag */}
+                          <div className="text-right">
+                            {message.type === 'web_search_results' ? (
+                              <div>Model: Brave Search</div>
+                            ) : message.model ? (
+                              <div>Model: {formatModelName(message.model)}</div>
+                            ) : null}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Model tag only for other assistant messages (no sources) */}
+                      {message.role === 'assistant' && 
+                       message.type !== 'web_search_results' && 
+                       message.type !== 'article_card' && 
+                       message.type !== 'document_card' && 
+                       message.type !== 'rag_response' && (
+                        <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
+                          {message.model && (
+                            <div>Model: {formatModelName(message.model)}</div>
                           )}
                         </div>
                       )}
