@@ -991,7 +991,7 @@ const ChatComposer: React.FC = () => {
                 className={`p-2 rounded transition-colors ${
                   showSpinner
                     ? 'text-blue-400 cursor-wait'
-                    : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                 }`}
                 title={showSpinner ? "Summarizing URL..." : "Summarize URL"}
               >
@@ -1011,7 +1011,7 @@ const ChatComposer: React.FC = () => {
                 className={`p-2 rounded transition-colors ${
                   isRagTrayOpen
                     ? 'text-[var(--user-bubble-bg)] bg-[var(--user-bubble-bg)]/20'
-                    : 'text-[#8e8ea0] hover:text-white hover:bg-[#565869]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                 }`}
                 title="RAG context tray (upload reference files)"
               >
