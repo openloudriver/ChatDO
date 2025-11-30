@@ -716,8 +716,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Messages */}
-        <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
-          <div className="max-w-4xl mx-auto">
+        <div ref={messagesContainerRef} className={`flex-1 overflow-y-auto transition-all duration-300 ${isRagTrayOpen ? 'mr-80' : ''}`}>
+          <div className="max-w-[1000px] mx-auto px-4 py-4 space-y-4">
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
         

@@ -145,7 +145,17 @@
     "title": "New Chat",
     "thread_id": "41b5fb42-f23e-452d-a8b9-dc5bfd32fe26",
     "created_at": "2025-11-29T23:32:40.829141+00:00",
-    "updated_at": "2025-11-29T23:32:40.829175+00:00",
+    "updated_at": "2025-11-29T23:57:26.671490+00:00",
+    "trashed": true,
+    "trashed_at": "2025-11-29T23:57:26.671450+00:00"
+  },
+  {
+    "id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
+    "project_id": "scratch",
+    "title": "Compare Bitcoin and Monero",
+    "thread_id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
+    "created_at": "2025-11-30T00:18:19.930244+00:00",
+    "updated_at": "2025-11-30T00:20:04.532798+00:00",
     "trashed": false,
     "trashed_at": null
   }

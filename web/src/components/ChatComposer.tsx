@@ -723,7 +723,7 @@ const ChatComposer: React.FC = () => {
       onDragLeave={isRagTrayOpen ? undefined : handleDragLeave}
       onDrop={isRagTrayOpen ? undefined : handleDrop}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-[1000px] mx-auto">
         {editingMessageId && (
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm text-[#8e8ea0]">Editing message</span>
