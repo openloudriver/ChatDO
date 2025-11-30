@@ -137,7 +137,7 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-xl rounded-lg bg-[var(--bg-primary)] p-6 shadow-xl border border-[var(--border-color)] transition-colors">
-        <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Quick Impact Capture</h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Bullet</h2>
         <div className="space-y-3 text-sm text-[var(--text-primary)]">
           <input
             className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors"

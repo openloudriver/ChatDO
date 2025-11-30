@@ -1,5 +1,5 @@
 /**
- * Impact Workspace Page - Simplified 2-column layout
+ * Bullet Workspace Page - Simplified 2-column layout
  * 
  * Architecture:
  * - Left column: Impact list with checkboxes for selection
@@ -23,7 +23,7 @@ import { ImpactCaptureModal } from "./ImpactCaptureModal";
 import { ActiveBulletEditor, type BulletMode, BULLET_MODES } from "./ActiveBulletEditor";
 import { useTheme } from "../contexts/ThemeContext";
 
-const IMPACT_PROJECT_NAME = "Impact Workspace";
+const IMPACT_PROJECT_NAME = "Bullet Workspace";
 
 // Per-impact scoped state
 type ImpactScopedState = {
@@ -366,7 +366,7 @@ export const ImpactWorkspacePage: React.FC = () => {
     }
   }, [viewMode, setViewMode]);
 
-  // Ensure Impact Workspace project exists and is selected
+  // Ensure Bullet Workspace project exists and is selected
   useEffect(() => {
     const ensureImpactProject = async () => {
       try {
@@ -392,7 +392,7 @@ export const ImpactWorkspacePage: React.FC = () => {
               impactProject = updatedState.projects.find(p => p.name === IMPACT_PROJECT_NAME);
             }
           } catch (e) {
-            console.error("Error creating Impact Workspace project:", e);
+            console.error("Error creating Bullet Workspace project:", e);
           }
         }
         
@@ -488,7 +488,7 @@ export const ImpactWorkspacePage: React.FC = () => {
   // Handle deleting selected impacts
   const handleDeleteSelected = async () => {
     if (selectedImpactIds.size === 0) return;
-    if (!confirm(`Delete ${selectedImpactIds.size} impact${selectedImpactIds.size > 1 ? 's' : ''}?`)) return;
+    if (!confirm(`Delete ${selectedImpactIds.size} bullet${selectedImpactIds.size > 1 ? 's' : ''}?`)) return;
     
     try {
       const idsToDelete = Array.from(selectedImpactIds);
@@ -528,7 +528,7 @@ export const ImpactWorkspacePage: React.FC = () => {
       {/* Header */}
       <div className="flex-shrink-0 border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-6 py-4 transition-colors">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-slate-100">Impact Workspace</h1>
+          <h1 className="text-xl font-semibold text-slate-100">Bullet Workspace</h1>
           {/* Mode toggle (small segmented buttons) */}
           <div className="flex gap-1 flex-wrap">
             {BULLET_MODES.map((mode) => {
@@ -563,7 +563,7 @@ export const ImpactWorkspacePage: React.FC = () => {
         {/* Left pane: Impact list */}
         <div className="w-80 flex flex-col border-r border-[var(--border-color)] bg-[var(--bg-primary)] overflow-hidden transition-colors">
           <div className="px-4 py-3 border-b border-slate-700 flex-shrink-0 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-100">Captured Impacts</h2>
+            <h2 className="text-sm font-semibold text-slate-100">Captured Bullets</h2>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
@@ -571,7 +571,7 @@ export const ImpactWorkspacePage: React.FC = () => {
                   setImpactModalOpen(true);
                 }}
                 className="rounded border border-emerald-500/60 bg-slate-800 px-2 py-1 text-xs text-emerald-300 hover:bg-emerald-500/10"
-                title="Add new impact"
+                title="Add new bullet"
               >
                 Add
               </button>
@@ -579,7 +579,7 @@ export const ImpactWorkspacePage: React.FC = () => {
                 onClick={handleEditSelected}
                 disabled={selectedImpactIds.size !== 1}
                 className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Edit selected impact"
+                title="Edit selected bullet"
               >
                 Edit
               </button>
@@ -587,7 +587,7 @@ export const ImpactWorkspacePage: React.FC = () => {
                 onClick={handleDeleteSelected}
                 disabled={selectedImpactIds.size === 0}
                 className="rounded border border-red-500/60 bg-slate-800 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Delete selected impacts"
+                title="Delete selected bullets"
               >
                 Delete
               </button>
@@ -598,7 +598,7 @@ export const ImpactWorkspacePage: React.FC = () => {
               <div className="p-4 text-xs text-slate-400">Loading impacts...</div>
             ) : impacts.length === 0 ? (
               <div className="p-4 text-xs text-slate-400">
-                No impacts captured yet. Use the Impact button in the bottom-left to add one.
+                No bullets captured yet. Use the Bullet button in the bottom-left to add one.
               </div>
             ) : (
               impacts.map((impact) => (
@@ -663,7 +663,7 @@ export const ImpactWorkspacePage: React.FC = () => {
           ) : (
             <div className="px-6 py-8 border-b border-[var(--border-color)] bg-[var(--bg-primary)] transition-colors">
               <div className="text-sm text-white/70">
-                No impact selected — select one on the left to ground the bullet.
+                No bullet selected — select one on the left to ground the bullet.
               </div>
             </div>
           )}
@@ -680,7 +680,7 @@ export const ImpactWorkspacePage: React.FC = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-sm text-white/60">
-                  Select an impact to start drafting bullets.
+                  Select a bullet to start.
                 </div>
               </div>
             )}
@@ -704,7 +704,7 @@ export const ImpactWorkspacePage: React.FC = () => {
               />
             ) : (
               <div className="px-6 py-4 text-sm text-white/50">
-                Select an impact to start chatting.
+                Select a bullet to start chatting.
               </div>
             )}
           </div>

@@ -208,7 +208,7 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    // Only show bullet options card inside the Impact Workspace
+    // Only show bullet options card inside the Bullet Workspace
     // where bulletMode is explicitly one of the constrained modes.
     if (!bulletMode || bulletMode === 'FREE') {
       setBulletOptions([]);
@@ -712,7 +712,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         backgroundColor: theme === 'dark' ? 'var(--bg-mid)' : 'var(--bg-primary)'
       }}
     >
-      {/* Breadcrumb/Header - only show in chat view mode, not in impact workspace */}
+      {/* Breadcrumb/Header - only show in chat view mode, not in bullet workspace */}
       {viewMode === 'chat' && (
         <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center gap-4 transition-colors">
           <button

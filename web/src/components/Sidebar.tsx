@@ -381,7 +381,7 @@ const Sidebar: React.FC = () => {
             strategy={verticalListSortingStrategy}
           >
             {filteredProjects
-              .filter((project: Project) => project.name !== "Impact Workspace") // Filter out Impact Workspace from projects list
+              .filter((project: Project) => project.name !== "Bullet Workspace") // Filter out Bullet Workspace from projects list
               .map((project: Project) => (
                 <SortableProjectItem
                   key={project.id}
@@ -412,7 +412,7 @@ const Sidebar: React.FC = () => {
             onClick={() => setImpactModalOpen(true)}
             className="p-2 rounded transition-colors flex-shrink-0 hover:bg-[var(--bg-primary)]"
             style={{ color: sidebarTextColor }}
-            title="Capture impact"
+            title="Bullets"
           >
             <svg
               className="w-5 h-5"
@@ -496,7 +496,7 @@ const Sidebar: React.FC = () => {
         }}
         onSaved={async (entry) => {
           // If we're in impact view, the ImpactWorkspacePage will handle reloading
-          // Otherwise, navigate to impact workspace which will trigger a reload
+          // Otherwise, navigate to bullet workspace which will trigger a reload
           if (viewMode !== 'impact') {
             setViewMode('impact');
             setCurrentProject(null);

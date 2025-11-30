@@ -1,5 +1,5 @@
 /**
- * Custom ChatComposer wrapper for Impact Workspace that adds context
+ * Custom ChatComposer wrapper for Bullet Workspace that adds context
  * from selected impacts and bullet draft to each message.
  */
 import React, { useState, useRef, useEffect } from 'react';
