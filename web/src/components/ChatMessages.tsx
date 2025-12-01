@@ -137,29 +137,71 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({ content, sources }) => {
   const hasSources = sources && sources.length > 0;
 
+  // Pre-process the entire content to build a shared usedSources array
+  // This ensures all citation chips show the correct total (e.g., "1/2", "2/2")
+  const sharedUsedSources = React.useMemo(() => {
+    if (!hasSources) return null;
+
+    // Sort sources by rank first
+    const sortedSources = [...sources].sort((a, b) => {
+      const aRank = a.rank ?? Infinity;
+      const bRank = b.rank ?? Infinity;
+      return aRank - bRank;
+    });
+
+    // Pre-scan the entire content for citations
+    const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+    const usedSourceNumbers = new Set<number>();
+
+    let scanMatch: RegExpExecArray | null;
+    citationPattern.lastIndex = 0;
+    while ((scanMatch = citationPattern.exec(content)) !== null) {
+      const nums = scanMatch[1]
+        .split(',')
+        .map(n => parseInt(n.trim(), 10))
+        .filter(n => !Number.isNaN(n) && n > 0);
+      nums.forEach(n => usedSourceNumbers.add(n));
+    }
+
+    // Build usedSources array in order of appearance in sortedSources
+    const usedSources: Source[] = [];
+    const usedNumberToIndex = new Map<number, number>();
+
+    sortedSources.forEach((source, originalIndex) => {
+      const oneBasedNumber = originalIndex + 1;
+      if (usedSourceNumbers.has(oneBasedNumber)) {
+        const usedIndex = usedSources.length;
+        usedSources.push(source);
+        usedNumberToIndex.set(oneBasedNumber, usedIndex);
+      }
+    });
+
+    return { usedSources, usedNumberToIndex };
+  }, [content, sources, hasSources]);
+
   // Helper to process children for citations
   const processChildrenForCitations = (children: React.ReactNode): React.ReactNode => {
-    if (!hasSources) {
+    if (!hasSources || !sharedUsedSources) {
       return children;
     }
 
     // Convert children to string if it's a simple string or number
     if (typeof children === 'string') {
-      return <InlineSourceCitations text={children} sources={sources} />;
+      return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
     }
 
     if (typeof children === 'number') {
-      return <InlineSourceCitations text={String(children)} sources={sources} />;
+      return <InlineSourceCitations text={String(children)} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
     }
 
     // If it's an array, try to process string elements
     if (Array.isArray(children)) {
       return children.map((child, idx) => {
         if (typeof child === 'string') {
-          return <InlineSourceCitations key={idx} text={child} sources={sources} />;
+          return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
         }
         if (typeof child === 'number') {
-          return <InlineSourceCitations key={idx} text={String(child)} sources={sources} />;
+          return <InlineSourceCitations key={idx} text={String(child)} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
         }
         return child;
       });
@@ -205,7 +247,7 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
             ),
             td: ({ children }) => (
               <td className="border-b border-[var(--border-color)] px-3 py-2 align-top text-[var(--text-primary)]">
-                {children}
+                {processChildrenForCitations(children)}
               </td>
             ),
             code: ({ className, children, ...props }) => {
