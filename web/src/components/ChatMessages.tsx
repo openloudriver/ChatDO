@@ -139,19 +139,21 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
 
   // Pre-process the entire content to build a shared usedSources array
   // This ensures all citation chips show the correct total (e.g., "1/2", "2/2")
+  // Citations are numbered sequentially based on their first appearance in the text
   const sharedUsedSources = React.useMemo(() => {
     if (!hasSources) return null;
 
-    // Sort sources by rank first
+    // Sort sources by rank first (for consistent source ordering)
     const sortedSources = [...sources].sort((a, b) => {
       const aRank = a.rank ?? Infinity;
       const bRank = b.rank ?? Infinity;
       return aRank - bRank;
     });
 
-    // Pre-scan the entire content for citations
+    // Pre-scan the entire content for citations in order of appearance
     const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-    const usedSourceNumbers = new Set<number>();
+    const firstAppearanceOrder: number[] = []; // Track order of first appearance
+    const seenNumbers = new Set<number>();
 
     let scanMatch: RegExpExecArray | null;
     citationPattern.lastIndex = 0;
@@ -160,19 +162,28 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
         .split(',')
         .map(n => parseInt(n.trim(), 10))
         .filter(n => !Number.isNaN(n) && n > 0);
-      nums.forEach(n => usedSourceNumbers.add(n));
+      
+      // Track first appearance of each number
+      nums.forEach(n => {
+        if (!seenNumbers.has(n)) {
+          seenNumbers.add(n);
+          firstAppearanceOrder.push(n);
+        }
+      });
     }
 
-    // Build usedSources array in order of appearance in sortedSources
+    // Build usedSources array in order of first appearance in text
     const usedSources: Source[] = [];
     const usedNumberToIndex = new Map<number, number>();
 
-    sortedSources.forEach((source, originalIndex) => {
-      const oneBasedNumber = originalIndex + 1;
-      if (usedSourceNumbers.has(oneBasedNumber)) {
-        const usedIndex = usedSources.length;
+    // Process citations in order of first appearance
+    firstAppearanceOrder.forEach((originalNumber) => {
+      const sourceIndex = originalNumber - 1; // Convert to 0-based index
+      if (sourceIndex >= 0 && sourceIndex < sortedSources.length) {
+        const source = sortedSources[sourceIndex];
+        const sequentialIndex = usedSources.length; // Sequential index (0, 1, 2, ...)
         usedSources.push(source);
-        usedNumberToIndex.set(oneBasedNumber, usedIndex);
+        usedNumberToIndex.set(originalNumber, sequentialIndex);
       }
     });
 
