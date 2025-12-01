@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Source } from '../types/sources';
 
 interface InlineCitationProps {
-  /** 0-based index into the sorted sources array */
+  /** 0-based index into the used sources array */
   index: number;
   source: Source;
-  /** Total number of sources for this message (for x/y display) */
+  /** Total number of used sources (for x/y display) */
   total: number;
+  /** Optional display text (e.g., "1, 4" for multi-citation) */
+  displayText?: string;
 }
 
-export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, total }) => {
+export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, total, displayText }) => {
   const [open, setOpen] = useState(false);
   const chipRef = useRef<HTMLSpanElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -77,7 +79,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         }}
         title={source.title}
       >
-        {index + 1}
+        {displayText ?? (index + 1).toString()}
       </span>
 
       {open && (

@@ -11,28 +11,63 @@ interface InlineSourceCitationsProps {
  * Replace literal [1], [2], [1, 3] patterns in plain text
  * with <InlineCitation /> chips.
  *
- * For v1 we:
- *  - Sort sources by rank
- *  - Use only the first number in [1, 3] to choose the source
+ * Only sources that are actually cited in the text are included in the popover navigation.
  */
 export const InlineSourceCitations: React.FC<InlineSourceCitationsProps> = ({ text, sources }) => {
   if (!sources || sources.length === 0) {
     return <>{text}</>;
   }
 
+  // Sort sources by rank first
   const sortedSources = [...sources].sort((a, b) => {
     const aRank = a.rank ?? Infinity;
     const bRank = b.rank ?? Infinity;
     return aRank - bRank;
   });
 
+  // Pre-scan the content for citations and build a used-index set
+  const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+  const usedSourceNumbers = new Set<number>();
+
+  let scanMatch: RegExpExecArray | null;
+  // Reset regex lastIndex to ensure we scan from the beginning
+  citationPattern.lastIndex = 0;
+  while ((scanMatch = citationPattern.exec(text)) !== null) {
+    const nums = scanMatch[1]
+      .split(',')
+      .map(n => parseInt(n.trim(), 10))
+      .filter(n => !Number.isNaN(n) && n > 0);
+    nums.forEach(n => usedSourceNumbers.add(n));
+  }
+
+  // Build a filtered, ordered usedSources array
+  // Map from original 1-based source number to index in usedSources
+  const usedSources: Source[] = [];
+  const usedNumberToIndex = new Map<number, number>();
+
+  // Build usedSources in order of appearance in sortedSources
+  sortedSources.forEach((source, originalIndex) => {
+    const oneBasedNumber = originalIndex + 1;
+    if (usedSourceNumbers.has(oneBasedNumber)) {
+      const usedIndex = usedSources.length;
+      usedSources.push(source);
+      usedNumberToIndex.set(oneBasedNumber, usedIndex);
+    }
+  });
+
+  // Graceful fallback: if no sources are used, return text as-is
+  if (usedSources.length === 0) {
+    return <>{text}</>;
+  }
+
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
 
-  const citationRegex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+  // Reset regex for main processing
+  citationPattern.lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = citationRegex.exec(text)) !== null) {
+  while ((match = citationPattern.exec(text)) !== null) {
     const matchStart = match.index;
     const matchEnd = match.index + match[0].length;
 
@@ -46,16 +81,22 @@ export const InlineSourceCitations: React.FC<InlineSourceCitationsProps> = ({ te
       .filter(n => !Number.isNaN(n) && n > 0);
 
     if (numbers.length > 0) {
-      const zeroBased = numbers[0] - 1;
-      const source = sortedSources[zeroBased];
+      // Use the first number in the group as the primary source
+      const primaryNumber = numbers[0];
+      const usedIndex = usedNumberToIndex.get(primaryNumber);
 
-      if (source) {
+      if (usedIndex !== undefined) {
+        const source = usedSources[usedIndex];
+        // Display the original citation numbers (e.g., "1, 4" or just "1")
+        const displayText = numbers.join(', ');
+        
         parts.push(
           <InlineCitation
             key={`cite-${matchStart}`}
-            index={zeroBased}
+            index={usedIndex}
             source={source}
-            total={sortedSources.length}
+            total={usedSources.length}
+            displayText={displayText}
           />
         );
       } else {

@@ -135,37 +135,58 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 
 // Component to render GPT messages with proper markdown formatting
 const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({ content, sources }) => {
-  // If sources are present, render with inline citations (plain text for v1)
-  if (sources && sources.length > 0) {
-    return (
-      <AssistantCard>
-        <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
-          <div className="text-[var(--text-primary)] whitespace-pre-wrap">
-            <InlineSourceCitations text={content} sources={sources} />
-          </div>
-        </div>
-      </AssistantCard>
-    );
-  }
+  const hasSources = sources && sources.length > 0;
 
-  // Default markdown rendering for messages without sources
+  // Helper to process children for citations
+  const processChildrenForCitations = (children: React.ReactNode): React.ReactNode => {
+    if (!hasSources) {
+      return children;
+    }
+
+    // Convert children to string if it's a simple string or number
+    if (typeof children === 'string') {
+      return <InlineSourceCitations text={children} sources={sources} />;
+    }
+
+    if (typeof children === 'number') {
+      return <InlineSourceCitations text={String(children)} sources={sources} />;
+    }
+
+    // If it's an array, try to process string elements
+    if (Array.isArray(children)) {
+      return children.map((child, idx) => {
+        if (typeof child === 'string') {
+          return <InlineSourceCitations key={idx} text={child} sources={sources} />;
+        }
+        if (typeof child === 'number') {
+          return <InlineSourceCitations key={idx} text={String(child)} sources={sources} />;
+        }
+        return child;
+      });
+    }
+
+    // For complex React nodes, return as-is (fallback)
+    return children;
+  };
+
+  // Default markdown rendering (always use markdown, even with sources)
   return (
     <AssistantCard>
       <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-[var(--text-primary)]">{children}</h1>,
-            h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-3 text-[var(--text-primary)]">{children}</h2>,
-            h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[var(--text-primary)]">{children}</h3>,
-            h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--text-primary)]">{children}</h4>,
+            h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h1>,
+            h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-3 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h2>,
+            h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h3>,
+            h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h4>,
             p: ({ children }) => {
-              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{children}</p>;
+              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{processChildrenForCitations(children)}</p>;
             },
             ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ul>,
             ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ol>,
             li: ({ children }) => {
-              return <li className="leading-relaxed">{children}</li>;
+              return <li className="leading-relaxed">{processChildrenForCitations(children)}</li>;
             },
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
