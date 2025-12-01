@@ -244,7 +244,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
 
       {/* Content Section */}
       <div className="border-t border-[var(--border-color)] pt-4 transition-colors">
-        <div className="prose max-w-none text-sm text-[var(--text-primary)] leading-relaxed">
+        <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
           <ReactMarkdown
             components={{
               h1: ({ children }) => <SectionHeading>{children}</SectionHeading>,
@@ -254,10 +254,10 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
               h5: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               h6: ({ children }) => <SectionHeading>{children}</SectionHeading>,
               ul: ({ children }) => (
-                <ul className="list-none mb-4 space-y-1 text-[var(--text-primary)] ml-2">{children}</ul>
+                <ul className="list-disc ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ul>
               ),
               ol: ({ children }) => (
-                <ol className="list-none mb-4 space-y-1 text-[var(--text-primary)] ml-2">{children}</ol>
+                <ol className="list-decimal ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ol>
               ),
               li: ({ children }) => {
                 const text = React.Children.toArray(children)
@@ -276,7 +276,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
                 if (!hasCitations) {
                   return (
-                    <li className="ml-4 text-sm text-[var(--text-primary)] mb-1 before:content-['•'] before:mr-2">
+                    <li className="leading-relaxed">
                       {children}
                     </li>
                   );
@@ -286,7 +286,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
 
                 return (
-                  <li className="ml-4 text-sm text-[var(--text-primary)] mb-1 before:content-['•'] before:mr-2">
+                  <li className="leading-relaxed">
                     {rendered}
                   </li>
                 );
@@ -340,7 +340,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 
                 if (!hasCitations) {
                   return (
-                    <p className="mb-3 text-sm leading-relaxed text-[var(--text-primary)]">
+                    <p className="my-2 text-[var(--text-primary)] leading-relaxed">
                       {isSubSectionHeading && <span className="mr-2">-</span>}
                       {children}
                     </p>
@@ -351,7 +351,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                 const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
 
                 return (
-                  <p className="mb-3 text-sm leading-relaxed text-[var(--text-primary)]">
+                  <p className="my-2 text-[var(--text-primary)] leading-relaxed">
                     {isSubSectionHeading && <span className="mr-2">-</span>}
                     {rendered}
                   </p>

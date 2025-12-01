@@ -1441,8 +1441,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       
                       {/* Model tag for all assistant messages */}
                       {message.role === 'assistant' && 
-                       message.type !== 'document_card' && 
-                       message.type !== 'rag_response' && (
+                       message.type !== 'document_card' && (
                         <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
                           {message.type === 'web_search_results' ? (
                             <div>Model: Brave Search</div>
