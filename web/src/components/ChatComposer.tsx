@@ -314,13 +314,27 @@ const ChatComposer: React.FC = () => {
             setLoading(false);
             ws.close();
           } else if (data.type === 'done') {
+            // Convert sources if they're in the old format
+            let sources: Source[] | undefined = undefined;
+            if (data.sources) {
+              if (Array.isArray(data.sources) && data.sources.length > 0) {
+                // Check if first item is already a Source object (has id, title, url)
+                if (typeof data.sources[0] === 'object' && 'id' in data.sources[0]) {
+                  sources = data.sources as Source[];
+                } else {
+                  // Convert legacy format
+                  sources = convertLegacySources(data.sources);
+                }
+              }
+            }
+            
             // Add final message with model/provider info
             addMessage({ 
               role: 'assistant', 
               content: streamedContent,
               model: data.model,
               provider: data.provider,
-              sources: data.sources,
+              sources: sources,
               meta: data.meta || undefined
             });
             clearStreaming();
@@ -829,13 +843,27 @@ const ChatComposer: React.FC = () => {
             setLoading(false);
             ws.close();
           } else if (data.type === 'done') {
+            // Convert sources if they're in the old format
+            let sources: Source[] | undefined = undefined;
+            if (data.sources) {
+              if (Array.isArray(data.sources) && data.sources.length > 0) {
+                // Check if first item is already a Source object (has id, title, url)
+                if (typeof data.sources[0] === 'object' && 'id' in data.sources[0]) {
+                  sources = data.sources as Source[];
+                } else {
+                  // Convert legacy format
+                  sources = convertLegacySources(data.sources);
+                }
+              }
+            }
+            
             // Add final message with model/provider info
             addMessage({ 
               role: 'assistant', 
               content: streamedContent,
               model: data.model,
               provider: data.provider,
-              sources: data.sources,
+              sources: sources,
               meta: data.meta || undefined
             });
             clearStreaming();

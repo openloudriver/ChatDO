@@ -109,23 +109,27 @@ export const InlineSourceCitations: React.FC<InlineSourceCitationsProps> = ({
         .sort((a, b) => a - b); // Sort to ensure consistent ordering
 
       if (usedIndices.length > 0) {
-        // Use the first valid index as the primary source for the popover
-        const primaryUsedIndex = usedIndices[0];
-        const source = usedSources[primaryUsedIndex];
-        
-        // Display renumbered citations (1-based from usedSources array)
-        // e.g., if original was [2, 5] and they map to usedIndices [0, 1], show "1, 2"
-        const displayText = usedIndices.map(idx => idx + 1).join(', ');
-        
-        parts.push(
-          <InlineCitation
-            key={`cite-${matchStart}`}
-            index={primaryUsedIndex}
-            source={source}
-            total={usedSources.length}
-            displayText={displayText}
-          />
-        );
+        // Create separate citation chips for each number
+        // This matches ChatGPT's behavior where each citation is individually clickable
+        usedIndices.forEach((usedIndex, idx) => {
+          const source = usedSources[usedIndex];
+          const displayText = String(usedIndex + 1); // Display as "1", "2", "3", etc.
+          
+          parts.push(
+            <InlineCitation
+              key={`cite-${matchStart}-${idx}`}
+              index={usedIndex}
+              source={source}
+              total={usedSources.length}
+              displayText={displayText}
+            />
+          );
+          
+          // Add a comma separator between citations (except for the last one)
+          if (idx < usedIndices.length - 1) {
+            parts.push(', ');
+          }
+        });
       } else {
         // No matching source, keep raw marker
         parts.push(match[0]);
