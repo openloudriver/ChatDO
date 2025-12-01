@@ -180,34 +180,53 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
   }, [content, sources, hasSources]);
 
   // Helper to process children for citations
+  // Only processes string/number children to avoid invalid HTML nesting
   const processChildrenForCitations = (children: React.ReactNode): React.ReactNode => {
     if (!hasSources || !sharedUsedSources) {
       return children;
     }
 
-    // Convert children to string if it's a simple string or number
+    // Only process simple string/number children - don't process already-rendered React elements
+    // This prevents invalid HTML nesting (e.g., div inside p)
     if (typeof children === 'string') {
-      return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      // Only process if there are citations in the text
+      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(children)) {
+        return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      }
+      return children;
     }
 
     if (typeof children === 'number') {
-      return <InlineSourceCitations text={String(children)} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      const text = String(children);
+      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+        return <InlineSourceCitations text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      }
+      return children;
     }
 
-    // If it's an array, try to process string elements
+    // If it's an array, only process string/number elements, leave React elements untouched
     if (Array.isArray(children)) {
       return children.map((child, idx) => {
+        // Only process primitive types - React elements are already rendered correctly
         if (typeof child === 'string') {
-          return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(child)) {
+            return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          }
+          return child;
         }
         if (typeof child === 'number') {
-          return <InlineSourceCitations key={idx} text={String(child)} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          const text = String(child);
+          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+            return <InlineSourceCitations key={idx} text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          }
+          return child;
         }
+        // For React elements, return as-is to avoid nesting issues
         return child;
       });
     }
 
-    // For complex React nodes, return as-is (fallback)
+    // For React elements, return as-is (don't process - they're already rendered)
     return children;
   };
 
@@ -223,7 +242,10 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
             h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h3>,
             h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--text-primary)]">{processChildrenForCitations(children)}</h4>,
             p: ({ children }) => {
-              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{processChildrenForCitations(children)}</p>;
+              // Extract text content from children to avoid nesting issues
+              // ReactMarkdown may pass React elements, so we need to be careful
+              const processed = processChildrenForCitations(children);
+              return <p className="my-2 text-[var(--text-primary)] leading-relaxed">{processed}</p>;
             },
             ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ul>,
             ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-2 text-[var(--text-primary)]">{children}</ol>,

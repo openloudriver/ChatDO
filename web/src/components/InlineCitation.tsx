@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Source } from '../types/sources';
 
 interface InlineCitationProps {
@@ -82,7 +83,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         {displayText ?? (index + 1).toString()}
       </span>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={popoverRef}
           className="fixed z-[10000] max-w-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-lg"
@@ -142,7 +143,8 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           <div className="mt-2 text-[10px] text-[var(--text-secondary)]">
             {index + 1}/{total}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
