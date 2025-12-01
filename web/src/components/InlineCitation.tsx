@@ -74,7 +74,10 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         onMouseLeave={() => setOpen(false)}
         onClick={e => {
           e.stopPropagation();
-          if (source.url) {
+          // Handle RAG files (stored in meta.onOpenFile)
+          if (source.meta?.onOpenFile && source.meta?.ragFile) {
+            source.meta.onOpenFile(source.meta.ragFile);
+          } else if (source.url) {
             window.open(source.url, '_blank', 'noopener,noreferrer');
           }
         }}
@@ -98,14 +101,19 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          {source.siteName && (
+          {(source.siteName || source.fileName) && (
             <div className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
-              {source.siteName}
+              {source.siteName || (source.fileName ? 'RAG File' : '')}
             </div>
           )}
           <div className="mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)]">
             {source.title}
           </div>
+          {source.fileName && source.fileName !== source.title && (
+            <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
+              {source.fileName}
+            </div>
+          )}
           {source.publishedAt && (
             <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
               {formatDate(source.publishedAt)}

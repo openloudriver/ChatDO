@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import SectionHeading from "./shared/SectionHeading";
 import { AssistantCard } from "./shared/AssistantCard";
+import { InlineSourceCitations } from "./InlineSourceCitations";
 import type { RagFile } from "../types/rag";
+import type { Source } from "../types/sources";
 
 export interface RagResponseCardProps {
   content: string;
@@ -10,66 +12,20 @@ export interface RagResponseCardProps {
   onOpenRagFile: (file: RagFile) => void;
 }
 
-// Build lookup map: index -> RagFile
-const buildRagFilesByIndex = (ragFiles: RagFile[]): Record<number, RagFile> => {
-  const map: Record<number, RagFile> = {};
-  ragFiles.forEach((file) => {
-    if (file.index) {
-      map[file.index] = file;
-    }
-  });
-  return map;
-};
-
-// Convert number to superscript (¹, ², ³, etc.)
-const toSuperscript = (num: number): string => {
-  const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-  return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
-};
-
-// CitationChip component for inline citations like [1] or [1, 3] - ChatGPT style with superscript numbers
-type CitationChipProps = {
-  indices: number[]; // e.g. [1] or [1, 3]
-  ragFilesByIndex: Record<number, RagFile>;
-  onOpenFile: (file: RagFile) => void;
-};
-
-const CitationChip: React.FC<CitationChipProps> = ({
-  indices,
-  ragFilesByIndex,
-  onOpenFile,
-}) => {
-  if (!indices.length) return null;
-
-  // Pick the first index as the file we open on click
-  const primaryIndex = indices[0];
-  const primaryFile = ragFilesByIndex[primaryIndex];
-
-  // Tooltip: join all file names we have for the indices
-  const tooltipText = indices
-    .map((i) => ragFilesByIndex[i]?.filename || `Source ${i}`)
-    .join(", ");
-
-  // Display citation numbers as superscript (e.g., ¹²³)
-  const citationNumbers = indices.map(i => toSuperscript(i)).join('');
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (primaryFile) {
-      onOpenFile(primaryFile);
-    }
+// Convert RagFile to Source format for inline citations
+const ragFileToSource = (ragFile: RagFile, onOpenFile: (file: RagFile) => void): Source => {
+  return {
+    id: ragFile.id,
+    title: ragFile.filename,
+    fileName: ragFile.filename,
+    description: ragFile.mime_type ? `File type: ${ragFile.mime_type}` : undefined,
+    rank: ragFile.index, // Use index as rank (1-based)
+    sourceType: 'rag',
+    meta: {
+      ragFile: ragFile,
+      onOpenFile: onOpenFile, // Store the handler in meta for later use
+    },
   };
-
-  return (
-    <sup
-      onClick={handleClick}
-      className="text-[10px] text-[var(--text-secondary)] align-super ml-0.5 cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-      title={tooltipText}
-    >
-      {citationNumbers}
-    </sup>
-  );
 };
 
 // Helper function to strip citations from text for empty bullet detection
@@ -131,87 +87,111 @@ function sanitizeRagContent(content: string): string {
   return sanitized.join('\n');
 }
 
-// Render text with citations replaced by CitationChip components
-function renderTextWithCitations(
-  text: string,
-  ragFilesByIndex: Record<number, RagFile>,
-  onOpenFile: (file: RagFile) => void,
-): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  // Create a new regex instance for each call to avoid state issues
-  const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-
-  while ((match = regex.exec(text)) !== null) {
-    const matchStart = match.index;
-
-    // Plain text before the citation
-    if (matchStart > lastIndex) {
-      const beforeText = text.slice(lastIndex, matchStart);
-      parts.push(beforeText);
-    }
-
-    // Parse citation numbers and filter out invalid ones (hallucinated citations)
-    const numbers = match[1]
-      .split(",")
-      .map((n) => parseInt(n.trim(), 10))
-      .filter((n) => !Number.isNaN(n) && n > 0)
-      .filter((n) => ragFilesByIndex[n] !== undefined); // Only include citations that exist
-
-    if (numbers.length > 0) {
-      parts.push(
-        <CitationChip
-          key={`cit-${matchStart}-${match[0]}`}
-          indices={numbers}
-          ragFilesByIndex={ragFilesByIndex}
-          onOpenFile={onOpenFile}
-        />
-      );
-    } else {
-      // If all citations are invalid, don't render anything (silently ignore hallucinated citations)
-      // This prevents showing broken citations like [6] when there are only 5 files
-    }
-
-    lastIndex = regex.lastIndex;
-  }
-
-  // Remaining text after the last match
-  if (lastIndex < text.length) {
-    let remainingText = text.slice(lastIndex);
-    
-    // If period is immediately after the last citation, move it before the citation
-    if (remainingText.trim().startsWith('.')) {
-      // Find the last text part (not a React element) and add period to it
-      for (let i = parts.length - 1; i >= 0; i--) {
-        if (typeof parts[i] === 'string') {
-          const textPart = parts[i] as string;
-          // Only add period if it doesn't already end with one
-          if (!textPart.trim().endsWith('.')) {
-            parts[i] = textPart.trim() + '.';
-          }
-          // Remove the period from remaining text
-          remainingText = remainingText.trim().substring(1).trim();
-          break;
-        }
-      }
-    }
-    
-    if (remainingText.trim()) {
-      parts.push(remainingText);
-    }
-  }
-
-  return parts;
-}
 
 export const RagResponseCard: React.FC<RagResponseCardProps> = ({
   content,
   ragFiles,
   onOpenRagFile,
 }) => {
-  // Build lookup map: index -> RagFile (single source of truth)
-  const ragFilesByIndex = useMemo(() => buildRagFilesByIndex(ragFiles), [ragFiles]);
+  // Convert ragFiles to Source[] format for inline citations
+  const sources = useMemo(() => {
+    return ragFiles
+      .filter(file => file.index) // Only include files with valid indices
+      .map(file => ragFileToSource(file, onOpenRagFile))
+      .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity)); // Sort by rank (index)
+  }, [ragFiles, onOpenRagFile]);
+
+  const hasSources = sources.length > 0;
+
+  // Pre-process the entire content to build a shared usedSources array
+  // Citations are numbered sequentially based on their first appearance in the text
+  const sharedUsedSources = React.useMemo(() => {
+    if (!hasSources) return null;
+
+    // Pre-scan the entire content for citations in order of appearance
+    const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+    const firstAppearanceOrder: number[] = []; // Track order of first appearance
+    const seenNumbers = new Set<number>();
+
+    let scanMatch: RegExpExecArray | null;
+    citationPattern.lastIndex = 0;
+    while ((scanMatch = citationPattern.exec(content)) !== null) {
+      const nums = scanMatch[1]
+        .split(',')
+        .map(n => parseInt(n.trim(), 10))
+        .filter(n => !Number.isNaN(n) && n > 0);
+      
+      // Track first appearance of each number
+      nums.forEach(n => {
+        if (!seenNumbers.has(n)) {
+          seenNumbers.add(n);
+          firstAppearanceOrder.push(n);
+        }
+      });
+    }
+
+    // Build usedSources array in order of first appearance in text
+    const usedSources: Source[] = [];
+    const usedNumberToIndex = new Map<number, number>();
+
+    // Process citations in order of first appearance
+    firstAppearanceOrder.forEach((originalNumber) => {
+      // Find source with matching rank (index)
+      const source = sources.find(s => s.rank === originalNumber);
+      if (source) {
+        const sequentialIndex = usedSources.length; // Sequential index (0, 1, 2, ...)
+        usedSources.push(source);
+        usedNumberToIndex.set(originalNumber, sequentialIndex);
+      }
+    });
+
+    return { usedSources, usedNumberToIndex };
+  }, [content, sources, hasSources]);
+
+  // Helper to process children for citations
+  const processChildrenForCitations = (children: React.ReactNode): React.ReactNode => {
+    if (!hasSources || !sharedUsedSources) {
+      return children;
+    }
+
+    // Only process simple string/number children - don't process already-rendered React elements
+    if (typeof children === 'string') {
+      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(children)) {
+        return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      }
+      return children;
+    }
+
+    if (typeof children === 'number') {
+      const text = String(children);
+      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+        return <InlineSourceCitations text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+      }
+      return children;
+    }
+
+    // If it's an array, only process string/number elements
+    if (Array.isArray(children)) {
+      return children.map((child, idx) => {
+        if (typeof child === 'string') {
+          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(child)) {
+            return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          }
+          return child;
+        }
+        if (typeof child === 'number') {
+          const text = String(child);
+          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+            return <InlineSourceCitations key={idx} text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
+          }
+          return child;
+        }
+        return child;
+      });
+    }
+
+    return children;
+  };
   
   // Sanitize content: remove empty bullets, normalize formatting
   const cleanedContent = useMemo(() => {
@@ -272,22 +252,9 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                   return null;
                 }
                 
-                // Check if text contains citations (use fresh regex to avoid state issues)
-                const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
-                if (!hasCitations) {
-                  return (
-                    <li className="leading-relaxed">
-                      {children}
-                    </li>
-                  );
-                }
-
-                // Render with citations
-                const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
-
                 return (
                   <li className="leading-relaxed">
-                    {rendered}
+                    {processChildrenForCitations(children)}
                   </li>
                 );
               },
@@ -315,9 +282,6 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
               },
               p: ({ children }) => {
                 const childrenArray = React.Children.toArray(children);
-                const text = childrenArray
-                  .map((child) => (typeof child === "string" ? child : ""))
-                  .join("");
                 
                 // Check if this paragraph is a sub-section heading:
                 // 1. Entire paragraph is a strong element, OR
@@ -335,28 +299,33 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
                   }
                 }
                 
-                // Check if text contains citations (use fresh regex to avoid state issues)
-                const hasCitations = /\[(\d+(?:\s*,\s*\d+)*)\]/g.test(text);
-                
-                if (!hasCitations) {
-                  return (
-                    <p className="my-2 text-[var(--text-primary)] leading-relaxed">
-                      {isSubSectionHeading && <span className="mr-2">-</span>}
-                      {children}
-                    </p>
-                  );
-                }
-
-                // Render with citations
-                const rendered = renderTextWithCitations(text, ragFilesByIndex, onOpenRagFile);
-
                 return (
                   <p className="my-2 text-[var(--text-primary)] leading-relaxed">
                     {isSubSectionHeading && <span className="mr-2">-</span>}
-                    {rendered}
+                    {processChildrenForCitations(children)}
                   </p>
                 );
               },
+              table: ({ children }) => (
+                <div className="overflow-x-auto my-4">
+                  <table className="w-full border-collapse table-fixed">
+                    {children}
+                  </table>
+                </div>
+              ),
+              thead: ({ children }) => <thead className="bg-[var(--bg-primary)]">{children}</thead>,
+              tbody: ({ children }) => <tbody>{children}</tbody>,
+              tr: ({ children }) => <tr className="border-b border-[var(--border-color)]">{children}</tr>,
+              th: ({ children }) => (
+                <th className="border-b border-[var(--border-color)] px-3 py-2 font-medium text-left text-[var(--text-primary)]">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td className="border-b border-[var(--border-color)] px-3 py-2 align-top text-[var(--text-primary)]">
+                  {processChildrenForCitations(children)}
+                </td>
+              ),
             }}
           >
             {cleanedContent}
