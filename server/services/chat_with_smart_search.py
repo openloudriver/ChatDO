@@ -88,6 +88,7 @@ async def chat_with_smart_search(
             logger.warning(f"Failed to get memory context: {e}")
     
     # 1. Decide if we need web search
+    # For now, use the existing classifier. In the future, this could accept web_mode parameter
     decision = await decide_web_search(user_message)
     logger.info(f"Smart search decision: use_search={decision.use_search}, reason={decision.reason}")
     
@@ -243,35 +244,63 @@ async def chat_with_smart_search(
             "sources": sources if sources else None
         }
     
-    # Format web results for GPT-5
-    web_results_text = "Web search results:\n\n"
-    for i, result in enumerate(web_results[:5], 1):
-        web_results_text += f"{i}. {result.get('title', 'No title')}\n"
-        web_results_text += f"   URL: {result.get('url', '')}\n"
-        web_results_text += f"   {result.get('snippet', 'No snippet')}\n\n"
+    # Convert web results to Source[] format
+    web_sources = []
+    for i, result in enumerate(web_results[:5]):
+        # Extract domain for siteName
+        site_name = None
+        if result.get('url'):
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(result['url'])
+                site_name = parsed.netloc.replace('www.', '')
+            except:
+                pass
+        
+        source = {
+            'id': f'web-{i}',
+            'title': result.get('title', 'Untitled'),
+            'url': result.get('url'),
+            'description': result.get('snippet', ''),
+            'siteName': site_name,
+            'rank': i,
+            'sourceType': 'web'
+        }
+        web_sources.append(source)
     
-    # Use the shared ChatDO system prompt - it already includes instructions for web search
-    # The web search results will be provided as context in a separate system message
+    # Format web results for GPT-5 with citation instructions
+    web_results_text = "You have access to the following up-to-date web sources.\n"
+    web_results_text += "When you use a specific fact from a source, add a citation like [1] or [2] at the end of the relevant sentence.\n"
+    web_results_text += "Use these sources only when needed; otherwise, answer normally.\n\n"
+    
+    for i, result in enumerate(web_results[:5], 1):
+        url_str = f" ({result.get('url', '')})" if result.get('url') else ""
+        web_results_text += f"{i}. {result.get('title', 'No title')}{url_str}\n"
+        web_results_text += f"{result.get('snippet', 'No snippet')}\n\n"
+    
+    # Use the shared ChatDO system prompt
     system_prompt = CHATDO_SYSTEM_PROMPT
     if memory_context:
         system_prompt = f"{memory_context}\n\n{system_prompt}"
+    
+    # Add citation instructions
+    system_prompt += "\n\nWhen you use a fact from the web sources above, add inline citations like [1], [2], or [1, 3] at the end of the sentence. If the answer does not require web sources, you may answer without citations."
     
     # Build messages with web search context
     messages = conversation_history.copy()
     if not any(msg.get("role") == "system" for msg in messages):
         messages.insert(0, {"role": "system", "content": system_prompt})
+        messages.insert(1, {"role": "system", "content": web_results_text})
     else:
-        # Replace existing system message
+        # Replace existing system message and add web context
         for i, msg in enumerate(messages):
             if msg.get("role") == "system":
                 messages[i] = {"role": "system", "content": system_prompt}
+                # Insert web context after system prompt
+                messages.insert(i + 1, {"role": "system", "content": web_results_text})
                 break
     
     messages.append({"role": "user", "content": user_message})
-    messages.append({
-        "role": "system",
-        "content": web_results_text
-    })
     
     # Call GPT-5 with web search context
     assistant_messages, model_id, provider_id, model_display = call_ai_router(
@@ -292,12 +321,15 @@ async def chat_with_smart_search(
             web_sources = sources.copy() if sources else []
             web_sources.append("Brave Search")
             
+            # Combine memory sources with web sources
+            all_sources = (sources.copy() if sources else []) + web_sources
+            
             history.append({
                 "role": "assistant",
                 "content": content,
-                "model": model_display,
+                "model": "Web + GPT-5" if web_sources else model_display,
                 "provider": provider_id,
-                "sources": web_sources,
+                "sources": all_sources if all_sources else None,
                 "meta": {
                     "usedWebSearch": True,
                     "webResultsPreview": web_results[:5]
@@ -307,9 +339,8 @@ async def chat_with_smart_search(
         except Exception as e:
             logger.warning(f"Failed to save conversation history: {e}")
     
-    # Add Brave Search to sources if web search was used
-    web_sources = sources.copy() if sources else []
-    web_sources.append("Brave Search")
+    # Combine memory sources with web sources
+    all_sources = (sources.copy() if sources else []) + web_sources
     
     return {
         "type": "assistant_message",
@@ -318,8 +349,8 @@ async def chat_with_smart_search(
             "usedWebSearch": True,
             "webResultsPreview": web_results[:5]  # Top 5 for sources display
         },
-        "model": model_display,
+        "model": "Web + GPT-5" if web_sources else model_display,
         "provider": provider_id,
-        "sources": web_sources
+        "sources": all_sources if all_sources else None
     }
 

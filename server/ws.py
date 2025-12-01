@@ -3,7 +3,7 @@ WebSocket streaming endpoint for ChatDO
 Streams ChatDO replies chunk-by-chunk
 """
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import sys
 import re
 from pathlib import Path
@@ -25,6 +25,128 @@ def extract_urls(text: str) -> list[str]:
     url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
     urls = re.findall(url_pattern, text)
     return urls
+
+
+def should_use_web_auto(latest_user_message: str) -> bool:
+    """
+    Determine if web search should be used automatically based on message content.
+    Returns True if the message contains time-sensitive, finance, or news-related keywords.
+    """
+    text = latest_user_message.lower()
+    
+    # Time-sensitive triggers
+    time_words = [
+        'today', 'right now', 'currently', 'latest', 'this week', 'this month', 
+        'this year', 'recent', 'up to date', 'now', 'current'
+    ]
+    
+    # Finance / prices / markets
+    finance_words = [
+        'price of', 'current price', 'stock price', 'share price', 'dividend',
+        'yield', 'interest rate', 'mortgage rate', 'treasury yield', 'market cap',
+        'volume', 'market is doing', 'how much is', 'worth', 'value', 'cost'
+    ]
+    
+    # News / events
+    news_words = [
+        'news', 'headlines', 'breaking', 'update on', 'what happened', 
+        'latest on', 'election', 'war', 'conflict', 'event'
+    ]
+    
+    def has_any(words: List[str]) -> bool:
+        return any(word in text for word in words)
+    
+    # Simple rules for now
+    if has_any(time_words) or has_any(finance_words) or has_any(news_words):
+        return True
+    
+    return False
+
+
+def should_use_web(web_mode: str, latest_user_message: str) -> bool:
+    """
+    Determine if web search should be used based on web_mode and message content.
+    
+    Args:
+        web_mode: 'auto' or 'on'
+        latest_user_message: The user's message content
+    
+    Returns:
+        True if web search should be used, False otherwise
+    """
+    if web_mode == 'on':
+        return True
+    # 'auto' mode
+    return should_use_web_auto(latest_user_message)
+
+
+def fetch_web_sources(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    """
+    Fetch web search results and convert to Source format.
+    
+    Returns:
+        List of Source dictionaries with title, url, description, siteName, rank
+    """
+    from chatdo.tools import web_search
+    
+    try:
+        search_results = web_search.search_web(query, max_results=max_results)
+        sources = []
+        
+        for index, result in enumerate(search_results):
+            # Extract domain for siteName
+            site_name = None
+            if result.get('url'):
+                try:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(result['url'])
+                    site_name = parsed.netloc.replace('www.', '')
+                except:
+                    pass
+            
+            source = {
+                'id': f'web-{index}',
+                'title': result.get('title', 'Untitled'),
+                'url': result.get('url'),
+                'description': result.get('snippet', ''),
+                'siteName': site_name,
+                'rank': index,
+                'sourceType': 'web'
+            }
+            sources.append(source)
+        
+        return sources
+    except Exception as e:
+        print(f"[WEB] Web search failed: {e}")
+        return []
+
+
+def build_web_context_prompt(sources: List[Dict[str, Any]]) -> str:
+    """
+    Build a system prompt that includes web sources and instructs GPT to cite them.
+    """
+    if not sources:
+        return ''
+    
+    lines = []
+    for i, source in enumerate(sources):
+        n = i + 1
+        url = source.get('url', '')
+        url_str = f" ({url})" if url else ""
+        title = source.get('title', 'Untitled')
+        description = source.get('description', '')
+        
+        lines.append(f"{n}. {title}{url_str}\n{description}".strip())
+    
+    prompt = [
+        'You have access to the following up-to-date web sources.',
+        'When you use a specific fact from a source, add a citation like [1] or [2] at the end of the relevant sentence.',
+        'Use these sources only when needed; otherwise, answer normally.',
+        '',
+        '\n\n'.join(lines)
+    ]
+    
+    return '\n'.join(prompt)
 
 
 def split_tasks_block(text: str) -> tuple[str, Optional[str]]:
@@ -55,7 +177,7 @@ async def stream_chat_response(
     target_name: str,
     message: str,
     rag_file_ids: Optional[List[str]] = None,
-    force_search: bool = False
+    web_mode: str = 'auto'
 ):
     """
     Stream ChatDO response via WebSocket
@@ -272,74 +394,22 @@ Keep it concise, neutral, and factual."""
             })
             return
         
-        # Check for explicit search (force_search flag or search: prefix)
-        message_lower = message.lower().strip()
-        explicit_search_patterns = ["search:", "web search:", "brave:", "find:"]
-        is_explicit_search = force_search or any(message_lower.startswith(pattern) for pattern in explicit_search_patterns)
+        # Determine if web search should be used
+        use_web = should_use_web(web_mode, message)
         
-        if is_explicit_search:
-            # Extract query from command if using prefix
-            query = message
-            if not force_search:
-                for pattern in explicit_search_patterns:
-                    if message_lower.startswith(pattern):
-                        query = message[len(pattern):].strip()
-                        break
-            
-            if not query:
-                query = message
-            
-            # Perform explicit Brave search and return Top Results card
-            from chatdo.tools import web_search
-            from chatdo.memory.store import load_thread_history, save_thread_history
-            
+        # Fetch web sources if needed
+        sources: List[Dict[str, Any]] = []
+        web_context_prompt = ""
+        
+        if use_web:
             try:
-                search_results = web_search.search_web(query, max_results=10)
-                if search_results and len(search_results) > 0:
-                    structured_result = {
-                        "type": "web_search_results",
-                        "query": query,
-                        "provider": "brave",
-                        "results": search_results
-                    }
-                    
-                    # Save to memory store
-                    if conversation_id:
-                        target_cfg = load_target(target_name)
-                        history = load_thread_history(target_cfg.name, conversation_id)
-                        history.append({"role": "user", "content": message})
-                        history.append({
-                            "role": "assistant",
-                            "content": "",
-                            "type": "web_search_results",
-                            "data": structured_result,
-                            "model": "Brave Search",
-                            "provider": "brave_search"
-                        })
-                        save_thread_history(target_cfg.name, conversation_id, history)
-                    
-                    await websocket.send_json({
-                        "type": "web_search_results",
-                        "data": structured_result,
-                        "model": "Brave Search",
-                        "provider": "brave_search"
-                    })
-                    return
-                else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "content": "No search results found. Please try a different query.",
-                        "done": True
-                    })
-                    return
+                sources = fetch_web_sources(message, max_results=5)
+                if sources:
+                    web_context_prompt = build_web_context_prompt(sources)
             except Exception as e:
-                error_msg = f"Web search failed: {str(e)}"
-                await websocket.send_json({
-                    "type": "error",
-                    "content": error_msg,
-                    "done": True
-                })
-                return
+                print(f"[WEB] Web search failed, falling back to GPT only: {e}")
+                sources = []
+                web_context_prompt = ""
         
         # Build RAG context if RAG files are provided
         user_message = message
@@ -357,6 +427,113 @@ Keep it concise, neutral, and factual."""
         
         # Load target configuration
         target_cfg = load_target(target_name)
+        
+        # If web is used and no RAG context, handle web + GPT flow directly
+        if use_web and sources and not has_rag_context:
+            # Use web sources as context for GPT
+            from chatdo.memory.store import load_thread_history
+            from chatdo.agents.main_agent import call_ai_router, CHATDO_SYSTEM_PROMPT
+            import os
+            import requests
+            
+            # Get conversation history
+            conversation_history = []
+            if conversation_id:
+                conversation_history = load_thread_history(target_cfg.name, conversation_id)
+                # Filter to only user/assistant/system messages with content
+                conversation_history = [
+                    {"role": msg.get("role"), "content": msg.get("content", "")}
+                    for msg in conversation_history
+                    if msg.get("role") in ["user", "assistant", "system"] and msg.get("content")
+                ]
+            
+            # Build messages with web context
+            messages = conversation_history.copy()
+            
+            # Add system prompt with web context
+            system_prompt = f"{web_context_prompt}\n\n{CHATDO_SYSTEM_PROMPT}\n\nWhen you use a fact from the web sources above, add inline citations like [1], [2], or [1, 3] at the end of the sentence. If the answer does not require web sources, you may answer without citations."
+            
+            if not any(msg.get("role") == "system" for msg in messages):
+                messages.insert(0, {"role": "system", "content": system_prompt})
+            else:
+                # Replace existing system message
+                for i, msg in enumerate(messages):
+                    if msg.get("role") == "system":
+                        messages[i] = {"role": "system", "content": system_prompt}
+                        break
+            
+            messages.append({"role": "user", "content": message})
+            
+            # Call AI Router
+            ai_router_url = os.getenv("AI_ROUTER_URL", "http://localhost:8081/v1/ai/run")
+            payload = {
+                "role": "chatdo",
+                "intent": "general_chat",
+                "priority": "high",
+                "privacyLevel": "normal",
+                "costTier": "standard",
+                "input": {
+                    "messages": messages,
+                },
+            }
+            
+            resp = requests.post(ai_router_url, json=payload, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            if not data.get("ok"):
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"AI Router error: {data.get('error')}",
+                    "done": True
+                })
+                return
+            
+            assistant_messages = data["output"]["messages"]
+            if not assistant_messages or len(assistant_messages) == 0:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": "No response from AI Router",
+                    "done": True
+                })
+                return
+            
+            content = assistant_messages[0].get("content", "")
+            model_display = "Web + GPT-5"
+            provider = data.get("provider", "openai-gpt5")
+            
+            # Save to memory store
+            if conversation_id:
+                from chatdo.memory.store import save_thread_history
+                history = load_thread_history(target_cfg.name, conversation_id)
+                history.append({"role": "user", "content": message})
+                history.append({
+                    "role": "assistant",
+                    "content": content,
+                    "model": model_display,
+                    "provider": provider,
+                    "sources": sources
+                })
+                save_thread_history(target_cfg.name, conversation_id, history)
+            
+            # Stream the response as chunks
+            chunk_size = 50
+            for i in range(0, len(content), chunk_size):
+                chunk = content[i:i + chunk_size]
+                await websocket.send_json({
+                    "type": "chunk",
+                    "content": chunk
+                })
+            
+            # Send done message with sources
+            await websocket.send_json({
+                "type": "done",
+                "model": model_display,
+                "provider": provider,
+                "sources": sources,
+                "meta": {"usedWebSearch": True}
+            })
+            return
         
         # If RAG context is available, use run_agent (preserves existing behavior)
         # Otherwise, use chat_with_smart_search for normal chat (consistent with REST endpoint)
@@ -622,7 +799,7 @@ async def websocket_endpoint(websocket: WebSocket):
             target_name = data.get("target_name")
             message = data.get("message")
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
-            force_search = data.get("force_search", False)  # Explicit web search flag
+            web_mode = data.get("web_mode", "auto")  # Web mode: 'auto' or 'on'
             print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             
             if not all([project_id, conversation_id, target_name, message]):
@@ -641,7 +818,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 target_name,
                 message,
                 rag_file_ids=rag_file_ids,
-                force_search=force_search
+                web_mode=web_mode
             )
     
     except WebSocketDisconnect:

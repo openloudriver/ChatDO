@@ -65,6 +65,7 @@ export interface Project {
 }
 
 export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory' | 'impact';
+export type WebMode = 'auto' | 'on';
 
 export interface ConnectProjectModalState {
   open: boolean;
@@ -92,6 +93,7 @@ interface ChatStore {
   ragFileIds: string[];  // RAG file IDs for current conversation (deprecated - use ragFilesByConversationId)
   ragFilesByConversationId: Record<string, RagFile[]>;  // RAG files scoped per conversation
   connectProjectModal: ConnectProjectModalState;  // Connect Project modal state
+  webMode: WebMode;  // Web search mode: 'auto' (default) or 'on' (forced)
   
   // Actions
   setProjects: (projects: Project[]) => void;
@@ -136,6 +138,7 @@ interface ChatStore {
   addSource: (source: Source) => void;
   setSources: (sources: Source[]) => void;
   loadSources: (conversationId: string) => Promise<void>;
+  setWebMode: (mode: WebMode) => void;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -1055,6 +1058,8 @@ export const useChatStore = create<ChatStore>((set) => ({
       set({ sources: [] });
     }
   },
+  
+  setWebMode: (mode: WebMode) => set({ webMode: mode }),
   
   ensureGeneralProject: async () => {
     const state = useChatStore.getState();

@@ -214,7 +214,7 @@ class ChatRequest(BaseModel):
     conversation_id: str
     target_name: str
     message: str
-    force_search: bool = False  # Explicit "Search web" trigger
+    web_mode: str = "auto"  # Web mode: 'auto' (default) or 'on' (forced web)
 
 
 class ChatResponse(BaseModel):
@@ -506,72 +506,8 @@ async def chat(request: ChatRequest):
                 provider=result.provider
             )
         
-        # 2. Check for explicit search (force_search flag or search: prefix)
-        message_lower = request.message.lower().strip()
-        explicit_search_patterns = ["search:", "web search:", "brave:", "find:"]
-        is_explicit_search = request.force_search or any(message_lower.startswith(pattern) for pattern in explicit_search_patterns)
-        
-        if is_explicit_search:
-            # Extract query from command
-            query = request.message
-            for pattern in explicit_search_patterns:
-                if message_lower.startswith(pattern):
-                    query = request.message[len(pattern):].strip()
-                    break
-            
-            if not query:
-                query = request.message
-            
-            # Perform explicit Brave search and return Top Results card
-            from chatdo.tools import web_search
-            try:
-                search_results = web_search.search_web(query, max_results=10)
-                if search_results and len(search_results) > 0:
-                    structured_result = {
-                        "type": "web_search_results",
-                        "query": query,
-                        "provider": "brave",
-                        "results": search_results
-                    }
-                    
-                    # Save to memory store
-                    if request.conversation_id:
-                        target_cfg = load_target(request.target_name)
-                        history = load_thread_history(target_cfg.name, request.conversation_id)
-                        history.append({"role": "user", "content": request.message})
-                        history.append({
-                            "role": "assistant",
-                            "content": "",
-                            "type": "web_search_results",
-                            "data": structured_result,
-                            "model": "Brave Search",
-                            "provider": "brave_search"
-                        })
-                        save_thread_history(target_cfg.name, request.conversation_id, history)
-                    
-                    return ChatResponse(
-                        reply="",
-                        message_type="web_search_results",
-                        message_data=structured_result,
-                        model_used="Brave Search",
-                        provider="brave_search",
-                        sources=["Brave Search"]
-                    )
-                else:
-                    return ChatResponse(
-                        reply="No search results found. Please try a different query.",
-                        model_used="Brave Search",
-                        provider="brave_search"
-                    )
-            except Exception as e:
-                error_msg = f"Web search failed: {str(e)}"
-                return ChatResponse(
-                    reply=error_msg,
-                    model_used="Brave Search",
-                    provider="brave_search"
-                )
-        
-        # 3. Normal chat with smart auto-search (or RAG if provided)
+        # 2. Normal chat with smart auto-search (or RAG if provided)
+        # Web mode is handled by chat_with_smart_search
         # Build RAG context if RAG files are provided
         rag_context = ""
         has_rag_context = False

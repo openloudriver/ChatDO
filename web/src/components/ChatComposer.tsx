@@ -5,7 +5,6 @@ import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
 import type { Source } from '../types/sources';
 import UrlSummaryDialog from './UrlSummaryDialog';
-import WebSearchDialog from './WebSearchDialog';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Helper: Convert web search result to Source
@@ -138,6 +137,8 @@ const ChatComposer: React.FC = () => {
     isSummarizingArticle,  // Shared state from Brave Search buttons
     isRagTrayOpen,
     setRagTrayOpen,
+    webMode,
+    setWebMode,
   } = useChatStore();
   
   const { theme } = useTheme();
@@ -145,15 +146,11 @@ const ChatComposer: React.FC = () => {
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
   const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
-  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
-  const handleSend = async (forceSearch: boolean = false) => {
+  const handleSend = async () => {
     // Debug: Log RAG file IDs before sending
     console.log('[RAG] Current ragFileIds from store:', ragFileIds);
     if ((!input.trim() && uploadedFiles.length === 0) || !currentProject || !currentConversation) return;
-
-    // Use forceSearch if explicitly provided
-    const shouldForceSearch = forceSearch;
 
     const userMessage = input.trim();
     const isEditing = !!editingMessageId;
@@ -251,7 +248,7 @@ const ChatComposer: React.FC = () => {
           target_name: currentConversation.targetName,
           message: messageToSend,
           rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-          force_search: shouldForceSearch
+          web_mode: webMode
         };
         console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds);
         ws.send(JSON.stringify(payload));
@@ -346,7 +343,7 @@ const ChatComposer: React.FC = () => {
           // Silently handle parse errors
           clearStreaming();
           ws.close();
-          fallbackToRest(messageToSend, shouldForceSearch);
+          fallbackToRest(messageToSend);
         }
       };
       
@@ -363,7 +360,7 @@ const ChatComposer: React.FC = () => {
     }
   };
 
-  const fallbackToRest = async (message: string, forceSearch: boolean = false) => {
+  const fallbackToRest = async (message: string) => {
     if (!currentProject || !currentConversation) return;
     
     try {
@@ -376,7 +373,7 @@ const ChatComposer: React.FC = () => {
         target_name: currentConversation.targetName,
         message: messageToSend,
         rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-        force_search: forceSearch
+        web_mode: webMode
       });
       
       // Check if response is structured (web_search_results or article_card)
@@ -775,9 +772,8 @@ const ChatComposer: React.FC = () => {
     setInput('');
   };
 
-  const handleSearchWebClick = () => {
-    if (!currentProject || !currentConversation) return;
-    setIsSearchDialogOpen(true);
+  const handleToggleWebMode = () => {
+    setWebMode(webMode === 'on' ? 'auto' : 'on');
   };
 
   const handleSearchDialogSubmit = async (query: string) => {
@@ -1072,9 +1068,14 @@ const ChatComposer: React.FC = () => {
                 </svg>
               </button>
               <button
-                onClick={handleSearchWebClick}
-                className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
-                title="Web Search"
+                type="button"
+                onClick={handleToggleWebMode}
+                className={`p-2 rounded transition-colors ${
+                  webMode === 'on'
+                    ? 'text-[var(--user-bubble-bg)] bg-[var(--user-bubble-bg)]/20'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
+                }`}
+                title={webMode === 'on' ? 'Web: Forced On' : 'Web: Auto'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -1347,11 +1348,6 @@ const ChatComposer: React.FC = () => {
         isOpen={isUrlDialogOpen}
         onClose={() => setIsUrlDialogOpen(false)}
         onSubmit={handleUrlDialogSubmit}
-      />
-      <WebSearchDialog
-        isOpen={isSearchDialogOpen}
-        onClose={() => setIsSearchDialogOpen(false)}
-        onSubmit={handleSearchDialogSubmit}
       />
     </div>
   );
