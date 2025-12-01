@@ -46,8 +46,6 @@ Formatting rules to mimic ChatGPT:
 
 5) Tone & disclaimers
 - Neutral, analytical tone.
-- For finance/crypto, always end with:
-  "Not financial advice—match your choice to your threat model, liquidity needs, and jurisdiction."
 
 6) What NOT to do
 - Do NOT output JSX, HTML, or JSON unless explicitly asked.
