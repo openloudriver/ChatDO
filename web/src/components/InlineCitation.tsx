@@ -16,6 +16,16 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   const [open, setOpen] = useState(false);
   const chipRef = useRef<HTMLSpanElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +45,37 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  const handleMouseEnter = () => {
+    // Clear any pending close timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Add a small delay before closing to allow mouse to move to popover
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpen(false);
+      closeTimeoutRef.current = null;
+    }, 150);
+  };
+
+  const handlePopoverMouseEnter = () => {
+    // Clear any pending close timeout when mouse enters popover
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const handlePopoverMouseLeave = () => {
+    // Close when mouse leaves popover
+    setOpen(false);
+  };
 
   const extractDomain = (url?: string): string => {
     if (!url) return '';
@@ -70,8 +111,8 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           leading-none
           px-[1px]
         "
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={e => {
           e.stopPropagation();
           // Handle RAG files (stored in meta.onOpenFile)
@@ -92,21 +133,35 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           className="fixed z-[10000] max-w-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-lg"
           style={{
             top: chipRef.current
-              ? chipRef.current.getBoundingClientRect().top - 120
+              ? chipRef.current.getBoundingClientRect().top - 5
               : 0,
             left: chipRef.current
               ? chipRef.current.getBoundingClientRect().left
               : 0,
+            transform: 'translateY(-100%)', // Position above the citation
           }}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onMouseEnter={handlePopoverMouseEnter}
+          onMouseLeave={handlePopoverMouseLeave}
         >
           {(source.siteName || source.fileName) && (
             <div className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
               {source.siteName || (source.fileName ? 'RAG File' : '')}
             </div>
           )}
-          <div className="mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)]">
+          <div 
+            className={`mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)] ${
+              source.meta?.onOpenFile && source.meta?.ragFile 
+                ? 'cursor-pointer hover:underline' 
+                : ''
+            }`}
+            onClick={e => {
+              e.stopPropagation();
+              // Handle RAG files (stored in meta.onOpenFile)
+              if (source.meta?.onOpenFile && source.meta?.ragFile) {
+                source.meta.onOpenFile(source.meta.ragFile);
+              }
+            }}
+          >
             {source.title}
           </div>
           {source.fileName && source.fileName !== source.title && (
