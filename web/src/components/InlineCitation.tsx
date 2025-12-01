@@ -2,50 +2,36 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Source } from '../types/sources';
 
 interface InlineCitationProps {
-  citationNumbers: number[]; // e.g. [1] or [1, 3]
-  sources: Source[];
-  sortedIndex: number; // The index in the sorted sources array
+  /** 0-based index into the sorted sources array */
+  index: number;
+  source: Source;
+  /** Total number of sources for this message (for x/y display) */
+  total: number;
 }
 
-// Convert number to superscript (¹ ² ³ etc.)
-const toSuperscript = (num: number): string => {
-  const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-  return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
-};
-
-export const InlineCitation: React.FC<InlineCitationProps> = ({ citationNumbers, sources, sortedIndex }) => {
-  const [showPopover, setShowPopover] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const chipRef = useRef<HTMLSpanElement>(null);
-
-  // Sort sources by rank
-  const sortedSources = [...sources].sort((a, b) => {
-    const rankA = a.rank ?? Infinity;
-    const rankB = b.rank ?? Infinity;
-    return rankA - rankB;
-  });
-
-  const source = sortedSources[sortedIndex];
+export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, total }) => {
+  const [open, setOpen] = useState(false);
+  const chipRef = useRef<HTMLSpanElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!showPopover) return;
+    if (!open) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node) &&
+        !popoverRef.current.contains(target) &&
         chipRef.current &&
-        !chipRef.current.contains(e.target as Node)
+        !chipRef.current.contains(target)
       ) {
-        setShowPopover(false);
+        setOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showPopover]);
-
-  if (!source) return null;
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   const extractDomain = (url?: string): string => {
     if (!url) return '';
@@ -71,50 +57,59 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ citationNumbers,
     <>
       <span
         ref={chipRef}
-        onMouseEnter={() => setShowPopover(true)}
-        onMouseLeave={() => setShowPopover(false)}
-        onClick={(e) => {
+        className="
+          text-[12px]
+          font-medium
+          text-[var(--text-secondary)]
+          hover:text-[var(--text-primary)]
+          cursor-pointer
+          align-super
+          leading-none
+          px-[1px]
+        "
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={e => {
           e.stopPropagation();
           if (source.url) {
             window.open(source.url, '_blank', 'noopener,noreferrer');
           }
         }}
-        className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer align-super transition-colors"
         title={source.title}
       >
-        {toSuperscript(sortedIndex + 1)}
+        {index + 1}
       </span>
 
-      {showPopover && (
+      {open && (
         <div
           ref={popoverRef}
-          className="fixed z-[10000] bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg p-3 max-w-xs pointer-events-auto"
+          className="fixed z-[10000] max-w-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-lg"
           style={{
-            top: chipRef.current?.getBoundingClientRect().top
-              ? `${chipRef.current.getBoundingClientRect().top - 120}px`
-              : '0px',
-            left: chipRef.current?.getBoundingClientRect().left
-              ? `${chipRef.current.getBoundingClientRect().left}px`
-              : '0px',
+            top: chipRef.current
+              ? chipRef.current.getBoundingClientRect().top - 120
+              : 0,
+            left: chipRef.current
+              ? chipRef.current.getBoundingClientRect().left
+              : 0,
           }}
-          onMouseEnter={() => setShowPopover(true)}
-          onMouseLeave={() => setShowPopover(false)}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
         >
           {source.siteName && (
-            <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide mb-1">
+            <div className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
               {source.siteName}
             </div>
           )}
-          <div className="text-xs font-semibold text-[var(--text-primary)] line-clamp-2 mb-2">
+          <div className="mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)]">
             {source.title}
           </div>
           {source.publishedAt && (
-            <div className="text-[10px] text-[var(--text-secondary)] mb-2">
+            <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
               {formatDate(source.publishedAt)}
             </div>
           )}
           {source.description && (
-            <p className="text-[11px] text-[var(--text-secondary)] line-clamp-3 mb-2">
+            <p className="mb-2 line-clamp-3 text-[11px] text-[var(--text-secondary)]">
               {source.description}
             </p>
           )}
@@ -123,15 +118,28 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ citationNumbers,
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-[10px] text-[var(--text-primary)] hover:underline flex items-center gap-1"
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1 text-[10px] text-[var(--text-primary)] hover:underline"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
               </svg>
               {extractDomain(source.url)}
             </a>
           )}
+          <div className="mt-2 text-[10px] text-[var(--text-secondary)]">
+            {index + 1}/{total}
+          </div>
         </div>
       )}
     </>

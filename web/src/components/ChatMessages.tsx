@@ -7,7 +7,9 @@ import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
 import { AssistantCard } from './shared/AssistantCard';
+import { InlineSourceCitations } from './InlineSourceCitations';
 import type { RagFile } from '../types/rag';
+import type { Source } from '../types/sources';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Extract bullet options from message content
@@ -132,7 +134,21 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
 };
 
 // Component to render GPT messages with proper markdown formatting
-const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
+const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({ content, sources }) => {
+  // If sources are present, render with inline citations (plain text for v1)
+  if (sources && sources.length > 0) {
+    return (
+      <AssistantCard>
+        <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
+          <div className="text-[var(--text-primary)] whitespace-pre-wrap">
+            <InlineSourceCitations text={content} sources={sources} />
+          </div>
+        </div>
+      </AssistantCard>
+    );
+  }
+
+  // Default markdown rendering for messages without sources
   return (
     <AssistantCard>
       <div className="prose max-w-[720px] mx-auto text-[0.95rem] leading-relaxed space-y-4">
@@ -205,7 +221,7 @@ const GPTMessageRenderer: React.FC<{ content: string }> = ({ content }) => {
 };
 
 // Component to render bullet options with cards
-const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE' }> = ({ content, bulletMode }) => {
+const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | 'OPB_350' | 'OPB_450' | 'FREE'; sources?: Source[] }> = ({ content, bulletMode, sources }) => {
   const [bulletOptions, setBulletOptions] = useState<string[]>([]);
   const [hasOptions, setHasOptions] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -257,7 +273,7 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
 
   // If we didn't detect structured bullet options, use GPTMessageRenderer for proper formatting
   if (!hasOptions || bulletOptions.length === 0) {
-    return <GPTMessageRenderer content={content} />;
+    return <GPTMessageRenderer content={content} sources={sources} />;
   }
 
   // Otherwise, render only the clean bullet options card (no extra intro text or tips)
@@ -1321,7 +1337,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       {/* Display text content if any (and not structured message types) */}
                       {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
                         message.role === 'assistant' ? (
-                          <OptionsRenderer content={content} bulletMode={bulletMode} />
+                          <OptionsRenderer content={content} bulletMode={bulletMode} sources={message.sources} />
                         ) : (
                           <p className="whitespace-pre-wrap" style={{ color: 'var(--user-bubble-text)' }}>{content}</p>
                         )
