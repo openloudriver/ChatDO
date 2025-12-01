@@ -27,57 +27,7 @@ def extract_urls(text: str) -> list[str]:
     return urls
 
 
-def should_use_web_auto(latest_user_message: str) -> bool:
-    """
-    Determine if web search should be used automatically based on message content.
-    Returns True if the message contains time-sensitive, finance, or news-related keywords.
-    """
-    text = latest_user_message.lower()
-    
-    # Time-sensitive triggers
-    time_words = [
-        'today', 'right now', 'currently', 'latest', 'this week', 'this month', 
-        'this year', 'recent', 'up to date', 'now', 'current'
-    ]
-    
-    # Finance / prices / markets
-    finance_words = [
-        'price of', 'current price', 'stock price', 'share price', 'dividend',
-        'yield', 'interest rate', 'mortgage rate', 'treasury yield', 'market cap',
-        'volume', 'market is doing', 'how much is', 'worth', 'value', 'cost'
-    ]
-    
-    # News / events
-    news_words = [
-        'news', 'headlines', 'breaking', 'update on', 'what happened', 
-        'latest on', 'election', 'war', 'conflict', 'event'
-    ]
-    
-    def has_any(words: List[str]) -> bool:
-        return any(word in text for word in words)
-    
-    # Simple rules for now
-    if has_any(time_words) or has_any(finance_words) or has_any(news_words):
-        return True
-    
-    return False
-
-
-def should_use_web(web_mode: str, latest_user_message: str) -> bool:
-    """
-    Determine if web search should be used based on web_mode and message content.
-    
-    Args:
-        web_mode: 'auto' or 'on'
-        latest_user_message: The user's message content
-    
-    Returns:
-        True if web search should be used, False otherwise
-    """
-    if web_mode == 'on':
-        return True
-    # 'auto' mode
-    return should_use_web_auto(latest_user_message)
+# Web policy decision logic moved to server/services/web_policy.py
 
 
 def fetch_web_sources(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
@@ -394,8 +344,16 @@ Keep it concise, neutral, and factual."""
             })
             return
         
-        # Determine if web search should be used
-        use_web = should_use_web(web_mode, message)
+        # Determine if web search should be used using centralized policy
+        from server.services.web_policy import should_use_web
+        
+        # Normalize web_mode
+        web_toggle: str = web_mode if web_mode in ("auto", "on") else "auto"
+        
+        use_web = should_use_web(
+            message_text=message,
+            web_mode=web_toggle
+        )
         
         # Fetch web sources if needed
         sources: List[Dict[str, Any]] = []

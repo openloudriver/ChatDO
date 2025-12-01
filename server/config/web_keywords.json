@@ -1,0 +1,122 @@
+{
+  "categories": {
+    "finance_price": {
+      "priority": 1,
+      "recency_required": true,
+      "keywords": [
+        "current price",
+        "price of",
+        "price right now",
+        "trading at",
+        "quote for",
+        "market price",
+        "spot price"
+      ],
+      "assets": [
+        "xmr",
+        "monero",
+        "btc",
+        "bitcoin",
+        "eth",
+        "ethereum",
+        "msty",
+        "mstr",
+        "schd",
+        " o ",
+        "mdst",
+        "jepi",
+        "spyi",
+        "spy",
+        "qqq",
+        "voo",
+        "vti",
+        "stock",
+        "etf",
+        "crypto",
+        "token",
+        "coin"
+      ]
+    },
+    "finance_news": {
+      "priority": 1,
+      "recency_required": true,
+      "keywords": [
+        "latest",
+        "breaking",
+        "recent",
+        "this week",
+        "this month",
+        "today",
+        "right now",
+        "currently"
+      ],
+      "context": [
+        "market",
+        "dividend",
+        "yield",
+        "earnings",
+        "cpi",
+        "inflation",
+        "jobs report",
+        "unemployment",
+        "fed",
+        "fomc",
+        "rate hike",
+        "interest rates"
+      ]
+    },
+    "crypto_chain": {
+      "priority": 2,
+      "recency_required": true,
+      "keywords": [
+        "hashrate",
+        "difficulty",
+        "block reward",
+        "block height",
+        "mempool",
+        "fees",
+        "gas fees"
+      ]
+    },
+    "security_incidents": {
+      "priority": 2,
+      "recency_required": true,
+      "keywords": [
+        "breach",
+        "exploit",
+        "cve",
+        "attack",
+        "hack",
+        "ransomware",
+        "outage",
+        "downtime",
+        "data leak"
+      ]
+    },
+    "global_news": {
+      "priority": 2,
+      "recency_required": true,
+      "keywords": [
+        "breaking news",
+        "latest news",
+        "news today",
+        "headline",
+        "recent news"
+      ]
+    }
+  },
+  "recency_words": [
+    "today",
+    "right now",
+    "currently",
+    "current",
+    "this week",
+    "this month",
+    "recently",
+    "latest",
+    "up to date",
+    "live",
+    "real time"
+  ]
+}
+
