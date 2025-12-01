@@ -597,6 +597,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     const mimeType = file.mime_type;
 
+    // Ensure we're not in fullscreen when opening a new file
+    // Exit fullscreen if modal was previously in fullscreen
+    if (previewModalRef.current && document.fullscreenElement === previewModalRef.current) {
+      try {
+        await document.exitFullscreen();
+      } catch (error) {
+        // Ignore errors - might already be exited
+      }
+    }
+    setIsFullscreen(false);
+
     if (mimeType === 'application/pdf') {
       setPreviewFile({ name: file.filename, data: previewPath, type: 'pdf', mimeType });
     } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
@@ -710,10 +721,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     if (!previewModalRef.current) return;
 
     try {
-      if (!document.fullscreenElement) {
+      // Check if the modal itself is in fullscreen (not the entire document)
+      const isModalFullscreen = document.fullscreenElement === previewModalRef.current;
+      
+      if (!isModalFullscreen) {
+        // Enter fullscreen for the modal only
         await previewModalRef.current.requestFullscreen();
         setIsFullscreen(true);
       } else {
+        // Exit fullscreen only if the modal is the one in fullscreen
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
@@ -725,7 +741,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      // Only set fullscreen state if the modal is the one in fullscreen
+      const isModalFullscreen = !!(previewModalRef.current && document.fullscreenElement === previewModalRef.current);
+      setIsFullscreen(isModalFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -1563,7 +1581,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {previewFile && (
         <div 
           className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
-          onClick={() => setPreviewFile(null)}
+          onClick={() => {
+            setPreviewFile(null);
+            // Exit fullscreen if modal is in fullscreen when closing
+            if (document.fullscreenElement === previewModalRef.current) {
+              document.exitFullscreen().catch(() => {});
+            }
+            setIsFullscreen(false);
+          }}
         >
           <div 
             ref={previewModalRef}
