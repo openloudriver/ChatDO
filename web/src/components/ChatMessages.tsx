@@ -678,8 +678,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         }
       }, 150); // Debounce to every 150ms during streaming
       return () => clearTimeout(timeoutId);
+    } else if (!isStreaming && messages.length > 0 && messagesEndRef.current) {
+      // When streaming finishes, ensure we scroll to bottom
+      requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      });
     }
-  }, [streamingContent, isStreaming]);
+  }, [streamingContent, isStreaming, messages.length]);
 
   const handleBack = () => {
     if (currentConversation?.trashed) {

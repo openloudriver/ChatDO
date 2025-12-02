@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -180,7 +180,9 @@ const Sidebar: React.FC = () => {
   const {
     projects,
     currentProject,
+    allConversations,
     setCurrentProject,
+    setCurrentConversation,
     createProject,
     renameProject,
     deleteProject,
@@ -210,12 +212,45 @@ const Sidebar: React.FC = () => {
   const [impactModalOpen, setImpactModalOpen] = useState(false);
   const { openConnectProjectModal } = useChatStore();
 
+  // Compute recent chats (last 3 across all projects)
+  const recentChats = useMemo(() => {
+    if (!allConversations || allConversations.length === 0) return [];
+
+    // Filter to only chats that actually have a projectId and are not trashed
+    const valid = allConversations.filter((c) => !!c.projectId && !c.trashed);
+
+    // Sort by updatedAt (desc), falling back to createdAt if updatedAt is missing
+    const sorted = [...valid].sort((a, b) => {
+      const aTime = a.updatedAt ?? a.createdAt?.toISOString() ?? '';
+      const bTime = b.updatedAt ?? b.createdAt?.toISOString() ?? '';
+      // Newest first
+      return (bTime || '').localeCompare(aTime || '');
+    });
+
+    // Deduplicate by id and take only the top 3
+    const unique: typeof sorted = [];
+    for (const c of sorted) {
+      if (!c.id) continue;
+      if (unique.find((u) => u.id === c.id)) continue;
+      unique.push(c);
+      if (unique.length >= 3) break;
+    }
+
+    return unique;
+  }, [allConversations]);
+
   // Load chats when project changes
   useEffect(() => {
     if (currentProject) {
       loadChats(currentProject.id);
     }
   }, [currentProject, loadChats]);
+
+  // Load all chats on mount to populate recentChats across all projects
+  useEffect(() => {
+    // Load all chats (no project filter) to get conversations from all projects for recentChats
+    loadChats();
+  }, [loadChats]);
 
   // Close context menus when clicking outside
   useEffect(() => {
@@ -359,6 +394,52 @@ const Sidebar: React.FC = () => {
 
       {/* Projects List */}
       <div className="px-2 mb-4 flex-1 overflow-y-auto">
+        {/* Recent Chats Section */}
+        {recentChats.length > 0 && (
+          <div className="mb-3">
+            <div className="px-2 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+              Recent
+            </div>
+            <div className="space-y-1">
+              {recentChats.map((chat) => {
+                const project = projects.find((p) => p.id === chat.projectId);
+                const title =
+                  chat.title && chat.title.trim().length > 0
+                    ? chat.title
+                    : 'Untitled chat';
+
+                return (
+                  <button
+                    key={chat.id}
+                    type="button"
+                    onClick={() => {
+                      // When I click a recent chat:
+                      // 1) make sure the correct project is selected
+                      // 2) open that conversation
+                      if (project && setCurrentProject) {
+                        setCurrentProject(project);
+                      }
+                      if (setCurrentConversation) {
+                        setCurrentConversation(chat);
+                      }
+                    }}
+                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-[var(--bg-tertiary)] transition-colors"
+                    style={{ color: sidebarTextColor }}
+                  >
+                    <div className="truncate text-[13px] text-[var(--text-primary)]">
+                      {title}
+                    </div>
+                    {project && (
+                      <div className="truncate text-[11px] text-[var(--text-secondary)]">
+                        in {project.name}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="text-xs uppercase" style={{ color: sidebarTextColor }}>Projects</div>
           <button

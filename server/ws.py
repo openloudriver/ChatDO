@@ -335,6 +335,11 @@ Keep it concise, neutral, and factual."""
                     print(f"Warning: Failed to save article summary to memory store: {e}")
             
             # Send article card via WebSocket
+            # Update chat's updated_at timestamp
+            if conversation_id:
+                from server.main import update_chat_timestamp
+                update_chat_timestamp(conversation_id)
+            
             await websocket.send_json({
                 "type": "article_card",
                 "data": message_data,
@@ -659,6 +664,10 @@ Keep it concise, neutral, and factual."""
                 except Exception as e:
                     print(f"Warning: Failed to update RAG response in memory store: {e}")
             
+            # Update chat's updated_at timestamp
+            if conversation_id:
+                update_chat_timestamp(conversation_id)
+            
             await websocket.send_json({
                 "type": "rag_response",
                 "data": {
@@ -713,6 +722,11 @@ Keep it concise, neutral, and factual."""
                     "content": error_note,
                     "done": False
                 })
+        
+        # Update chat's updated_at timestamp
+        if conversation_id:
+            from server.main import update_chat_timestamp
+            update_chat_timestamp(conversation_id)
         
         # Send completion message with model/provider info
         await websocket.send_json({

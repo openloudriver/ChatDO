@@ -143,6 +143,24 @@ const ChatComposer: React.FC = () => {
   
   const { theme } = useTheme();
   
+  // Auto-focus input when a new chat is created or selected
+  useEffect(() => {
+    if (currentConversation && textareaRef.current) {
+      // Focus if it's a new chat (title is "New Chat" and has no messages)
+      const isNewChat = currentConversation.title === 'New Chat' && 
+                        (currentConversation.messages?.length === 0 || !currentConversation.messages);
+      
+      if (isNewChat) {
+        // Small delay to ensure the component has fully rendered
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+          }
+        }, 100);
+      }
+    }
+  }, [currentConversation?.id, currentConversation?.title]); // Focus when conversation ID or title changes
+  
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
   const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
@@ -293,6 +311,19 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
+            // Update the conversation's updatedAt in allConversations immediately
+            const { allConversations: allConvsArticle } = useChatStore.getState();
+            const updatedAllConvsArticle = allConvsArticle.map(c => 
+              c.id === currentConversation?.id 
+                ? { ...c, updatedAt: new Date().toISOString() }
+                : c
+            );
+            useChatStore.setState({ allConversations: updatedAllConvsArticle });
+            // Reload all chats in the background to sync with backend
+            setTimeout(() => {
+              const { loadChats: loadChatsArticle } = useChatStore.getState();
+              loadChatsArticle();
+            }, 500);
           } else if (data.type === 'rag_response') {
             // Handle structured RAG response
             // Get RAG files from store and convert to Source[]
@@ -313,6 +344,19 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
+            // Update the conversation's updatedAt in allConversations immediately
+            const { allConversations: allConvsRag } = useChatStore.getState();
+            const updatedAllConvsRag = allConvsRag.map(c => 
+              c.id === currentConversation?.id 
+                ? { ...c, updatedAt: new Date().toISOString() }
+                : c
+            );
+            useChatStore.setState({ allConversations: updatedAllConvsRag });
+            // Reload all chats in the background to sync with backend
+            setTimeout(() => {
+              const { loadChats: loadChatsRag } = useChatStore.getState();
+              loadChatsRag();
+            }, 500);
           } else if (data.type === 'done') {
             // Convert sources if they're in the old format
             let sources: Source[] | undefined = undefined;
@@ -339,6 +383,20 @@ const ChatComposer: React.FC = () => {
             });
             clearStreaming();
             ws.close();
+            // Update the conversation's updatedAt in allConversations immediately
+            // Then reload all chats in the background to sync with backend
+            const { allConversations, setConversations: _setConversations } = useChatStore.getState();
+            const updatedAllConversations = allConversations.map(c => 
+              c.id === currentConversation?.id 
+                ? { ...c, updatedAt: new Date().toISOString() }
+                : c
+            );
+            useChatStore.setState({ allConversations: updatedAllConversations });
+            // Reload all chats in the background to sync with backend (with small delay to ensure backend has saved)
+            setTimeout(() => {
+              const { loadChats } = useChatStore.getState();
+              loadChats(); // Load all chats (no project filter) to update allConversations
+            }, 500);
           } else if (data.type === 'error') {
             // Only log to console if it's not a connection error (those are expected)
             if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
@@ -757,6 +815,19 @@ const ChatComposer: React.FC = () => {
             });
             
             addMessage({ role: 'assistant', content: response.data.reply });
+            // Update the conversation's updatedAt in allConversations immediately
+            const { allConversations: allConvsRest } = useChatStore.getState();
+            const updatedAllConvsRest = allConvsRest.map(c => 
+              c.id === currentConversation?.id 
+                ? { ...c, updatedAt: new Date().toISOString() }
+                : c
+            );
+            useChatStore.setState({ allConversations: updatedAllConvsRest });
+            // Reload all chats in the background to sync with backend
+            setTimeout(() => {
+              const { loadChats: loadChatsRest } = useChatStore.getState();
+              loadChatsRest();
+            }, 500);
           } catch (error: any) {
             console.error('Failed to send message:', error);
             const errorMessage = error?.response?.data?.detail || error?.message || 'Sorry, I encountered an error. Please try again.';

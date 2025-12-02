@@ -137,6 +137,22 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def update_chat_timestamp(conversation_id: str) -> None:
+    """Update the chat's updated_at timestamp when a message is sent"""
+    if not conversation_id:
+        return
+    
+    try:
+        chats = load_chats()
+        for chat in chats:
+            if chat.get("id") == conversation_id:
+                chat["updated_at"] = now_iso()
+                save_chats(chats)
+                break
+    except Exception as e:
+        logger.warning(f"Failed to update chat timestamp: {e}")
+
+
 def purge_trashed_chats() -> int:
     """
     Permanently delete chats that have been in trash longer than RETENTION_DAYS.
@@ -498,6 +514,9 @@ async def chat(request: ChatRequest):
                 project_id=project_id
             )
             result = await summarize_article(article_request)
+            # Update chat's updated_at timestamp
+            if request.conversation_id:
+                update_chat_timestamp(request.conversation_id)
             return ChatResponse(
                 reply=result.message_data.get("summary", ""),
                 message_type=result.message_type,
@@ -571,6 +590,9 @@ async def chat(request: ChatRequest):
                 else:
                     # No tasks - return smart chat result directly
                     # Add meta information for frontend
+                    # Update chat's updated_at timestamp
+                    if request.conversation_id:
+                        update_chat_timestamp(request.conversation_id)
                     return ChatResponse(
                         reply=human_text,  # Use human_text (content without tasks)
                         message_type="text",
@@ -716,11 +738,15 @@ async def chat(request: ChatRequest):
                 sources=["RAG-Upload"] if source_files else None
             )
         
-        # 5) If no tasks, return (run_agent already saved the message)
+        # 5) Update chat's updated_at timestamp when a message is sent
+        if request.conversation_id:
+            update_chat_timestamp(request.conversation_id)
+        
+        # 6) If no tasks, return (run_agent already saved the message)
         if not tasks_json:
             return ChatResponse(reply=human_text, model_used=model_display, provider=provider)
         
-        # 6) Parse tasks from JSON
+        # 7) Parse tasks from JSON
         try:
             tasks = parse_tasks_block(tasks_json)
         except Exception as e:
@@ -728,7 +754,7 @@ async def chat(request: ChatRequest):
             error_note = f"\n\n---\nExecutor error: could not parse tasks JSON ({e})."
             return ChatResponse(reply=human_text + error_note)
         
-        # 7) Execute tasks against the target repo
+        # 8) Execute tasks against the target repo
         exec_result = apply_tasks(target_cfg, tasks)
         
         # 8) Build a human-readable summary

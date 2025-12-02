@@ -4,6 +4,23 @@ import axios from 'axios';
 import type { Source } from '../types/sources';
 import type { RagFile } from '../types/rag';
 
+// Configure axios to suppress 404 errors in console for chat message endpoints
+// (These are expected when chats don't exist or have no messages)
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Suppress 404 errors for chat message endpoints (expected for deleted/non-existent chats)
+    if (error.config?.url?.includes('/api/chats/') && error.config?.url?.includes('/messages')) {
+      if (error.response?.status === 404) {
+        // Return a rejected promise but don't log to console
+        return Promise.reject(error);
+      }
+    }
+    // For all other errors, let them through normally
+    return Promise.reject(error);
+  }
+);
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -52,6 +69,7 @@ export interface Conversation {
   projectId: string;
   targetName: string;
   createdAt: Date;
+  updatedAt?: string;  // ISO string from backend updated_at
   trashed?: boolean;
   trashed_at?: string;
   thread_id?: string;
@@ -78,6 +96,7 @@ interface ChatStore {
   projects: Project[];
   currentProject: Project | null;
   conversations: Conversation[];
+  allConversations: Conversation[];  // All conversations across all projects (for Recent section)
   trashedChats: Conversation[];
   currentConversation: Conversation | null;
   messages: Message[];
@@ -146,6 +165,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   projects: [],
   currentProject: null,
   conversations: [],
+  allConversations: [],  // All conversations across all projects
   trashedChats: [],
   currentConversation: null,
   messages: [],
@@ -353,6 +373,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           projectId: chatProjectId,
           targetName: chatTarget,
           createdAt: new Date(chat.created_at),
+          updatedAt: chat.updated_at,  // Map updated_at from backend
           trashed: chat.trashed || false,
           trashed_at: chat.trashed_at,
           thread_id: chat.thread_id
@@ -393,61 +414,94 @@ export const useChatStore = create<ChatStore>((set) => ({
           currentConversation: newCurrentConversation
         };
         
-        // Only update trashedChats if loading all chats (no project filter)
+        // If loading all chats (no project filter), update allConversations and trashedChats
         if (!projectId) {
+          update.allConversations = activeChats;  // Update global list with all active chats
           update.trashedChats = trashedChats;
+        } else {
+          // When loading a specific project's chats, merge into allConversations
+          // Remove old chats for this project and add new ones
+          // Keep chats from other projects
+          const otherProjectChats = state.allConversations.filter(
+            c => c.projectId !== projectId
+          );
+          update.allConversations = [...otherProjectChats, ...activeChats];
         }
         
         return update;
       });
       
       // Then load preview messages for each active chat (non-blocking)
-      // Load more messages to find the last user message for preview
-      for (const chat of activeChats) {
-        if (chat.thread_id) {
-          axios.get(`http://localhost:8000/api/chats/${chat.id}/messages?limit=10`)
-            .then(response => {
-              const previewMessages = response.data.messages || [];
-              if (previewMessages.length > 0) {
-                // Find the last user message (go backwards)
-                let lastUserMsg = null;
-                for (let i = previewMessages.length - 1; i >= 0; i--) {
-                  if (previewMessages[i].role === 'user') {
-                    lastUserMsg = previewMessages[i];
-                    break;
+      // Only load previews for chats that:
+      // 1. Have a thread_id (exist in backend)
+      // 2. Are in the current activeChats list (not stale/deleted)
+      // 3. Only when loading a specific project (not when loading all chats globally)
+      // This prevents 404s from trying to load previews for deleted chats
+      if (projectId) {
+        for (const chat of activeChats) {
+          if (chat.thread_id && chat.id) {
+            // Use a small delay to batch requests and avoid overwhelming the server
+            setTimeout(() => {
+              axios.get(`http://localhost:8000/api/chats/${chat.id}/messages?limit=10`, {
+                validateStatus: (status) => status < 500 // Don't throw on 404, just catch it
+              })
+                .then(response => {
+                  // Verify the chat still exists in activeChats before updating
+                  const state = useChatStore.getState();
+                  const chatStillExists = state.conversations.some(c => c.id === chat.id) || 
+                                         state.allConversations.some(c => c.id === chat.id);
+                  
+                  if (!chatStillExists) {
+                    // Chat was deleted, don't update
+                    return;
                   }
-                }
-                
-                // If no user message found, use the last message anyway
-                const msgToShow = lastUserMsg || previewMessages[previewMessages.length - 1];
-                
-                const previewMessage: Message = {
-                  id: `${chat.id}-preview`,
-                  role: msgToShow.role,
-                  content: msgToShow.content,
-                  timestamp: new Date()
-                };
-                
-                // Store all messages for preview (so getPreview can find user messages)
-                const allPreviewMessages: Message[] = previewMessages.map((msg: any, idx: number) => ({
-                  id: `${chat.id}-preview-${idx}`,
-                  role: msg.role,
-                  content: msg.content,
-                  timestamp: new Date()
-                }));
-                
-                // Update conversation with preview messages
-                set((state) => ({
-                  conversations: state.conversations.map(c =>
-                    c.id === chat.id ? { ...c, messages: allPreviewMessages } : c
-                  )
-                }));
-              }
-            })
-            .catch(err => {
-              // Silently fail - preview is optional
-              console.debug('Failed to load preview for chat:', chat.id, err);
-            });
+                  
+                  const previewMessages = response.data.messages || [];
+                  if (previewMessages.length > 0) {
+                    // Find the last user message (go backwards)
+                    let lastUserMsg = null;
+                    for (let i = previewMessages.length - 1; i >= 0; i--) {
+                      if (previewMessages[i].role === 'user') {
+                        lastUserMsg = previewMessages[i];
+                        break;
+                      }
+                    }
+                    
+                    // If no user message found, use the last message anyway
+                    const msgToShow = lastUserMsg || previewMessages[previewMessages.length - 1];
+                    
+                    const previewMessage: Message = {
+                      id: `${chat.id}-preview`,
+                      role: msgToShow.role,
+                      content: msgToShow.content,
+                      timestamp: new Date()
+                    };
+                    
+                    // Store all messages for preview (so getPreview can find user messages)
+                    const allPreviewMessages: Message[] = previewMessages.map((msg: any, idx: number) => ({
+                      id: `${chat.id}-preview-${idx}`,
+                      role: msg.role,
+                      content: msg.content,
+                      timestamp: new Date()
+                    }));
+                    
+                    // Update conversation with preview messages
+                    set((state) => ({
+                      conversations: state.conversations.map(c =>
+                        c.id === chat.id ? { ...c, messages: allPreviewMessages } : c
+                      ),
+                      allConversations: state.allConversations.map(c =>
+                        c.id === chat.id ? { ...c, messages: allPreviewMessages } : c
+                      )
+                    }));
+                  }
+                })
+                .catch(() => {
+                  // Silently ignore all errors - preview is optional
+                  // Don't log anything to console to keep it clean
+                });
+            }, Math.random() * 100); // Small random delay to batch requests
+          }
         }
       }
     } catch (error) {
@@ -475,6 +529,7 @@ export const useChatStore = create<ChatStore>((set) => ({
             projectId: chat.project_id,
             targetName: defaultTarget,
             createdAt: new Date(chat.created_at),
+            updatedAt: chat.updated_at,  // Map updated_at from backend
             trashed: true,
             trashed_at: chat.trashed_at,
             thread_id: chat.thread_id
@@ -500,7 +555,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   setConversations: (conversations) => set({ conversations }),
   
   addConversation: (conversation) => set((state) => ({
-    conversations: [conversation, ...state.conversations]
+    conversations: [conversation, ...state.conversations],
+    allConversations: [conversation, ...state.allConversations]
   })),
   
   renameChat: async (id, title) => {
@@ -514,6 +570,9 @@ export const useChatStore = create<ChatStore>((set) => ({
         const updatedConversations = state.conversations.map(c =>
           c.id === id ? { ...c, title: updatedChat.title } : c
         );
+        const updatedAllConversations = state.allConversations.map(c =>
+          c.id === id ? { ...c, title: updatedChat.title } : c
+        );
         const updatedTrashedChats = state.trashedChats.map(c =>
           c.id === id ? { ...c, title: updatedChat.title } : c
         );
@@ -523,6 +582,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         
         return {
           conversations: updatedConversations,
+          allConversations: updatedAllConversations,
           trashedChats: updatedTrashedChats,
           currentConversation: updatedCurrentConversation
         };
@@ -551,6 +611,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         projectId: deletedChat.project_id,
         targetName: defaultTarget,
         createdAt: new Date(deletedChat.created_at),
+        updatedAt: deletedChat.updated_at,  // Map updated_at from backend
         trashed: true,
         trashed_at: deletedChat.trashed_at,
         thread_id: deletedChat.thread_id
@@ -558,6 +619,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       
       set((state) => {
         const updatedConversations = state.conversations.filter(c => c.id !== id);
+        const updatedAllConversations = state.allConversations.filter(c => c.id !== id);
         
         // If deleted chat was current, select another or clear
         const updatedCurrentConversation = state.currentConversation?.id === id
@@ -571,6 +633,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         
         return {
           conversations: updatedConversations,
+          allConversations: updatedAllConversations,
           trashedChats: updatedTrashedChats,
           currentConversation: updatedCurrentConversation
         };
@@ -609,14 +672,17 @@ export const useChatStore = create<ChatStore>((set) => ({
           projectId: restoredChat.project_id,
           targetName: chat?.targetName || defaultTarget,
           createdAt: new Date(restoredChat.created_at),
+          updatedAt: restoredChat.updated_at,  // Map updated_at from backend
           trashed: false,
           trashed_at: undefined,
           thread_id: restoredChat.thread_id
         };
         const updatedConversations = [restoredConversation, ...state.conversations];
+        const updatedAllConversations = [restoredConversation, ...state.allConversations];
         
         return {
           conversations: updatedConversations,
+          allConversations: updatedAllConversations,
           trashedChats: updatedTrashedChats
         };
       });
@@ -885,10 +951,17 @@ export const useChatStore = create<ChatStore>((set) => ({
         // Update conversation in conversations list so preview shows
         conversations: state.conversations.map(c =>
           c.id === conversation.id ? updatedConversation : c
+        ),
+        // Also update allConversations
+        allConversations: state.allConversations.map(c =>
+          c.id === conversation.id ? updatedConversation : c
         )
       }));
-    } catch (error) {
-      console.error('Failed to load messages:', error);
+    } catch (error: any) {
+      // Silently ignore 404s - chat might not exist or have no messages yet
+      if (error.response?.status !== 404) {
+        console.error('Failed to load messages:', error);
+      }
       // If loading fails, use messages from conversation object (might be empty)
       set({ messages: conversation.messages || [] });
     }
@@ -915,6 +988,9 @@ export const useChatStore = create<ChatStore>((set) => ({
         conversations: state.conversations.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
+        allConversations: state.allConversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
         trashedChats: state.trashedChats.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
@@ -939,6 +1015,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       return {
         messages: updatedMessages,
         conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        allConversations: state.allConversations.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
         trashedChats: state.trashedChats.map(c =>
@@ -969,6 +1048,9 @@ export const useChatStore = create<ChatStore>((set) => ({
         conversations: state.conversations.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
+        allConversations: state.allConversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
         trashedChats: state.trashedChats.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
@@ -995,6 +1077,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       return {
         messages: updatedMessages,
         conversations: state.conversations.map(c =>
+          c.id === updatedConversation.id ? updatedConversation : c
+        ),
+        allConversations: state.allConversations.map(c =>
           c.id === updatedConversation.id ? updatedConversation : c
         ),
         trashedChats: state.trashedChats.map(c =>
@@ -1173,8 +1258,13 @@ export const useChatStore = create<ChatStore>((set) => ({
                 break;
               }
             }
-          } catch (err) {
-            // If we can't load messages, just skip content search for this chat
+          } catch (err: any) {
+            // If we can't load messages (404 or other error), just skip content search for this chat
+            // Silently ignore 404s - chat might not exist or have no messages
+            if (err.response?.status !== 404) {
+              // Only log non-404 errors for debugging
+              console.debug('Failed to load messages for search:', chat.id, err);
+            }
           }
         }
         
@@ -1189,6 +1279,7 @@ export const useChatStore = create<ChatStore>((set) => ({
             projectId: chat.project_id,
             targetName: defaultTarget,
             createdAt: new Date(chat.created_at),
+            updatedAt: chat.updated_at,  // Map updated_at from backend
             trashed: false,
             trashed_at: undefined,
             thread_id: chat.thread_id
