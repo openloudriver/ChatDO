@@ -103,7 +103,8 @@ interface ChatStore {
   isLoading: boolean;
   isStreaming: boolean;
   streamingContent: string;
-  isSummarizingArticle: boolean;  // Shared state for article summarization
+  isSummarizingArticle: boolean;  // Shared state for article summarization (deprecated - use per-conversation)
+  summarizingConversations: Set<string>;  // Track which conversations are currently summarizing
   isRagTrayOpen: boolean;  // Whether RAG context tray is open
   viewMode: ViewMode;
   searchResults: Conversation[];
@@ -149,7 +150,9 @@ interface ChatStore {
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
   clearStreaming: () => void;
-  setSummarizingArticle: (summarizing: boolean) => void;
+  setSummarizingArticle: (summarizing: boolean) => void;  // Deprecated - kept for backward compatibility
+  setConversationSummarizing: (conversationId: string | null, isSummarizing: boolean) => void;
+  isConversationSummarizing: (conversationId: string | null) => boolean;
   setRagTrayOpen: (open: boolean) => void;
   setRagFileIds: (ids: string[]) => void;
   setRagFilesForConversation: (conversationId: string, files: RagFile[]) => void;
@@ -172,7 +175,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   isLoading: false,
   isStreaming: false,
   streamingContent: '',
-  isSummarizingArticle: false,
+  isSummarizingArticle: false,  // Deprecated - kept for backward compatibility
+  summarizingConversations: new Set<string>(),
   isRagTrayOpen: false,
   viewMode: (() => {
     // Restore viewMode from localStorage on initialization
@@ -978,9 +982,11 @@ export const useChatStore = create<ChatStore>((set) => ({
     
     // Update conversation if it exists
     if (state.currentConversation) {
+      const now = new Date().toISOString();
       const updatedConversation = {
         ...state.currentConversation,
-        messages: updatedMessages
+        messages: updatedMessages,
+        updatedAt: now // Update timestamp when message is added
       };
       
       return {
@@ -1100,7 +1106,20 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   clearStreaming: () => set({ isStreaming: false, streamingContent: '' }),
   
-  setSummarizingArticle: (summarizing) => set({ isSummarizingArticle: summarizing }),
+  setSummarizingArticle: (summarizing) => set({ isSummarizingArticle: summarizing }),  // Deprecated - kept for backward compatibility
+  setConversationSummarizing: (conversationId, isSummarizing) => set((state) => {
+    const newSet = new Set(state.summarizingConversations);
+    if (isSummarizing && conversationId) {
+      newSet.add(conversationId);
+    } else if (conversationId) {
+      newSet.delete(conversationId);
+    }
+    return { summarizingConversations: newSet };
+  }),
+  isConversationSummarizing: (conversationId) => {
+    const state = useChatStore.getState();
+    return conversationId ? state.summarizingConversations.has(conversationId) : false;
+  },
   
   setRagTrayOpen: (open) => set({ isRagTrayOpen: open }),
   

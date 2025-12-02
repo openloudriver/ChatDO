@@ -134,7 +134,9 @@ const ChatComposer: React.FC = () => {
     editMessage,
     removeMessagesAfter,
     ragFileIds,
-    isSummarizingArticle,  // Shared state from Brave Search buttons
+    isSummarizingArticle,  // Shared state from Brave Search buttons (deprecated)
+    setConversationSummarizing,
+    isConversationSummarizing,
     isRagTrayOpen,
     setRagTrayOpen,
     webMode,
@@ -654,9 +656,16 @@ const ChatComposer: React.FC = () => {
   const handleUrlDialogSubmit = async (url: string) => {
     if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
-    // Close dialog first, then set loading state so spinner is visible
-    setIsUrlDialogOpen(false);
+    // Set loading state first (both local and per-conversation)
     setIsSummarizingArticleLocal(true);
+    if (currentConversation) {
+      setConversationSummarizing(currentConversation.id, true);
+    }
+    // Close dialog after a brief delay to ensure state update is visible
+    requestAnimationFrame(() => {
+      setIsUrlDialogOpen(false);
+    });
+    
     try {
       setLoading(true);
       
@@ -700,11 +709,16 @@ const ChatComposer: React.FC = () => {
       setLoading(false);
     } finally {
       setIsSummarizingArticleLocal(false);
+      if (currentConversation) {
+        setConversationSummarizing(currentConversation.id, false);
+      }
     }
   };
   
-  // Show spinner if either local state (this button) or shared state (Brave Search button) is active
-  const showSpinner = isSummarizingArticleLocal || isSummarizingArticle;
+  // Show spinner if this conversation is summarizing (per-conversation state)
+  const showSpinner = isSummarizingArticleLocal || 
+                      (currentConversation && isConversationSummarizing(currentConversation.id)) ||
+                      isSummarizingArticle;  // Fallback for Brave Search buttons
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

@@ -21,7 +21,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { currentConversation, currentProject, addMessage } = useChatStore();
+  const { currentConversation, currentProject, addMessage, setSummarizingArticle, setConversationSummarizing } = useChatStore();
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -107,6 +107,10 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
     if (!source.url || !currentProject || !currentConversation || isSummarizing) return;
     
     setIsSummarizing(true);
+    setSummarizingArticle(true); // Also set shared state for backward compatibility
+    if (currentConversation) {
+      setConversationSummarizing(currentConversation.id, true); // Set per-conversation state
+    }
     try {
       // Add user message to show what we're summarizing
       addMessage({
@@ -148,6 +152,10 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
       });
     } finally {
       setIsSummarizing(false);
+      setSummarizingArticle(false); // Clear shared state for backward compatibility
+      if (currentConversation) {
+        setConversationSummarizing(currentConversation.id, false); // Clear per-conversation state
+      }
     }
   };
 
