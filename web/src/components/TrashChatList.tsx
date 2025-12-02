@@ -54,6 +54,16 @@ const TrashChatList: React.FC = () => {
     isBulk: false,
   });
 
+  // Get Bullet Workspace project IDs to filter them out
+  const bulletWorkspaceProjectIds = new Set(
+    projects.filter(p => p.name === "Bullet Workspace").map(p => p.id)
+  );
+
+  // Filter out Bullet Workspace chats from trash
+  const filteredTrashedChats = trashedChats.filter(chat => 
+    !chat.projectId || !bulletWorkspaceProjectIds.has(chat.projectId)
+  );
+
   // Load trashed chats when component mounts
   useEffect(() => {
     loadTrashedChats();
@@ -91,7 +101,7 @@ const TrashChatList: React.FC = () => {
   };
 
   const handlePurgeAll = () => {
-    const count = trashedChats.length;
+    const count = filteredTrashedChats.length;
     if (count === 0) return;
     
     setPurgeConfirm({
@@ -102,11 +112,13 @@ const TrashChatList: React.FC = () => {
   };
 
   const confirmPurgeAll = async () => {
-    const count = trashedChats.length;
+    const count = filteredTrashedChats.length;
     if (count === 0) return;
     
     try {
-      await purgeAllTrashedChats();
+      // Only purge the filtered chats (exclude Bullet Workspace)
+      const purgePromises = filteredTrashedChats.map(chat => purgeChat(chat.id));
+      await Promise.all(purgePromises);
       setPurgeConfirm({ open: false, chatId: null, isBulk: false });
     } catch (error) {
       console.error('Failed to purge all chats:', error);
@@ -124,7 +136,7 @@ const TrashChatList: React.FC = () => {
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">Trash</h2>
             <p className="text-sm text-[var(--text-secondary)] mt-1">Deleted chats are kept for 30 days</p>
           </div>
-          {trashedChats.length > 0 && (
+          {filteredTrashedChats.length > 0 && (
             <button
               onClick={handlePurgeAll}
               className="px-4 py-2 bg-[#ef4444] hover:bg-[#dc2626] text-white rounded-lg text-sm font-medium transition-colors"
@@ -137,13 +149,13 @@ const TrashChatList: React.FC = () => {
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {trashedChats.length === 0 ? (
+        {filteredTrashedChats.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-[var(--text-secondary)] text-sm">Trash is empty</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {trashedChats.map((chat) => {
+            {filteredTrashedChats.map((chat) => {
               const isSelected = currentConversation?.id === chat.id;
               const project = projects.find(p => p.id === chat.projectId);
               const updatedDate = chat.trashed_at ? new Date(chat.trashed_at) : chat.createdAt;
@@ -211,7 +223,7 @@ const TrashChatList: React.FC = () => {
         title={purgeConfirm.isBulk ? 'Delete all chats permanently' : 'Delete chat permanently'}
         message={
           purgeConfirm.isBulk
-            ? `Are you sure you want to permanently delete all ${trashedChats.length} chat${trashedChats.length > 1 ? 's' : ''} in Trash? This cannot be undone.`
+            ? `Are you sure you want to permanently delete all ${filteredTrashedChats.length} chat${filteredTrashedChats.length > 1 ? 's' : ''} in Trash? This cannot be undone.`
             : 'Are you sure you want to permanently delete this chat? This cannot be undone.'
         }
         confirmLabel="OK"

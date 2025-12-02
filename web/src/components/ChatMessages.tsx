@@ -470,7 +470,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     setSummarizingArticle,
     isRagTrayOpen,
     ragFileIds, // Get ragFileIds to match backend order
-    getRagFilesForConversation, // Get conversation-scoped RAG files
+    ragFilesByConversationId, // Get the actual store value reactively
   } = useChatStore();
   
   const { theme } = useTheme();
@@ -502,10 +502,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   
-  // Get RAG files from store (conversation-scoped)
+  // Get RAG files from store (conversation-scoped) - reactively subscribe to store changes
   const ragFiles = useMemo(() => {
-    return getRagFilesForConversation(currentConversation?.id || null);
-  }, [currentConversation?.id, getRagFilesForConversation]);
+    if (!currentConversation?.id) return [];
+    return ragFilesByConversationId[currentConversation.id] || [];
+  }, [currentConversation?.id, ragFilesByConversationId]);
 
   // Compute indexed RAG files once - this is the single source of truth
   // CRITICAL: Use ragFileIds order to match backend numbering (not created_at order!)

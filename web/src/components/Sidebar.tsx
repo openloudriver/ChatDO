@@ -216,8 +216,17 @@ const Sidebar: React.FC = () => {
   const recentChats = useMemo(() => {
     if (!allConversations || allConversations.length === 0) return [];
 
-    // Filter to only chats that actually have a projectId and are not trashed
-    const valid = allConversations.filter((c) => !!c.projectId && !c.trashed);
+    // Get Bullet Workspace project IDs to filter them out
+    const bulletWorkspaceProjectIds = new Set(
+      projects.filter(p => p.name === "Bullet Workspace").map(p => p.id)
+    );
+
+    // Filter to only chats that actually have a projectId, are not trashed, and are not from Bullet Workspace
+    const valid = allConversations.filter((c) => 
+      !!c.projectId && 
+      !c.trashed && 
+      !bulletWorkspaceProjectIds.has(c.projectId)
+    );
 
     // Sort by updatedAt (desc), falling back to createdAt if updatedAt is missing
     const sorted = [...valid].sort((a, b) => {
@@ -237,7 +246,7 @@ const Sidebar: React.FC = () => {
     }
 
     return unique;
-  }, [allConversations]);
+  }, [allConversations, projects]);
 
   // Load chats when project changes
   useEffect(() => {
@@ -415,10 +424,12 @@ const Sidebar: React.FC = () => {
                     onClick={() => {
                       // When I click a recent chat:
                       // 1) make sure the correct project is selected
-                      // 2) open that conversation
+                      // 2) switch to chat view mode
+                      // 3) open that conversation
                       if (project && setCurrentProject) {
                         setCurrentProject(project);
                       }
+                      setViewMode('chat');
                       if (setCurrentConversation) {
                         setCurrentConversation(chat);
                       }

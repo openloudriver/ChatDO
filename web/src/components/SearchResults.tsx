@@ -42,8 +42,18 @@ const SearchResults: React.FC = () => {
     projects
   } = useChatStore();
 
+  // Get Bullet Workspace project IDs to filter them out
+  const bulletWorkspaceProjectIds = new Set(
+    projects.filter(p => p.name === "Bullet Workspace").map(p => p.id)
+  );
+
+  // Filter out Bullet Workspace chats from search results
+  const filteredResults = searchResults.filter(chat => 
+    !chat.projectId || !bulletWorkspaceProjectIds.has(chat.projectId)
+  );
+
   // Group results by project
-  const resultsByProject = searchResults.reduce((acc, chat) => {
+  const resultsByProject = filteredResults.reduce((acc, chat) => {
     const projectId = chat.projectId || 'unknown';
     if (!acc[projectId]) {
       acc[projectId] = [];
@@ -60,13 +70,13 @@ const SearchResults: React.FC = () => {
           Search Results
         </h2>
         <p className="text-sm text-[var(--text-secondary)] mt-1">
-          {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
+          {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} for "{searchQuery}"
         </p>
       </div>
 
       {/* Results List */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {searchResults.length === 0 ? (
+        {filteredResults.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-[var(--text-secondary)] text-sm">No results found</p>
           </div>
