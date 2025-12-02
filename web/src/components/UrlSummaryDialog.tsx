@@ -28,7 +28,7 @@ const UrlSummaryDialog: React.FC<UrlSummaryDialogProps> = ({
     e.preventDefault();
     if (!url.trim()) return;
     onSubmit(url.trim());
-    onClose();
+    // Don't close here - let the parent component handle closing after setting loading state
   };
 
   const handleCancel = () => {

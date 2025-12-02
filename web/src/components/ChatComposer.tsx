@@ -654,6 +654,8 @@ const ChatComposer: React.FC = () => {
   const handleUrlDialogSubmit = async (url: string) => {
     if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
+    // Close dialog first, then set loading state so spinner is visible
+    setIsUrlDialogOpen(false);
     setIsSummarizingArticleLocal(true);
     try {
       setLoading(true);

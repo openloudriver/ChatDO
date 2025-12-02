@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import axios from 'axios';
+import { useChatStore } from '../store/chat';
 import type { Source } from '../types/sources';
 
 interface InlineCitationProps {
@@ -14,9 +16,12 @@ interface InlineCitationProps {
 
 export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, total, displayText }) => {
   const [open, setOpen] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const chipRef = useRef<HTMLSpanElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { currentConversation, currentProject, addMessage } = useChatStore();
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -96,6 +101,58 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
       return '';
     }
   };
+
+  const handleSummarizeUrl = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!source.url || !currentProject || !currentConversation || isSummarizing) return;
+    
+    setIsSummarizing(true);
+    try {
+      // Add user message to show what we're summarizing
+      addMessage({
+        role: 'user',
+        content: `Summarize: ${source.url}`,
+      });
+      
+      // Call the article summary endpoint
+      const response = await axios.post('http://localhost:8000/api/article/summary', {
+        url: source.url.trim(),
+        conversation_id: currentConversation.id,
+        project_id: currentProject.id,
+      });
+      
+      if (response.data.message_type === 'article_card' && response.data.message_data) {
+        addMessage({
+          role: 'assistant',
+          content: '',
+          type: 'article_card',
+          data: response.data.message_data,
+          model: response.data.model_label || response.data.model || 'Trafilatura + GPT-5',
+          provider: response.data.provider || 'trafilatura-gpt5',
+        });
+      } else {
+        // Fallback to error message
+        addMessage({
+          role: 'assistant',
+          content: 'Error: Could not summarize URL. Please try again.',
+        });
+      }
+      
+      // Close the popover after summarizing
+      setOpen(false);
+    } catch (error: any) {
+      console.error('Error summarizing article:', error);
+      addMessage({
+        role: 'assistant',
+        content: `Error: ${error.response?.data?.detail || error.message || 'Could not summarize URL. Please try again.'}`,
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  // Only show summarize button for non-RAG sources with URLs
+  const showSummarizeButton = source.url && !source.meta?.ragFile && !source.fileName;
 
   return (
     <>
@@ -185,7 +242,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1 text-[10px] text-[var(--text-primary)] hover:underline"
+              className="flex items-center gap-1 text-[10px] text-[var(--text-primary)] hover:underline mb-2"
             >
               <svg
                 className="h-3 w-3"
@@ -203,8 +260,33 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
               {extractDomain(source.url)}
             </a>
           )}
-          <div className="mt-2 text-[10px] text-[var(--text-secondary)]">
-            {index + 1}/{total}
+          <div className="mt-2 flex items-center gap-2">
+            <div className="text-[10px] text-[var(--text-secondary)]">
+              {index + 1}/{total}
+            </div>
+            {showSummarizeButton && (
+              <button
+                onClick={handleSummarizeUrl}
+                disabled={isSummarizing || !currentProject || !currentConversation}
+                className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+                  isSummarizing
+                    ? 'text-blue-400 cursor-wait'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
+                }`}
+                title={isSummarizing ? "Summarizing..." : "Summarize this URL"}
+              >
+                {isSummarizing ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
         </div>,
         document.body
