@@ -137,10 +137,41 @@ export async function recordUsage(
 
 /**
  * Return current month info, including per-provider and total.
+ * Also checks if month has changed and resets if needed (even without a new AI call).
  */
 export async function getCurrentMonthSpend(): Promise<MonthlyHistoryEntry> {
-  const state = await loadCurrentMonthState();
-  const monthId = state.monthId || getCurrentMonthId(new Date());
+  const now = new Date();
+  const currentMonthId = getCurrentMonthId(now);
+  let state = await loadCurrentMonthState();
+
+  // Check if month has changed (even if no AI calls have been made yet this month)
+  if (state.monthId && state.monthId !== currentMonthId) {
+    // Roll over: save previous month to history
+    const totalUsd = Object.values(state.providers).reduce((sum, val) => sum + val, 0);
+    if (totalUsd > 0) {
+      const history = await loadHistory();
+      history[state.monthId] = {
+        monthId: state.monthId,
+        providers: { ...state.providers },
+        totalUsd,
+      };
+      await saveHistory(history);
+    }
+
+    // Reset state for new month
+    state = {
+      monthId: currentMonthId,
+      providers: {},
+    };
+    await saveCurrentMonthState(state);
+  } else if (!state.monthId) {
+    // First run: initialize with current month
+    state.monthId = currentMonthId;
+    state.providers = {};
+    await saveCurrentMonthState(state);
+  }
+
+  const monthId = state.monthId || currentMonthId;
   const totalUsd = Object.values(state.providers).reduce((sum, val) => sum + val, 0);
 
   return {
