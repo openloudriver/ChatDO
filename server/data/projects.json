@@ -58,24 +58,10 @@
     "memory_sources": []
   },
   {
-    "id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
-    "name": "Impact Workspace",
-    "default_target": "general",
-    "sort_index": 7,
-    "memory_sources": []
-  },
-  {
-    "id": "4e175041-7e26-43d6-8a9f-761043e75cad",
-    "name": "Impact Workspace",
-    "default_target": "general",
-    "sort_index": 8,
-    "memory_sources": []
-  },
-  {
     "id": "718c6805-92cd-4616-a2cf-7e693d5cf2f2",
     "name": "Real History",
     "default_target": "general",
-    "sort_index": 9,
+    "sort_index": 7,
     "memory_sources": []
   }
 ]

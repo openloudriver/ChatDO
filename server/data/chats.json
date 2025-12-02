@@ -80,16 +80,6 @@
     "trashed_at": null
   },
   {
-    "id": "733991e8-c504-4297-91bc-62aead1c8606",
-    "project_id": "scratch",
-    "title": "Where do chickens come from?",
-    "thread_id": "733991e8-c504-4297-91bc-62aead1c8606",
-    "created_at": "2025-11-25T04:07:43.990952+00:00",
-    "updated_at": "2025-11-29T23:31:59.508143+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-29T23:31:59.508117+00:00"
-  },
-  {
     "id": "ff6de4c0-b7c3-41c9-81ec-70721c7688b3",
     "project_id": "privacypay",
     "title": "Which repos can you see?",
@@ -98,16 +88,6 @@
     "updated_at": "2025-11-26T12:36:57.497071+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "4479cf8b-f8cb-4f20-a5aa-c8c55ffeb2df",
-    "project_id": "scratch",
-    "title": "URL Summary",
-    "thread_id": "4479cf8b-f8cb-4f20-a5aa-c8c55ffeb2df",
-    "created_at": "2025-11-26T12:42:58.930104+00:00",
-    "updated_at": "2025-11-29T23:32:30.759374+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-29T23:32:30.759361+00:00"
   },
   {
     "id": "d234bc6b-117b-41f3-8b16-558e4340b333",
@@ -130,26 +110,6 @@
     "trashed_at": null
   },
   {
-    "id": "96758640-f156-4a1b-ab2b-159e89f891e4",
-    "project_id": "scratch",
-    "title": "Testing",
-    "thread_id": "96758640-f156-4a1b-ab2b-159e89f891e4",
-    "created_at": "2025-11-29T14:22:56.258158+00:00",
-    "updated_at": "2025-11-29T23:24:50.499136+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-29T23:24:50.499114+00:00"
-  },
-  {
-    "id": "41b5fb42-f23e-452d-a8b9-dc5bfd32fe26",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "41b5fb42-f23e-452d-a8b9-dc5bfd32fe26",
-    "created_at": "2025-11-29T23:32:40.829141+00:00",
-    "updated_at": "2025-11-29T23:57:26.671490+00:00",
-    "trashed": true,
-    "trashed_at": "2025-11-29T23:57:26.671450+00:00"
-  },
-  {
     "id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
     "project_id": "scratch",
     "title": "Compare Bitcoin and Monero",
@@ -158,26 +118,6 @@
     "updated_at": "2025-11-30T00:20:04.532798+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "6cc9ef15-1540-4b8d-a786-482f5d8a440c",
-    "project_id": "scratch",
-    "title": "What do you think Monero will be worth in USD f...",
-    "thread_id": "6cc9ef15-1540-4b8d-a786-482f5d8a440c",
-    "created_at": "2025-11-30T23:57:56.981579+00:00",
-    "updated_at": "2025-12-01T00:22:51.971187+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-01T00:22:51.971157+00:00"
-  },
-  {
-    "id": "fb3f2a27-9548-41d6-a1cf-93843647c961",
-    "project_id": "scratch",
-    "title": "New Chat",
-    "thread_id": "fb3f2a27-9548-41d6-a1cf-93843647c961",
-    "created_at": "2025-12-01T00:22:53.631642+00:00",
-    "updated_at": "2025-12-01T00:23:01.454417+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-01T00:23:01.454395+00:00"
   },
   {
     "id": "219ebddb-6d55-457e-abea-0a7a68b62c02",
