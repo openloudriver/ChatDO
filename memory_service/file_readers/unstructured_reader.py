@@ -15,8 +15,14 @@ This replaces all individual file readers with a single, high-quality extraction
 import logging
 from pathlib import Path
 from typing import Optional
+import signal
+import threading
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
+
+# Timeout for file extraction (5 minutes per file)
+FILE_EXTRACTION_TIMEOUT = 300  # seconds
 
 # Try to import Unstructured
 try:
@@ -27,6 +33,36 @@ except ImportError:
     logger.warning(
         "unstructured not installed. Install with: pip install 'unstructured[all-docs]'"
     )
+
+
+@contextmanager
+def timeout_handler(seconds):
+    """Context manager for timeout handling using signals (Unix) or threading (Windows)."""
+    # Use signal.alarm on Unix systems (more reliable)
+    if hasattr(signal, 'SIGALRM'):
+        def timeout_signal(signum, frame):
+            raise TimeoutError(f"Operation timed out after {seconds} seconds")
+        
+        old_handler = signal.signal(signal.SIGALRM, timeout_signal)
+        signal.alarm(seconds)
+        try:
+            yield
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+    else:
+        # Windows fallback: use threading (less reliable but works)
+        timer = None
+        def timeout_func():
+            raise TimeoutError(f"Operation timed out after {seconds} seconds")
+        
+        timer = threading.Timer(seconds, timeout_func)
+        timer.start()
+        try:
+            yield
+        finally:
+            if timer:
+                timer.cancel()
 
 
 def extract_with_unstructured(path: Path) -> Optional[str]:
@@ -53,30 +89,43 @@ def extract_with_unstructured(path: Path) -> Optional[str]:
         # Try hi_res first (best quality), but fallback to fast if it fails
         # hi_res can be slow or fail if models aren't available
         try:
-            logger.debug(f"Attempting hi_res extraction for {path}")
-            elements = partition(
-                filename=str(path),
-                # High-resolution strategy for best quality (slower but better)
-                # This is especially important for PDFs with tables
-                strategy="hi_res",
-                # Infer table structure for better table extraction (PDFs, images)
-                infer_table_structure=True,
-                # Extract images in PDFs (for OCR of embedded images)
-                extract_images_in_pdf=True,
-                # OCR mode for images and PDFs with embedded images
-                ocr_languages=["eng"],
-            )
-            logger.debug(f"hi_res extraction succeeded for {path}")
-        except Exception as e:
-            # If hi_res fails (e.g., missing models, hangs, etc.), try fast strategy
-            logger.warning(f"Unstructured hi_res failed for {path}: {e}, trying fast strategy")
+            logger.debug(f"Attempting hi_res extraction for {path} (timeout: {FILE_EXTRACTION_TIMEOUT}s)")
+            # Use timeout to prevent hangs
             try:
-                elements = partition(
-                    filename=str(path),
-                    strategy="fast",  # Faster, still good quality
-                    infer_table_structure=True,
-                )
+                with timeout_handler(FILE_EXTRACTION_TIMEOUT):
+                    elements = partition(
+                        filename=str(path),
+                        # High-resolution strategy for best quality (slower but better)
+                        # This is especially important for PDFs with tables
+                        strategy="hi_res",
+                        # Infer table structure for better table extraction (PDFs, images)
+                        infer_table_structure=True,
+                        # Extract images in PDFs (for OCR of embedded images)
+                        extract_images_in_pdf=True,
+                        # OCR mode for images and PDFs with embedded images
+                        ocr_languages=["eng"],
+                    )
+                logger.debug(f"hi_res extraction succeeded for {path}")
+            except TimeoutError:
+                logger.warning(f"hi_res extraction timed out for {path} after {FILE_EXTRACTION_TIMEOUT}s, trying fast strategy")
+                raise  # Re-raise to trigger fast fallback
+        except (Exception, TimeoutError) as e:
+            # If hi_res fails (e.g., missing models, hangs, timeout, etc.), try fast strategy
+            if isinstance(e, TimeoutError):
+                logger.warning(f"Unstructured hi_res timed out for {path}, trying fast strategy")
+            else:
+                logger.warning(f"Unstructured hi_res failed for {path}: {e}, trying fast strategy")
+            try:
+                with timeout_handler(FILE_EXTRACTION_TIMEOUT):
+                    elements = partition(
+                        filename=str(path),
+                        strategy="fast",  # Faster, still good quality
+                        infer_table_structure=True,
+                    )
                 logger.debug(f"fast extraction succeeded for {path}")
+            except TimeoutError:
+                logger.error(f"Unstructured fast strategy also timed out for {path} after {FILE_EXTRACTION_TIMEOUT}s")
+                return None
             except Exception as e2:
                 logger.error(f"Unstructured fast strategy also failed for {path}: {e2}")
                 return None
