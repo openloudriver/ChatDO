@@ -932,23 +932,6 @@ const ChatComposer: React.FC = () => {
             clearStreaming();
             setLoading(false);
             ws.close();
-          } else if (data.type === 'api_result') {
-            // Handle API results (weather, crypto, stock)
-            const sources: Source[] = data.sources || [];
-            
-            addMessage({ 
-              role: 'assistant', 
-              content: '',
-              type: 'api_result',
-              api_kind: data.api_kind,
-              data: data.data,
-              model: data.model || 'API',
-              provider: data.provider,
-              sources: sources.length > 0 ? sources : undefined
-            });
-            clearStreaming();
-            setLoading(false);
-            ws.close();
           } else if (data.type === 'done') {
             // Convert sources if they're in the old format
             let sources: Source[] | undefined = undefined;

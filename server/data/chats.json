@@ -65,9 +65,9 @@
     "title": "ChatDO responses",
     "thread_id": "9d85a742-d505-43de-824a-95a602075e60",
     "created_at": "2025-11-23T22:44:31.902488+00:00",
-    "updated_at": "2025-12-03T02:46:25.544133+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-12-03T13:11:55.931196+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-03T13:11:55.931170+00:00"
   },
   {
     "id": "3a5d546e-89be-4cb2-aeda-d829100f9af0",
@@ -115,9 +115,9 @@
     "title": "Compare Bitcoin and Monero",
     "thread_id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
     "created_at": "2025-11-30T00:18:19.930244+00:00",
-    "updated_at": "2025-11-30T00:20:04.532798+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-12-03T13:11:50.778998+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-03T13:11:50.778961+00:00"
   },
   {
     "id": "219ebddb-6d55-457e-abea-0a7a68b62c02",
@@ -125,9 +125,9 @@
     "title": "What does head lice look like?",
     "thread_id": "219ebddb-6d55-457e-abea-0a7a68b62c02",
     "created_at": "2025-12-01T00:23:05.853748+00:00",
-    "updated_at": "2025-12-01T00:28:43.806670+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-12-03T13:11:47.893948+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-03T13:11:47.893922+00:00"
   },
   {
     "id": "a098440c-d07f-49dd-8c62-bb81415efe51",
@@ -135,9 +135,9 @@
     "title": "What is the current price of Monero?",
     "thread_id": "a098440c-d07f-49dd-8c62-bb81415efe51",
     "created_at": "2025-12-01T02:06:35.012510+00:00",
-    "updated_at": "2025-12-03T00:17:26.932800+00:00",
-    "trashed": false,
-    "trashed_at": null
+    "updated_at": "2025-12-03T13:11:43.924459+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-03T13:11:43.924434+00:00"
   },
   {
     "id": "44b82557-8ba5-4d1e-bad7-230f419d8f58",
@@ -166,6 +166,16 @@
     "thread_id": "6d2a8c56-1464-4187-b9f6-a77b4e2b94ff",
     "created_at": "2025-12-02T19:47:29.664695+00:00",
     "updated_at": "2025-12-02T19:47:29.664718+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "553a2e21-3142-429e-86ac-246e5302bb8f",
+    "project_id": "scratch",
+    "title": "Testing Capes",
+    "thread_id": "553a2e21-3142-429e-86ac-246e5302bb8f",
+    "created_at": "2025-12-03T13:11:59.033030+00:00",
+    "updated_at": "2025-12-03T13:18:51.086389+00:00",
     "trashed": false,
     "trashed_at": null
   }

@@ -44,38 +44,24 @@
     "memory_sources": []
   },
   {
-    "id": "5585082f-f02f-4da3-9894-661513a6eb9c",
-    "name": "Flywheel",
-    "default_target": "general",
-    "sort_index": 5,
-    "memory_sources": []
-  },
-  {
-    "id": "0eb7031c-765d-4547-8cd8-7f497af91952",
-    "name": "Retirement",
-    "default_target": "general",
-    "sort_index": 6,
-    "memory_sources": []
-  },
-  {
     "id": "718c6805-92cd-4616-a2cf-7e693d5cf2f2",
     "name": "Real History",
     "default_target": "general",
-    "sort_index": 7,
+    "sort_index": 5,
     "memory_sources": []
   },
   {
     "id": "765d15b1-760e-4a29-8c5a-244ef0b22ef6",
     "name": "Bullet Workspace",
     "default_target": "general",
-    "sort_index": 8,
+    "sort_index": 6,
     "memory_sources": []
   },
   {
     "id": "78baad66-b003-4f64-a7a5-717230873629",
     "name": "Bullet Workspace",
     "default_target": "general",
-    "sort_index": 9,
+    "sort_index": 7,
     "memory_sources": []
   }
 ]

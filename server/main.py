@@ -45,17 +45,6 @@ from server.services.impact_store import ImpactEntry
 from server.services.impact_templates_store import ImpactTemplate, get_template_file_path
 from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
 from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
-from server.services.api_router import (
-    ApiRouter,
-    CryptoPriceRequest,
-    CryptoPriceResult,
-    MoneroNetworkStats,
-    StockQuoteRequest,
-    StockQuoteResult,
-    WeatherRequest,
-    WeatherResult,
-    GeocodeResult,
-)
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -2765,47 +2754,6 @@ async def websocket_chat(websocket: WebSocket):
     WebSocket endpoint for streaming chat responses
     """
     await websocket_endpoint(websocket)
-
-
-# API Router endpoints for Tier 1 + Tier 2 data feeds
-@app.post("/api/tools/crypto-price", response_model=CryptoPriceResult)
-async def api_crypto_price(req: CryptoPriceRequest):
-    """
-    Get crypto price for a given symbol (e.g. xmr, btc) vs a fiat currency (default: USD).
-    """
-    return await ApiRouter.get_crypto_price(req)
-
-
-@app.get("/api/tools/monero-network", response_model=MoneroNetworkStats)
-async def api_monero_network():
-    """
-    Get Monero network stats (height, hashrate, difficulty, etc.).
-    """
-    return await ApiRouter.get_monero_network_stats()
-
-
-@app.post("/api/tools/stock-quote", response_model=StockQuoteResult)
-async def api_stock_quote(req: StockQuoteRequest):
-    """
-    Get basic stock/ETF quote (SCHD, MSTY, SPYI, etc.).
-    """
-    return await ApiRouter.get_stock_quote(req)
-
-
-@app.post("/api/tools/weather", response_model=WeatherResult)
-async def api_weather(req: WeatherRequest):
-    """
-    Get current weather for a human-readable location.
-    """
-    return await ApiRouter.get_weather(req)
-
-
-@app.get("/api/tools/geocode", response_model=GeocodeResult)
-async def api_geocode(q: str):
-    """
-    Geocode a human-readable location into lat/lon + display name.
-    """
-    return await ApiRouter.geocode_location(q)
 
 
 if __name__ == "__main__":

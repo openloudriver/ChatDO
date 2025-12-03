@@ -44,8 +44,21 @@ EMAIL_EXTENSIONS = {'.eml', '.msg'}  # Email files
 ARCHIVE_EXTENSIONS = {'.epub', '.mobi'}  # E-books
 OTHER_EXTENSIONS = {'.rtf', '.odt', '.ods', '.odp'}  # Already covered but listed for clarity
 
+# Excluded formats - these should never be indexed
+# Video files and ISO images are binary and not useful for text search
+EXCLUDED_EXTENSIONS = {
+    # Video formats
+    '.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.m4v', '.mpg', '.mpeg', '.3gp',
+    # ISO/Disk images
+    '.iso', '.img', '.dmg', '.vhd', '.vhdx',
+    # Audio formats (not useful for text search)
+    '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma',
+    # Other binary formats
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz', '.exe', '.dll', '.bin'
+}
+
 ALL_SUPPORTED = (
-    TEXT_EXTENSIONS | PDF_EXTENSIONS | DOCX_EXTENSIONS | 
+    TEXT_EXTENSIONS | PDF_EXTENSIONS | DOCX_EXTENSIONS |
     XLSX_EXTENSIONS | PPTX_EXTENSIONS | IMAGE_EXTENSIONS |
     EMAIL_EXTENSIONS | ARCHIVE_EXTENSIONS
 )
@@ -138,8 +151,13 @@ def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:
 def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Optional[str]) -> bool:
     """Check if a file should be indexed based on glob patterns."""
     path_str = str(path)
+    file_ext = path.suffix.lower()
     
-    # Check exclude first - support multiple patterns separated by commas
+    # First check if file extension is explicitly excluded (video, ISO, etc.)
+    if file_ext in EXCLUDED_EXTENSIONS:
+        return False
+    
+    # Check exclude glob patterns - support multiple patterns separated by commas
     if exclude_glob:
         # Split by comma and check each pattern
         exclude_patterns = [p.strip() for p in exclude_glob.split(',')]
@@ -153,7 +171,7 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
             return False
     
     # Check if extension is supported
-    return path.suffix.lower() in ALL_SUPPORTED
+    return file_ext in ALL_SUPPORTED
 
 
 def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
@@ -180,6 +198,14 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         modified_at = datetime.fromtimestamp(stat.st_mtime)
         size_bytes = stat.st_size
         filetype = path.suffix.lower().lstrip('.')
+        
+        # Skip very large non-PDF files that are likely to cause timeouts or memory issues
+        # PDFs can be large but are still useful for search, so we allow them
+        # Other file types over 100MB are often binary or not useful for search
+        MAX_FILE_SIZE_NON_PDF = 100 * 1024 * 1024  # 100MB
+        if size_bytes > MAX_FILE_SIZE_NON_PDF and filetype != 'pdf':
+            logger.warning(f"Skipping very large file ({size_bytes / (1024*1024):.1f}MB): {path}")
+            return False
         
         # Check if file already exists and hasn't changed
         existing_file = db.get_file_by_path(source_db_id, str(path), source_id)

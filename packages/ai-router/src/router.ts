@@ -17,6 +17,11 @@ const providers: Record<string, AiProvider> = {
 };
 
 function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {
+  // Handle strict privacy - throw error since no local model available
+  if (input.privacyLevel === "strict") {
+    throw new Error("Strict privacy level requires a local model, but no local model provider is configured");
+  }
+
   // Get routing rule for this intent
   const rule = routingRules[input.intent];
   if (!rule) {

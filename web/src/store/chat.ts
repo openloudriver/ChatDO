@@ -26,11 +26,10 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card' | 'rag_response' | 'api_result';  // Message types
-  model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5", "API", "API + GPT-5")
-  provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5", "coingecko", "yahoo-finance")
+  type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card' | 'rag_response';  // Message types
+  model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
+  provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
   sources?: Source[];  // Source objects for citations (ChatGPT-style)
-  api_kind?: 'api_weather_current' | 'api_crypto_price' | 'api_stock_price';  // API message subtype
   data?: {
     query?: string;
     provider?: string;
@@ -933,12 +932,11 @@ export const useChatStore = create<ChatStore>((set) => ({
           id: `${conversation.id}-${messages.length}`,
           role: msg.role,
           content: msg.content || '',
-          type: msg.type || undefined, // Preserve structured message types (article_card, web_search_results, rag_response, api_result)
+          type: msg.type || undefined, // Preserve structured message types (article_card, web_search_results, rag_response)
           data: msg.data || undefined, // Preserve structured message data
           model: msg.model || undefined, // Preserve model attribution
           provider: msg.provider || undefined, // Preserve provider attribution
           sources: sources, // Use converted sources
-          api_kind: msg.api_kind || undefined, // Preserve API message subtype
           timestamp: new Date() // Backend doesn't provide timestamps, use current time
         });
       }

@@ -10,9 +10,12 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Optional, Tuple
 import hashlib
+import logging
 
 from memory_service.config import BASE_STORE_PATH, get_db_path_for_source, TRACKING_DB_PATH
 from memory_service.models import Source, File, Chunk, Embedding, SearchResult, SourceStatus, IndexJob
+
+logger = logging.getLogger(__name__)
 
 
 def get_db_connection(source_id: str):
@@ -599,8 +602,86 @@ def get_recent_jobs(source_id: str, limit: int = 10) -> List[IndexJob]:
     ]
 
 
+def cleanup_stale_jobs(max_age_hours: int = 4) -> int:
+    """
+    Detect and mark stale running jobs as failed.
+    
+    A job is considered stale if:
+    - It has been running for more than max_age_hours
+    - It hasn't made progress in the last max_age_hours (for jobs that started earlier)
+    
+    Args:
+        max_age_hours: Maximum age in hours before a job is considered stale
+        
+    Returns:
+        Number of jobs cleaned up
+    """
+    from datetime import timedelta
+    
+    conn = get_tracking_db_connection()
+    cursor = conn.cursor()
+    
+    # Find all running jobs
+    cursor.execute("""
+        SELECT * FROM index_jobs 
+        WHERE status = 'running'
+    """)
+    
+    running_jobs = cursor.fetchall()
+    now = datetime.now()
+    cleaned_count = 0
+    
+    for job_row in running_jobs:
+        started_at = datetime.fromisoformat(job_row["started_at"])
+        job_age = now - started_at
+        
+        # Mark as stale if job is older than max_age_hours
+        if job_age > timedelta(hours=max_age_hours):
+            job_id = job_row["id"]
+            source_id = job_row["source_id"]
+            
+            # Mark job as failed
+            cursor.execute("""
+                UPDATE index_jobs 
+                SET status = 'failed', 
+                    completed_at = ?,
+                    error = ?
+                WHERE id = ?
+            """, (
+                now.isoformat(),
+                f"Job was running for {job_age.total_seconds() / 3600:.1f} hours without completion - marked as stale",
+                job_id
+            ))
+            
+            # Update source status to error
+            cursor.execute("""
+                UPDATE source_status 
+                SET status = 'error',
+                    last_error = ?,
+                    updated_at = ?
+                WHERE id = ?
+            """, (
+                f"Indexing job timed out after {job_age.total_seconds() / 3600:.1f} hours",
+                now.isoformat(),
+                source_id
+            ))
+            
+            cleaned_count += 1
+    
+    conn.commit()
+    conn.close()
+    
+    if cleaned_count > 0:
+        logger.info(f"Cleaned up {cleaned_count} stale indexing job(s)")
+    
+    return cleaned_count
+
+
 def get_all_sources_with_latest_job() -> List[Tuple[SourceStatus, Optional[IndexJob]]]:
     """Get all sources with their latest job."""
+    # Clean up stale jobs before fetching sources
+    cleanup_stale_jobs()
+    
     init_tracking_db()
     conn = get_tracking_db_connection()
     cursor = conn.cursor()

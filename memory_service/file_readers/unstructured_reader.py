@@ -105,7 +105,7 @@ def extract_with_unstructured(path: Path) -> Optional[str]:
                         # OCR mode for images and PDFs with embedded images
                         ocr_languages=["eng"],
                     )
-                logger.debug(f"hi_res extraction succeeded for {path}")
+                    logger.debug(f"hi_res extraction succeeded for {path}")
             except TimeoutError:
                 logger.warning(f"hi_res extraction timed out for {path} after {FILE_EXTRACTION_TIMEOUT}s, trying fast strategy")
                 raise  # Re-raise to trigger fast fallback
