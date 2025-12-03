@@ -6,6 +6,7 @@ import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import DocumentCard from './DocumentCard';
 import RagResponseCard from './RagResponseCard';
+import APICard from './APICard';
 import { AssistantCard } from './shared/AssistantCard';
 import { InlineSourceCitations } from './InlineSourceCitations';
 import type { RagFile } from '../types/rag';
@@ -495,6 +496,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   
   // Helper function to format model names for display
   const formatModelName = (model: string): string => {
+    if (model === 'API') {
+      return 'API';
+    }
+    if (model === 'API + GPT-5') {
+      return 'API + GPT-5';
+    }
     if (model.startsWith('gpt-5')) {
       return 'GPT-5';
     }
@@ -1456,8 +1463,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         />
                       )}
                       
+                      {/* Display API card if message type is api_result */}
+                      {message.type === 'api_result' && message.api_kind && message.data && (
+                        <APICard
+                          kind={message.api_kind}
+                          data={message.data as any}
+                        />
+                      )}
+                      
                       {/* Display text content if any (and not structured message types) */}
-                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && (
+                      {content && message.type !== 'web_search_results' && message.type !== 'article_card' && message.type !== 'document_card' && message.type !== 'rag_response' && message.type !== 'api_result' && (
                         message.role === 'assistant' ? (
                           <OptionsRenderer content={content} bulletMode={bulletMode} sources={message.sources} />
                         ) : (

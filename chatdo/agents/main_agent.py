@@ -59,7 +59,6 @@ def _format_model_name(provider_id: str, model_id: str) -> str:
         "grok-code": "Grok",
         "gemini-pro": "Gemini",
         "mistral-large": "Mistral",
-        "llama-local": "Llama",
     }
     provider_label = provider_labels.get(provider_id, provider_id)
     

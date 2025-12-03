@@ -31,11 +31,6 @@ export const PRICING: PricingEntry[] = [
     inputPerMillion: 3.0,
     outputPerMillion: 15.0,
   },
-  {
-    providerId: "llama-local",
-    inputPerMillion: 0,
-    outputPerMillion: 0,
-  },
 ];
 
 export function findPricing(providerId: string): PricingEntry | null {

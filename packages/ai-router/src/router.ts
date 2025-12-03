@@ -7,7 +7,6 @@ import { claudeSonnetProvider } from "./providers/anthropic";
 import { grokCodeProvider } from "./providers/grok";
 import { geminiProProvider } from "./providers/gemini";
 import { mistralLargeProvider } from "./providers/mistral";
-import { llamaLocalProvider } from "./providers/llamaLocal";
 
 const providers: Record<string, AiProvider> = {
   [openAiGpt5Provider.id]: openAiGpt5Provider,
@@ -15,18 +14,9 @@ const providers: Record<string, AiProvider> = {
   [grokCodeProvider.id]: grokCodeProvider,
   [geminiProProvider.id]: geminiProProvider,
   [mistralLargeProvider.id]: mistralLargeProvider,
-  [llamaLocalProvider.id]: llamaLocalProvider,
 };
 
 function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {
-  // Handle strict privacy - use local model
-  if (input.privacyLevel === "strict") {
-    const local = providers["llama-local"];
-    if (local && local.supportsPrivacyLevel("strict")) {
-      return { provider: local, model: "llama-local" };
-    }
-  }
-
   // Get routing rule for this intent
   const rule = routingRules[input.intent];
   if (!rule) {
