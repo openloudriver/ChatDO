@@ -5,6 +5,7 @@ import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
 import type { Source } from '../types/sources';
 import UrlSummaryDialog from './UrlSummaryDialog';
+import WebSearchDialog from './WebSearchDialog';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Helper: Convert web search result to Source
@@ -166,6 +167,7 @@ const ChatComposer: React.FC = () => {
   // Local state for this button's own summarization
   const [isSummarizingArticleLocal, setIsSummarizingArticleLocal] = useState(false);
   const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
   const handleSend = async () => {
     // Debug: Log RAG file IDs before sending
@@ -873,8 +875,9 @@ const ChatComposer: React.FC = () => {
     setInput('');
   };
 
-  const handleToggleWebMode = () => {
-    setWebMode(webMode === 'on' ? 'auto' : 'on');
+  const handleSearchWebClick = () => {
+    if (!currentProject || !currentConversation) return;
+    setIsSearchDialogOpen(true);
   };
 
   const handleSearchDialogSubmit = async (query: string) => {
@@ -1184,13 +1187,9 @@ const ChatComposer: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={handleToggleWebMode}
-                className={`p-2 rounded transition-colors ${
-                  webMode === 'on'
-                    ? 'text-[var(--user-bubble-bg)] bg-[var(--user-bubble-bg)]/20'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
-                }`}
-                title={webMode === 'on' ? 'Web: On' : 'Web: Auto'}
+                onClick={handleSearchWebClick}
+                className="p-2 rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
+                title="Web Search"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -1463,6 +1462,11 @@ const ChatComposer: React.FC = () => {
         isOpen={isUrlDialogOpen}
         onClose={() => setIsUrlDialogOpen(false)}
         onSubmit={handleUrlDialogSubmit}
+      />
+      <WebSearchDialog
+        isOpen={isSearchDialogOpen}
+        onClose={() => setIsSearchDialogOpen(false)}
+        onSubmit={handleSearchDialogSubmit}
       />
     </div>
   );

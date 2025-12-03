@@ -10,13 +10,15 @@ from ..utils.html_clean import strip_tags
 env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 
-def search_web(query: str, max_results: int = 10) -> List[Dict[str, str]]:
+def search_web(query: str, max_results: int = 10, freshness: str = None) -> List[Dict[str, str]]:
     """
     Search the web using Brave Search API (same search engine as Brave Browser).
     
     Args:
         query: Search query string
         max_results: Maximum number of results to return (default: 10)
+        freshness: Optional freshness filter - "pd" (past day), "pw" (past week), "pm" (past month), "py" (past year)
+                  If None, no freshness filter is applied (searches all time)
     
     Returns:
         List of dictionaries with 'title', 'url', and 'snippet' keys
@@ -45,9 +47,11 @@ def search_web(query: str, max_results: int = 10) -> List[Dict[str, str]]:
             "count": min(max_results, 20),  # Brave API max is 20
             "search_lang": "en",
             "country": "US",
-            "safesearch": "moderate",
-            "freshness": "pd"  # Past day for recent results
+            "safesearch": "moderate"
         }
+        # Only add freshness parameter if specified (for time-sensitive queries)
+        if freshness:
+            params["freshness"] = freshness
         
         response = requests.get(url, headers=headers, params=params, timeout=10)
         response.raise_for_status()

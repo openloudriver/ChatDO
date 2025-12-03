@@ -268,8 +268,9 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 break
         
         # Perform web search using Brave Search API
+        # Don't use freshness filter for explicit web_search intent - return all results
         try:
-            search_results = web_search.search_web(search_query, max_results=10)
+            search_results = web_search.search_web(search_query, max_results=10, freshness=None)
             if search_results and len(search_results) > 0:
                 # Return structured results (no LLM call, no summarization)
                 structured_result = {
