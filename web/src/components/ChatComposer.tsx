@@ -385,8 +385,14 @@ const ChatComposer: React.FC = () => {
               sources: sources,
               meta: data.meta || undefined
             });
-            clearStreaming();
             ws.close();
+            // Delay clearing streaming to allow React to render the new message first
+            // This prevents the flash/gap where streaming UI disappears before message appears
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                clearStreaming();
+              });
+            });
             // Update the conversation's updatedAt in allConversations immediately
             // Then reload all chats in the background to sync with backend
             const { allConversations, setConversations: _setConversations } = useChatStore.getState();
