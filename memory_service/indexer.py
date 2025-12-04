@@ -2,6 +2,13 @@
 Responsible for walking sources and updating file/chunk/embedding records.
 
 Handles text extraction, chunking, and embedding generation for indexed files.
+Also handles indexing of chat messages for cross-chat memory.
+
+File Indexing Implementation:
+- All file indexing uses the local Unstructured Python package (unstructured.partition.auto.partition)
+- No remote API calls are made - all extraction happens locally
+- The extract_text_with_unstructured() helper is the single entry point for file text extraction
+- This ensures consistent, reliable indexing across all supported file types
 """
 import logging
 from pathlib import Path
@@ -9,13 +16,22 @@ from datetime import datetime
 from typing import List, Tuple, Optional
 import fnmatch
 
-from memory_service.config import CHUNK_SIZE_CHARS, CHUNK_OVERLAP_CHARS
+from memory_service.config import CHUNK_SIZE_CHARS, CHUNK_OVERLAP_CHARS, EMBEDDING_MODEL
 from memory_service import store
 from memory_service.store import db
 from memory_service.embeddings import embed_texts
-from memory_service.file_readers import read_file
 
 logger = logging.getLogger(__name__)
+
+# Try to import Unstructured
+try:
+    from unstructured.partition.auto import partition
+    UNSTRUCTURED_AVAILABLE = True
+except ImportError:
+    UNSTRUCTURED_AVAILABLE = False
+    logger.warning(
+        "unstructured not installed. Install with: pip install 'unstructured[all-docs]'"
+    )
 
 # Supported file extensions - expanded list for Unstructured
 # Unstructured supports many more formats than we previously handled
@@ -64,17 +80,61 @@ ALL_SUPPORTED = (
 )
 
 
+def extract_text_with_unstructured(path: Path) -> str:
+    """
+    Extracts text from a document using the **local** Unstructured Python package.
+    
+    Returns a single normalized string.
+    
+    Args:
+        path: Path to the file
+        
+    Returns:
+        Extracted text as string, or empty string if extraction fails
+    """
+    logger.info(f"[MEMORY] Unstructured extracting: {path}")
+    
+    if not UNSTRUCTURED_AVAILABLE:
+        logger.error(f"[MEMORY] Unstructured not available. Cannot extract from {path}")
+        return ""
+    
+    if not path.exists():
+        logger.warning(f"[MEMORY] File does not exist: {path}")
+        return ""
+    
+    try:
+        elements = partition(filename=str(path))
+        logger.debug(f"[MEMORY] Unstructured extracted {len(elements)} elements from {path}")
+    except Exception as e:
+        logger.exception(f"[MEMORY] Unstructured extraction failed for {path}: {e}")
+        return ""
+    
+    # Join elements into plain text; keep it simple/robust.
+    texts: List[str] = []
+    for el in elements:
+        try:
+            txt = el.text if hasattr(el, "text") else str(el)
+            if txt:
+                texts.append(txt.strip())
+        except Exception:
+            # Be defensive: skip any weird element rather than failing whole file
+            continue
+    
+    result = "\n\n".join(t for t in texts if t)
+    if result:
+        logger.debug(f"[MEMORY] Unstructured extracted {len(result)} characters from {path}")
+    else:
+        logger.warning(f"[MEMORY] Unstructured extracted no text from {path}")
+    
+    return result
+
+
 def extract_text(path: Path) -> Optional[str]:
     """
-    Extract text from any file using Unstructured.io for maximum quality.
+    Extract text from any file using Unstructured (local Python package).
     
-    Unstructured automatically detects file type and uses the best extraction
-    method for each format. This provides superior quality compared to
-    individual file readers, especially for:
-    - PDFs with tables
-    - Complex Word/Excel/PowerPoint documents
-    - Images with text (OCR)
-    - HTML/XML documents
+    This is the main entry point for file indexing. All file indexing
+    goes through this helper for consistency and easier debugging.
     
     Args:
         path: Path to the file
@@ -82,9 +142,159 @@ def extract_text(path: Path) -> Optional[str]:
     Returns:
         Extracted text as string, or None if extraction fails or file type not supported
     """
-    # Use Unstructured's unified extraction for all file types
-    # It handles file type detection and uses optimal extraction methods
-    return read_file(path)
+    text = extract_text_with_unstructured(path)
+    if not text or not text.strip():
+        return None
+    return text
+
+
+def chunk_chat_message(text: str) -> List[Tuple[int, str, int, int]]:
+    """
+    Split chat message text into chunks with token-based logic.
+    
+    Rules:
+    - If content < ~1000 tokens → single chunk
+    - If longer → split into overlapping chunks (512 tokens with 64-token overlap)
+    
+    Uses character approximation: ~4 characters per token.
+    
+    Args:
+        text: Text to chunk
+        
+    Returns:
+        List of (chunk_index, chunk_text, start_char, end_char) tuples
+    """
+    if not text:
+        return []
+    
+    # Approximate token count (4 chars per token)
+    TOKENS_PER_CHAR = 0.25
+    CHUNK_SIZE_TOKENS = 512
+    CHUNK_OVERLAP_TOKENS = 64
+    SINGLE_CHUNK_THRESHOLD_TOKENS = 1000
+    
+    text_len = len(text)
+    estimated_tokens = text_len * TOKENS_PER_CHAR
+    
+    # If under threshold, return single chunk
+    if estimated_tokens <= SINGLE_CHUNK_THRESHOLD_TOKENS:
+        return [(0, text, 0, text_len)]
+    
+    # Otherwise, split into overlapping chunks
+    CHUNK_SIZE_CHARS = int(CHUNK_SIZE_TOKENS / TOKENS_PER_CHAR)  # ~2048 chars
+    CHUNK_OVERLAP_CHARS = int(CHUNK_OVERLAP_TOKENS / TOKENS_PER_CHAR)  # ~256 chars
+    
+    chunks = []
+    start = 0
+    chunk_index = 0
+    
+    while start < text_len:
+        end = min(start + CHUNK_SIZE_CHARS, text_len)
+        
+        # Try to break at sentence boundary if not at end
+        if end < text_len:
+            # Look for sentence end
+            sentence_end = text.rfind('. ', start, end)
+            if sentence_end != -1 and sentence_end > start + 100:
+                end = sentence_end + 2
+            else:
+                # Look for line break
+                line_break = text.rfind('\n', start, end)
+                if line_break != -1 and line_break > start + 100:
+                    end = line_break + 1
+        
+        chunk_text = text[start:end].strip()
+        
+        if chunk_text and len(chunk_text) > 10:
+            chunks.append((chunk_index, chunk_text, start, end))
+            chunk_index += 1
+        
+        # Move start with overlap
+        new_start = max(start + 1, end - CHUNK_OVERLAP_CHARS)
+        if new_start <= start:
+            new_start = start + CHUNK_SIZE_CHARS // 2
+        start = new_start
+    
+    return chunks
+
+
+def index_chat_message(
+    project_id: str,
+    chat_id: str,
+    message_id: str,
+    role: str,
+    content: str,
+    timestamp: datetime,
+    message_index: int
+) -> bool:
+    """
+    Index a chat message into the Memory Service.
+    
+    Uses a special source_id format: f"chat-{project_id}" to store all chat messages
+    for a project in a single source.
+    
+    Args:
+        project_id: The project ID
+        chat_id: The chat/conversation ID
+        message_id: Unique message ID
+        role: "user" or "assistant"
+        content: Message content
+        timestamp: Message timestamp
+        message_index: Index of message in the conversation
+        
+    Returns:
+        True if indexed successfully, False otherwise
+    """
+    try:
+        # Use a special source_id for chat messages: "chat-{project_id}"
+        source_id = f"chat-{project_id}"
+        
+        # Initialize DB for this source if needed
+        db.init_db(source_id)
+        
+        # Upsert source (chat messages don't have a root_path, use empty string)
+        source_db_id = db.upsert_source(source_id, project_id, "", None, None)
+        
+        # Upsert chat message
+        chat_message_id = db.upsert_chat_message(
+            source_id=source_id,
+            project_id=project_id,
+            chat_id=chat_id,
+            message_id=message_id,
+            role=role,
+            content=content,
+            timestamp=timestamp,
+            message_index=message_index
+        )
+        
+        # Chunk the content
+        chunks = chunk_chat_message(content)
+        if not chunks:
+            logger.warning(f"No chunks extracted from chat message {message_id}")
+            return False
+        
+        # Insert chunks
+        chunk_data = [(idx, txt, start, end) for idx, txt, start, end in chunks]
+        db.insert_chunks(None, chunk_data, source_id, chat_message_id=chat_message_id)
+        
+        # Get chunk IDs for embedding
+        chunk_records = db.get_chunks_by_chat_message_id(chat_message_id, source_id)
+        chunk_ids = [c.id for c in chunk_records]
+        chunk_texts = [c.text for c in chunk_records]
+        
+        # Generate embeddings
+        logger.debug(f"Generating embeddings for {len(chunk_texts)} chunks from chat message {message_id}")
+        embeddings = embed_texts(chunk_texts)
+        
+        # Store embeddings
+        db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL, source_id)
+        
+        logger.debug(f"Successfully indexed chat message {message_id} ({len(chunks)} chunks)")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error indexing chat message {message_id}: {e}", exc_info=True)
+        return False
 
 
 def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:
@@ -153,8 +363,13 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
     path_str = str(path)
     file_ext = path.suffix.lower()
     
+    # Special logging for Downloads
+    is_downloads = "Downloads" in path_str or "downloads" in path_str.lower()
+    log_level = logger.info if is_downloads else logger.debug
+    
     # First check if file extension is explicitly excluded (video, ISO, etc.)
     if file_ext in EXCLUDED_EXTENSIONS:
+        log_level(f"[MEMORY] Skipping file (excluded extension {file_ext}): {path}")
         return False
     
     # Check exclude glob patterns - support multiple patterns separated by commas
@@ -163,15 +378,29 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
         exclude_patterns = [p.strip() for p in exclude_glob.split(',')]
         for pattern in exclude_patterns:
             if fnmatch.fnmatch(path_str, pattern) or pattern in path_str:
+                log_level(f"[MEMORY] Skipping file (excluded by glob pattern '{pattern}'): {path}")
                 return False
     
     # Check include
     if include_glob:
-        if not fnmatch.fnmatch(path_str, include_glob) and include_glob not in path_str:
+        matches_glob = fnmatch.fnmatch(path_str, include_glob)
+        contains_glob = include_glob in path_str
+        if not matches_glob and not contains_glob:
+            log_level(f"[MEMORY] Skipping file (not matching include glob '{include_glob}'): {path} (fnmatch={matches_glob}, contains={contains_glob})")
             return False
     
     # Check if extension is supported
-    return file_ext in ALL_SUPPORTED
+    if file_ext not in ALL_SUPPORTED:
+        log_level(f"[MEMORY] Skipping file (unsupported extension {file_ext}): {path}")
+        if is_downloads:
+            logger.info(f"[MEMORY] Supported extensions include: {sorted(ALL_SUPPORTED)}")
+        return False
+    
+    # File passed all checks
+    if is_downloads:
+        logger.info(f"[MEMORY] File passed all filter checks: {path}")
+    
+    return True
 
 
 def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
@@ -215,10 +444,10 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
                 logger.debug(f"File unchanged, skipping: {path}")
                 return True
         
-        # Extract text
+        # Extract text using Unstructured (local Python package)
         text = extract_text(path)
-        if text is None:
-            logger.warning(f"Could not extract text from {path}")
+        if text is None or not text.strip():
+            logger.warning(f"[MEMORY] Skipping file (empty text): {path}")
             return False
         
         # Compute content hash
@@ -282,12 +511,15 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
     
     source = db.get_source_by_source_id(source_id)
     if not source:
-        logger.error(f"Source not found: {source_id}")
+        logger.error(f"[MEMORY] Source not found in database: {source_id}")
+        db.update_source_stats(source_id, status="error", last_error=f"Source not found: {source_id}")
         return 0, 0, 0
     
     root_path = Path(source.root_path)
     if not root_path.exists():
-        logger.error(f"Source root path does not exist: {root_path}")
+        error_msg = f"Source root path does not exist: {root_path}"
+        logger.error(f"[MEMORY] {error_msg}")
+        db.update_source_stats(source_id, status="error", last_error=error_msg)
         return 0, 0, 0
     
     # Register source in tracking DB
@@ -337,14 +569,50 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
             db.update_index_job(latest_job.id, status="cancelled", completed_at=datetime.now())
     
     # Count files to be indexed (optional, can be expensive for large repos)
-    logger.info(f"Scanning files for source: {source_id}")
+    logger.info(f"[MEMORY] Starting index_source for source_id={source_id}, path={root_path}")
+    logger.info(f"[MEMORY] Source include_glob={source.include_glob}, exclude_glob={source.exclude_glob}")
+    
+    # Special logging for Downloads source
+    is_downloads = "Downloads" in str(root_path) or "downloads" in source_id.lower()
+    
     files_to_index = []
-    for path in root_path.rglob('*'):
-        if path.is_file() and should_index_file(path, source.include_glob, source.exclude_glob):
-            files_to_index.append(path)
+    total_scanned = 0
+    skipped_by_type = 0
+    skipped_by_filter = 0
+    skipped_by_extension = 0
+    
+    try:
+        for path in root_path.rglob('*'):
+            total_scanned += 1
+            
+            if not path.is_file():
+                continue
+            
+            file_ext = path.suffix.lower()
+            
+            # Log every file we're considering (especially for Downloads)
+            if is_downloads:
+                logger.info(f"[MEMORY] Considering file: {path} (ext={file_ext}, size={path.stat().st_size if path.exists() else 'N/A'})")
+            
+            if should_index_file(path, source.include_glob, source.exclude_glob):
+                files_to_index.append(path)
+                if is_downloads:
+                    logger.info(f"[MEMORY] File will be indexed: {path}")
+            else:
+                skipped_by_filter += 1
+                if is_downloads:
+                    logger.warning(f"[MEMORY] File skipped by filter: {path} (ext={file_ext}, include_glob={source.include_glob}, exclude_glob={source.exclude_glob})")
+    except Exception as e:
+        logger.error(f"[MEMORY] Error scanning directory {root_path}: {e}", exc_info=True)
+        raise
     
     files_total = len(files_to_index)
-    logger.info(f"Found {files_total} files to index for source: {source_id}")
+    logger.info(f"[MEMORY] Found {files_total} indexable files (scanned {total_scanned} total items, skipped {skipped_by_filter} by filter) for source: {source_id}")
+    
+    if files_total == 0 and total_scanned > 0:
+        logger.warning(f"[MEMORY] No indexable files found for {source_id} (scanned {total_scanned} items, skipped {skipped_by_filter} by filter). Files may be filtered by include/exclude patterns or unsupported file types.")
+        if is_downloads:
+            logger.warning(f"[MEMORY] Downloads source has no indexable files! Check include_glob={source.include_glob}, exclude_glob={source.exclude_glob}")
     
     # Create new job if not resuming
     if not resume_job:
@@ -384,6 +652,10 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
         # If resuming, index_file's idempotent check will skip already-indexed files
         for path in files_to_index:
             try:
+                # Log file being processed (especially for Downloads)
+                if "Downloads" in str(root_path) or "downloads" in source_id.lower():
+                    logger.info(f"[MEMORY] Processing file: {path}")
+                
                 # Check if file was already indexed before this job started
                 existing_file = db.get_file_by_path(source.id, str(path), source_id)
                 was_already_indexed = existing_file is not None
@@ -399,12 +671,17 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
                         # New file was indexed (or file was updated and re-indexed)
                         indexed_count += 1
                         try:
-                            bytes_processed += path.stat().st_size
-                        except:
-                            pass
+                            file_size = path.stat().st_size
+                            bytes_processed += file_size
+                            logger.info(f"[MEMORY] Indexed file: {path} (bytes={file_size})")
+                        except Exception as e:
+                            logger.warning(f"[MEMORY] Could not get file size for {path}: {e}")
+                    else:
+                        logger.debug(f"[MEMORY] File already indexed (unchanged): {path}")
                     # else: file was already indexed and unchanged, skip counting (already in initial_indexed_count)
                 else:
                     skipped_count += 1
+                    logger.info(f"[MEMORY] File indexing returned False (skipped): {path}")
                 
                 # Get actual totals from database (includes all indexed files, not just this job)
                 conn = db.get_db_connection(source_id)
@@ -465,7 +742,8 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
             bytes_indexed=final_bytes    # Use actual database sum
         )
         
-        logger.info(f"Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id}")
+        logger.info(f"[MEMORY] Indexed {indexed_count} files, skipped {skipped_count} files for source {source_id} (total: {final_files} files, {final_bytes:,} bytes)")
+        logger.info(f"[MEMORY] Indexing completed for source {source_id}: {final_files} files indexed, {final_bytes:,} bytes")
         return indexed_count, bytes_processed, job_id
         
     except Exception as e:

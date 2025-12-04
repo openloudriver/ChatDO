@@ -13,7 +13,7 @@ import hashlib
 import logging
 
 from memory_service.config import BASE_STORE_PATH, get_db_path_for_source, TRACKING_DB_PATH
-from memory_service.models import Source, File, Chunk, Embedding, SearchResult, SourceStatus, IndexJob
+from memory_service.models import Source, File, Chunk, ChatMessage, Embedding, SearchResult, SourceStatus, IndexJob
 
 logger = logging.getLogger(__name__)
 
@@ -63,18 +63,59 @@ def init_db(source_id: str):
         )
     """)
     
-    # Chunks table
+    # Chat messages table (for cross-chat memory)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id INTEGER NOT NULL,
+            project_id TEXT NOT NULL,
+            chat_id TEXT NOT NULL,
+            message_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp TIMESTAMP NOT NULL,
+            message_index INTEGER NOT NULL,
+            FOREIGN KEY (source_id) REFERENCES sources(id),
+            UNIQUE(chat_id, message_id)
+        )
+    """)
+    
+    # Chunks table (extended to support both files and chat messages)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS chunks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_id INTEGER NOT NULL,
+            file_id INTEGER,
+            chat_message_id INTEGER,
             chunk_index INTEGER NOT NULL,
             text TEXT NOT NULL,
             start_char INTEGER NOT NULL,
             end_char INTEGER NOT NULL,
             FOREIGN KEY (file_id) REFERENCES files(id),
-            UNIQUE(file_id, chunk_index)
+            FOREIGN KEY (chat_message_id) REFERENCES chat_messages(id),
+            CHECK ((file_id IS NOT NULL AND chat_message_id IS NULL) OR (file_id IS NULL AND chat_message_id IS NOT NULL))
         )
+    """)
+    
+    # Migration: Add chat_message_id column if it doesn't exist (for existing databases)
+    cursor.execute("PRAGMA table_info(chunks)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'chat_message_id' not in columns:
+        # Column doesn't exist, add it
+        logger.info(f"Migrating chunks table: adding chat_message_id column for source {source_id}")
+        try:
+            cursor.execute("ALTER TABLE chunks ADD COLUMN chat_message_id INTEGER")
+        except sqlite3.OperationalError as e:
+            # Column might have been added between check and alter
+            logger.warning(f"Migration note (may be harmless): {e}")
+    
+    # Create unique constraint for chunks (file-based or chat-based)
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_chunks_file_unique 
+        ON chunks(file_id, chunk_index) WHERE file_id IS NOT NULL
+    """)
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_chunks_chat_unique 
+        ON chunks(chat_message_id, chunk_index) WHERE chat_message_id IS NOT NULL
     """)
     
     # Embeddings table
@@ -92,6 +133,9 @@ def init_db(source_id: str):
     # Indexes for performance
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_source ON files(source_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_file ON chunks(file_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_chat_message ON chunks(chat_message_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_project ON chat_messages(project_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_chat ON chat_messages(chat_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_chunk ON embeddings(chunk_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sources_project ON sources(project_id)")
     
@@ -155,7 +199,6 @@ def get_file_by_path(source_db_id: int, path: str, source_id: str) -> Optional[F
     conn = get_db_connection(source_id)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM files WHERE source_id = ? AND path = ?", (source_db_id, path))
-    cursor.execute("SELECT * FROM files WHERE source_id = ? AND path = ?", (source_id, path))
     row = cursor.fetchone()
     conn.close()
     
@@ -186,11 +229,11 @@ def upsert_file(source_db_id: int, path: str, filetype: str,
             modified_at = excluded.modified_at,
             size_bytes = excluded.size_bytes,
             hash = excluded.hash
-    """, (source_id, path, filetype, modified_at, size_bytes, content_hash))
+    """, (source_db_id, path, filetype, modified_at, size_bytes, content_hash))
     
     db_id = cursor.lastrowid
     if db_id == 0:
-        cursor.execute("SELECT id FROM files WHERE source_id = ? AND path = ?", (source_id, path))
+        cursor.execute("SELECT id FROM files WHERE source_id = ? AND path = ?", (source_db_id, path))
         db_id = cursor.fetchone()["id"]
     
     conn.commit()
@@ -221,19 +264,27 @@ def delete_file_by_path(source_db_id: int, path: str, source_id: str):
         delete_file(file.id, source_id)
 
 
-def insert_chunks(file_id: int, chunks: List[Tuple[int, str, int, int]], source_id: str):
-    """Insert chunks for a file. chunks is a list of (chunk_index, text, start_char, end_char)."""
+def insert_chunks(file_id: int, chunks: List[Tuple[int, str, int, int]], source_id: str, chat_message_id: Optional[int] = None):
+    """Insert chunks for a file or chat message. chunks is a list of (chunk_index, text, start_char, end_char)."""
     conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
-    # Delete existing chunks
-    cursor.execute("DELETE FROM chunks WHERE file_id = ?", (file_id,))
-    
-    # Insert new chunks
-    cursor.executemany("""
-        INSERT INTO chunks (file_id, chunk_index, text, start_char, end_char)
-        VALUES (?, ?, ?, ?, ?)
-    """, [(file_id, idx, text, start, end) for idx, text, start, end in chunks])
+    if chat_message_id is not None:
+        # Delete existing chunks for chat message
+        cursor.execute("DELETE FROM chunks WHERE chat_message_id = ?", (chat_message_id,))
+        # Insert new chunks
+        cursor.executemany("""
+            INSERT INTO chunks (chat_message_id, chunk_index, text, start_char, end_char)
+            VALUES (?, ?, ?, ?, ?)
+        """, [(chat_message_id, idx, text, start, end) for idx, text, start, end in chunks])
+    else:
+        # Delete existing chunks for file
+        cursor.execute("DELETE FROM chunks WHERE file_id = ?", (file_id,))
+        # Insert new chunks
+        cursor.executemany("""
+            INSERT INTO chunks (file_id, chunk_index, text, start_char, end_char)
+            VALUES (?, ?, ?, ?, ?)
+        """, [(file_id, idx, text, start, end) for idx, text, start, end in chunks])
     
     conn.commit()
     conn.close()
@@ -250,6 +301,26 @@ def get_chunks_by_file_id(file_id: int, source_id: str) -> List[Chunk]:
     return [Chunk(
         id=row["id"],
         file_id=row["file_id"],
+        chat_message_id=row["chat_message_id"] if row["chat_message_id"] is not None else None,
+        chunk_index=row["chunk_index"],
+        text=row["text"],
+        start_char=row["start_char"],
+        end_char=row["end_char"]
+    ) for row in rows]
+
+
+def get_chunks_by_chat_message_id(chat_message_id: int, source_id: str) -> List[Chunk]:
+    """Get all chunks for a chat message."""
+    conn = get_db_connection(source_id)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM chunks WHERE chat_message_id = ? ORDER BY chunk_index", (chat_message_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [Chunk(
+        id=row["id"],
+        file_id=row["file_id"] if row["file_id"] is not None else None,
+        chat_message_id=row["chat_message_id"],
         chunk_index=row["chunk_index"],
         text=row["text"],
         start_char=row["start_char"],
@@ -279,28 +350,43 @@ def insert_embeddings(chunk_ids: List[int], embeddings: np.ndarray, model_name: 
     conn.close()
 
 
-def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple[int, np.ndarray, int, str, str, str, str]]:
+def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str]]]:
     """
-    Get all embeddings for a specific source.
-    Returns list of (chunk_id, embedding_vector, file_id, file_path, chunk_text, source_id, project_id).
+    Get all embeddings for a specific source (files and chat messages).
+    Returns list of (chunk_id, embedding_vector, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id).
+    For file chunks: file_id and file_path are set, chat_id and message_id are None.
+    For chat chunks: file_id and file_path are None, chat_id and message_id are set.
     """
     conn = get_db_connection(source_id)
     cursor = conn.cursor()
     
+    # Get file-based embeddings
     cursor.execute("""
-        SELECT e.chunk_id, e.embedding, c.file_id, f.path, c.text, s.source_id, s.project_id, f.filetype, c.chunk_index, c.start_char, c.end_char
+        SELECT e.chunk_id, e.embedding, c.file_id, f.path, c.text, s.source_id, s.project_id, f.filetype, c.chunk_index, c.start_char, c.end_char, NULL as chat_id, NULL as message_id
         FROM embeddings e
         JOIN chunks c ON e.chunk_id = c.id
         JOIN files f ON c.file_id = f.id
         JOIN sources s ON f.source_id = s.id
-        WHERE s.source_id = ? AND e.model_name = ?
+        WHERE s.source_id = ? AND e.model_name = ? AND c.file_id IS NOT NULL
     """, (source_id, model_name))
     
-    rows = cursor.fetchall()
+    file_rows = cursor.fetchall()
+    
+    # Get chat-based embeddings
+    cursor.execute("""
+        SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+        FROM embeddings e
+        JOIN chunks c ON e.chunk_id = c.id
+        JOIN chat_messages cm ON c.chat_message_id = cm.id
+        JOIN sources s ON cm.source_id = s.id
+        WHERE s.source_id = ? AND e.model_name = ? AND c.chat_message_id IS NOT NULL
+    """, (source_id, model_name))
+    
+    chat_rows = cursor.fetchall()
     conn.close()
     
     results = []
-    for row in rows:
+    for row in file_rows + chat_rows:
         # Deserialize embedding
         embedding_bytes = row["embedding"]
         embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
@@ -315,10 +401,73 @@ def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple
             row["filetype"],
             row["chunk_index"],
             row["start_char"],
-            row["end_char"]
+            row["end_char"],
+            row["chat_id"],
+            row["message_id"]
         ))
     
     return results
+
+
+def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_chat_id: Optional[str] = None) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str]]]:
+    """
+    Get all chat message embeddings for a project, optionally excluding a specific chat.
+    Returns same format as get_all_embeddings_for_source.
+    """
+    source_id = f"chat-{project_id}"
+    
+    try:
+        conn = get_db_connection(source_id)
+        cursor = conn.cursor()
+        
+        if exclude_chat_id:
+            cursor.execute("""
+                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+                FROM embeddings e
+                JOIN chunks c ON e.chunk_id = c.id
+                JOIN chat_messages cm ON c.chat_message_id = cm.id
+                JOIN sources s ON cm.source_id = s.id
+                WHERE s.project_id = ? AND e.model_name = ? AND c.chat_message_id IS NOT NULL AND cm.chat_id != ?
+            """, (project_id, model_name, exclude_chat_id))
+        else:
+            cursor.execute("""
+                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+                FROM embeddings e
+                JOIN chunks c ON e.chunk_id = c.id
+                JOIN chat_messages cm ON c.chat_message_id = cm.id
+                JOIN sources s ON cm.source_id = s.id
+                WHERE s.project_id = ? AND e.model_name = ? AND c.chat_message_id IS NOT NULL
+            """, (project_id, model_name))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        results = []
+        for row in rows:
+            # Deserialize embedding
+            embedding_bytes = row["embedding"]
+            embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
+            results.append((
+                row["chunk_id"],
+                embedding,
+                row["file_id"],
+                row["path"],
+                row["text"],
+                row["source_id"],
+                row["project_id"],
+                row["filetype"],
+                row["chunk_index"],
+                row["start_char"],
+                row["end_char"],
+                row["chat_id"],
+                row["message_id"]
+            ))
+        
+        return results
+    except Exception as e:
+        # Source might not exist yet (no chats indexed)
+        logger.debug(f"No chat embeddings found for project {project_id}: {e}")
+        return []
 
 
 def compute_file_hash(path: Path) -> str:
@@ -709,4 +858,78 @@ def get_all_sources_with_latest_job() -> List[Tuple[SourceStatus, Optional[Index
     
     conn.close()
     return results
+
+
+def upsert_chat_message(
+    source_id: str,
+    project_id: str,
+    chat_id: str,
+    message_id: str,
+    role: str,
+    content: str,
+    timestamp: datetime,
+    message_index: int
+) -> int:
+    """
+    Insert or update a chat message.
+    Returns the database ID of the chat message.
+    """
+    # Get source_db_id
+    source_db_id = upsert_source(source_id, project_id, "", None, None)
+    
+    # Initialize DB for this source if needed
+    init_db(source_id)
+    conn = get_db_connection(source_id)
+    cursor = conn.cursor()
+    
+    # Check if message already exists
+    cursor.execute("""
+        SELECT id FROM chat_messages 
+        WHERE chat_id = ? AND message_id = ?
+    """, (chat_id, message_id))
+    existing = cursor.fetchone()
+    
+    if existing:
+        # Update existing message
+        cursor.execute("""
+            UPDATE chat_messages
+            SET role = ?, content = ?, timestamp = ?, message_index = ?
+            WHERE id = ?
+        """, (role, content, timestamp, message_index, existing["id"]))
+        chat_message_id = existing["id"]
+    else:
+        # Insert new message
+        cursor.execute("""
+            INSERT INTO chat_messages (source_id, project_id, chat_id, message_id, role, content, timestamp, message_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (source_db_id, project_id, chat_id, message_id, role, content, timestamp, message_index))
+        chat_message_id = cursor.lastrowid
+    
+    conn.commit()
+    conn.close()
+    return chat_message_id
+
+
+def get_chat_message_by_id(chat_message_id: int, source_id: str) -> Optional[ChatMessage]:
+    """Get a chat message by its database ID."""
+    conn = get_db_connection(source_id)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM chat_messages WHERE id = ?", (chat_message_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        return None
+    
+    return ChatMessage(
+        id=row["id"],
+        source_id=row["source_id"],
+        project_id=row["project_id"],
+        chat_id=row["chat_id"],
+        message_id=row["message_id"],
+        role=row["role"],
+        content=row["content"],
+        timestamp=datetime.fromisoformat(row["timestamp"]) if isinstance(row["timestamp"], str) else row["timestamp"],
+        message_index=row["message_index"]
+    )
 

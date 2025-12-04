@@ -16,7 +16,7 @@ import threading
 
 from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sources, create_dynamic_source, BASE_DIR, BASE_STORE_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
 from memory_service.store import db
-from memory_service.indexer import index_source
+from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.embeddings import embed_query
 from memory_service.models import SourceStatus, IndexJob
@@ -92,18 +92,32 @@ class SearchRequest(BaseModel):
     query: str
     limit: int = 10
     source_ids: Optional[List[str]] = None
+    chat_id: Optional[str] = None  # Exclude this chat from results
 
 
 class SearchResult(BaseModel):
     score: float
     project_id: str
     source_id: str
-    file_path: str
-    filetype: str
+    file_path: Optional[str] = None
+    filetype: Optional[str] = None
     chunk_index: int
     text: str
     start_char: int
     end_char: int
+    source_type: str = "file"  # "file" or "chat"
+    chat_id: Optional[str] = None
+    message_id: Optional[str] = None
+
+
+class IndexChatMessageRequest(BaseModel):
+    project_id: str
+    chat_id: str
+    message_id: str
+    role: str
+    content: str
+    timestamp: str  # ISO format datetime string
+    message_index: int
 
 
 class SearchResponse(BaseModel):
@@ -319,8 +333,9 @@ async def delete_source(source_id: str):
 @app.post("/reindex")
 async def reindex(request: ReindexRequest):
     """Trigger a full reindex of a source."""
+    logger.info(f"[MEMORY] Reindex requested: {request.source_id}")
     try:
-        # Load source config from YAML
+        # First, try to get source from config files
         sources = load_sources()
         source_config = None
         for s in sources:
@@ -328,21 +343,32 @@ async def reindex(request: ReindexRequest):
                 source_config = s
                 break
         
+        # If not in config, check tracking database
         if not source_config:
-            raise HTTPException(status_code=404, detail=f"Source not found in config: {request.source_id}")
+            try:
+                # Get source from tracking database
+                source_status = db.get_source_status(request.source_id)
+                if source_status:
+                    # Create a SourceConfig from the tracking DB entry
+                    from memory_service.config import SourceConfig
+                    source_config = SourceConfig({
+                        "id": source_status.id,
+                        "project_id": source_status.project_id or "scratch",
+                        "root_path": source_status.root_path,
+                        "include_glob": "**/*",  # Default since not stored in tracking DB
+                        "exclude_glob": "",  # Default since not stored in tracking DB
+                        "display_name": source_status.display_name
+                    })
+                    logger.info(f"Found source {request.source_id} in tracking database, using it for reindex")
+            except Exception as e:
+                logger.warning(f"Error checking tracking database for source {request.source_id}: {e}")
         
-        # Delete the old index directory for this source
-        import shutil
-        from memory_service.config import BASE_STORE_PATH
-        source_dir = BASE_STORE_PATH / request.source_id
-        if source_dir.exists():
-            shutil.rmtree(source_dir, ignore_errors=True)
-            logger.info(f"Deleted old index directory for source: {request.source_id}")
+        if not source_config:
+            raise HTTPException(status_code=404, detail=f"Source not found: {request.source_id}")
         
-        # Recreate empty directory
-        source_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Register source in database before indexing
+        # Initialize database and register source FIRST (before deleting anything)
+        # This ensures the source exists when index_source() tries to find it
+        db.init_db(request.source_id)
         db_id = db.upsert_source(
             source_config.id,
             source_config.project_id,
@@ -350,14 +376,50 @@ async def reindex(request: ReindexRequest):
             source_config.include_glob,
             source_config.exclude_glob
         )
-        logger.info(f"Registered source {request.source_id} in database (db_id: {db_id})")
+        logger.info(f"[MEMORY] Registered source {request.source_id} in database (db_id: {db_id})")
+        
+        # Clear old index data (files, chunks, embeddings) but keep the source record
+        # We do this by deleting files/chunks/embeddings from the database, not deleting the directory
+        from memory_service.config import BASE_STORE_PATH
+        source_dir = BASE_STORE_PATH / request.source_id
+        
+        # Delete all files/chunks/embeddings for this source from the database
+        conn = db.get_db_connection(request.source_id)
+        cursor = conn.cursor()
+        try:
+            # Delete embeddings first (foreign key constraint)
+            cursor.execute("DELETE FROM embeddings")
+            # Delete chunks
+            cursor.execute("DELETE FROM chunks")
+            # Delete files
+            cursor.execute("DELETE FROM files")
+            conn.commit()
+            logger.info(f"[MEMORY] Cleared old index data (files/chunks/embeddings) for source: {request.source_id}")
+        except Exception as e:
+            logger.warning(f"[MEMORY] Error clearing old index data: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+        
+        # Update source status to "indexing" immediately
+        db.update_source_stats(
+            request.source_id,
+            status="indexing",
+            last_index_started_at=datetime.now()
+        )
+        logger.info(f"[MEMORY] Set source {request.source_id} status to 'indexing'")
         
         # Run indexing in background thread to avoid blocking the API
         def run_indexing():
             try:
-                index_source(request.source_id)
+                logger.info(f"[MEMORY] Starting background indexing for {request.source_id}")
+                # Give the API response time to return before starting heavy work
+                import time
+                time.sleep(0.5)
+                result = index_source(request.source_id)
+                logger.info(f"[MEMORY] Background indexing completed for {request.source_id}: {result}")
             except Exception as e:
-                logger.error(f"Background indexing failed for {request.source_id}: {e}", exc_info=True)
+                logger.error(f"[MEMORY] Background indexing failed for {request.source_id}: {e}", exc_info=True)
                 db.update_source_stats(
                     request.source_id,
                     status="error",
@@ -366,6 +428,9 @@ async def reindex(request: ReindexRequest):
         
         thread = threading.Thread(target=run_indexing, daemon=True)
         thread.start()
+        logger.info(f"[MEMORY] Background thread started for {request.source_id}, thread ID: {thread.ident}")
+        
+        logger.info(f"[MEMORY] Reindex request accepted for {request.source_id}, background job started")
         
         # Return immediately - client can poll /sources to get the job_id
         return {
@@ -473,7 +538,7 @@ async def search(request: SearchRequest):
         # Embed all query variations
         query_embeddings = [embed_query(q) for q in all_queries]
         
-        # Search across all specified sources
+        # Search across all specified sources (files)
         all_embeddings = []
         for source_id in request.source_ids:
             try:
@@ -483,12 +548,23 @@ async def search(request: SearchRequest):
                 logger.warning(f"Error searching source {source_id}: {e}")
                 continue
         
+        # Also search chat messages for this project (excluding current chat if provided)
+        try:
+            chat_embeddings = db.get_chat_embeddings_for_project(
+                request.project_id, 
+                EMBEDDING_MODEL, 
+                exclude_chat_id=request.chat_id
+            )
+            all_embeddings.extend(chat_embeddings)
+        except Exception as e:
+            logger.debug(f"Error searching chat messages for project {request.project_id}: {e}")
+        
         if not all_embeddings:
             return SearchResponse(results=[])
         
         # Compute cosine similarities using best match across all query variations
         similarities = []
-        for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char in all_embeddings:
+        for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
             # Try all query embeddings and take the best match
             best_similarity = 0.0
             for query_embedding in query_embeddings:
@@ -500,6 +576,9 @@ async def search(request: SearchRequest):
                     similarity = dot_product / (norm_query * norm_embedding)
                     best_similarity = max(best_similarity, similarity)
             
+            # Determine source type
+            source_type = "chat" if chat_id is not None else "file"
+            
             similarities.append((
                 best_similarity,
                 project_id,
@@ -509,7 +588,10 @@ async def search(request: SearchRequest):
                 chunk_index,
                 chunk_text,
                 start_char,
-                end_char
+                end_char,
+                source_type,
+                chat_id,
+                message_id
             ))
         
         # Sort by similarity (descending) and take top N
@@ -518,23 +600,61 @@ async def search(request: SearchRequest):
         
         # Build results
         results = []
-        for score, project_id, source_id, file_path, filetype, chunk_index, chunk_text, start_char, end_char in top_results:
+        for score, project_id, source_id, file_path, filetype, chunk_index, chunk_text, start_char, end_char, source_type, chat_id, message_id in top_results:
             results.append(SearchResult(
                 score=float(score),
                 project_id=project_id,
                 source_id=source_id,
                 file_path=file_path,
-                filetype=filetype or Path(file_path).suffix.lstrip('.'),
+                filetype=filetype or (Path(file_path).suffix.lstrip('.') if file_path else None),
                 chunk_index=chunk_index,
                 text=chunk_text,
                 start_char=start_char,
-                end_char=end_char
+                end_char=end_char,
+                source_type=source_type,
+                chat_id=chat_id,
+                message_id=message_id
             ))
         
         return SearchResponse(results=results)
         
     except Exception as e:
         logger.error(f"Error searching: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/index-chat-message")
+async def index_chat_message_endpoint(request: IndexChatMessageRequest):
+    """
+    Index a chat message into the Memory Service.
+    
+    This endpoint is called by the Backend Server after saving a message
+    to index it for cross-chat memory retrieval.
+    """
+    try:
+        # Parse timestamp
+        timestamp = datetime.fromisoformat(request.timestamp.replace('Z', '+00:00'))
+        
+        # Index the message
+        success = index_chat_message(
+            project_id=request.project_id,
+            chat_id=request.chat_id,
+            message_id=request.message_id,
+            role=request.role,
+            content=request.content,
+            timestamp=timestamp,
+            message_index=request.message_index
+        )
+        
+        if success:
+            logger.info(f"[MEMORY] Indexed chat message chat_id={request.chat_id} project_id={request.project_id}")
+            return {"status": "ok", "message": "Chat message indexed successfully"}
+        else:
+            logger.warning(f"[MEMORY] Failed to index chat message chat_id={request.chat_id} project_id={request.project_id}")
+            return {"status": "error", "message": "Failed to index chat message"}
+            
+    except Exception as e:
+        logger.error(f"Error indexing chat message: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
