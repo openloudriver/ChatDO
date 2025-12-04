@@ -8,7 +8,7 @@ ChatDO v1.5 adds a ChatGPT-style web UI with FastAPI backend.
 - Node.js 18+ and pnpm
 - ChatDO v1.0 already set up (with virtual environment)
 
-## Backend Setup (FastAPI Server)
+## Backend Server Setup
 
 1. **Install server dependencies:**
 
@@ -33,7 +33,7 @@ Or add it to a `.env` file in the ChatDO root directory. See `BRAVE_SEARCH_SETUP
 
 **Note**: Web search will not work without a valid BRAVE_SEARCH_API_KEY.
 
-2. **Start the FastAPI server:**
+2. **Start the Backend Server:**
 
 ```bash
 cd server
@@ -42,7 +42,7 @@ uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 
 The server will be available at `http://localhost:8000`
 
-## Frontend Setup (React Web UI)
+## Frontend Server Setup
 
 1. **Install dependencies:**
 
@@ -108,7 +108,7 @@ The web app will be available at `http://localhost:5173`
 ```
 ChatDO/
 ├── server/           # FastAPI backend
-│   ├── main.py       # Main API server
+│   ├── main.py       # Backend Server
 │   ├── uploads.py    # File upload handling
 │   ├── scraper.py     # URL scraping
 │   ├── ws.py          # WebSocket streaming

@@ -47,7 +47,7 @@ export BRAVE_SEARCH_API_KEY=your-api-key-here
 
 ### 3. Restart ChatDO Server
 
-After adding the API key, restart the FastAPI server:
+After adding the API key, restart the Backend Server:
 
 ```bash
 cd server

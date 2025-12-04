@@ -1,5 +1,5 @@
 """
-FastAPI server for ChatDO v1.5
+Backend Server for ChatDO v1.5
 Provides REST API and WebSocket endpoints for the ChatGPT-style UI
 """
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, WebSocket, Query

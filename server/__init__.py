@@ -1,2 +1,2 @@
-"""ChatDO FastAPI server"""
+"""ChatDO Backend Server"""
 
