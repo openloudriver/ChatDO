@@ -1077,10 +1077,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     <div
                       className={`rounded-lg px-4 py-3 box-border transition-colors ${
                         message.role === 'user'
-                          ? 'bg-[var(--user-bubble-bg)] max-w-[70%] ml-auto mr-[-6px]'
+                          ? 'bg-[var(--user-bubble-bg)] max-w-[70%] ml-auto mr-[-6px] break-words'
                           : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px]'
                       }`}
-                      style={message.role === 'user' ? { color: 'var(--user-bubble-text)' } : undefined}
+                      style={message.role === 'user' ? { color: 'var(--user-bubble-text)', wordBreak: 'break-word', overflowWrap: 'anywhere' } : undefined}
                     >
                       {/* Display files (documents, or all files for assistant) inside the message bubble */}
                       {filesToShow.length > 0 && (
@@ -1434,7 +1434,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         message.role === 'assistant' ? (
                           <OptionsRenderer content={content} bulletMode={bulletMode} sources={message.sources} />
                         ) : (
-                          <p className="whitespace-pre-wrap" style={{ color: 'var(--user-bubble-text)' }}>{content}</p>
+                          <p className="whitespace-pre-wrap break-words" style={{ color: 'var(--user-bubble-text)', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{content}</p>
                         )
                       )}
                       
