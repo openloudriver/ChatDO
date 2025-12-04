@@ -598,15 +598,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     const mimeType = file.mime_type;
 
-    // Ensure we're not in fullscreen when opening a new file
-    // Exit fullscreen if modal was previously in fullscreen
-    if (previewModalRef.current && document.fullscreenElement === previewModalRef.current) {
-      try {
-        await document.exitFullscreen();
-      } catch (error) {
-        // Ignore errors - might already be exited
-      }
-    }
+    // Reset fullscreen state when opening a new file
     setIsFullscreen(false);
 
     if (mimeType === 'application/pdf') {
@@ -724,41 +716,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     setEditTitleValue('');
   };
 
-  // Fullscreen functionality
-  const toggleFullscreen = async () => {
-    if (!previewModalRef.current) return;
-
-    try {
-      // Check if the modal itself is in fullscreen (not the entire document)
-      const isModalFullscreen = document.fullscreenElement === previewModalRef.current;
-      
-      if (!isModalFullscreen) {
-        // Enter fullscreen for the modal only
-        await previewModalRef.current.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        // Exit fullscreen only if the modal is the one in fullscreen
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+  // Fullscreen functionality - use CSS-based fullscreen (like ChatComposer) instead of browser API
+  // This avoids conflicts with browser fullscreen and is more reliable
+  const toggleFullscreen = (e?: React.MouseEvent) => {
+    // Prevent event propagation to avoid triggering browser fullscreen
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+
+    // Simply toggle the CSS-based fullscreen state
+    // This uses CSS classes to make the modal fullscreen, not the browser API
+    setIsFullscreen(prev => !prev);
   };
 
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      // Only set fullscreen state if the modal is the one in fullscreen
-      const isModalFullscreen = !!(previewModalRef.current && document.fullscreenElement === previewModalRef.current);
-      setIsFullscreen(isModalFullscreen);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
+  // No longer need to listen for browser fullscreen changes since we're using CSS-based fullscreen
+  // The isFullscreen state is managed directly by toggleFullscreen
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -1591,10 +1564,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
           onClick={() => {
             setPreviewFile(null);
-            // Exit fullscreen if modal is in fullscreen when closing
-            if (document.fullscreenElement === previewModalRef.current) {
-              document.exitFullscreen().catch(() => {});
-            }
+            // Reset fullscreen state when closing
             setIsFullscreen(false);
           }}
         >
@@ -1607,9 +1577,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               <h3 className="text-lg font-semibold text-white truncate">{previewFile.name}</h3>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={toggleFullscreen}
+                  onClick={(e) => toggleFullscreen(e)}
                   className="p-2 hover:bg-[var(--border-color)] rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                  type="button"
                 >
                   {isFullscreen ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
