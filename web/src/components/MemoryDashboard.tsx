@@ -51,6 +51,7 @@ const MemoryDashboard: React.FC = () => {
       const hasIndexing = response.data.sources?.some(
         (s: Source) => s.status === 'indexing' || s.latest_job?.status === 'running'
       );
+      console.debug('[MEMORY] Sources fetched, hasIndexing:', hasIndexing, 'sources:', response.data.sources?.map((s: Source) => ({ id: s.id, status: s.status, job_status: s.latest_job?.status })));
       setIsPolling(hasIndexing);
     } catch (err: any) {
       console.error('Error fetching memory sources:', err);
@@ -72,9 +73,10 @@ const MemoryDashboard: React.FC = () => {
 
   useEffect(() => {
     // Always poll - either for indexing progress or to detect when service comes back online
-    const pollInterval = isPolling ? 3000 : 5000; // Poll every 3 seconds when indexing, 5 seconds when idle/offline
+    const pollInterval = isPolling ? 2000 : 5000; // Poll every 2 seconds when indexing, 5 seconds when idle/offline
     
     const interval = setInterval(() => {
+      console.debug('[MEMORY] Polling sources...', { isPolling, pollInterval });
       fetchSources();
     }, pollInterval);
 
@@ -83,16 +85,54 @@ const MemoryDashboard: React.FC = () => {
   }, [isPolling]);
 
   const handleReindex = async (sourceId: string) => {
+    console.log('[MEMORY] Reindex button clicked for source:', sourceId);
+    
+    // Optimistically update UI to show indexing status
+    setSources(prevSources => 
+      prevSources.map(s => 
+        s.id === sourceId 
+          ? { ...s, status: 'indexing' as const }
+          : s
+      )
+    );
+    
     try {
-      await axios.post('http://127.0.0.1:5858/reindex', { source_id: sourceId }, {
+      console.log('[MEMORY] Sending POST to http://127.0.0.1:5858/reindex with payload:', { source_id: sourceId });
+      
+      const response = await axios.post('http://127.0.0.1:5858/reindex', { source_id: sourceId }, {
         timeout: 10000, // 10 second timeout for reindex trigger
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      
+      console.log('[MEMORY] Reindex request successful:', response.status, response.data);
+      
+      // Enable polling to track progress
       setIsPolling(true);
-      // Refresh immediately
+      
+      // Refresh immediately to get the latest job status
       setTimeout(() => fetchSources(), 500);
     } catch (err: any) {
-      console.error('Error triggering reindex:', err);
-      alert(`Failed to trigger reindex: ${err.message || 'Unknown error'}`);
+      console.error('[MEMORY] Error triggering reindex:', err);
+      console.error('[MEMORY] Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        code: err.code,
+      });
+      
+      // Revert optimistic update on error
+      setSources(prevSources => 
+        prevSources.map(s => 
+          s.id === sourceId 
+            ? { ...s, status: 'error' as const, last_error: err.message || 'Unknown error' }
+            : s
+        )
+      );
+      
+      const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
+      alert(`Failed to trigger reindex: ${errorMsg}`);
     }
   };
 
@@ -151,10 +191,6 @@ const MemoryDashboard: React.FC = () => {
       </div>
     );
   }
-
-  const loadSources = () => {
-    fetchSources();
-  };
 
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--bg-primary)] p-6 transition-colors">
@@ -216,7 +252,13 @@ const MemoryDashboard: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleReindex(source.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('[MEMORY] Reindex button onClick fired for:', source.id);
+                          handleReindex(source.id);
+                        }}
                         disabled={source.status === 'indexing'}
                         className="px-3 py-1.5 text-sm bg-[var(--border-color)] hover:bg-[var(--bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-primary)] rounded transition-colors"
                       >

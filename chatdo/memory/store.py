@@ -42,6 +42,88 @@ def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[st
     ensure_thread_dirs(target_name, thread_id)
     path = thread_history_path(target_name, thread_id)
     path.write_text(json.dumps(messages, indent=2, ensure_ascii=False))
+    
+    # Index new messages into Memory Service (async, non-blocking)
+    # Only index the last message(s) that were just added
+    try:
+        # Try to load previous history to see what's new
+        try:
+            old_messages = json.loads(path.read_text()) if path.exists() else []
+        except:
+            old_messages = []
+        
+        # Find new messages (those not in old_messages)
+        old_message_ids = {msg.get("id") for msg in old_messages if msg.get("id")}
+        new_messages = [msg for msg in messages if msg.get("id") and msg.get("id") not in old_message_ids]
+        
+        # If we can't determine what's new, index the last message
+        if not new_messages and messages:
+            new_messages = [messages[-1]]
+        
+        # Index new messages
+        if new_messages:
+            # Get project_id from target_name or from message metadata
+            # For now, we'll need to get it from the project config
+            # This is a simplified approach - in practice, you'd pass project_id explicitly
+            project_id = None
+            try:
+                from pathlib import Path
+                projects_path = Path(__file__).parent.parent.parent / "server" / "data" / "projects.json"
+                if projects_path.exists():
+                    import json as json_module
+                    with open(projects_path, 'r') as f:
+                        projects = json_module.load(f)
+                        # Find project by default_target matching target_name
+                        for project in projects:
+                            if project.get("default_target") == target_name:
+                                project_id = project.get("id")
+                                break
+            except Exception:
+                pass
+            
+            if project_id:
+                from server.services.memory_service_client import get_memory_client
+                client = get_memory_client()
+                
+                for msg in new_messages:
+                    role = msg.get("role")
+                    content = msg.get("content", "")
+                    message_id = msg.get("id", "")
+                    
+                    # Only index user and assistant messages (not system)
+                    if role in ("user", "assistant") and content and message_id:
+                        # Get timestamp
+                        timestamp = msg.get("timestamp")
+                        if not timestamp:
+                            from datetime import datetime
+                            timestamp = datetime.now().isoformat()
+                        elif isinstance(timestamp, str):
+                            pass  # Already ISO string
+                        else:
+                            timestamp = timestamp.isoformat()
+                        
+                        # Get message index
+                        message_index = len([m for m in messages if m.get("role") == role])
+                        
+                        # Index asynchronously (fire and forget)
+                        try:
+                            client.index_chat_message(
+                                project_id=project_id,
+                                chat_id=thread_id,
+                                message_id=message_id,
+                                role=role,
+                                content=content,
+                                timestamp=timestamp,
+                                message_index=message_index
+                            )
+                        except Exception as e:
+                            # Log but don't fail - indexing is best effort
+                            import logging
+                            logging.getLogger(__name__).debug(f"Failed to index message {message_id}: {e}")
+    except Exception as e:
+        # Don't fail if indexing fails - it's best effort
+        import logging
+        logging.getLogger(__name__).debug(f"Failed to index messages: {e}")
 
 def delete_thread_history(target_name: str, thread_id: str) -> None:
     """

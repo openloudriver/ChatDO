@@ -26,15 +26,16 @@ class MemoryServiceClient:
         except Exception:
             return False
     
-    def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None) -> List[Dict]:
+    def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None, chat_id: Optional[str] = None) -> List[Dict]:
         """
-        Search for relevant chunks in a project's indexed files.
+        Search for relevant chunks in a project's indexed files and chat messages.
         
         Args:
             project_id: The project ID (e.g., "drr", "privacypay")
             query: Search query string
             limit: Maximum number of results to return
             source_ids: Optional list of source IDs to search. If None, uses [project_id] as fallback.
+            chat_id: Optional chat ID to exclude from results (to avoid echoing current conversation)
             
         Returns:
             List of search results with score, file_path, text, etc.
@@ -56,7 +57,8 @@ class MemoryServiceClient:
                     "project_id": project_id,
                     "query": query,
                     "limit": limit,
-                    "source_ids": source_ids
+                    "source_ids": source_ids,
+                    "chat_id": chat_id
                 },
                 timeout=5
             )
@@ -72,7 +74,7 @@ class MemoryServiceClient:
         Format search results into a context block for the AI prompt.
         
         Args:
-            results: List of search result dictionaries
+            results: List of search result dictionaries (can include both files and chat messages)
             
         Returns:
             Formatted context string
@@ -83,17 +85,26 @@ class MemoryServiceClient:
         context_parts = ["[PROJECT MEMORY]"]
         
         for i, result in enumerate(results, 1):
-            file_path = result.get("file_path", "unknown")
-            # Make path relative if it's an absolute path
-            if "/" in file_path:
-                # Try to extract just the filename or a relative portion
-                parts = file_path.split("/")
-                if len(parts) > 2:
-                    # Show last 2 parts
-                    file_path = "/".join(parts[-2:])
+            source_type = result.get("source_type", "file")
+            
+            if source_type == "chat":
+                # Format chat message source
+                chat_id = result.get("chat_id", "unknown")
+                message_id = result.get("message_id", "unknown")
+                context_parts.append(f"\n{i}) Source: Chat message (chat_id: {chat_id[:8]}...)")
+            else:
+                # Format file source
+                file_path = result.get("file_path", "unknown")
+                # Make path relative if it's an absolute path
+                if file_path and "/" in file_path:
+                    # Try to extract just the filename or a relative portion
+                    parts = file_path.split("/")
+                    if len(parts) > 2:
+                        # Show last 2 parts
+                        file_path = "/".join(parts[-2:])
+                context_parts.append(f"\n{i}) Source: {file_path}")
             
             chunk_text = result.get("text", "")
-            context_parts.append(f"\n{i}) Source: {file_path}")
             context_parts.append("---")
             context_parts.append(chunk_text)
         
@@ -156,6 +167,55 @@ class MemoryServiceClient:
         except Exception as e:
             logger.warning(f"Memory Service trigger_reindex failed: {e}")
             return None
+    
+    def index_chat_message(
+        self,
+        project_id: str,
+        chat_id: str,
+        message_id: str,
+        role: str,
+        content: str,
+        timestamp: str,
+        message_index: int
+    ) -> bool:
+        """
+        Index a chat message into the Memory Service.
+        
+        Args:
+            project_id: The project ID
+            chat_id: The chat/conversation ID
+            message_id: Unique message ID
+            role: "user" or "assistant"
+            content: Message content
+            timestamp: ISO format datetime string
+            message_index: Index of message in the conversation
+            
+        Returns:
+            True if indexed successfully, False otherwise
+        """
+        if not self.is_available():
+            logger.debug("Memory Service is not available, skipping chat message indexing")
+            return False
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/index-chat-message",
+                json={
+                    "project_id": project_id,
+                    "chat_id": chat_id,
+                    "message_id": message_id,
+                    "role": role,
+                    "content": content,
+                    "timestamp": timestamp,
+                    "message_index": message_index
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            logger.warning(f"Memory Service index_chat_message failed: {e}")
+            return False
     
     def add_memory_source(self, root_path: str, display_name: Optional[str] = None,
                           project_id: Optional[str] = "scratch") -> Dict:
@@ -230,14 +290,16 @@ def get_memory_sources_for_project(project_id: str) -> List[str]:
     return project.get("memory_sources") or []
 
 
-def get_project_memory_context(project_id: str | None, query: str, limit: int = 8) -> Optional[tuple[str, bool]]:
+def get_project_memory_context(project_id: str | None, query: str, limit: int = 8, chat_id: Optional[str] = None) -> Optional[tuple[str, bool]]:
     """
     Get memory context for a project and format it for injection into prompts.
+    Includes both file-based sources and cross-chat memory (excluding current chat).
     
     Args:
         project_id: The project ID (can be None)
         query: Search query (typically the user's message)
         limit: Maximum number of results
+        chat_id: Optional chat ID to exclude from results (to avoid echoing current conversation)
         
     Returns:
         Tuple of (formatted context string, has_results: bool) or None if no project_id or no sources
@@ -247,12 +309,11 @@ def get_project_memory_context(project_id: str | None, query: str, limit: int = 
         return None
     
     source_ids = get_memory_sources_for_project(project_id)
-    if not source_ids:
-        # No sources attached -> skip memory search
-        return None
+    # Even if no file sources, we still want to search chat messages
+    # So we don't return None here - we'll search chats regardless
     
     client = get_memory_client()
-    results = client.search(project_id, query, limit, source_ids)
+    results = client.search(project_id, query, limit, source_ids, chat_id=chat_id)
     if results:
         return client.format_context(results), True
     return "", False

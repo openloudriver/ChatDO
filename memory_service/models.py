@@ -33,10 +33,25 @@ class File:
 
 
 @dataclass
-class Chunk:
-    """Represents a text chunk from a file."""
+class ChatMessage:
+    """Represents an indexed chat message."""
     id: int
-    file_id: int
+    source_id: int
+    project_id: str
+    chat_id: str
+    message_id: str
+    role: str
+    content: str
+    timestamp: datetime
+    message_index: int
+
+
+@dataclass
+class Chunk:
+    """Represents a text chunk from a file or chat message."""
+    id: int
+    file_id: Optional[int]
+    chat_message_id: Optional[int]
     chunk_index: int
     text: str
     start_char: int
@@ -58,12 +73,15 @@ class SearchResult:
     score: float
     project_id: str
     source_id: str
-    file_path: str
-    filetype: str
+    file_path: Optional[str]  # None for chat messages
+    filetype: Optional[str]  # None for chat messages
     chunk_index: int
     text: str
     start_char: int
     end_char: int
+    source_type: str = "file"  # "file" or "chat"
+    chat_id: Optional[str] = None  # For chat messages
+    message_id: Optional[str] = None  # For chat messages
 
 
 @dataclass

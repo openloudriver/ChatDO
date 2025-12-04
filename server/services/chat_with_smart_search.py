@@ -13,6 +13,26 @@ from .memory_service_client import get_project_memory_context, get_memory_client
 logger = logging.getLogger(__name__)
 
 
+def build_model_label(used_web: bool, used_memory: bool) -> str:
+    """
+    Build model label based on what was used.
+    
+    Returns:
+        - "GPT-5" if neither web nor memory
+        - "Memory + GPT-5" if only memory
+        - "Web + GPT-5" if only web
+        - "Web + Memory + GPT-5" if both
+    """
+    if used_web and used_memory:
+        return "Web + Memory + GPT-5"
+    elif used_web:
+        return "Web + GPT-5"
+    elif used_memory:
+        return "Memory + GPT-5"
+    else:
+        return "GPT-5"
+
+
 async def chat_with_smart_search(
     user_message: str,
     target_name: str = "general",
@@ -66,13 +86,15 @@ async def chat_with_smart_search(
     # 0. Get memory context if project_id is available
     memory_context = ""
     sources = []
+    has_memory = False
     if project_id:
         try:
-            memory_result = get_project_memory_context(project_id, user_message, limit=8)
+            # Pass thread_id as chat_id to exclude current chat from results
+            memory_result = get_project_memory_context(project_id, user_message, limit=12, chat_id=thread_id)
             if memory_result:
                 memory_context, has_memory = memory_result
             if has_memory:
-                logger.info(f"Retrieved memory context for project {project_id}")
+                logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id}")
                 # Get source names from the actual sources used
                 from server.services.memory_service_client import get_memory_sources_for_project
                 from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
@@ -112,6 +134,13 @@ async def chat_with_smart_search(
         
         content = assistant_messages[0].get("content", "") if assistant_messages else ""
         
+        # Build model label based on what was used
+        used_web = False
+        used_memory = has_memory
+        
+        model_display = build_model_label(used_web=used_web, used_memory=used_memory)
+        logger.info(f"[MODEL] model label = {model_display}")
+        
         # Save to memory store if thread_id is provided
         if thread_id:
             try:
@@ -123,7 +152,7 @@ async def chat_with_smart_search(
                     "model": model_display,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False}
+                    "meta": {"usedWebSearch": False, "usedMemory": used_memory}
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
             except Exception as e:
@@ -134,6 +163,7 @@ async def chat_with_smart_search(
             "content": content,
             "meta": {
                 "usedWebSearch": False,
+                "usedMemory": used_memory,
             },
             "model": model_display,
             "provider": provider_id,
@@ -327,7 +357,7 @@ async def chat_with_smart_search(
             history.append({
                 "role": "assistant",
                 "content": content,
-                "model": "Web + GPT-5" if web_sources else model_display,
+                "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory),
                 "provider": provider_id,
                 "sources": all_sources if all_sources else None,
                 "meta": {
@@ -347,9 +377,10 @@ async def chat_with_smart_search(
         "content": content,
         "meta": {
             "usedWebSearch": True,
+            "usedMemory": has_memory,
             "webResultsPreview": web_results[:5]  # Top 5 for sources display
         },
-        "model": "Web + GPT-5" if web_sources else model_display,
+        "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory),
         "provider": provider_id,
         "sources": all_sources if all_sources else None
     }
