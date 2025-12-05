@@ -559,8 +559,13 @@ Keep it concise, neutral, and factual."""
             
             # Save to memory store
             if conversation_id:
+                from datetime import datetime, timezone
+                from server.services.memory_service_client import get_memory_client
                 from chatdo.memory.store import save_thread_history
+                
                 history = load_thread_history(target_cfg.name, conversation_id)
+                message_index = len(history)
+                
                 history.append({"role": "user", "content": message})
                 history.append({
                     "role": "assistant",
@@ -570,6 +575,38 @@ Keep it concise, neutral, and factual."""
                     "sources": sources
                 })
                 save_thread_history(target_cfg.name, conversation_id, history)
+                
+                # Index messages into Memory Service for cross-chat search
+                if project_id:
+                    try:
+                        memory_client = get_memory_client()
+                        now = datetime.now(timezone.utc).isoformat()
+                        
+                        # Index user message
+                        user_message_id = f"{conversation_id}-user-{message_index}"
+                        memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=conversation_id,
+                            message_id=user_message_id,
+                            role="user",
+                            content=message,
+                            timestamp=now,
+                            message_index=message_index
+                        )
+                        
+                        # Index assistant message
+                        assistant_message_id = f"{conversation_id}-assistant-{message_index + 1}"
+                        memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=conversation_id,
+                            message_id=assistant_message_id,
+                            role="assistant",
+                            content=content,
+                            timestamp=now,
+                            message_index=message_index + 1
+                        )
+                    except Exception as e:
+                        print(f"[MEMORY] Warning: Failed to index messages: {e}")
             
             # Stream the response as chunks
             chunk_size = 50
@@ -816,6 +853,66 @@ Keep it concise, neutral, and factual."""
                     "content": error_note,
                     "done": False
                 })
+        
+        # Index messages into Memory Service for cross-chat search
+        # Note: run_agent already saved messages to thread history
+        if conversation_id and project_id:
+            try:
+                from datetime import datetime, timezone
+                from server.services.memory_service_client import get_memory_client
+                from chatdo.memory.store import load_thread_history
+                
+                # Load the history that run_agent just saved
+                history = load_thread_history(target_cfg.name, conversation_id)
+                
+                # Find the last user and assistant messages (just added by run_agent)
+                # We need to index both if they exist
+                user_msg_idx = None
+                assistant_msg_idx = None
+                for i in range(len(history) - 1, -1, -1):
+                    if history[i].get("role") == "assistant" and assistant_msg_idx is None:
+                        assistant_msg_idx = i
+                    elif history[i].get("role") == "user" and user_msg_idx is None:
+                        user_msg_idx = i
+                    if user_msg_idx is not None and assistant_msg_idx is not None:
+                        break
+                
+                memory_client = get_memory_client()
+                now = datetime.now(timezone.utc).isoformat()
+                
+                # Index user message
+                if user_msg_idx is not None:
+                    user_msg = history[user_msg_idx]
+                    user_content = user_msg.get("content", "")
+                    if user_content:
+                        user_message_id = f"{conversation_id}-user-{user_msg_idx}"
+                        memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=conversation_id,
+                            message_id=user_message_id,
+                            role="user",
+                            content=user_content,
+                            timestamp=now,
+                            message_index=user_msg_idx
+                        )
+                
+                # Index assistant message
+                if assistant_msg_idx is not None:
+                    assistant_msg = history[assistant_msg_idx]
+                    assistant_content = assistant_msg.get("content", "")
+                    if assistant_content:
+                        assistant_message_id = f"{conversation_id}-assistant-{assistant_msg_idx}"
+                        memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=conversation_id,
+                            message_id=assistant_message_id,
+                            role="assistant",
+                            content=assistant_content,
+                            timestamp=now,
+                            message_index=assistant_msg_idx
+                        )
+            except Exception as e:
+                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}")
         
         # Update chat's updated_at timestamp
         if conversation_id:

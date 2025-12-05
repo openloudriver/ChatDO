@@ -887,11 +887,75 @@ async def chat(request: ChatRequest):
                 sources=["RAG-Upload"] if source_files else None
             )
         
-        # 5) Update chat's updated_at timestamp when a message is sent
+        # 5) Index messages into Memory Service for cross-chat search
+        # Note: run_agent already saved messages to thread history
+        if request.conversation_id and request.project_id:
+            try:
+                from datetime import datetime, timezone
+                from server.services.memory_service_client import get_memory_client
+                
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == request.project_id), None)
+                if project:
+                    target_name = get_target_name_from_project(project)
+                    thread_id = request.conversation_id
+                    
+                    # Load the history that run_agent just saved
+                    history = load_thread_history(target_name, thread_id)
+                    
+                    # Find the last user and assistant messages (just added by run_agent)
+                    user_msg_idx = None
+                    assistant_msg_idx = None
+                    for i in range(len(history) - 1, -1, -1):
+                        if history[i].get("role") == "assistant" and assistant_msg_idx is None:
+                            assistant_msg_idx = i
+                        elif history[i].get("role") == "user" and user_msg_idx is None:
+                            user_msg_idx = i
+                        if user_msg_idx is not None and assistant_msg_idx is not None:
+                            break
+                    
+                    memory_client = get_memory_client()
+                    now = datetime.now(timezone.utc).isoformat()
+                    
+                    # Index user message
+                    if user_msg_idx is not None:
+                        user_msg = history[user_msg_idx]
+                        user_content = user_msg.get("content", "")
+                        if user_content:
+                            user_message_id = f"{thread_id}-user-{user_msg_idx}"
+                            memory_client.index_chat_message(
+                                project_id=request.project_id,
+                                chat_id=thread_id,
+                                message_id=user_message_id,
+                                role="user",
+                                content=user_content,
+                                timestamp=now,
+                                message_index=user_msg_idx
+                            )
+                    
+                    # Index assistant message
+                    if assistant_msg_idx is not None:
+                        assistant_msg = history[assistant_msg_idx]
+                        assistant_content = assistant_msg.get("content", "")
+                        if assistant_content:
+                            assistant_message_id = f"{thread_id}-assistant-{assistant_msg_idx}"
+                            memory_client.index_chat_message(
+                                project_id=request.project_id,
+                                chat_id=thread_id,
+                                message_id=assistant_message_id,
+                                role="assistant",
+                                content=assistant_content,
+                                timestamp=now,
+                                message_index=assistant_msg_idx
+                            )
+            except Exception as e:
+                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}")
+        
+        # 6) Update chat's updated_at timestamp when a message is sent
         if request.conversation_id:
             update_chat_timestamp(request.conversation_id)
         
-        # 6) If no tasks, return (run_agent already saved the message)
+        # 7) If no tasks, return (run_agent already saved the message)
         if not tasks_json:
             return ChatResponse(reply=human_text, model_used=model_display, provider=provider)
         

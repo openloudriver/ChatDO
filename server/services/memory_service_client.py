@@ -35,7 +35,8 @@ class MemoryServiceClient:
             query: Search query string
             limit: Maximum number of results to return
             source_ids: Optional list of source IDs to search. If None, uses [project_id] as fallback.
-            chat_id: Optional chat ID to exclude from results (to avoid echoing current conversation)
+            chat_id: DEPRECATED - kept for backward compatibility but no longer excludes chats.
+                     All chats in the project are now included in search results.
             
         Returns:
             List of search results with score, file_path, text, etc.
@@ -293,13 +294,13 @@ def get_memory_sources_for_project(project_id: str) -> List[str]:
 def get_project_memory_context(project_id: str | None, query: str, limit: int = 8, chat_id: Optional[str] = None) -> Optional[tuple[str, bool]]:
     """
     Get memory context for a project and format it for injection into prompts.
-    Includes both file-based sources and cross-chat memory (excluding current chat).
+    Includes both file-based sources and cross-chat memory from ALL chats in the project.
     
     Args:
         project_id: The project ID (can be None)
         query: Search query (typically the user's message)
         limit: Maximum number of results
-        chat_id: Optional chat ID to exclude from results (to avoid echoing current conversation)
+        chat_id: DEPRECATED - kept for backward compatibility but no longer excludes chats
         
     Returns:
         Tuple of (formatted context string, has_results: bool) or None if no project_id or no sources
@@ -313,7 +314,8 @@ def get_project_memory_context(project_id: str | None, query: str, limit: int = 
     # So we don't return None here - we'll search chats regardless
     
     client = get_memory_client()
-    results = client.search(project_id, query, limit, source_ids, chat_id=chat_id)
+    # Pass None for chat_id to include ALL chats (including current chat)
+    results = client.search(project_id, query, limit, source_ids, chat_id=None)
     if results:
         return client.format_context(results), True
     return "", False

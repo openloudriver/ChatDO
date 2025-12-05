@@ -92,7 +92,7 @@ class SearchRequest(BaseModel):
     query: str
     limit: int = 10
     source_ids: Optional[List[str]] = None
-    chat_id: Optional[str] = None  # Exclude this chat from results
+    chat_id: Optional[str] = None  # DEPRECATED: No longer excludes chats. All chats are included.
 
 
 class SearchResult(BaseModel):
@@ -551,12 +551,12 @@ async def search(request: SearchRequest):
                 logger.warning(f"Error searching source {source_id}: {e}")
                 continue
         
-        # Also search chat messages for this project (excluding current chat if provided)
+        # Also search chat messages for this project (include ALL chats, including current chat)
         try:
             chat_embeddings = db.get_chat_embeddings_for_project(
                 request.project_id, 
                 EMBEDDING_MODEL, 
-                exclude_chat_id=request.chat_id
+                exclude_chat_id=None  # Include all chats, including current chat
             )
             all_embeddings.extend(chat_embeddings)
         except Exception as e:

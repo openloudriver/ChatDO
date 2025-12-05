@@ -1376,7 +1376,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                           ? 'text-blue-400 cursor-wait'
                                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                                       }`}
-                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize this URL"}
+                                      title={isSummarized ? "Summary created" : isSummarizing ? "Summarizing..." : "Summarize URL"}
                                     >
                                       {isSummarizing ? (
                                         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
