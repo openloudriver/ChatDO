@@ -103,8 +103,25 @@ def extract_text_with_unstructured(path: Path) -> str:
         return ""
     
     try:
-        elements = partition(filename=str(path))
-        logger.debug(f"[MEMORY] Unstructured extracted {len(elements)} elements from {path}")
+        # Use enhanced extraction options now that we have system dependencies installed
+        # (pandoc, poppler, tesseract, imagemagick, ghostscript, etc.)
+        # Try hi_res first for best quality, fallback to fast if it fails
+        try:
+            elements = partition(
+                filename=str(path),
+                # High-resolution strategy for best quality (uses poppler, tesseract if available)
+                strategy="hi_res",
+                # Extract images in PDFs for OCR (uses tesseract)
+                extract_images_in_pdf=True,
+                # OCR languages (uses tesseract)
+                ocr_languages=["eng"],
+            )
+            logger.debug(f"[MEMORY] Unstructured extracted {len(elements)} elements from {path} (hi_res)")
+        except Exception as hi_res_error:
+            # Fallback to fast strategy if hi_res fails (e.g., timeout or missing dependencies)
+            logger.debug(f"[MEMORY] hi_res extraction failed for {path}, trying fast strategy: {hi_res_error}")
+            elements = partition(filename=str(path))
+            logger.debug(f"[MEMORY] Unstructured extracted {len(elements)} elements from {path} (fast fallback)")
     except Exception as e:
         logger.exception(f"[MEMORY] Unstructured extraction failed for {path}: {e}")
         return ""
