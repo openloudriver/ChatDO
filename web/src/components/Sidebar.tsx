@@ -93,7 +93,6 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
       ref={setNodeRef}
       style={style}
       className="group relative mb-1"
-      onMouseLeave={() => setOpenMenuId(null)}
     >
       <button
         {...attributes}
@@ -135,6 +134,8 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
           className="absolute right-0 mt-1 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-50 transition-colors"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onMouseEnter={() => setOpenMenuId(project.id)}
+          onMouseLeave={() => setOpenMenuId(null)}
         >
           <button
             onClick={() => {
