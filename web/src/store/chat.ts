@@ -391,14 +391,22 @@ export const useChatStore = create<ChatStore>((set) => ({
       }
       
       // Sort by updated_at (most recent first)
-      const sortByDate = (a: Conversation, b: Conversation) => {
+      // For active chats, use updatedAt (fallback to createdAt)
+      // For trashed chats, use trashed_at (fallback to createdAt)
+      const sortActiveChats = (a: Conversation, b: Conversation) => {
+        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        return bTime - aTime;
+      };
+      
+      const sortTrashedChats = (a: Conversation, b: Conversation) => {
         const dateA = new Date(a.trashed_at || a.createdAt).getTime();
         const dateB = new Date(b.trashed_at || b.createdAt).getTime();
         return dateB - dateA;
       };
       
-      activeChats.sort(sortByDate);
-      trashedChats.sort(sortByDate);
+      activeChats.sort(sortActiveChats);
+      trashedChats.sort(sortTrashedChats);
       
       // Set conversations first (so UI can render immediately)
       set((state) => {
@@ -429,7 +437,24 @@ export const useChatStore = create<ChatStore>((set) => ({
           const otherProjectChats = state.allConversations.filter(
             c => c.projectId !== projectId
           );
-          update.allConversations = [...otherProjectChats, ...activeChats];
+          // Merge and deduplicate by id, keeping the most recent version
+          const merged = [...otherProjectChats, ...activeChats];
+          const deduplicated = new Map<string, Conversation>();
+          for (const chat of merged) {
+            if (!chat.id) continue;
+            const existing = deduplicated.get(chat.id);
+            if (!existing) {
+              deduplicated.set(chat.id, chat);
+            } else {
+              // Keep the one with the more recent updatedAt
+              const existingTime = existing.updatedAt ?? existing.createdAt?.toISOString() ?? '';
+              const newTime = chat.updatedAt ?? chat.createdAt?.toISOString() ?? '';
+              if (newTime > existingTime) {
+                deduplicated.set(chat.id, chat);
+              }
+            }
+          }
+          update.allConversations = Array.from(deduplicated.values());
         }
         
         return update;
@@ -1216,6 +1241,13 @@ export const useChatStore = create<ChatStore>((set) => ({
         },
         ragFileIds: [],
       }));
+      
+      // Reload all chats in the background to update allConversations with latest from all projects
+      // This ensures the Recent section shows the correct chats
+      setTimeout(() => {
+        const { loadChats } = useChatStore.getState();
+        loadChats(); // Load all chats (no project filter) to update allConversations
+      }, 200);
       
       return newConversation;
     } catch (error) {
