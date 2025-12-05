@@ -104,12 +104,15 @@ async def chat_with_smart_search(
             from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
             source_ids = get_memory_sources_for_project(project_id)
             # Get source display names from Memory Service
-            client = get_memory_client()
-            all_sources = client.get_sources()
-            source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
-            for source_id in source_ids:
-                source_name = source_map.get(source_id, source_id)
-                sources.append(f"Memory-{source_name}")
+            try:
+                client = get_memory_client()
+                all_sources = client.get_sources()
+                source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
+                for source_id in source_ids:
+                    source_name = source_map.get(source_id, source_id)
+                    sources.append(f"Memory-{source_name}")
+            except Exception as source_error:
+                logger.debug(f"Failed to get source names: {source_error}")
         except Exception as e:
             logger.warning(f"Failed to get memory context: {e}")
     
@@ -140,7 +143,7 @@ async def chat_with_smart_search(
         
         # Build model label based on what was used
         used_web = False
-        used_memory = searched_memory  # Show Memory if we searched, even if no results
+        used_memory = has_memory  # Only show Memory if we actually found and used memory results
         
         model_display = build_model_label(used_web=used_web, used_memory=used_memory)
         logger.info(f"[MODEL] model label = {model_display}")
@@ -148,8 +151,40 @@ async def chat_with_smart_search(
         # Save to memory store if thread_id is provided
         if thread_id:
             try:
+                from datetime import datetime, timezone
+                from server.services.memory_service_client import get_memory_client
+                
                 history = memory_store.load_thread_history(target_name, thread_id)
+                message_index = len(history)
+                
+                # Add user message
                 history.append({"role": "user", "content": user_message})
+                
+                # Index user message into Memory Service for cross-chat search
+                if project_id:
+                    try:
+                        memory_client = get_memory_client()
+                        user_message_id = f"{thread_id}-user-{message_index}"
+                        logger.info(f"[MEMORY] Attempting to index user message {user_message_id} for project {project_id}")
+                        success = memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=thread_id,
+                            message_id=user_message_id,
+                            role="user",
+                            content=user_message,
+                            timestamp=datetime.now(timezone.utc).isoformat(),
+                            message_index=message_index
+                        )
+                        if success:
+                            logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id}")
+                        else:
+                            logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+                    except Exception as e:
+                        logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+                else:
+                    logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
+                
+                # Add assistant message
                 history.append({
                     "role": "assistant",
                     "content": content,
@@ -159,6 +194,30 @@ async def chat_with_smart_search(
                     "meta": {"usedWebSearch": False, "usedMemory": used_memory}
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
+                
+                # Index assistant message into Memory Service for cross-chat search
+                if project_id:
+                    try:
+                        memory_client = get_memory_client()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        logger.info(f"[MEMORY] Attempting to index assistant message {assistant_message_id} for project {project_id}")
+                        success = memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=thread_id,
+                            message_id=assistant_message_id,
+                            role="assistant",
+                            content=content,
+                            timestamp=datetime.now(timezone.utc).isoformat(),
+                            message_index=message_index + 1
+                        )
+                        if success:
+                            logger.info(f"[MEMORY] ✅ Successfully indexed assistant message {assistant_message_id} for project {project_id}")
+                        else:
+                            logger.warning(f"[MEMORY] ❌ Failed to index assistant message {assistant_message_id} for project {project_id} (Memory Service returned False)")
+                    except Exception as e:
+                        logger.warning(f"[MEMORY] ❌ Exception indexing assistant message: {e}", exc_info=True)
+                else:
+                    logger.warning(f"[MEMORY] ⚠️  Skipping assistant message indexing: project_id is None (thread_id={thread_id})")
             except Exception as e:
                 logger.warning(f"Failed to save conversation history: {e}")
         
@@ -361,6 +420,7 @@ async def chat_with_smart_search(
                 try:
                     memory_client = get_memory_client()
                     user_message_id = f"{thread_id}-user-{message_index}"
+                    logger.info(f"[MEMORY] Attempting to index user message {user_message_id} for project {project_id}")
                     success = memory_client.index_chat_message(
                         project_id=project_id,
                         chat_id=thread_id,
@@ -371,11 +431,13 @@ async def chat_with_smart_search(
                         message_index=message_index
                     )
                     if success:
-                        logger.info(f"[MEMORY] Indexed user message {user_message_id} for project {project_id}")
+                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id}")
                     else:
-                        logger.warning(f"[MEMORY] Failed to index user message {user_message_id} for project {project_id}")
+                        logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
                 except Exception as e:
-                    logger.warning(f"[MEMORY] Failed to index user message: {e}", exc_info=True)
+                    logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+            else:
+                logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
             
             # Add assistant message
             # Add Brave Search to sources if web search was used
@@ -388,7 +450,7 @@ async def chat_with_smart_search(
             assistant_message = {
                 "role": "assistant",
                 "content": content,
-                "model": build_model_label(used_web=bool(web_sources), used_memory=searched_memory),
+                "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory),
                 "provider": provider_id,
                 "sources": all_sources if all_sources else None,
                 "meta": {
@@ -404,6 +466,7 @@ async def chat_with_smart_search(
                 try:
                     memory_client = get_memory_client()
                     assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                    logger.info(f"[MEMORY] Attempting to index assistant message {assistant_message_id} for project {project_id}")
                     success = memory_client.index_chat_message(
                         project_id=project_id,
                         chat_id=thread_id,
@@ -414,11 +477,13 @@ async def chat_with_smart_search(
                         message_index=message_index + 1
                     )
                     if success:
-                        logger.info(f"[MEMORY] Indexed assistant message {assistant_message_id} for project {project_id}")
+                        logger.info(f"[MEMORY] ✅ Successfully indexed assistant message {assistant_message_id} for project {project_id}")
                     else:
-                        logger.warning(f"[MEMORY] Failed to index assistant message {assistant_message_id} for project {project_id}")
+                        logger.warning(f"[MEMORY] ❌ Failed to index assistant message {assistant_message_id} for project {project_id} (Memory Service returned False)")
                 except Exception as e:
-                    logger.warning(f"[MEMORY] Failed to index assistant message: {e}", exc_info=True)
+                    logger.warning(f"[MEMORY] ❌ Exception indexing assistant message: {e}", exc_info=True)
+            else:
+                logger.warning(f"[MEMORY] ⚠️  Skipping assistant message indexing: project_id is None (thread_id={thread_id})")
         except Exception as e:
             logger.warning(f"Failed to save conversation history: {e}")
     

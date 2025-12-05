@@ -195,7 +195,7 @@ class MemoryServiceClient:
             True if indexed successfully, False otherwise
         """
         if not self.is_available():
-            logger.debug("Memory Service is not available, skipping chat message indexing")
+            logger.warning("[MEMORY] Memory Service is not available, skipping chat message indexing")
             return False
         
         try:

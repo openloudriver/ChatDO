@@ -519,11 +519,8 @@ async def search(request: SearchRequest):
     Uses query expansion to improve recall for table-heavy documents.
     """
     try:
-        # Require source_ids
-        if not request.source_ids:
-            return SearchResponse(results=[])
-        
         # Query expansion: extract key terms and search for them individually
+        # Note: We allow empty source_ids to enable chat-only searches
         # This helps with table-heavy PDFs where the full query might not match well
         query_terms = []
         original_query = request.query.lower()
@@ -543,13 +540,14 @@ async def search(request: SearchRequest):
         
         # Search across all specified sources (files)
         all_embeddings = []
-        for source_id in request.source_ids:
-            try:
-                source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
-                all_embeddings.extend(source_embeddings)
-            except Exception as e:
-                logger.warning(f"Error searching source {source_id}: {e}")
-                continue
+        if request.source_ids:  # Only search file sources if source_ids is provided
+            for source_id in request.source_ids:
+                try:
+                    source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
+                    all_embeddings.extend(source_embeddings)
+                except Exception as e:
+                    logger.warning(f"Error searching source {source_id}: {e}")
+                    continue
         
         # Also search chat messages for this project (include ALL chats, including current chat)
         try:
