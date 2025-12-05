@@ -42,8 +42,16 @@ env/
 Thumbs.db
 
 # ChatDO memory (thread history)
-# Exclude memory from git to keep conversation history private
-memory/
+# Exclude runtime data from git to keep conversation history private
+# But keep the code files (store.py, etc.)
+chatdo/memory/*.db
+chatdo/memory/*.sqlite
+chatdo/memory/chats.json
+chatdo/memory/projects.json
+chatdo/memory/**/*.db
+chatdo/memory/**/*.sqlite
+# Keep the actual code
+!chatdo/memory/store.py
 
 # Node.js / React
 node_modules/
