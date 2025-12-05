@@ -361,7 +361,7 @@ async def chat_with_smart_search(
                 try:
                     memory_client = get_memory_client()
                     user_message_id = f"{thread_id}-user-{message_index}"
-                    memory_client.index_chat_message(
+                    success = memory_client.index_chat_message(
                         project_id=project_id,
                         chat_id=thread_id,
                         message_id=user_message_id,
@@ -370,8 +370,12 @@ async def chat_with_smart_search(
                         timestamp=datetime.now(timezone.utc).isoformat(),
                         message_index=message_index
                     )
+                    if success:
+                        logger.info(f"[MEMORY] Indexed user message {user_message_id} for project {project_id}")
+                    else:
+                        logger.warning(f"[MEMORY] Failed to index user message {user_message_id} for project {project_id}")
                 except Exception as e:
-                    logger.debug(f"Failed to index user message: {e}")
+                    logger.warning(f"[MEMORY] Failed to index user message: {e}", exc_info=True)
             
             # Add assistant message
             # Add Brave Search to sources if web search was used
@@ -400,7 +404,7 @@ async def chat_with_smart_search(
                 try:
                     memory_client = get_memory_client()
                     assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
-                    memory_client.index_chat_message(
+                    success = memory_client.index_chat_message(
                         project_id=project_id,
                         chat_id=thread_id,
                         message_id=assistant_message_id,
@@ -409,8 +413,12 @@ async def chat_with_smart_search(
                         timestamp=datetime.now(timezone.utc).isoformat(),
                         message_index=message_index + 1
                     )
+                    if success:
+                        logger.info(f"[MEMORY] Indexed assistant message {assistant_message_id} for project {project_id}")
+                    else:
+                        logger.warning(f"[MEMORY] Failed to index assistant message {assistant_message_id} for project {project_id}")
                 except Exception as e:
-                    logger.debug(f"Failed to index assistant message: {e}")
+                    logger.warning(f"[MEMORY] Failed to index assistant message: {e}", exc_info=True)
         except Exception as e:
             logger.warning(f"Failed to save conversation history: {e}")
     

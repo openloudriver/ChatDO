@@ -606,7 +606,7 @@ Keep it concise, neutral, and factual."""
                             message_index=message_index + 1
                         )
                     except Exception as e:
-                        print(f"[MEMORY] Warning: Failed to index messages: {e}")
+                        print(f"[MEMORY] Warning: Failed to index messages: {e}", exc_info=True)
             
             # Stream the response as chunks
             chunk_size = 50
@@ -912,7 +912,7 @@ Keep it concise, neutral, and factual."""
                             message_index=assistant_msg_idx
                         )
             except Exception as e:
-                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}")
+                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}", exc_info=True)
         
         # Update chat's updated_at timestamp
         if conversation_id:

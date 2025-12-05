@@ -949,7 +949,7 @@ async def chat(request: ChatRequest):
                                 message_index=assistant_msg_idx
                             )
             except Exception as e:
-                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}")
+                print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}", exc_info=True)
         
         # 6) Update chat's updated_at timestamp when a message is sent
         if request.conversation_id:
