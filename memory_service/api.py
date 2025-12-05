@@ -277,13 +277,16 @@ async def delete_source(source_id: str):
                     updated = True
             
             if updated:
+                # Atomic write to projects.json
+                import tempfile
+                import shutil
                 temp_path = projects_path.with_suffix('.json.tmp')
                 with open(temp_path, 'w') as pf:
                     json.dump(projects, pf, indent=2)
-                temp_path.replace(projects_path)
+                shutil.move(str(temp_path), str(projects_path))
                 logger.info(f"Removed {source_id} from project connections")
     except Exception as e:
-        logger.warning(f"Could not update projects.json: {e}")
+        logger.error(f"Could not update projects.json: {e}", exc_info=True)
     
     # Stop watching this source
     try:

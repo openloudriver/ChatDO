@@ -110,6 +110,26 @@ def load_dynamic_sources() -> List[SourceConfig]:
         with open(DYNAMIC_SOURCES_PATH, 'r') as f:
             sources_data = json.load(f)
         
+        # Load projects to auto-detect project_id from connections (same as static sources)
+        projects_map = {}
+        try:
+            projects_path = BASE_DIR / "server" / "data" / "projects.json"
+            if projects_path.exists():
+                with open(projects_path, 'r') as pf:
+                    projects = json.load(pf)
+                    for project in projects:
+                        for source_id in project.get("memory_sources", []):
+                            projects_map[source_id] = project["id"]
+        except Exception as e:
+            # If we can't load projects, continue with JSON project_id
+            pass
+        
+        # Update project_id from projects.json if source is connected
+        for source_data in sources_data:
+            source_id = source_data.get("id")
+            if source_id in projects_map:
+                source_data["project_id"] = projects_map[source_id]
+        
         return [SourceConfig(source_data) for source_data in sources_data]
     except Exception as e:
         # If file is corrupted, return empty list
