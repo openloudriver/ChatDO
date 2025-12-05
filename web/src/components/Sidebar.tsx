@@ -241,7 +241,7 @@ const Sidebar: React.FC = () => {
   const [deleteProjectName, setDeleteProjectName] = useState<string>('');
   const { openConnectProjectModal } = useChatStore();
 
-  // Compute recent chats (last 3 across all projects)
+  // Compute recent chats (last 5 across all projects)
   const recentChats = useMemo(() => {
     if (!allConversations || allConversations.length === 0) return [];
 
@@ -250,10 +250,20 @@ const Sidebar: React.FC = () => {
       projects.filter(p => p.name === "Bullet Workspace").map(p => p.id)
     );
 
-    // Filter to only chats that actually have a projectId, are not trashed, and are not from Bullet Workspace
+    // Get active (non-trashed) project IDs
+    const activeProjectIds = new Set(
+      projects.filter(p => !p.trashed).map(p => p.id)
+    );
+
+    // Filter to only chats that:
+    // - Have a projectId
+    // - Are not trashed
+    // - Belong to an active (non-trashed) project
+    // - Are not from Bullet Workspace
     const valid = allConversations.filter((c) => 
       !!c.projectId && 
       !c.trashed && 
+      activeProjectIds.has(c.projectId) &&
       !bulletWorkspaceProjectIds.has(c.projectId)
     );
 
@@ -265,13 +275,13 @@ const Sidebar: React.FC = () => {
       return (bTime || '').localeCompare(aTime || '');
     });
 
-    // Deduplicate by id and take only the top 3
+    // Deduplicate by id and take only the top 5
     const unique: typeof sorted = [];
     for (const c of sorted) {
       if (!c.id) continue;
       if (unique.find((u) => u.id === c.id)) continue;
       unique.push(c);
-      if (unique.length >= 3) break;
+      if (unique.length >= 5) break;
     }
 
     return unique;
@@ -448,10 +458,13 @@ const Sidebar: React.FC = () => {
       <div className="px-2 mb-4 flex-1 overflow-y-auto">
         {/* Recent Chats Section */}
         {recentChats.length > 0 && (
-          <div className="mb-3">
-            <div className="px-2 pt-1 pb-1 text-xs uppercase" style={{ color: sidebarTextColor }}>
-              Recent Chats
-            </div>
+          <>
+            {/* Divider above Recent Chats */}
+            <div className="my-3 mx-2 border-t" style={{ borderColor: sidebarTextColor, opacity: 0.3 }}></div>
+            <div className="mb-3">
+              <div className="px-2 pt-1 pb-1 text-xs uppercase font-bold underline" style={{ color: sidebarTextColor }}>
+                Recent Chats
+              </div>
             <div className="space-y-1">
               {recentChats.map((chat) => {
                 const project = projects.find((p) => p.id === chat.projectId);
@@ -493,9 +506,16 @@ const Sidebar: React.FC = () => {
               })}
             </div>
           </div>
+          </>
         )}
+        
+        {/* Divider between Recent Chats and Projects */}
+        {recentChats.length > 0 && (
+          <div className="my-3 mx-2 border-t" style={{ borderColor: sidebarTextColor, opacity: 0.3 }}></div>
+        )}
+        
         <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-xs uppercase" style={{ color: sidebarTextColor }}>Projects</div>
+          <div className="text-xs uppercase font-bold underline" style={{ color: sidebarTextColor }}>Projects</div>
           <button
             type="button"
             onClick={handleNewProject}

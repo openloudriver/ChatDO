@@ -284,16 +284,42 @@ export const useChatStore = create<ChatStore>((set) => ({
       await axios.delete(`http://localhost:8000/api/projects/${id}`);
       
       set((state) => {
+        // Filter out the deleted project (it's now trashed)
         const updatedProjects = state.projects.filter(p => p.id !== id);
-        const updatedCurrentProject = state.currentProject?.id === id
+        const wasCurrentProject = state.currentProject?.id === id;
+        const updatedCurrentProject = wasCurrentProject
           ? (updatedProjects.length > 0 ? updatedProjects[0] : null)
           : state.currentProject;
         
+        // If the deleted project was the current project, clear current conversation
+        // Also clear any conversations that belonged to the deleted project
+        const updatedCurrentConversation = wasCurrentProject || state.currentConversation?.projectId === id
+          ? null
+          : state.currentConversation;
+        
+        // Remove all conversations that belonged to the deleted project from active lists
+        // (They are now trashed on the backend, so they'll be in trashedChats after reload)
+        const updatedConversations = state.conversations.filter(c => c.projectId !== id);
+        const updatedAllConversations = state.allConversations.filter(c => c.projectId !== id);
+        
         return {
           projects: updatedProjects,
-          currentProject: updatedCurrentProject
+          currentProject: updatedCurrentProject,
+          currentConversation: updatedCurrentConversation,
+          conversations: updatedConversations,
+          allConversations: updatedAllConversations
         };
       });
+      
+      // Reload chats to ensure we have the latest state after project deletion
+      const state = useChatStore.getState();
+      if (state.currentProject) {
+        await state.loadChats(state.currentProject.id);
+      }
+      // Reload all chats (including trashed) to update allConversations and trashedChats
+      // This will pick up the chats that were soft-deleted when the project was deleted
+      await useChatStore.getState().loadChats();
+      await useChatStore.getState().loadTrashedChats();
     } catch (error) {
       console.error('Failed to delete project:', error);
       throw error;

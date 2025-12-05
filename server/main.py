@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target, TargetConfig
 from chatdo.agents.main_agent import run_agent
-from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history, load_thread_sources, add_thread_source
+from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history, load_thread_sources, add_thread_source, memory_root
 from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
@@ -202,12 +202,93 @@ def purge_trashed_chats() -> int:
     return purged_count
 
 
+def purge_trashed_projects() -> int:
+    """
+    Permanently delete projects that have been in trash longer than RETENTION_DAYS.
+    Returns the number of projects purged.
+    """
+    projects = load_projects()
+    chats = load_chats()
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=RETENTION_DAYS)
+    purged_count = 0
+    
+    projects_to_purge = []
+    for project in projects:
+        if project.get("trashed", False) and project.get("trashed_at"):
+            try:
+                trashed_at = datetime.fromisoformat(project["trashed_at"].replace("Z", "+00:00"))
+                if trashed_at < cutoff_date:
+                    projects_to_purge.append(project)
+            except (ValueError, KeyError):
+                # Invalid date format, skip
+                continue
+    
+    # Purge each project
+    for project in projects_to_purge:
+        project_id = project.get("id")
+        target_name = get_target_name_from_project(project)
+        
+        # Delete all chats associated with this project
+        chats_to_delete = [c for c in chats if c.get("project_id") == project_id]
+        for chat in chats_to_delete:
+            thread_id = chat.get("thread_id")
+            if thread_id:
+                try:
+                    delete_thread_history(target_name, thread_id)
+                except Exception as e:
+                    logger.warning(f"Failed to delete thread history for {thread_id}: {e}")
+        
+        # Remove all chats for this project from the chats list
+        chats = [c for c in chats if c.get("project_id") != project_id]
+        
+        # Delete the project's memory folder
+        project_memory_dir = memory_root() / target_name
+        if project_memory_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(project_memory_dir)
+            except Exception as e:
+                logger.warning(f"Failed to delete memory folder for project {project_id}: {e}")
+        
+        # Remove project from projects list
+        projects = [p for p in projects if p.get("id") != project_id]
+        purged_count += 1
+    
+    if purged_count > 0:
+        save_chats(chats)
+        save_projects(projects)
+        
+        # Reindex remaining projects to maintain sequential sort_index
+        for i, project in enumerate(projects):
+            project["sort_index"] = i
+        save_projects(projects)
+    
+    return purged_count
+
+
+def ensure_project_folders():
+    """Ensure all projects have their memory folders created"""
+    projects = load_projects()
+    for project in projects:
+        target_name = get_target_name_from_project(project)
+        project_memory_dir = memory_root() / target_name / "threads"
+        project_memory_dir.mkdir(parents=True, exist_ok=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: ensure all project folders exist
+    ensure_project_folders()
+    
     # Startup: purge old trashed chats
     purged = purge_trashed_chats()
     if purged > 0:
         print(f"Purged {purged} trashed chats older than {RETENTION_DAYS} days")
+    
+    # Startup: purge old trashed projects
+    purged_projects = purge_trashed_projects()
+    if purged_projects > 0:
+        print(f"Purged {purged_projects} trashed projects older than {RETENTION_DAYS} days")
     yield
     # Shutdown (if needed)
 
@@ -286,6 +367,8 @@ class Project(BaseModel):
     name: str
     default_target: str
     sort_index: int = 0
+    trashed: bool = False
+    trashed_at: Optional[str] = None
 
 
 class ProjectCreate(BaseModel):
@@ -357,6 +440,9 @@ async def get_projects():
     """Return list of available projects, ensuring General exists"""
     projects = load_projects()
     
+    # Filter out trashed projects
+    projects = [p for p in projects if not p.get("trashed", False)]
+    
     # Ensure General project exists
     general_project = next((p for p in projects if p.get("name") == "General"), None)
     if not general_project:
@@ -396,6 +482,12 @@ async def create_project(project_data: ProjectCreate):
     projects.append(new_project)
     save_projects(projects)
     
+    # Create the memory folder structure for this project
+    # This ensures the folder exists even before any chats are created
+    target_name = get_target_name_from_project(new_project)
+    project_memory_dir = memory_root() / target_name / "threads"
+    project_memory_dir.mkdir(parents=True, exist_ok=True)
+    
     return new_project
 
 
@@ -423,22 +515,40 @@ async def update_project(project_id: str, project_data: ProjectUpdate):
 
 @app.delete("/api/projects/{project_id}")
 async def delete_project(project_id: str):
-    """Delete a project"""
+    """Soft delete a project (move to trash) and all its chats"""
     projects = load_projects()
+    chats = load_chats()
     
-    # Find and remove project
-    original_count = len(projects)
-    projects = [p for p in projects if p.get("id") != project_id]
+    # Find the project being deleted
+    project_index = None
+    for i, p in enumerate(projects):
+        if p.get("id") == project_id:
+            project_index = i
+            break
     
-    if len(projects) == original_count:
+    if project_index is None:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Reindex remaining projects to maintain sequential sort_index
-    for i, project in enumerate(projects):
-        project["sort_index"] = i
-    
+    # Soft delete - mark project as trashed
+    projects[project_index]["trashed"] = True
+    projects[project_index]["trashed_at"] = now_iso()
     save_projects(projects)
-    return {"success": True}
+    
+    # Soft delete all chats belonging to this project
+    # Find all chats for this project that aren't already trashed
+    chats_to_trash = []
+    for i, chat in enumerate(chats):
+        if chat.get("project_id") == project_id and not chat.get("trashed", False):
+            chats[i]["trashed"] = True
+            chats[i]["trashed_at"] = now_iso()
+            chats[i]["updated_at"] = now_iso()
+            chats_to_trash.append(chat.get("id"))
+    
+    if chats_to_trash:
+        save_chats(chats)
+        logger.info(f"Soft deleted {len(chats_to_trash)} chats for project {project_id}")
+    
+    return {"success": True, "chats_trashed": len(chats_to_trash)}
 
 
 @app.post("/api/projects/reorder", response_model=List[Project])
@@ -559,8 +669,24 @@ async def chat(request: ChatRequest):
             else:
                 print(f"[RAG] Warning: No context was built despite {len(request.rag_file_ids)} file IDs provided")
         
+        # Determine target_name from project_id (don't trust client)
+        # This ensures we always use the project-based folder structure
+        projects = load_projects()
+        project = None
+        if request.project_id:
+            project = next((p for p in projects if p.get("id") == request.project_id), None)
+        elif request.conversation_id:
+            # Fallback: get project_id from conversation
+            chats = load_chats()
+            chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
+            if chat:
+                project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
+        
+        # Determine target_name from project (use project-based name, not default_target)
+        target_name = get_target_name_from_project(project) if project else "general"
+        
         # Load target configuration
-        target_cfg = load_target(request.target_name)
+        target_cfg = load_target(target_name)
         
         # If RAG context is provided, use run_agent (existing RAG flow)
         # Otherwise, use smart chat with auto-search
@@ -568,10 +694,8 @@ async def chat(request: ChatRequest):
             # Prepend RAG context to user message
             user_message = f"{rag_context}\n\nUser question: {request.message}"
             
-            # Get project to determine thread_target_name
-            projects = load_projects()
-            project = next((p for p in projects if p.get("id") == request.project_id), None) if request.project_id else None
-            thread_target_name = get_target_name_from_project(project) if project else None
+            # Use the project-based target_name for thread storage
+            thread_target_name = target_name
             
             # Use run_agent for RAG (existing flow)
             raw_result, model_display, provider = run_agent(
@@ -585,19 +709,12 @@ async def chat(request: ChatRequest):
             # Use smart chat with auto-search for normal chat
             from server.services.chat_with_smart_search import chat_with_smart_search
             
-            # Get project_id from conversation if available
-            project_id = request.project_id if hasattr(request, 'project_id') else None
-            if not project_id and request.conversation_id:
-                chats = load_chats()
-                chat = next((c for c in chats if c.get("id") == request.conversation_id), None)
-                if chat:
-                    project_id = chat.get("project_id")
-            
+            # Use the project-based target_name we determined above
             result = await chat_with_smart_search(
                 user_message=request.message,
-                target_name=target_cfg.name,
+                target_name=target_name,  # Use project-based target_name, not from client
                 thread_id=request.conversation_id if request.conversation_id else None,
-                project_id=project_id
+                project_id=project.get("id") if project else None
             )
             
             # If result has tasks or needs special handling, route to run_agent
@@ -1991,6 +2108,10 @@ async def get_chats(
     if needs_save:
         save_chats(chats)
     
+    # Filter out chats that belong to deleted projects
+    project_ids = {p.get("id") for p in projects}
+    chats = [c for c in chats if c.get("project_id") in project_ids or not c.get("project_id")]
+    
     # Filter by project if specified
     if project_id:
         chats = [c for c in chats if c.get("project_id") == project_id]
@@ -2020,7 +2141,10 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
     projects = load_projects()
     project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        # Chat belongs to a deleted project - return empty messages instead of 404
+        # This prevents errors when frontend tries to load messages for chats from deleted projects
+        logger.warning(f"Chat {chat_id} belongs to deleted project {chat.get('project_id')}, returning empty messages")
+        return {"messages": []}
     
     target_name = get_target_name_from_project(project)
     thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
