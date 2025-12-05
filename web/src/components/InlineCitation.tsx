@@ -21,7 +21,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { currentConversation, currentProject, addMessage, setSummarizingArticle, setConversationSummarizing } = useChatStore();
+  const { currentConversation, currentProject, addMessage, renameChat, setSummarizingArticle, setConversationSummarizing } = useChatStore();
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -112,11 +112,45 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
       setConversationSummarizing(currentConversation.id, true); // Set per-conversation state
     }
     try {
+      // Auto-name chat based on first message if it's still "New Chat"
+      // Check BEFORE adding the user message, since addMessage will increase the length
+      const isFirstMessage = currentConversation?.title === 'New Chat' && 
+                            currentConversation?.messages.length === 0;
+      
       // Add user message to show what we're summarizing
       addMessage({
         role: 'user',
         content: `Summarize: ${source.url}`,
       });
+      
+      // Auto-rename chat if this is the first message
+      if (isFirstMessage && currentConversation) {
+        // Generate title from URL (extract domain or use URL)
+        let autoTitle = source.url.trim();
+        try {
+          const urlObj = new URL(source.url);
+          autoTitle = urlObj.hostname.replace('www.', '');
+          // If hostname is too long, use a shortened version
+          if (autoTitle.length > 50) {
+            autoTitle = autoTitle.substring(0, 47) + '...';
+          }
+        } catch {
+          // If URL parsing fails, use the URL itself (truncated)
+          autoTitle = source.url.length > 50 ? source.url.substring(0, 47) + '...' : source.url;
+        }
+        
+        // Only auto-rename if we got a meaningful title
+        if (autoTitle.length > 0) {
+          try {
+            console.log('[Auto-label] Renaming chat from "New Chat" to:', autoTitle);
+            await renameChat(currentConversation.id, autoTitle);
+            console.log('[Auto-label] Successfully renamed chat');
+          } catch (error) {
+            console.error('Failed to auto-name chat:', error);
+            // Don't block sending the message if auto-naming fails
+          }
+        }
+      }
       
       // Call the article summary endpoint
       const response = await axios.post('http://localhost:8000/api/article/summary', {

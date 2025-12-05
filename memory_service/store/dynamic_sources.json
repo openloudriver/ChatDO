@@ -1,19 +1,19 @@
 [
   {
-    "id": "coin-dir",
-    "project_id": "scratch",
-    "root_path": "/Users/christopher.peck/Coin",
-    "include_glob": "**/*",
-    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
-    "display_name": "Coin"
-  },
-  {
     "id": "chatdo-dir",
     "project_id": "scratch",
     "root_path": "/Users/christopher.peck/ChatDO",
     "include_glob": "**/*",
     "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
     "display_name": "ChatDO"
+  },
+  {
+    "id": "coin-dir",
+    "project_id": "scratch",
+    "root_path": "/Users/christopher.peck/Coin",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "Coin"
   },
   {
     "id": "drr-dir",
@@ -32,11 +32,11 @@
     "display_name": "PrivacyPay"
   },
   {
-    "id": "downloads-dir",
+    "id": "traderbot-dir",
     "project_id": "scratch",
-    "root_path": "/Volumes/iCPWeeaPWBXs/Downloads",
+    "root_path": "/Users/christopher.peck/TraderBot",
     "include_glob": "**/*",
     "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
-    "display_name": "Downloads"
+    "display_name": "TraderBot"
   }
 ]

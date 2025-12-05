@@ -30,6 +30,12 @@ def load_projects() -> List[Dict]:
         if "memory_sources" not in project:
             project["memory_sources"] = []
             needs_save = True
+        if "trashed" not in project:
+            project["trashed"] = False
+            needs_save = True
+        if "trashed_at" not in project:
+            project["trashed_at"] = None
+            needs_save = True
     
     # Sort by sort_index, then by name as tie-breaker
     projects.sort(key=lambda p: (p.get("sort_index", 0), p.get("name", "")))

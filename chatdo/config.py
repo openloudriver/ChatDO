@@ -14,8 +14,17 @@ def load_target(name: str) -> TargetConfig:
     here = pathlib.Path(__file__).resolve().parent.parent
     targets_dir = here / "targets"
     cfg_path = targets_dir / f"{name}.yaml"
+    
+    # If project-specific target config doesn't exist, fall back to general.yaml
     if not cfg_path.exists():
-        raise SystemExit(f"Target config not found: {cfg_path}")
+        # Try to use general.yaml as fallback
+        general_cfg_path = targets_dir / "general.yaml"
+        if general_cfg_path.exists():
+            print(f"Warning: Target config not found for '{name}', using 'general' as fallback")
+            cfg_path = general_cfg_path
+        else:
+            raise SystemExit(f"Target config not found: {cfg_path} and fallback 'general.yaml' also not found")
+    
     data = yaml.safe_load(cfg_path.read_text())
     repo_path = pathlib.Path(data["path"]).expanduser().resolve()
     core_paths = [

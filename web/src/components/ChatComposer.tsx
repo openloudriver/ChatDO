@@ -211,6 +211,12 @@ const ChatComposer: React.FC = () => {
       }
     }
     
+    // Auto-name chat based on first message if it's still "New Chat"
+    // Check BEFORE adding the user message, since addMessage will increase the length
+    const isFirstMessage = currentConversation.title === 'New Chat' && 
+                          currentConversation.messages.length === 0 &&
+                          !isEditing;
+    
     // If we're editing a message, update it and remove messages after
     if (isEditing && messageIdToEdit) {
       editMessage(messageIdToEdit, messageWithFiles);
@@ -225,11 +231,7 @@ const ChatComposer: React.FC = () => {
     setInput('');
     setUploadedFiles([]); // Clear uploaded files after sending
     
-    // Auto-name chat based on first message if it's still "New Chat"
-    const isFirstMessage = currentConversation.title === 'New Chat' && 
-                          currentConversation.messages.length === 0;
-    
-    if (isFirstMessage && !isEditing) {
+    if (isFirstMessage) {
       // Generate title from first message (truncate to 50 chars, clean up)
       let autoTitle = userMessage
         .replace(/[#*`_~\[\]()]/g, '') // Remove markdown
@@ -376,6 +378,9 @@ const ChatComposer: React.FC = () => {
               }
             }
             
+            // Close WebSocket first to prevent any more messages
+            ws.close();
+            
             // Add final message with model/provider info
             addMessage({ 
               role: 'assistant', 
@@ -385,14 +390,14 @@ const ChatComposer: React.FC = () => {
               sources: sources,
               meta: data.meta || undefined
             });
-            ws.close();
-            // Delay clearing streaming to allow React to render the new message first
-            // This prevents the flash/gap where streaming UI disappears before message appears
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                clearStreaming();
-              });
-            });
+            
+            // Clear streaming state immediately after adding message
+            // Use setTimeout to ensure React has processed the addMessage state update
+            // This prevents the flash where streaming UI disappears before message appears
+            setTimeout(() => {
+              clearStreaming();
+              setLoading(false);
+            }, 50);
             // Update the conversation's updatedAt in allConversations immediately
             // Then reload all chats in the background to sync with backend
             const { allConversations, setConversations: _setConversations } = useChatStore.getState();
@@ -664,6 +669,11 @@ const ChatComposer: React.FC = () => {
   const handleUrlDialogSubmit = async (url: string) => {
     if (!currentProject || !currentConversation || isSummarizingArticleLocal) return;
     
+    // Auto-name chat based on first message if it's still "New Chat"
+    // Check BEFORE adding the user message, since addMessage will increase the length
+    const isFirstMessage = currentConversation.title === 'New Chat' && 
+                          currentConversation.messages.length === 0;
+    
     // Set loading state first (both local and per-conversation)
     setIsSummarizingArticleLocal(true);
     if (currentConversation) {
@@ -682,6 +692,35 @@ const ChatComposer: React.FC = () => {
         role: 'user',
         content: `Summarize: ${url}`,
       });
+      
+      // Auto-rename chat if this is the first message
+      if (isFirstMessage) {
+        // Generate title from URL (extract domain or use URL)
+        let autoTitle = url.trim();
+        try {
+          const urlObj = new URL(url);
+          autoTitle = urlObj.hostname.replace('www.', '');
+          // If hostname is too long, use a shortened version
+          if (autoTitle.length > 50) {
+            autoTitle = autoTitle.substring(0, 47) + '...';
+          }
+        } catch {
+          // If URL parsing fails, use the URL itself (truncated)
+          autoTitle = url.length > 50 ? url.substring(0, 47) + '...' : url;
+        }
+        
+        // Only auto-rename if we got a meaningful title
+        if (autoTitle.length > 0) {
+          try {
+            console.log('[Auto-label] Renaming chat from "New Chat" to:', autoTitle);
+            await renameChat(currentConversation.id, autoTitle);
+            console.log('[Auto-label] Successfully renamed chat');
+          } catch (error) {
+            console.error('Failed to auto-name chat:', error);
+            // Don't block sending the message if auto-naming fails
+          }
+        }
+      }
       
       // Call the article summary endpoint with conversation_id and project_id for persistence
       const response = await axios.post('http://localhost:8000/api/article/summary', {
@@ -889,8 +928,46 @@ const ChatComposer: React.FC = () => {
   const handleSearchDialogSubmit = async (query: string) => {
     if (!currentProject || !currentConversation) return;
     
+    // Auto-name chat based on first message if it's still "New Chat"
+    // Check BEFORE adding the user message, since addMessage will increase the length
+    const isFirstMessage = currentConversation.title === 'New Chat' && 
+                          currentConversation.messages.length === 0;
+    
     // Add user message
     addMessage({ role: 'user', content: query });
+    
+    // Auto-rename chat if this is the first message
+    if (isFirstMessage) {
+      // Generate title from query (truncate to 50 chars, clean up)
+      let autoTitle = query
+        .replace(/[#*`_~\[\]()]/g, '') // Remove markdown
+        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .trim();
+      
+      // Truncate to 50 characters
+      if (autoTitle.length > 50) {
+        autoTitle = autoTitle.substring(0, 47) + '...';
+      }
+      
+      // Only auto-rename if we got a meaningful title
+      if (autoTitle.length > 0) {
+        try {
+          console.log('[Auto-label] Renaming chat from "New Chat" to:', autoTitle);
+          await renameChat(currentConversation.id, autoTitle);
+          console.log('[Auto-label] Successfully renamed chat');
+        } catch (error) {
+          console.error('Failed to auto-name chat:', error);
+          // Don't block sending the message if auto-naming fails
+        }
+      } else {
+        console.log('[Auto-label] Skipping auto-rename: empty title after cleanup');
+      }
+    } else {
+      console.log('[Auto-label] Not first message:', {
+        title: currentConversation.title,
+        messageCount: currentConversation.messages.length
+      });
+    }
     
     setLoading(true);
     

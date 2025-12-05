@@ -1291,10 +1291,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                     <button
                                       onClick={async () => {
                                         if (!currentProject || !currentConversation || isSummarizing || isSummarized) return;
+                                        
+                                        // Auto-name chat based on first message if it's still "New Chat"
+                                        // Check BEFORE adding the user message, since addMessage will increase the length
+                                        const isFirstMessage = currentConversation.title === 'New Chat' && 
+                                                              currentConversation.messages.length === 0;
+                                        
                                         setArticleStates(prev => ({ ...prev, [result.url]: 'summarizing' }));
                                         setSummarizingArticle(true);
                                         try {
-                                          const { setLoading: setStoreLoading, addMessage: addStoreMessage } = useChatStore.getState();
+                                          const { setLoading: setStoreLoading, addMessage: addStoreMessage, renameChat: renameChatStore } = useChatStore.getState();
                                           setStoreLoading(true);
                                           
                                           // Add user message
@@ -1302,6 +1308,35 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             role: 'user',
                                             content: `Summarize: ${result.url}`,
                                           });
+                                          
+                                          // Auto-rename chat if this is the first message
+                                          if (isFirstMessage) {
+                                            // Generate title from URL (extract domain or use URL)
+                                            let autoTitle = result.url.trim();
+                                            try {
+                                              const urlObj = new URL(result.url);
+                                              autoTitle = urlObj.hostname.replace('www.', '');
+                                              // If hostname is too long, use a shortened version
+                                              if (autoTitle.length > 50) {
+                                                autoTitle = autoTitle.substring(0, 47) + '...';
+                                              }
+                                            } catch {
+                                              // If URL parsing fails, use the URL itself (truncated)
+                                              autoTitle = result.url.length > 50 ? result.url.substring(0, 47) + '...' : result.url;
+                                            }
+                                            
+                                            // Only auto-rename if we got a meaningful title
+                                            if (autoTitle.length > 0) {
+                                              try {
+                                                console.log('[Auto-label] Renaming chat from "New Chat" to:', autoTitle);
+                                                await renameChatStore(currentConversation.id, autoTitle);
+                                                console.log('[Auto-label] Successfully renamed chat');
+                                              } catch (error) {
+                                                console.error('Failed to auto-name chat:', error);
+                                                // Don't block sending the message if auto-naming fails
+                                              }
+                                            }
+                                          }
                                           
                                           const response = await axios.post('http://localhost:8000/api/article/summary', {
                                             url: result.url,

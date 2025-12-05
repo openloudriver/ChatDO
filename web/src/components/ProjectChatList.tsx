@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
 import ConfirmDialog from './ConfirmDialog';
+import RenameChatModal from './RenameChatModal';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Helper to format date
@@ -74,6 +75,11 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     chatTitle: null,
     isBulk: false,
   });
+  const [renameChatModal, setRenameChatModal] = useState<{ open: boolean; chatId: string | null; currentTitle: string }>({
+    open: false,
+    chatId: null,
+    currentTitle: '',
+  });
 
   const handleNewChat = async () => {
     if (!currentProject) return;
@@ -107,16 +113,23 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     }
   }, [openMenuId]);
 
-  const handleRenameChat = async (chatId: string, currentTitle: string) => {
+  const handleRenameChat = (chatId: string, currentTitle: string) => {
     setOpenMenuId(null);
     setMenuPosition(null);
-    const newTitle = window.prompt('Rename chat:', currentTitle);
-    if (!newTitle || newTitle.trim() === currentTitle) return;
+    setRenameChatModal({
+      open: true,
+      chatId,
+      currentTitle,
+    });
+  };
+
+  const confirmRenameChat = async (newTitle: string) => {
+    if (!renameChatModal.chatId) return;
     try {
-      await renameChat(chatId, newTitle.trim());
+      await renameChat(renameChatModal.chatId, newTitle);
     } catch (error) {
       console.error('Failed to rename chat:', error);
-      alert('Failed to rename chat. Please try again.');
+      throw error; // Let the modal handle the error display
     }
   };
 
@@ -372,6 +385,14 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
         cancelLabel="Cancel"
         onConfirm={deleteConfirm.isBulk ? confirmBulkDelete : confirmDeleteChat}
         onCancel={() => setDeleteConfirm({ open: false, chatId: null, chatTitle: null, isBulk: false })}
+      />
+
+      {/* Rename Chat Modal */}
+      <RenameChatModal
+        isOpen={renameChatModal.open}
+        currentTitle={renameChatModal.currentTitle}
+        onClose={() => setRenameChatModal({ open: false, chatId: null, currentTitle: '' })}
+        onRename={confirmRenameChat}
       />
     </div>
   );

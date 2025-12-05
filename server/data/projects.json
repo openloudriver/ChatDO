@@ -4,9 +4,9 @@
     "name": "General",
     "default_target": "privacypay",
     "sort_index": 0,
-    "memory_sources": [
-      "downloads-dir"
-    ]
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "24a85d18-a1d3-43f7-86b3-48fa6c61177c",
@@ -15,53 +15,98 @@
     "sort_index": 1,
     "memory_sources": [
       "chatdo-dir"
-    ]
+    ],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "privacypay",
     "name": "PrivacyPay",
     "default_target": "privacypay",
     "sort_index": 2,
-    "memory_sources": [
-      "coin-dir",
-      "privacypay-dir"
-    ]
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "drr",
-    "name": "Douay-Rheims Renewed",
+    "name": "DRR",
     "default_target": "drr",
     "sort_index": 3,
-    "memory_sources": [
-      "drr-dir"
-    ]
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "975a7513-9e4d-4df4-967f-6ad1ad149319",
     "name": "TraderBot",
     "default_target": "general",
     "sort_index": 4,
-    "memory_sources": []
-  },
-  {
-    "id": "718c6805-92cd-4616-a2cf-7e693d5cf2f2",
-    "name": "Real History",
-    "default_target": "general",
-    "sort_index": 5,
-    "memory_sources": []
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "765d15b1-760e-4a29-8c5a-244ef0b22ef6",
     "name": "Bullet Workspace",
     "default_target": "general",
-    "sort_index": 6,
-    "memory_sources": []
+    "sort_index": 5,
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   },
   {
     "id": "78baad66-b003-4f64-a7a5-717230873629",
     "name": "Bullet Workspace",
     "default_target": "general",
+    "sort_index": 6,
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "733d99b9-c9bf-4fd5-832a-9302657e0b32",
+    "name": "Zoology",
+    "default_target": "general",
     "sort_index": 7,
-    "memory_sources": []
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-05T20:33:27.536320+00:00"
+  },
+  {
+    "id": "b504a244-a7a8-4330-9fc8-460304f9d88b",
+    "name": "Testv1",
+    "default_target": "general",
+    "sort_index": 8,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-05T20:38:48.379952+00:00"
+  },
+  {
+    "id": "0245bb0a-b880-4438-857a-ca35765514b3",
+    "name": "1",
+    "default_target": "general",
+    "sort_index": 9,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-05T20:41:36.482604+00:00"
+  },
+  {
+    "id": "00f4e0b3-7178-4a12-9277-8a44d412f5ec",
+    "name": "2",
+    "default_target": "general",
+    "sort_index": 10,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-05T20:41:28.422850+00:00"
+  },
+  {
+    "id": "52650675-d1ac-4212-b88d-1a800d72c803",
+    "name": "v3",
+    "default_target": "general",
+    "sort_index": 11,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-05T21:16:44.801240+00:00"
   }
 ]

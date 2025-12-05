@@ -64,7 +64,7 @@ const ConfirmDeleteProjectModal: React.FC<ConfirmDeleteProjectModalProps> = ({
 
         <div className="space-y-4">
           <p className="text-sm text-[var(--text-secondary)]">
-            Delete <span className="font-semibold text-[var(--text-primary)]">"{projectName}"</span>? This will remove it from the sidebar.
+            Delete <span className="font-semibold text-[var(--text-primary)]">"{projectName}"</span>? It will move to Trash and be permanently removed after 30 days.
           </p>
 
           {error && (

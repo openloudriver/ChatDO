@@ -100,16 +100,6 @@
     "trashed_at": null
   },
   {
-    "id": "413decf4-5c36-4d07-af16-50f35bff4ea0",
-    "project_id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
-    "title": "New Chat",
-    "thread_id": "413decf4-5c36-4d07-af16-50f35bff4ea0",
-    "created_at": "2025-11-27T03:29:47.165413+00:00",
-    "updated_at": "2025-11-27T03:29:47.165430+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
     "id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
     "project_id": "scratch",
     "title": "Compare Bitcoin and Monero",
@@ -176,6 +166,96 @@
     "thread_id": "553a2e21-3142-429e-86ac-246e5302bb8f",
     "created_at": "2025-12-03T13:11:59.033030+00:00",
     "updated_at": "2025-12-03T13:18:51.086389+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "e26866ba-018f-4c33-9be5-107460daa0e7",
+    "project_id": "scratch",
+    "title": "What are the state birds of each state in the USA?",
+    "thread_id": "e26866ba-018f-4c33-9be5-107460daa0e7",
+    "created_at": "2025-12-05T18:07:46.135315+00:00",
+    "updated_at": "2025-12-05T18:08:03.156180+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "1057b0a4-b330-4c52-a031-ed07bcc5a9bf",
+    "project_id": "scratch",
+    "title": "What is the great hope for 2026?",
+    "thread_id": "1057b0a4-b330-4c52-a031-ed07bcc5a9bf",
+    "created_at": "2025-12-05T18:09:40.298629+00:00",
+    "updated_at": "2025-12-05T18:11:03.129427+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "c4f2a94f-1188-4c50-b9a2-ec7e4489b8b2",
+    "project_id": "scratch",
+    "title": "What date and time is it?",
+    "thread_id": "c4f2a94f-1188-4c50-b9a2-ec7e4489b8b2",
+    "created_at": "2025-12-05T18:11:52.963439+00:00",
+    "updated_at": "2025-12-05T18:11:58.704891+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "15a2b94d-0560-4b4f-bca9-9348666927db",
+    "project_id": "scratch",
+    "title": "Memory: My favorite color is blue",
+    "thread_id": "15a2b94d-0560-4b4f-bca9-9348666927db",
+    "created_at": "2025-12-05T18:51:36.933221+00:00",
+    "updated_at": "2025-12-05T18:51:48.523991+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "c94621f9-0dc5-4124-806c-5a42038165a3",
+    "project_id": "733d99b9-c9bf-4fd5-832a-9302657e0b32",
+    "title": "New Chat",
+    "thread_id": "c94621f9-0dc5-4124-806c-5a42038165a3",
+    "created_at": "2025-12-05T19:51:43.414353+00:00",
+    "updated_at": "2025-12-05T20:30:35.271179+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "3dcee0e5-cadd-4a2a-8b03-2e44aa211d95",
+    "project_id": "b504a244-a7a8-4330-9fc8-460304f9d88b",
+    "title": "New Chat",
+    "thread_id": "3dcee0e5-cadd-4a2a-8b03-2e44aa211d95",
+    "created_at": "2025-12-05T20:33:45.756172+00:00",
+    "updated_at": "2025-12-05T20:33:51.320223+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "c4904259-4a2b-48a6-b143-debc37951eb8",
+    "project_id": "0245bb0a-b880-4438-857a-ca35765514b3",
+    "title": "Monero",
+    "thread_id": "c4904259-4a2b-48a6-b143-debc37951eb8",
+    "created_at": "2025-12-05T20:39:11.694516+00:00",
+    "updated_at": "2025-12-05T20:39:23.904418+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "f9e38dfb-e4ed-4a74-820d-3e8706d08e03",
+    "project_id": "00f4e0b3-7178-4a12-9277-8a44d412f5ec",
+    "title": "youtube.com",
+    "thread_id": "f9e38dfb-e4ed-4a74-820d-3e8706d08e03",
+    "created_at": "2025-12-05T20:39:49.926453+00:00",
+    "updated_at": "2025-12-05T20:39:53.126455+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "68ce4286-5458-4ba5-b309-33c4cabcc167",
+    "project_id": "52650675-d1ac-4212-b88d-1a800d72c803",
+    "title": "Monero vs Bitcoin",
+    "thread_id": "68ce4286-5458-4ba5-b309-33c4cabcc167",
+    "created_at": "2025-12-05T20:58:39.910120+00:00",
+    "updated_at": "2025-12-05T20:58:54.849147+00:00",
     "trashed": false,
     "trashed_at": null
   }

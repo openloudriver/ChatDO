@@ -124,12 +124,19 @@ async def stream_chat_response(
     websocket: WebSocket,
     project_id: str,
     conversation_id: str,
-    target_name: str,
+    target_name: str,  # This is now determined from project_id, but kept for backward compatibility
     message: str,
     rag_file_ids: Optional[List[str]] = None,
     web_mode: str = 'auto',
     force_search: bool = False
 ):
+    # Ensure target_name is correct by getting it from project_id
+    # This ensures we always use the project-based folder structure
+    from server.main import load_projects, get_target_name_from_project
+    projects = load_projects()
+    project = next((p for p in projects if p.get("id") == project_id), None)
+    if project:
+        target_name = get_target_name_from_project(project)
     """
     Stream ChatDO response via WebSocket
     For now, we'll simulate streaming by chunking the response
@@ -855,7 +862,6 @@ async def websocket_endpoint(websocket: WebSocket):
             
             project_id = data.get("project_id")
             conversation_id = data.get("conversation_id")
-            target_name = data.get("target_name")
             message = data.get("message")
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
             web_mode = data.get("web_mode", "auto")  # Web mode: 'auto' or 'on'
@@ -863,13 +869,26 @@ async def websocket_endpoint(websocket: WebSocket):
             print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             print(f"[WEB] WebSocket received force_search: {force_search}")
             
-            if not all([project_id, conversation_id, target_name, message]):
+            if not all([project_id, conversation_id, message]):
                 await websocket.send_json({
                     "type": "error",
-                    "content": "Missing required fields: project_id, conversation_id, target_name, message",
+                    "content": "Missing required fields: project_id, conversation_id, message",
                     "done": True
                 })
                 continue
+            
+            # Determine target_name from project_id (don't trust client)
+            from server.main import load_projects, get_target_name_from_project
+            projects = load_projects()
+            project = next((p for p in projects if p.get("id") == project_id), None)
+            if not project:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"Project not found: {project_id}",
+                    "done": True
+                })
+                continue
+            target_name = get_target_name_from_project(project)
             
             # Stream response
             await stream_chat_response(
