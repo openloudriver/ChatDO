@@ -20,6 +20,8 @@ import { useChatStore, type Project } from '../store/chat';
 import { AiSpendIndicator } from './AiSpendIndicator';
 import ConnectProjectModal from './ConnectProjectModal';
 import { ImpactCaptureModal } from './ImpactCaptureModal';
+import RenameProjectModal from './RenameProjectModal';
+import ConfirmDeleteProjectModal from './ConfirmDeleteProjectModal';
 import { useTheme } from '../contexts/ThemeContext';
 
 const NewProjectIcon = () => (
@@ -105,7 +107,16 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+          // Prevent fullscreen exit by ensuring we handle the event completely
           setOpenMenuId(openMenuId === project.id ? null : project.id);
+        }}
+        onMouseDown={(e) => {
+          // Prevent right-click from bubbling up and potentially exiting fullscreen
+          if (e.button === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         }}
         className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-grab active:cursor-grabbing flex items-center gap-2 ${
           currentProject?.id === project.id
@@ -131,9 +142,20 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
       </button>
       {openMenuId === project.id && (
         <div 
-          className="absolute right-0 mt-1 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-50 transition-colors"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
+          className="context-menu absolute right-0 mt-1 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-50 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+          }}
           onMouseEnter={() => setOpenMenuId(project.id)}
           onMouseLeave={() => setOpenMenuId(null)}
         >
@@ -211,6 +233,12 @@ const Sidebar: React.FC = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const [impactModalOpen, setImpactModalOpen] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [renameProjectId, setRenameProjectId] = useState<string | null>(null);
+  const [renameProjectName, setRenameProjectName] = useState<string>('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [deleteProjectName, setDeleteProjectName] = useState<string>('');
   const { openConnectProjectModal } = useChatStore();
 
   // Compute recent chats (last 3 across all projects)
@@ -264,15 +292,30 @@ const Sidebar: React.FC = () => {
 
   // Close context menus when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // Don't close if clicking on the context menu itself
+      const target = e.target as HTMLElement;
+      if (target.closest('.context-menu')) {
+        return;
+      }
       setOpenMenuId(null);
       setOpenChatMenuId(null);
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      // Prevent browser's default context menu when our custom menu is open
+      if (openMenuId || openChatMenuId) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
     if (openMenuId || openChatMenuId) {
       document.addEventListener('click', handleClickOutside);
+      document.addEventListener('contextmenu', handleContextMenu, true); // Use capture phase
       return () => {
         document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('contextmenu', handleContextMenu, true);
       };
     }
   }, [openMenuId, openChatMenuId]);
@@ -293,43 +336,42 @@ const Sidebar: React.FC = () => {
   // Filter projects based on search query (only if not in search mode)
   const filteredProjects = projects;
 
-  const handleNewProject = async () => {
-    const name = window.prompt('New project name?');
-    if (!name) return;
-    try {
-      await createProject(name.trim());
-    } catch (error) {
-      console.error('Failed to create project:', error);
-      alert('Failed to create project. Please try again.');
-    }
+  const handleNewProject = () => {
+    setRenameProjectId(null);
+    setRenameProjectName('');
+    setRenameModalOpen(true);
   };
 
-  const handleEditProject = async (projectId: string, currentName: string) => {
+  const handleCreateProject = async (name: string) => {
+    await createProject(name);
+  };
+
+  const handleEditProject = (projectId: string, currentName: string) => {
     setOpenMenuId(null);
-    const newName = window.prompt('New project name?', currentName);
-    if (!newName || newName.trim() === currentName) return;
-    try {
-      await renameProject(projectId, newName.trim());
-    } catch (error) {
-      console.error('Failed to rename project:', error);
-      alert('Failed to rename project. Please try again.');
-    }
+    setRenameProjectId(projectId);
+    setRenameProjectName(currentName);
+    setRenameModalOpen(true);
+  };
+
+  const handleRenameProject = async (newName: string) => {
+    if (!renameProjectId) return;
+    await renameProject(renameProjectId, newName);
   };
 
   const handleConnectProject = (projectId: string, projectName: string) => {
     openConnectProjectModal(projectId, projectName);
   };
 
-  const handleDeleteProject = async (projectId: string, projectName: string) => {
+  const handleDeleteProject = (projectId: string, projectName: string) => {
     setOpenMenuId(null);
-    const confirmed = window.confirm(`Delete "${projectName}"? This will remove it from the sidebar.`);
-    if (!confirmed) return;
-    try {
-      await deleteProject(projectId);
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-      alert('Failed to delete project. Please try again.');
-    }
+    setDeleteProjectId(projectId);
+    setDeleteProjectName(projectName);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteProjectId) return;
+    await deleteProject(deleteProjectId);
   };
 
 
@@ -596,6 +638,26 @@ const Sidebar: React.FC = () => {
             // Give it a moment for the component to mount, then it will reload
           }
         }}
+      />
+      <RenameProjectModal
+        isOpen={renameModalOpen}
+        currentName={renameProjectName}
+        onClose={() => {
+          setRenameModalOpen(false);
+          setRenameProjectId(null);
+          setRenameProjectName('');
+        }}
+        onRename={renameProjectId ? handleRenameProject : handleCreateProject}
+      />
+      <ConfirmDeleteProjectModal
+        isOpen={deleteModalOpen}
+        projectName={deleteProjectName}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeleteProjectId(null);
+          setDeleteProjectName('');
+        }}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

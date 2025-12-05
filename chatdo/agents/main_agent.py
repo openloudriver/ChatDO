@@ -237,12 +237,15 @@ def build_agent(target: TargetConfig, task: str):
     )
     return agent
 
-def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, skip_web_search: bool = False) -> tuple[Union[str, Dict[str, Any]], str, str]:
+def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, skip_web_search: bool = False, thread_target_name: Optional[str] = None) -> tuple[Union[str, Dict[str, Any]], str, str]:
     """
     Run ChatDO on a given task using AI-Router.
     If thread_id is provided, load/save conversation history so the agent has long-term context.
     If skip_web_search is True, skip web search even if intent is web_search (e.g., when RAG context is provided).
     """
+    # Use thread_target_name if provided (for project-based storage), otherwise use target.name
+    storage_target_name = thread_target_name if thread_target_name else target.name
+    
     # Classify intent from user message
     intent = classify_intent(task)
     print(f"[INTENT] Classified '{task[:100]}...' as intent: {intent}, skip_web_search: {skip_web_search}")
@@ -285,7 +288,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 
                 # Save to memory store if thread_id is provided
                 if thread_id:
-                    history = memory_store.load_thread_history(target.name, thread_id)
+                    history = memory_store.load_thread_history(storage_target_name, thread_id)
                     # Add user message
                     history.append({"role": "user", "content": task})
                     # Add assistant message with structured data
@@ -298,37 +301,37 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                         "provider": provider
                     }
                     history.append(assistant_message)
-                    memory_store.save_thread_history(target.name, thread_id, history)
+                    memory_store.save_thread_history(storage_target_name, thread_id, history)
                 
                 return structured_result, model_display, provider
             else:
                 error_msg = "No search results found. Please try a different query."
                 # Save to memory store if thread_id is provided
                 if thread_id:
-                    history = memory_store.load_thread_history(target.name, thread_id)
+                    history = memory_store.load_thread_history(storage_target_name, thread_id)
                     history.append({"role": "user", "content": task})
                     history.append({"role": "assistant", "content": error_msg})
-                    memory_store.save_thread_history(target.name, thread_id, history)
+                    memory_store.save_thread_history(storage_target_name, thread_id, history)
                 return error_msg, "Brave Search", "brave_search"
         except ValueError as e:
             # If API key is missing or invalid, return helpful error message
             error_msg = f"Web search is not configured. {str(e)}"
             # Save to memory store if thread_id is provided
             if thread_id:
-                history = memory_store.load_thread_history(target.name, thread_id)
+                history = memory_store.load_thread_history(storage_target_name, thread_id)
                 history.append({"role": "user", "content": task})
                 history.append({"role": "assistant", "content": error_msg})
-                memory_store.save_thread_history(target.name, thread_id, history)
+                memory_store.save_thread_history(storage_target_name, thread_id, history)
             return error_msg, "Brave Search", "brave_search"
         except Exception as e:
             # If search fails for other reasons, return error
             error_msg = f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
             # Save to memory store if thread_id is provided
             if thread_id:
-                history = memory_store.load_thread_history(target.name, thread_id)
+                history = memory_store.load_thread_history(storage_target_name, thread_id)
                 history.append({"role": "user", "content": task})
                 history.append({"role": "assistant", "content": error_msg})
-                memory_store.save_thread_history(target.name, thread_id, history)
+                memory_store.save_thread_history(storage_target_name, thread_id, history)
             return error_msg, "Brave Search", "brave_search"
     
     # Build message history
@@ -448,7 +451,7 @@ Notes:
     messages.append({"role": "system", "content": system_prompt})
     
     if thread_id:
-        prior = memory_store.load_thread_history(target.name, thread_id)
+        prior = memory_store.load_thread_history(storage_target_name, thread_id)
         # Prior history should not include system message; only user/assistant.
         # We append after the system message.
         messages.extend(prior)
@@ -470,7 +473,7 @@ Notes:
     # Only save actual user messages and assistant responses
     if thread_id:
         # We store only user/assistant messages, not system
-        history = memory_store.load_thread_history(target.name, thread_id)
+        history = memory_store.load_thread_history(storage_target_name, thread_id)
         print(f"[DIAG] run_agent: Before saving, history has {len(history)} messages")
         
         # Check if task contains RAG context preamble (should be filtered by caller, but double-check)
@@ -488,7 +491,7 @@ Notes:
                 print(f"[DIAG] run_agent: Task preview: {task[:200]}...")
                 # Don't save the user message, only save assistant response
                 history.append({"role": "assistant", "content": final_content})
-                memory_store.save_thread_history(target.name, thread_id, history)
+                memory_store.save_thread_history(storage_target_name, thread_id, history)
                 print(f"[DIAG] run_agent: Saved only assistant message (skipped RAG context user message)")
                 return final_content, model_display, provider_id
         
@@ -497,7 +500,7 @@ Notes:
             print(f"[DIAG] run_agent: WARNING - Task is too long ({len(task_to_save)} chars), likely contains full document text. NOT saving to history.")
             # Don't save the user message, only save assistant response
             history.append({"role": "assistant", "content": final_content})
-            memory_store.save_thread_history(target.name, thread_id, history)
+            memory_store.save_thread_history(storage_target_name, thread_id, history)
             print(f"[DIAG] run_agent: Saved only assistant message (skipped oversized user message)")
             return final_content, model_display, provider_id
         
@@ -505,7 +508,7 @@ Notes:
         history.append({"role": "assistant", "content": final_content})
         print(f"[DIAG] run_agent: Saving user message (length={len(task_to_save)}), assistant message (length={len(final_content)})")
         print(f"[DIAG] run_agent: User message preview: {task_to_save[:100]}...")
-        memory_store.save_thread_history(target.name, thread_id, history)
+        memory_store.save_thread_history(storage_target_name, thread_id, history)
         print(f"[DIAG] run_agent: After saving, history has {len(history)} messages")
     
     return final_content, model_display, provider_id

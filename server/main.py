@@ -184,7 +184,7 @@ def purge_trashed_chats() -> int:
                 break
         
         if project:
-            target_name = project.get("default_target", "general")
+            target_name = get_target_name_from_project(project)
             thread_id = chat.get("thread_id")
             if thread_id:
                 try:
@@ -320,6 +320,26 @@ def generate_slug(name: str) -> str:
     slug = re.sub(r'[^\w\s-]', '', name.lower())
     slug = re.sub(r'[-\s]+', '-', slug)
     return slug.strip('-')
+
+def get_target_name_from_project(project: Optional[dict]) -> str:
+    """
+    Get the target name for storing threads based on the project name.
+    Each project gets its own folder under memory/{project_name}/threads/
+    General project maps to 'general'.
+    """
+    if not project:
+        return "general"
+    
+    project_name = project.get("name", "").strip()
+    if not project_name:
+        return "general"
+    
+    # Special case: "General" project always maps to "general"
+    if project_name.lower() == "general":
+        return "general"
+    
+    # For all other projects, slugify the name
+    return generate_slug(project_name)
 
 
 def generate_project_id() -> str:
@@ -462,7 +482,7 @@ async def new_conversation(request: NewConversationRequest):
     chats = load_chats()
     projects = load_projects()
     project = next((p for p in projects if p.get("id") == request.project_id), None)
-    target_name = project.get("default_target", "general") if project else "general"
+    target_name = get_target_name_from_project(project)
     
     new_chat = {
         "id": conversation_id,
@@ -548,12 +568,18 @@ async def chat(request: ChatRequest):
             # Prepend RAG context to user message
             user_message = f"{rag_context}\n\nUser question: {request.message}"
             
+            # Get project to determine thread_target_name
+            projects = load_projects()
+            project = next((p for p in projects if p.get("id") == request.project_id), None) if request.project_id else None
+            thread_target_name = get_target_name_from_project(project) if project else None
+            
             # Use run_agent for RAG (existing flow)
             raw_result, model_display, provider = run_agent(
                 target=target_cfg,
                 task=user_message,  # This includes RAG context
                 thread_id=request.conversation_id if request.conversation_id else None,
-                skip_web_search=True  # Skip web search when RAG is available
+                skip_web_search=True,  # Skip web search when RAG is available
+                thread_target_name=thread_target_name  # Use project-based target name for thread storage
             )
         else:
             # Use smart chat with auto-search for normal chat
@@ -605,12 +631,18 @@ async def chat(request: ChatRequest):
                         sources=result.get("sources")
                     )
             else:
+                # Get project to determine thread_target_name
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == request.project_id), None) if request.project_id else None
+                thread_target_name = get_target_name_from_project(project) if project else None
+                
                 # Unexpected result type, fall back to run_agent
                 raw_result, model_display, provider = run_agent(
                     target=target_cfg,
                     task=request.message,
                     thread_id=request.conversation_id if request.conversation_id else None,
-                    skip_web_search=False
+                    skip_web_search=False,
+                    thread_target_name=thread_target_name  # Use project-based target name for thread storage
                 )
         
         # Continue with existing flow for RAG or tasks
@@ -699,7 +731,7 @@ async def chat(request: ChatRequest):
                     projects = load_projects()
                     project = next((p for p in projects if p.get("id") == request.project_id), None)
                     if project:
-                        target_name = project.get("default_target", "general")
+                        target_name = get_target_name_from_project(project)
                         thread_id = request.conversation_id
                         
                         history = load_thread_history(target_name, thread_id)
@@ -1040,7 +1072,7 @@ Keep it concise, neutral, and factual."""
                 projects = load_projects()
                 project = next((p for p in projects if p.get("id") == request.project_id), None)
                 if project:
-                    target_name = project.get("default_target", "general")
+                    target_name = get_target_name_from_project(project)
                     thread_id = request.conversation_id
                     
                     # Load existing history
@@ -1990,7 +2022,7 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    target_name = project.get("default_target", "general")
+    target_name = get_target_name_from_project(project)
     thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
     
     print(f"[DIAG] get_chat_messages: chat_id={chat_id}, thread_id={thread_id}, target_name={target_name}")
@@ -2057,7 +2089,7 @@ async def get_chat_sources(chat_id: str):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    target_name = project.get("default_target", "general")
+    target_name = get_target_name_from_project(project)
     thread_id = chat.get("thread_id")
     
     if not thread_id:
@@ -2171,7 +2203,7 @@ async def purge_chat(chat_id: str):
         projects = load_projects()
         project = next((p for p in projects if p.get("id") == project_id), None)
         if project:
-            target_name = project.get("default_target", "general")
+            target_name = get_target_name_from_project(project)
             try:
                 delete_thread_history(target_name, thread_id)
             except Exception as e:
@@ -2286,7 +2318,7 @@ async def purge_all_trashed():
             trashed_chat_ids.append(chat.get("id"))
             # Get project to find target_name for thread deletion
             project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
-            target_name = project.get("default_target", "general") if project else "general"
+            target_name = get_target_name_from_project(project)
             thread_id = chat.get("thread_id")
             
             # Delete thread history if it exists

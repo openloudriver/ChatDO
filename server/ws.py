@@ -300,7 +300,8 @@ Keep it concise, neutral, and factual."""
                     projects = load_projects()
                     project = next((p for p in projects if p.get("id") == project_id), None)
                     if project:
-                        target_name = project.get("default_target", "general")
+                        from server.main import get_target_name_from_project
+                        target_name = get_target_name_from_project(project)
                         thread_id = conversation_id
                         
                         history = load_thread_history(target_name, thread_id)
@@ -406,7 +407,8 @@ Keep it concise, neutral, and factual."""
                 target=target_cfg,
                 task=search_message,
                 thread_id=conversation_id if conversation_id else None,
-                skip_web_search=False  # Don't skip web search when force_search is true
+                skip_web_search=False,  # Don't skip web search when force_search is true
+                thread_target_name=target_name  # Use project-based target name for thread storage
             )
             
             print(f"[FORCE_SEARCH] run_agent returned: type={type(raw_result)}, model={model_display}, provider={provider}")
@@ -592,7 +594,8 @@ Keep it concise, neutral, and factual."""
                 target=target_cfg,
                 task=user_message,  # This includes RAG context
                 thread_id=conversation_id if conversation_id else None,  # Load history for context
-                skip_web_search=has_rag_context
+                skip_web_search=has_rag_context,
+                thread_target_name=target_name  # Use project-based target name for thread storage
             )
         else:
             # Use chat_with_smart_search for normal chat (consistent with REST endpoint)
@@ -718,7 +721,8 @@ Keep it concise, neutral, and factual."""
                     projects = load_projects()
                     project = next((p for p in projects if p.get("id") == project_id), None)
                     if project:
-                        target_name = project.get("default_target", "general")
+                        from server.main import get_target_name_from_project
+                        target_name = get_target_name_from_project(project)
                         thread_id = conversation_id
                         
                         history = load_thread_history(target_name, thread_id)
