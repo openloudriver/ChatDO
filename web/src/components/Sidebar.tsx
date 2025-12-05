@@ -407,8 +407,8 @@ const Sidebar: React.FC = () => {
         {/* Recent Chats Section */}
         {recentChats.length > 0 && (
           <div className="mb-3">
-            <div className="px-2 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-              Recent
+            <div className="px-2 pt-1 pb-1 text-xs uppercase" style={{ color: sidebarTextColor }}>
+              Recent Chats
             </div>
             <div className="space-y-1">
               {recentChats.map((chat) => {
