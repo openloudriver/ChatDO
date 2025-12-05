@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { addMemorySource } from '../utils/api';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -19,6 +19,17 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const folderPathInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the folder path input when modal opens
+  useEffect(() => {
+    if (isOpen && folderPathInputRef.current) {
+      // Small delay to ensure modal is fully rendered
+      setTimeout(() => {
+        folderPathInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +105,7 @@ const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               Folder path <span className="text-red-400">*</span>
             </label>
             <input
+              ref={folderPathInputRef}
               type="text"
               value={rootPath}
               onChange={(e) => setRootPath(e.target.value)}
