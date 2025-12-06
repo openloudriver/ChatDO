@@ -74,7 +74,8 @@ Memory Service provides automatic file indexing and semantic search capabilities
 - **Per-Source SQLite Databases**: Each source has its own database at `memory_service/store/<source_id>/index.sqlite`
 - **Global Tracking Database**: Status and job tracking in `memory_service/store/tracking.sqlite`
 - **File Watchers**: Automatically index files when they're created, modified, or deleted
-- **Embeddings**: Uses sentence-transformers with all-MiniLM-L6-v2 model (384-dimensional vectors)
+- **Embeddings**: Uses sentence-transformers with BAAI/bge-large-en-v1.5 model (1024-dimensional vectors)
+- **Hybrid Search**: Combines vector similarity (60%) with BM25 keyword matching (40%) for improved search quality
 
 ## Installation
 

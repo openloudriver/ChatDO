@@ -20,6 +20,8 @@ from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.embeddings import embed_query
 from memory_service.models import SourceStatus, IndexJob
+from memory_service.text_utils import tokenize, compute_bm25_score
+from collections import Counter, defaultdict
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
@@ -511,12 +513,10 @@ async def get_source_jobs(source_id: str, limit: int = 10):
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """
-    Search for relevant chunks by source_ids and query.
+    Hybrid search combining vector similarity (BGE embeddings) and BM25 keyword matching.
     
-    Returns top-N matches ordered by cosine similarity.
+    Returns top-N matches ordered by combined score (weighted average of vector and BM25).
     If source_ids is not provided, returns empty results.
-    
-    Uses query expansion to improve recall for table-heavy documents.
     """
     try:
         # Query expansion: extract key terms and search for them individually
@@ -563,25 +563,60 @@ async def search(request: SearchRequest):
         if not all_embeddings:
             return SearchResponse(results=[])
         
-        # Compute cosine similarities using best match across all query variations
-        similarities = []
+        # Tokenize query for BM25
+        query_tokens = tokenize(request.query)
+        
+        # Pre-compute document frequencies for BM25
+        # Count how many documents contain each token
+        doc_freqs = defaultdict(int)
+        doc_token_lists = {}
+        doc_lengths = []
+        
         for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
-            # Try all query embeddings and take the best match
-            best_similarity = 0.0
+            doc_tokens = tokenize(chunk_text)
+            doc_token_lists[chunk_id] = doc_tokens
+            doc_lengths.append(len(doc_tokens))
+            unique_tokens = set(doc_tokens)
+            for token in unique_tokens:
+                doc_freqs[token] += 1
+        
+        avg_doc_length = sum(doc_lengths) / len(doc_lengths) if doc_lengths else 1.0
+        
+        # Compute hybrid scores (vector + BM25)
+        scores = []
+        for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
+            # Vector similarity (cosine similarity) - try all query variations and take best
+            best_vector_score = 0.0
             for query_embedding in query_embeddings:
                 dot_product = np.dot(query_embedding, embedding)
                 norm_query = np.linalg.norm(query_embedding)
                 norm_embedding = np.linalg.norm(embedding)
-            
+                
                 if norm_query > 0 and norm_embedding > 0:
                     similarity = dot_product / (norm_query * norm_embedding)
-                    best_similarity = max(best_similarity, similarity)
+                    # Normalize to [0, 1] range (cosine similarity is [-1, 1])
+                    normalized = (similarity + 1.0) / 2.0
+                    best_vector_score = max(best_vector_score, normalized)
+            
+            # BM25 keyword score
+            doc_tokens = doc_token_lists.get(chunk_id, [])
+            bm25_score = compute_bm25_score(query_tokens, doc_tokens, doc_freqs, avg_doc_length)
+            
+            # Normalize BM25 score (simple min-max normalization)
+            # BM25 scores are typically in range [0, 10+], normalize to [0, 1]
+            max_bm25 = 10.0  # Adjust based on your data
+            normalized_bm25 = min(bm25_score / max_bm25, 1.0) if max_bm25 > 0 else 0.0
+            
+            # Hybrid score: weighted combination (60% vector, 40% BM25)
+            vector_weight = 0.6
+            bm25_weight = 0.4
+            hybrid_score = (vector_weight * best_vector_score) + (bm25_weight * normalized_bm25)
             
             # Determine source type
             source_type = "chat" if chat_id is not None else "file"
             
-            similarities.append((
-                best_similarity,
+            scores.append((
+                hybrid_score,
                 project_id,
                 source_id,
                 file_path,
@@ -595,15 +630,15 @@ async def search(request: SearchRequest):
                 message_id
             ))
         
-        # Sort by similarity (descending) and take top N
-        similarities.sort(key=lambda x: x[0], reverse=True)
-        top_results = similarities[:request.limit]
+        # Sort by hybrid score (descending) and take top N
+        scores.sort(key=lambda x: x[0], reverse=True)
+        top_results = scores[:request.limit]
         
         # Build results
         results = []
-        for score, project_id, source_id, file_path, filetype, chunk_index, chunk_text, start_char, end_char, source_type, chat_id, message_id in top_results:
+        for hybrid_score, project_id, source_id, file_path, filetype, chunk_index, chunk_text, start_char, end_char, source_type, chat_id, message_id in top_results:
             results.append(SearchResult(
-                score=float(score),
+                score=float(hybrid_score),
                 project_id=project_id,
                 source_id=source_id,
                 file_path=file_path,

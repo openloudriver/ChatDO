@@ -1,7 +1,7 @@
 """
 Embedding generation using sentence-transformers.
 
-Loads the all-MiniLM-L6-v2 model and provides batched embedding generation.
+Loads the BAAI/bge-large-en-v1.5 model (1024 dimensions) and provides batched embedding generation.
 """
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -34,7 +34,7 @@ def embed_texts(texts: List[str]) -> np.ndarray:
         texts: List of text strings to embed
         
     Returns:
-        numpy array of shape [N, 384] where N is the number of texts
+        numpy array of shape [N, 1024] where N is the number of texts
     """
     if not texts:
         return np.array([])
@@ -52,7 +52,7 @@ def embed_query(query: str) -> np.ndarray:
         query: Query text string
         
     Returns:
-        numpy array of shape [384]
+        numpy array of shape [1024]
     """
     return embed_texts([query])[0]
 
