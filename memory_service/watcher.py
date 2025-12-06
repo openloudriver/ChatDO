@@ -70,7 +70,7 @@ class IndexingHandler(FileSystemEventHandler):
         
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
-            logger.info(f"File created, indexing: {path}")
+            logger.info("[WATCH] File created, indexing: %s", path)
             index_file(path, self.source_db_id, self.source_id)
     
     def on_modified(self, event: FileSystemEvent):
@@ -83,7 +83,7 @@ class IndexingHandler(FileSystemEventHandler):
         
         path = Path(event.src_path)
         if should_index_file(path, self.include_glob, self.exclude_glob):
-            logger.info(f"File modified, re-indexing: {path}")
+            logger.info("[WATCH] File modified, re-indexing: %s", path)
             index_file(path, self.source_db_id, self.source_id)
     
     def on_deleted(self, event: FileSystemEvent):
@@ -95,7 +95,7 @@ class IndexingHandler(FileSystemEventHandler):
             return
         
         path = Path(event.src_path)
-        logger.info(f"File deleted, removing from index: {path}")
+        logger.info("[WATCH] File deleted, removing from index: %s", path)
         delete_file(path, self.source_db_id, self.source_id)
 
 
@@ -140,7 +140,7 @@ class WatcherManager:
         observer.start()
         
         self.observers[source_id] = observer
-        logger.info(f"Started watching source: {source_id} at {root_path}")
+        logger.info("[WATCH] Starting watch for source id=%s path=%s", source_id, root_path)
     
     def add_source_watch(self, source):
         """
@@ -175,7 +175,7 @@ class WatcherManager:
         observer.stop()
         observer.join()
         del self.observers[source_id]
-        logger.info(f"Stopped watching source: {source_id}")
+        logger.info("[WATCH] Stopping watch for source id=%s", source_id)
     
     def stop_all(self):
         """Stop all watchers."""

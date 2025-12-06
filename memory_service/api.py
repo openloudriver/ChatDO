@@ -55,15 +55,15 @@ async def lifespan(app: FastAPI):
     logger.info("Database system ready")
     
     # Load sources from config and start watchers
+    logger.info("[WATCH] WatcherManager startup: starting all watchers")
     watcher_manager.start_all()
-    logger.info("File watchers started")
     
     yield
     
     # Shutdown
     logger.info("Shutting down Memory Service...")
+    logger.info("[WATCH] WatcherManager shutdown: stopping all watchers")
     watcher_manager.stop_all()
-    logger.info("File watchers stopped")
 
 
 app = FastAPI(title="Memory Service", version="1.0.0", lifespan=lifespan)
@@ -211,6 +211,7 @@ async def add_source(request: AddSourceRequest):
     
     # Start watching this path
     watcher_manager.add_source_watch(src)
+    logger.info("[WATCH] Now watching source id=%s path=%s", src.id, src.root_path)
     
     # Kick off indexing in background thread
     def run_indexing():
@@ -293,6 +294,7 @@ async def delete_source(source_id: str):
     # Stop watching this source
     try:
         watcher_manager.stop_watching(source_id)
+        logger.info("[WATCH] Stopped watching source id=%s", source_id)
     except Exception as e:
         logger.warning(f"Could not stop watcher for {source_id}: {e}")
     

@@ -420,6 +420,31 @@ def should_index_file(path: Path, include_glob: Optional[str], exclude_glob: Opt
     return True
 
 
+def _update_source_stats_from_db(source_id: str) -> None:
+    """
+    Update source statistics by querying the actual database counts.
+    Called after individual file operations (index/delete) to keep stats accurate.
+    Also updates last_index_completed_at to reflect when indexing last occurred.
+    """
+    try:
+        conn = db.get_db_connection(source_id)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+        row = cursor.fetchone()
+        actual_files = row[0] if row else 0
+        actual_bytes = row[1] if row and len(row) > 1 else 0
+        conn.close()
+        
+        db.update_source_stats(
+            source_id,
+            files_indexed=actual_files,
+            bytes_indexed=actual_bytes,
+            last_index_completed_at=datetime.now()
+        )
+    except Exception as e:
+        logger.warning(f"Could not update source stats for {source_id}: {e}")
+
+
 def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
     """
     Index a single file (idempotent).
@@ -504,7 +529,11 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         from memory_service.config import EMBEDDING_MODEL
         db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL, source_id)
         
+        # Update source statistics after successful indexing
+        _update_source_stats_from_db(source_id)
+        
         logger.info(f"Successfully indexed {path} ({len(chunks)} chunks)")
+        logger.info(f"[MEMORY] Indexed file: {path} (bytes={size_bytes})")
         return True
         
     except Exception as e:
@@ -786,5 +815,9 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
 def delete_file(path: Path, source_db_id: int, source_id: str):
     """Delete a file and all its chunks/embeddings from the index."""
     db.delete_file_by_path(source_db_id, str(path), source_id)
+    
+    # Update source statistics after successful deletion
+    _update_source_stats_from_db(source_id)
+    
     logger.info(f"Deleted file from index: {path}")
 
