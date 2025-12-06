@@ -1,0 +1,80 @@
+[
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=r8hfQKEAabc&pp=ugUEEgJlbg%3D%3D"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=r8hfQKEAabc&pp=ugUEEgJlbg%3D%3D",
+      "title": "If this video found YOU, you survived another bitcoin cycle...",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The video is a motivational pep talk responding to a roughly 36% Bitcoin price drop, urging viewers not to panic and framing such volatility as routine. It contrasts selling for short-term relief with buying and holding for long-term conviction, arguing the deeper reason to own Bitcoin is dissatisfaction with inflationary fiat systems. The speaker claims institutional interest is rising even as prices fall and encourages focusing on fundamentals and self-custody instead of short-term price moves. Key Points:",
+      "keyPoints": [
+        "The speaker cites a drop from ~126K to ~80K as typical Bitcoin volatility meant to “shake out” leveraged and weak-handed traders.",
+        "Core thesis: fiat money is “broken” due to debt and money printing; Bitcoin’s fixed 21 million supply is positioned as an alternative.",
+        "Practical guidance: avoid panic and leverage, only buy if you truly believe, and prioritize self-custody (hardware wallet, seed phrase, open-source tools, move off exchanges).",
+        "Claims of growing mainstream/institutional interest (e.g., large asset managers and universities) alongside continued price swings.",
+        "Emphasizes conviction over timing the market, while noting the content includes promotional referral codes."
+      ],
+      "whyMatters": "The clip encapsulates a common crypto narrative that normalizes volatility and prioritizes long-term conviction and self-custody. It highlights the need for individual due diligence, clear risk tolerance, and awareness that such guidance is opinionated and promotional."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=RW9SG6WnDQI&t=727s&pp=0gcJCSUKAYcqIYzv"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=RW9SG6WnDQI&t=727s&pp=0gcJCSUKAYcqIYzv",
+      "title": "The Real Reason Gods Elect Dont Fit In Church Anymore || Voddie Baucham Bible Lessons",
+      "siteName": "Video",
+      "published": null,
+      "summary": "The speaker argues that many modern churches have drifted from scripture-centered preaching to trend-driven, entertainment-focused services, leaving committed believers (“the elect”) feeling spiritually malnourished and out of place. He says sin, repentance, judgment, and the cross are softened or avoided, while messages become man-centered and therapeutic. Through examples of Samuel and Rachel, he illustrates why some believers leave such churches to find congregations that prioritize sound doctrine and reverent worship. The call is to return to Bible-saturated preaching, God-exalting worship, and exhortation over spectacle.",
+      "keyPoints": [
+        "Claims truth has been replaced by trends, with culture reshaping church priorities and tone",
+        "Critiques entertainment replacing exhortation: performance, emotionalism, and motivational talks over substantive preaching",
+        "Says sermons often minimize sin and judgment, reframing the cross and using scripture superficially",
+        "Warns the gospel is being redefined toward self-help and affirmation rather than repentance and lordship of Christ",
+        "Provides examples (Samuel and Rachel) of believers leaving shallow environments to seek doctrinal depth"
+      ],
+      "whyMatters": "The critique highlights ongoing tensions in contemporary Christianity between cultural relevance and doctrinal fidelity, helping explain why some committed members disengage from certain churches. It underscores how shifts in preaching and worship can affect spiritual formation and the perceived authenticity of church life."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://rumble.com/v72ne40-prayer-of-favor-youtubeshorts-grace-jesus-mercy-favor-fyp-trust-bless-love-.html?e9s=src_v1_viral"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://rumble.com/v72ne40-prayer-of-favor-youtubeshorts-grace-jesus-mercy-favor-fyp-trust-bless-love-.html?e9s=src_v1_viral",
+      "title": "Prayer of Favor #youtubeshorts #grace #jesus #mercy #favor #fyp #trust #bless #love #God #help #joy",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: A Christian prayer invoking Psalm 5:12 asks God to surround the righteous with favor like a shield. The speaker thanks God for favor, grace, mercy, and protection, and seeks covering by the blood of Jesus and an “open heaven” as the day ends. The prayer asks God to nullify spiritual forces of darkness, protect against negative or manipulated dreams, and grant increase, all in Jesus’ name. Key Points:",
+      "keyPoints": [
+        "Cites Psalm 5:12 about God’s favor encircling the righteous as a shield.",
+        "Expresses gratitude for God’s grace, mercy, favor, and protection.",
+        "Requests covering by the blood of Jesus and an open heaven.",
+        "Prays against principalities, rulers of darkness, and spiritual wickedness.",
+        "Seeks protection during sleep from dream theft/manipulation and asks for increase."
+      ],
+      "whyMatters": "Offers spiritual comfort and a sense of divine protection for believers, particularly at day’s end. Reflects common Christian themes of favor, gratitude, and spiritual warfare in prayer."
+    },
+    "model": "yt-dlp + Whisper-small-FP16 + GPT-5",
+    "provider": "yt-dlp-whisper-small"
+  }
+]

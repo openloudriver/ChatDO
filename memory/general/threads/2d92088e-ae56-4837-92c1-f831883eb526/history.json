@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t know yet—what is your favorite color? If you tell me (a name or hex code), I’ll remember it for future chats.\n\n## TL;DR\n- I don’t have your favorite color on record.\n- Reply with the color (optionally a hex like #3B82F6), and I’ll use it going forward.\n\n## Quick picker\n- Blue (#3B82F6)\n- Green (#10B981)\n- Purple (#8B5CF6)\n- Red (#EF4444)\n- Orange (#F59E0B)\n- Pink (#EC4899)\n- Teal (#14B8A6)\n- Black (#111827)\n- White (#F9FAFB)\n\n## Practical tip\n- If you share a hex code, I can use it in examples (UI themes, charts, code snippets) and keep it consistent.",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  }
+]

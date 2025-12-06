@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "What is my mom's favorite flower?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your mom's favorite flower is daisies.\n\n## Note\n- You also mentioned her favorite color is white.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

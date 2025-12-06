@@ -1,0 +1,28 @@
+[
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=r8hfQKEAabc&pp=ugUEEgJlbg%3D%3D"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=r8hfQKEAabc&pp=ugUEEgJlbg%3D%3D",
+      "title": "If this video found YOU, you survived another bitcoin cycle...",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The speaker delivers a motivational pep talk after a roughly 36% Bitcoin price drop, framing the volatility as routine and urging viewers not to panic. He contrasts selling for short-term relief with buying/holding for conviction, then argues the deeper reason to own Bitcoin is distrust of fiat systems, government debt, and money printing. He emphasizes Bitcoin’s fixed supply (21 million) as a “cure” for inflation and claims mainstream adoption is growing even as price falls. The video ends with a strong call to self-custody and long-term commitment. Key Points:",
+      "keyPoints": [
+        "Frames sharp Bitcoin drawdowns as normal, noting repeated cycles and frequent “Bitcoin is dead” narratives.",
+        "Claims broader acceptance (e.g., institutions and countries) yet continued price volatility, arguing conviction should not rely on headlines.",
+        "Recasts the decision from “sell vs. buy the dip” to “why hold Bitcoin,” citing broken money, unsustainable debt, and inflation from money printing.",
+        "Promotes strict self-custody: set up a wallet, record a seed phrase, use open-source hardware (e.g., Blockstream Jade), and withdraw from exchanges.",
+        "Urges a long-term mindset and personal responsibility, asserting that it will never “feel safe” and that belief in Bitcoin’s thesis is the key determinant."
+      ],
+      "whyMatters": "This encapsulates a common Bitcoin maximalist narrative during downturns: treat volatility as noise, focus on macro distrust of fiat, and prioritize self-custody. It illustrates how sentiment, ideology, and risk framing shape investor behavior in crypto markets."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  }
+]

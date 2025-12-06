@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "Do you remember what my favorite color is?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t have your favorite color recorded yet.\n\n## TL;DR\n- Tell me your favorite color, and I’ll remember it for next time.\n\n## Want me to remember it?\n- Reply with the color name (e.g., “deep green”) or a hex code (e.g., “#0F9D58”).\n- If you have variations you prefer (light/dark, matte/neon), include that too.",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  }
+]

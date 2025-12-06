@@ -1,0 +1,70 @@
+[
+  {
+    "role": "user",
+    "content": "search for Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $405.09 USD with a 24-hour trading volume of $142,120,960.99 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all."
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source."
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ..."
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  }
+]

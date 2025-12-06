@@ -1,0 +1,352 @@
+[
+  {
+    "role": "user",
+    "content": "search for Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $405.09 USD with a 24-hour trading volume of $142,120,960.99 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all."
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source."
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ..."
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "search for Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin - Open source P2P money",
+          "url": "https://bitcoin.org/en/",
+          "snippet": "Bitcoin uses peer-to-peer technology to operate with no central authority or banks; managing transactions and the issuing of bitcoins is carried out collectively by the network. Bitcoin is open-source; its design is public, nobody owns or controls Bitcoin and everyone can take part."
+        },
+        {
+          "title": "Bitcoin - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Bitcoin",
+          "snippet": "Bitcoin (abbreviation: BTC; sign: ₿) is the first decentralized cryptocurrency. Based on a free-market ideology, bitcoin was invented in 2008 when an unknown entity published a white paper under the pseudonym of Satoshi Nakamoto. Use of bitcoin as a currency began in 2009, with the release ..."
+        },
+        {
+          "title": "Bitcoin price today, BTC to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/bitcoin/",
+          "snippet": "The live Bitcoin price today is $92,048.55 USD with a 24-hour trading volume of $59,455,948,683.78 USD. We update our BTC to USD price in real-time."
+        },
+        {
+          "title": "Bitcoin - The Currency of the Internet",
+          "url": "https://www.reddit.com/r/Bitcoin/",
+          "snippet": "Bitcoin is the currency of the Internet: a distributed, worldwide, decentralized digital money. Unlike traditional currencies such as dollars, bitcoins are issued and managed without any central authority whatsoever: there is no government, ..."
+        },
+        {
+          "title": "BTC USD — Bitcoin Price and Chart",
+          "url": "https://www.tradingview.com/symbols/BTCUSD/",
+          "snippet": "Just one more step · Complete the test below to access the page"
+        },
+        {
+          "title": "Bitcoin (@Bitcoin) / X",
+          "url": "https://x.com/Bitcoin",
+          "snippet": "Bitcoin is an open source censorship-resistant peer-to-peer immutable network. Trackable digital gold. Don't trust; verify."
+        },
+        {
+          "title": "What is Bitcoin? | Coinbase",
+          "url": "https://www.coinbase.com/learn/crypto-basics/what-is-bitcoin",
+          "snippet": "Bitcoin is the world's first widely adopted cryptocurrency — it allows for secure and seamless peer-to-peer transactions on the internet."
+        },
+        {
+          "title": "BTC.CM=: Bitcoin/USD Coin Metrics - Stock Price, Quote and News - CNBC",
+          "url": "https://www.cnbc.com/quotes/BTC.CM=",
+          "snippet": "Bitcoin is down nearly 30% from its record high — history shows that's normal18 Hours AgoCNBC.com"
+        },
+        {
+          "title": "Buy Bitcoin & cryptocurrency | Wallet, news, education.",
+          "url": "https://www.bitcoin.com/",
+          "snippet": "The world's gateway to Bitcoin & cryptocurrency. Buy, sell, spend, swap, and invest in BTC, ETH, BCH, AVAX, MATIC & hundreds more digital assets. Stay informed about crypto, DeFi, and Web3."
+        },
+        {
+          "title": "Bitcoin: A Peer-to-Peer Electronic Cash System Satoshi Nakamoto",
+          "url": "https://bitcoin.org/bitcoin.pdf",
+          "snippet": "Bitcoin: A Peer-to-Peer Electronic Cash System · Satoshi Nakamoto · satoshin@gmx.com · www.bitcoin.org · Abstract. A purely peer-to-peer version of electronic cash would allow online · payments to be sent directly from one party to another without going through a ·"
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "search for Bitcoin vs Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin vs Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero ... more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)...."
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Through technologies like Ring Signatures and Stealth Addresses, Monero ensures that the sender, receiver, and transaction amount remain private. This makes Monero the preferred choice for users who prioritize security and privacy in their digital transactions. With Bitcoin’s transparent ledger, anyone can inspect the blockchain and verify every transaction."
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism."
+        },
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "Bitcoin transactions are publicly visible on its blockchain, providing transparency but limiting privacy, while Monero obscures sender, receiver, and transaction amounts through advanced privacy features like ring signatures, stealth addresses, and bulletproofs."
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "These qualities have earned the ... the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden...."
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "It means that if someone can associate a Bitcoin address with a specific person, they can potentially trace their transaction history. When it comes to privacy, it is primarily about stealth addresses. These are disorganized, one-time addresses that have nothing to do with any shared or previously put regular addresses. Put simply, on the public ledger, a few transactions sent to the same standard Monero address will appear to have been sent to completely different addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ..."
+        },
+        {
+          "title": "Monero (XMR) vs Bitcoin (BTC): Privacy, Performance, and Market Dynamics in 2025 | MEXC Crypto Pulse",
+          "url": "https://www.mexc.com/crypto-pulse/article/monero-xmr-vs-bitcoin-btc-39588",
+          "snippet": "Monero (XMR) and Bitcoin (BTC) represent two different crypto ideologies. Bitcoin is transparent, traceable, and globally accepted as a digital store of value, while Monero prioritizes privacy, offering untraceable transactions through advanced cryptography. In 2025, Monero briefly outperformed ..."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://coinbureau.com/analysis/monero-vs-bitcoin/"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+      "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+      "siteName": "coinbureau.com",
+      "published": "2023-09-27T06:00:00.000Z",
+      "summary": "Summary: The article compares Bitcoin and Monero as proof-of-work cryptocurrencies rooted in cypherpunk principles, focusing on their differing approaches to privacy, scalability, mining, and use cases. Bitcoin offers a transparent, widely recognized, and highly liquid network often used as a store of value, while Monero prioritizes strong on-chain privacy and fungibility through advanced cryptography. Monero’s RandomX algorithm aims to keep mining decentralized and ASIC-resistant, whereas Bitcoin’s SHA-256 mining is ASIC-dominated. Regulatory scrutiny has limited Monero’s adoption and exchange availability despite its strong privacy features. Key Points:",
+      "keyPoints": [
+        "Privacy: Bitcoin is pseudonymous but traceable on a transparent ledger; Monero obfuscates sender, receiver, and amounts via ring signatures, RingCT, and stealth addresses.",
+        "Mining: Bitcoin uses SHA-256 with ASIC-dominant mining; Monero uses RandomX to favor CPU/GPU mining and decentralization.",
+        "Performance and Fees: Monero targets ~2-minute blocks and dynamic block sizes for generally lower, more predictable fees; Bitcoin’s 10-minute blocks can lead to variable fees during congestion.",
+        "Scalability: Monero’s dynamic block size offers more flexibility; Bitcoin’s fixed block size has spurred ongoing scalability debates.",
+        "Adoption and Use Cases: Bitcoin is widely recognized, liquid, and positioned as “digital gold”; Monero is preferred for privacy-focused transactions but faces regulatory headwinds, delistings, and lower market cap (ranked around 26th)."
+      ],
+      "whyMatters": "Users face a clear trade-off: Bitcoin’s liquidity, adoption, and store-of-value narrative versus Monero’s strong privacy and fungibility. Understanding these differences helps align crypto choices with priorities like anonymity, regulatory exposure, and long-term investment goals."
+    },
+    "model": "Readability + GPT-5",
+    "provider": "trafilatura-gpt5"
+  },
+  {
+    "role": "user",
+    "content": "search for Bitcoin vs Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin vs Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero ... more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)...."
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Through technologies like Ring Signatures and Stealth Addresses, Monero ensures that the sender, receiver, and transaction amount remain private. This makes Monero the preferred choice for users who prioritize security and privacy in their digital transactions. With Bitcoin’s transparent ledger, anyone can inspect the blockchain and verify every transaction."
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism."
+        },
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "Bitcoin transactions are publicly visible on its blockchain, providing transparency but limiting privacy, while Monero obscures sender, receiver, and transaction amounts through advanced privacy features like ring signatures, stealth addresses, and bulletproofs."
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "These qualities have earned the ... the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden...."
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "It means that if someone can associate a Bitcoin address with a specific person, they can potentially trace their transaction history. When it comes to privacy, it is primarily about stealth addresses. These are disorganized, one-time addresses that have nothing to do with any shared or previously put regular addresses. Put simply, on the public ledger, a few transactions sent to the same standard Monero address will appear to have been sent to completely different addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ..."
+        },
+        {
+          "title": "Monero (XMR) vs Bitcoin (BTC): Privacy, Performance, and Market Dynamics in 2025 | MEXC Crypto Pulse",
+          "url": "https://www.mexc.com/crypto-pulse/article/monero-xmr-vs-bitcoin-btc-39588",
+          "snippet": "Monero (XMR) and Bitcoin (BTC) represent two different crypto ideologies. Bitcoin is transparent, traceable, and globally accepted as a digital store of value, while Monero prioritizes privacy, offering untraceable transactions through advanced cryptography. In 2025, Monero briefly outperformed ..."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://coinbureau.com/analysis/monero-vs-bitcoin/"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+      "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+      "siteName": "coinbureau.com",
+      "published": "2023-09-27T06:00:00.000Z",
+      "summary": "Bitcoin and Monero are presented as early, proof-of-work cryptocurrencies rooted in cypherpunk ideals, but they prioritize different goals. Bitcoin offers a transparent, pseudonymous ledger and has evolved into a widely recognized store of value with deep liquidity and strong network security. Monero is privacy-by-design, obscuring senders, recipients, and amounts through ring signatures, RingCT, and stealth addresses, and uses the ASIC-resistant RandomX algorithm to foster decentralized mining. The article outlines trade-offs: Monero’s stronger privacy and flexible block size versus Bitcoin’s broader adoption, liquidity, and regulatory friendliness. Key Points:",
+      "keyPoints": [
+        "Privacy: Bitcoin is traceable despite pseudonymity; Monero hides transaction details and balances by default, enhancing fungibility.",
+        "Performance and Fees: Monero’s ~2-minute blocks and dynamic block size aim for faster confirmations and more predictable, lower fees; Bitcoin’s 10-minute blocks can see fee spikes during congestion.",
+        "Mining: Bitcoin’s SHA-256 mining is ASIC-dominated; Monero’s RandomX favors CPUs/GPUs to reduce mining centralization.",
+        "Scalability: Monero’s dynamic block size offers flexibility; Bitcoin’s fixed block size has prompted ongoing scalability debates.",
+        "Adoption and Use Cases: Bitcoin serves as “digital gold” with high liquidity and recognition; Monero is favored for privacy-focused transactions but faces regulatory scrutiny, exchange delistings, and a smaller market cap."
+      ],
+      "whyMatters": "The comparison highlights a core trade-off in crypto: strong privacy and decentralization versus mainstream adoption and regulatory acceptance. Users choose between Monero and Bitcoin based on whether privacy or liquidity and store-of-value characteristics are the top priority."
+    },
+    "model": "Readability + GPT-5",
+    "provider": "trafilatura-gpt5"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://guarda.com/academy/blockchain/monero-vs-bitcoin/"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+      "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+      "siteName": "guarda.com",
+      "published": "2025-01-15",
+      "summary": "In 2025, the Bitcoin–Monero debate hinges on transparency versus privacy. Bitcoin dominates in adoption, liquidity, and infrastructure—bolstered by potential ETF approval and the upcoming halving—yet its transparent ledger limits privacy. Monero prioritizes anonymity and fungibility through ring signatures, stealth addresses, and RingCT, but faces scalability trade-offs and regulatory scrutiny. The “better” choice depends on whether users value mainstream acceptance or privacy-first transactions.",
+      "keyPoints": [
+        "Privacy models: Bitcoin is pseudonymous with a transparent blockchain; Monero obscures sender, receiver, and amount for strong privacy and fungibility.",
+        "Adoption and scalability: Bitcoin enjoys broader merchant acceptance and infrastructure; Monero’s privacy features increase transaction size and can slow throughput.",
+        "Market catalysts: Potential Bitcoin ETF approval and the halving focus investor attention and may affect supply dynamics and price.",
+        "Mining and consensus: Both use Proof of Work; Bitcoin mining is more concentrated with energy concerns, while Monero’s ASIC resistance aims for wider, more decentralized participation.",
+        "Use cases and risks: Bitcoin is often treated as “digital gold” and a hedge; Monero serves confidentiality-focused use cases but draws greater regulatory scrutiny."
+      ],
+      "whyMatters": "Understanding these trade-offs helps users choose the right asset for their needs—open auditability and broad acceptance versus strong on-chain privacy—and informs how regulation, infrastructure, and market events could shape each network’s future."
+    },
+    "model": "Trafilatura + GPT-5",
+    "provider": "trafilatura-gpt5"
+  }
+]

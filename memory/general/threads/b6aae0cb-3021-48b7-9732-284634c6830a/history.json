@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "My favorite color is blue."
+  },
+  {
+    "role": "assistant",
+    "content": "Noted—I’ll remember that your favorite color is blue.\n\n## TL;DR\n- I’ll default to blue for themes, examples, charts, and UI suggestions unless you say otherwise.\n\n## Where I’ll use it\n- UI/theme mockups and color tokens.\n- Charts/diagrams and example screenshots.\n- Sample data, badges, and highlights in docs.\n- Prompting/style suggestions (e.g., “use a blue accent”).\n\n## Optional tweaks\n- Preferred shade? Common picks:\n  - Primary: #3B82F6 (vivid blue-500)\n  - Dark: #1E3A8A (blue-800 for text/headers)\n  - Accent: #60A5FA (blue-400 for hover/links)\n\nIf you want, I can standardize a mini palette (primary, accent, background, contrast) for future use.",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  }
+]

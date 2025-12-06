@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "Did you know that my favorite color is blue?"
+  },
+  {
+    "role": "assistant",
+    "content": "I do now—your favorite color is blue.\n\n## TL;DR\n- Noted. Want me to remember this so I bias examples, mockups, and themes toward blue?\n\n## Quick picker\n- Save it as a preference: Yes / Not now\n- Optional: Favorite shade? (navy, royal, cobalt, teal, azure)\n\n## Practical tips\n- Nice pairings with blue:\n  - Accents: orange/amber, coral, gold\n  - Calm neutrals: gray, charcoal, off‑white\n- Handy palettes (tweak as you like):\n  - Navy UI: #0F172A (bg), #1E293B, #334155, Accent #F59E0B\n  - Bright blue: #0EA5E9, #0284C7, #0369A1, Accent #F43F5E\n  - Teal blend: #14B8A6, #0D9488, #115E59, Accent #F59E0B\n\nIf you tell me the exact shade, I’ll tune palettes and charts to match.",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  }
+]
