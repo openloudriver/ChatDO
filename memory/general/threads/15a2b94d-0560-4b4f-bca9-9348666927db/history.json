@@ -1,0 +1,47 @@
+[
+  {
+    "role": "user",
+    "content": "My favorite color is blue"
+  },
+  {
+    "role": "assistant",
+    "content": "Saved — your favorite color is blue.\n\n## TL;DR\n- I’ll remember blue for future prompts, examples, and UI suggestions.\n\n## Practical notes\n- Want to be more specific? You can set a shade like “navy blue,” “royal blue,” or “powder blue.”\n- You can change this anytime—just tell me your new preference.\n\n## How I’ll use it\n- Default accent color in examples (charts, UI mockups).\n- Personalized themes in snippets or config samples.\n- Color choices in design recommendations.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero first, Bitcoin second (you don’t care much about it), and XLM third.\n\n## TL;DR\n- Monero (XMR) — #1\n- Bitcoin (BTC) — #2, low priority\n- Stellar (XLM) — #3\n\n## How I’ll use this\n- Default examples and news: Monero first, XLM second, Bitcoin last and brief unless relevant.\n\n## Adjust anytime\n- Want to change the order or add a #4? Just tell me.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "If I had to choose, I guess USDT is my fourth favorite. Also, you don't have to remember that BTC is \"low priority\""
+  },
+  {
+    "role": "assistant",
+    "content": "Updated and saved — your favorites are Monero #1, Bitcoin #2, XLM #3, and USDT #4, and I won’t treat BTC as “low priority” anymore.\n\n## TL;DR\n- Monero (XMR) — #1  \n- Bitcoin (BTC) — #2  \n- Stellar (XLM) — #3  \n- Tether (USDT) — #4\n\n## How I’ll use this\n- Examples and news: prioritize Monero first, then include BTC/XLM/USDT as relevant.\n- Comparisons: add USDT when a stablecoin baseline helps.\n- No downweighting of BTC unless you ask.\n\n## Adjust anytime\n- Want a #5 or a re-order later? Just tell me (e.g., “swap XLM and BTC”).",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

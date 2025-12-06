@@ -4,7 +4,9 @@
     "name": "General",
     "default_target": "privacypay",
     "sort_index": 0,
-    "memory_sources": [],
+    "memory_sources": [
+      "coin-dir"
+    ],
     "trashed": false,
     "trashed_at": null
   },
