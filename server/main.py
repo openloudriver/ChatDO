@@ -32,14 +32,14 @@ load_dotenv(env_path)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target, TargetConfig
-from chatdo.agents.main_agent import run_agent
+from chatdo.agents.ai_router import run_agent
 from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history, load_thread_sources, add_thread_source, memory_root
 from chatdo.executor import parse_tasks_block, apply_tasks
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
 from server.ws import websocket_endpoint
 from server.article_summary import extract_article
-from chatdo.agents.main_agent import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT, FILE_SUMMARY_SYSTEM_PROMPT
+from chatdo.agents.ai_router import call_ai_router, ARTICLE_SUMMARY_SYSTEM_PROMPT, FILE_SUMMARY_SYSTEM_PROMPT
 from server.services import impact_store, impact_templates_store
 from server.services.impact_store import ImpactEntry
 from server.services.impact_templates_store import ImpactTemplate, get_template_file_path
@@ -1602,7 +1602,7 @@ Revised answer:"""
     ]
     
     try:
-        from chatdo.agents.main_agent import call_ai_router
+        from chatdo.agents.ai_router import call_ai_router
         assistant_messages, _, _, _ = call_ai_router(messages, intent="general_chat")
         
         if assistant_messages and len(assistant_messages) > 0:

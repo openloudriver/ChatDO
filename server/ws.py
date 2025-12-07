@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from chatdo.config import load_target
-from chatdo.agents.main_agent import run_agent
+from chatdo.agents.ai_router import run_agent
 from chatdo.executor import parse_tasks_block, apply_tasks
 
 # Task execution constants
@@ -155,7 +155,7 @@ async def stream_chat_response(
             from datetime import datetime, timezone
             from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
             from server.main import load_projects
-            from chatdo.agents.main_agent import ARTICLE_SUMMARY_SYSTEM_PROMPT
+            from chatdo.agents.ai_router import ARTICLE_SUMMARY_SYSTEM_PROMPT
             
             url = urls[0]
             article_data = extract_article(url)
@@ -403,7 +403,7 @@ Keep it concise, neutral, and factual."""
         # If force_search is true, route to run_agent which will return Top Results card
         if force_search and not has_rag_context:
             print(f"[FORCE_SEARCH] force_search=True, message='{message[:100]}...'")
-            from chatdo.agents.main_agent import run_agent
+            from chatdo.agents.ai_router import run_agent
             from chatdo.tools import web_search
             
             # Prepend "search for" to ensure it gets classified as web_search intent
@@ -487,7 +487,8 @@ Keep it concise, neutral, and factual."""
         if use_web and sources and not has_rag_context:
             # Use web sources as context for GPT
             from chatdo.memory.store import load_thread_history
-            from chatdo.agents.main_agent import call_ai_router, CHATDO_SYSTEM_PROMPT
+            from chatdo.agents.ai_router import call_ai_router
+            from chatdo.prompts import CHATDO_SYSTEM_PROMPT
             import os
             import requests
             

@@ -1,3 +1,20 @@
+"""
+═══════════════════════════════════════════════════════════════════════════════
+LEGACY AGENT IMPLEMENTATION (LangChain-based)
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️  WARNING: This file is kept ONLY for historical reference.
+
+- Not imported anywhere in the runtime
+- Not part of ChatDO's current architecture
+- Replaced by AI Router + custom Orchestrator (see chatdo/agents/ai_router.py)
+- Contains LangChain dependencies that are no longer in pyproject.toml
+
+Safe to delete in the future once no longer needed.
+
+═══════════════════════════════════════════════════════════════════════════════
+"""
+
 from deepagents import create_deep_agent
 from langchain_openai import ChatOpenAI
 from pathlib import Path
@@ -512,3 +529,4 @@ Notes:
         print(f"[DIAG] run_agent: After saving, history has {len(history)} messages")
     
     return final_content, model_display, provider_id
+

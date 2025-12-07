@@ -5,7 +5,8 @@ When web search is needed, it's done in the background and results are fed to GP
 import logging
 from typing import Dict, List, Any, Optional
 from chatdo.tools import web_search
-from chatdo.agents.main_agent import call_ai_router, CHATDO_SYSTEM_PROMPT
+from chatdo.agents.ai_router import call_ai_router
+from chatdo.prompts import CHATDO_SYSTEM_PROMPT
 from chatdo.memory import store as memory_store
 from .smart_search_classifier import decide_web_search
 from .memory_service_client import get_project_memory_context, get_memory_client

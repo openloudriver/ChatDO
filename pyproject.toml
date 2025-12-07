@@ -5,8 +5,6 @@ description = "Director of Operations (dev-time deep agent)"
 requires-python = ">=3.10"
 dependencies = [
   "deepagents",
-  "langchain",
-  "langchain-community",
   "pyyaml",
 ]
 

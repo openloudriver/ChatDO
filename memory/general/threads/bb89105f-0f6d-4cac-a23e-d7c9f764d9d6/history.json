@@ -1,0 +1,17 @@
+[
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Blue.\n\n## TL;DR\n- Your favorite color is blue.\n\n## Quick picker\n- Navy — #001F3F  \n- Cobalt — #0047AB  \n- Royal — #4169E1  \n- Sky — #38B6FF  \n\nWant me to use a specific shade by default?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]
