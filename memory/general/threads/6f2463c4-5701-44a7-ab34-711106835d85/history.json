@@ -1,0 +1,104 @@
+[
+  {
+    "role": "user",
+    "content": "my favorite color is blue"
+  },
+  {
+    "role": "assistant",
+    "content": "Got it—your favorite color is blue.\n\n## TL;DR\n- I can use blue for themes, examples, and charts going forward.\n- Want me to remember this preference for future sessions?\n\n## Quick picker\n- Shades to choose from:\n  - Navy: #001F3F\n  - Cobalt: #0047AB\n  - Royal: #4169E1\n  - Sky: #38B6FF\n  - Teal-leaning: #1E90FF (Dodger Blue)\n\n## Practical uses\n- UI/theme suggestions and mockups.\n- Chart/graph palettes and accent colors in docs.\n- Code example highlights and callout blocks.\n\nIf you have a preferred shade or hex, tell me and I’ll use that by default.",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptocurrencies in order are: 1) XMR, 2) BTC, 3) XLM, 4) USDT."
+  },
+  {
+    "role": "assistant",
+    "content": "Noted—your favorites in order are XMR, BTC, XLM, and USDT.\n\n## TL;DR\n- I’ll prioritize these in analyses, examples, charts, and alerts.\n- Want me to remember this list for future sessions?\n\n## 📊 Ranking\n| Rank | Ticker | Name    |\n| --- | --- | --- |\n| 1 | XMR | Monero |\n| 2 | BTC | Bitcoin |\n| 3 | XLM | Stellar |\n| 4 | USDT | Tether |\n\n## Quick actions\n- Set this as your default watchlist order.\n- Use USD as the default quote currency (or specify another).\n- Prefer a specific exchange for prices (e.g., Kraken, Coinbase, Binance)?\n- USDT chain preference: ERC20 (Ethereum), TRC20 (Tron), SOL (Solana), or others?\n\n## Practical uses\n- Market summaries: show these first, with deeper notes on XMR.\n- Portfolio examples and backtests: weight and compare using this order.\n- Alerts: price moves, dominance, or on-chain stats focused on these.\n- Charts/tables: default columns for XMR/BTC/XLM/USDT, with blue accents if you like.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Wait, I hate multi-chain cryptos. Remove USDT from my favorites"
+  },
+  {
+    "role": "assistant",
+    "content": "Done—I’ve removed USDT; your favorites are now XMR, BTC, and XLM.\n\n## TL;DR\n- Updated list: XMR (1), BTC (2), XLM (3).\n- Want me to remember a “no multi‑chain tokens” rule for future suggestions?\n\n## 📊 Updated ranking\n| Rank | Ticker | Name    |\n| --- | --- | --- |\n| 1 | XMR | Monero |\n| 2 | BTC | Bitcoin |\n| 3 | XLM | Stellar |\n\n## Quick actions\n- Enforce a global filter: exclude multi‑chain tokens (e.g., USDT, USDC, DAI) from watchlists, examples, and alerts.\n- Replace the 4th slot with a single‑chain alternative? Options: LTC, SOL, ADA.\n- Apply this update to any saved watchlists and alerts.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is the latest price for XMR?"
+  },
+  {
+    "role": "assistant",
+    "content": "XMR is trading around $390 USD right now (prices vary slightly by source) [1, 3, 4, 5].\n\n## TL;DR\n- Ballpark: ~$390.\n- Slight differences by tracker/exchange; see spot checks below.\n\n## 📊 Spot checks\n- CoinMarketCap: $386.79 [1]\n- Kraken: $387.34 [3]\n- Coinbase: $391.15 [5]\n- CoinDesk: $394.69 [4]\n\n## Practical tips\n- Prices move quickly—want me to pin one source as your default (e.g., Kraken) and use that for all quotes?\n- I can set alerts for XMR moves (e.g., ±3%, new 24h high/low) and summarize daily.",
+    "model": "Web + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "web-0",
+        "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+        "url": "https://coinmarketcap.com/currencies/monero/",
+        "description": "The live Monero price today is $386.79 USD with a 24-hour trading volume of $108,222,796.23 USD. We update our XMR to USD price in real-time.",
+        "siteName": "coinmarketcap.com",
+        "rank": 0,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-1",
+        "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+        "url": "https://www.coingecko.com/en/coins/monero",
+        "description": "The trading volume of Monero (XMR) ... high of BTC0.03475 and an all-time low of BTC0.001015. It’s now trading -27.10% below that peak and 182,790.10% above its lowest price....",
+        "siteName": "coingecko.com",
+        "rank": 1,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-2",
+        "title": "Monero price today - XMR price chart & live trends",
+        "url": "https://www.kraken.com/prices/monero",
+        "description": "Monero price today is $387.34. In the last 24 hours Monero's price moved -1.23%. The current XMR to USD conversion rate is $387.34 per XMR. The circulating supply of Monero is 18,502,911 XMR and the current Monero market cap is $7,166,917,563. 262,493 XMR was purchased today on Kraken worth ...",
+        "siteName": "kraken.com",
+        "rank": 2,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-3",
+        "title": "Monero (XMR) Price | XMR to USD Price and Live Chart",
+        "url": "https://www.coindesk.com/price/monero",
+        "description": "The price of Monero (XMR) is $394.69 today as of Dec 6, 2025, 5:33 am EST, with a 24-hour trading volume of $96.96M.",
+        "siteName": "coindesk.com",
+        "rank": 3,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-4",
+        "title": "Monero Price, XMR Price, Live Charts, and Marketcap: monero price, xrm crypto, xmr price",
+        "url": "https://www.coinbase.com/price/monero",
+        "description": "Monero (XMR) Price USD Today is $391.15. News, predictions, charts, market cap, buy, sell, convert, and invest on the most trusted platform for crypto.",
+        "siteName": "coinbase.com",
+        "rank": 4,
+        "sourceType": "web"
+      }
+    ]
+  }
+]
