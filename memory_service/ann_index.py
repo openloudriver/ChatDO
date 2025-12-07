@@ -283,8 +283,12 @@ class AnnIndexManager:
                     continue
                 
                 # Apply source filter if provided
-                if filter_source_ids and metadata.get("source_id") not in filter_source_ids:
-                    continue
+                # BUT: Always include chat embeddings (source_id starts with "chat-") for cross-chat memory
+                source_id = metadata.get("source_id")
+                if filter_source_ids and source_id not in filter_source_ids:
+                    # Skip file sources that don't match, but always include chat sources
+                    if not (source_id and source_id.startswith("chat-")):
+                        continue
                 
                 # Convert inner product to normalized cosine similarity [0, 1]
                 # Inner product of normalized vectors is in [-1, 1], normalize to [0, 1]
