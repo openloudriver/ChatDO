@@ -18,7 +18,7 @@ from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sour
 from memory_service.store import db
 from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
-from memory_service.embeddings import embed_query
+from memory_service.vector_cache import get_query_embedding
 from memory_service.models import SourceStatus, IndexJob
 from memory_service.text_utils import tokenize, compute_bm25_score
 from collections import Counter, defaultdict
@@ -537,8 +537,8 @@ async def search(request: SearchRequest):
         # Also try the original query
         all_queries = [request.query] + query_terms[:3]  # Limit to top 3 terms to avoid too many searches
         
-        # Embed all query variations
-        query_embeddings = [embed_query(q) for q in all_queries]
+        # Embed all query variations (using cached query embeddings)
+        query_embeddings = [get_query_embedding(q) for q in all_queries]
         
         # Search across all specified sources (files)
         all_embeddings = []
