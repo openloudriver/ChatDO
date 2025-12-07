@@ -5,7 +5,7 @@ Provides REST API endpoints for health checks, source management, indexing, and 
 """
 import logging
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -20,7 +20,8 @@ from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.vector_cache import get_query_embedding
 from memory_service.ann_index import AnnIndexManager
-from memory_service.models import SourceStatus, IndexJob
+from memory_service.filetree import FileTreeManager
+from memory_service.models import SourceStatus, IndexJob, FileTreeResponse, FileReadResponse
 from memory_service.text_utils import tokenize, compute_bm25_score
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -33,6 +34,9 @@ watcher_manager = WatcherManager()
 
 # Global ANN index manager
 ann_index_manager = AnnIndexManager(dimension=EMBEDDING_DIM)
+
+# Global FileTree manager
+filetree_manager = FileTreeManager()
 
 
 def _build_ann_index():
@@ -984,6 +988,62 @@ async def get_chunk_stats(source_id: str):
         }
     except Exception as e:
         logger.error(f"Error getting chunk stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/filetree/{source_id}", response_model=FileTreeResponse)
+async def get_filetree(
+    source_id: str,
+    path: str = Query("", description="Relative path from source root (directory or file)"),
+    max_depth: int = Query(2, ge=0, le=10, description="Maximum depth to traverse (0 = root only)"),
+    max_entries: int = Query(500, ge=1, le=5000, description="Maximum total entries to include"),
+):
+    """
+    List the directory tree for a Memory Source.
+    
+    Returns a tree structure starting at the specified path (relative to source root).
+    - If path is empty, starts at source root
+    - If path is a file, returns a single file node
+    - If path is a directory, returns the directory tree up to max_depth levels
+    """
+    try:
+        return filetree_manager.list_tree(
+            source_id=source_id,
+            rel_path=path,
+            max_depth=max_depth,
+            max_entries=max_entries,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing filetree for source {source_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/filetree/{source_id}/file", response_model=FileReadResponse)
+async def read_file(
+    source_id: str,
+    path: str = Query(..., description="Relative file path from source root"),
+    max_bytes: int = Query(65536, ge=1, le=5_000_000, description="Maximum bytes to read (default: 64KB)"),
+):
+    """
+    Read a single file from a Memory Source.
+    
+    Returns file contents as text (if UTF-8 decodable) or marks as binary.
+    - Files are bounded by max_bytes to prevent excessive memory usage
+    - Binary files are detected and content is omitted
+    - Path must be relative to the source root (no ../ traversal allowed)
+    """
+    try:
+        return filetree_manager.read_file(
+            source_id=source_id,
+            rel_path=path,
+            max_bytes=max_bytes,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading file from source {source_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

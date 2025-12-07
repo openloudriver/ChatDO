@@ -141,6 +141,97 @@ python -m uvicorn api:app --host 127.0.0.1 --port 5858 --reload
   }
   ```
 
+## FileTree API (Phase 1)
+
+Memory Service v1.1 adds read-only filesystem access to Memory Sources, allowing the Orchestrator to browse and read files within a source's root directory.
+
+### New Endpoints
+
+- `GET /filetree/{source_id}` - List directory tree for a source
+  - Query parameters:
+    - `path` (optional, default: ""): Relative path from source root (directory or file)
+    - `max_depth` (optional, default: 2): Maximum depth to traverse (0-10)
+    - `max_entries` (optional, default: 500): Maximum total entries to include (1-5000)
+  - Returns: `FileTreeResponse` with a tree structure
+
+- `GET /filetree/{source_id}/file` - Read a single file from a source
+  - Query parameters:
+    - `path` (required): Relative file path from source root
+    - `max_bytes` (optional, default: 65536): Maximum bytes to read (1-5MB)
+  - Returns: `FileReadResponse` with file contents (if text) or binary marker
+
+### Safety Features
+
+- **Read-only**: No write/delete/rename capabilities
+- **Path confinement**: All paths are strictly validated to prevent directory traversal (`../` escapes)
+- **Bounded operations**: 
+  - Tree listing limited by `max_depth` and `max_entries`
+  - File reading limited by `max_bytes` (default 64KB)
+- **Binary detection**: Binary files are detected and content is omitted (encoding marked as "binary")
+
+### Example Usage
+
+**List top-level directory:**
+```bash
+curl "http://127.0.0.1:5858/filetree/coin-dir?path=&max_depth=1"
+```
+
+**List a subdirectory:**
+```bash
+curl "http://127.0.0.1:5858/filetree/coin-dir?path=docs&max_depth=2"
+```
+
+**Read a text file:**
+```bash
+curl "http://127.0.0.1:5858/filetree/coin-dir/file?path=README.md&max_bytes=4096"
+```
+
+### Example Responses
+
+**FileTreeResponse:**
+```json
+{
+  "source_id": "coin-dir",
+  "root": {
+    "name": "Coin",
+    "path": "",
+    "is_dir": true,
+    "size_bytes": null,
+    "modified_at": "2025-12-07T20:00:00",
+    "children": [
+      {
+        "name": "README.md",
+        "path": "README.md",
+        "is_dir": false,
+        "size_bytes": 2048,
+        "modified_at": "2025-12-07T19:30:00",
+        "children": null
+      },
+      {
+        "name": "docs",
+        "path": "docs",
+        "is_dir": true,
+        "size_bytes": null,
+        "modified_at": "2025-12-07T18:00:00",
+        "children": [...]
+      }
+    ]
+  }
+}
+```
+
+**FileReadResponse:**
+```json
+{
+  "source_id": "coin-dir",
+  "path": "README.md",
+  "encoding": "utf-8",
+  "size_bytes": 2048,
+  "content": "# Coin Project\n\nThis is the README...",
+  "truncated": false
+}
+```
+
 ### Testing
 
 1. Start the service:
