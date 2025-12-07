@@ -374,6 +374,12 @@ Keep it concise, neutral, and factual."""
         web_context_prompt = ""
         
         if use_web:
+            # Send status message to frontend so it knows web search is happening
+            await websocket.send_json({
+                "type": "status",
+                "status": "searching_web",
+                "message": "Searching web..."
+            })
             try:
                 sources = fetch_web_sources(message, max_results=5)
                 if sources:

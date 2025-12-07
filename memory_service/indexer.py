@@ -306,6 +306,35 @@ def index_chat_message(
         # Store embeddings
         db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL, source_id)
         
+        # Add embeddings to ANN index
+        try:
+            from memory_service.api import ann_index_manager
+            if ann_index_manager.is_available():
+                # Prepare metadata for ANN
+                metadata_list = []
+                for i, chunk_record in enumerate(chunk_records):
+                    metadata_list.append({
+                        "embedding_id": chunk_record.id,  # Use chunk_id as embedding_id
+                        "chunk_id": chunk_record.id,
+                        "file_id": None,
+                        "file_path": None,
+                        "chunk_text": chunk_record.text,
+                        "source_id": source_id,
+                        "project_id": project_id,
+                        "filetype": None,
+                        "chunk_index": chunk_record.chunk_index,
+                        "start_char": chunk_record.start_char,
+                        "end_char": chunk_record.end_char,
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                    })
+                
+                # Add to ANN index
+                ann_index_manager.add_embeddings(embeddings, metadata_list)
+                logger.debug(f"[ANN] Added {len(embeddings)} chat embeddings to ANN index for message {message_id}")
+        except Exception as e:
+            logger.warning(f"[ANN] Failed to add chat embeddings to ANN index: {e}")
+        
         logger.debug(f"Successfully indexed chat message {message_id} ({len(chunks)} chunks)")
         return True
         
@@ -528,6 +557,39 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         # Store embeddings
         from memory_service.config import EMBEDDING_MODEL
         db.insert_embeddings(chunk_ids, embeddings, EMBEDDING_MODEL, source_id)
+        
+        # Add embeddings to ANN index
+        try:
+            from memory_service.api import ann_index_manager
+            if ann_index_manager.is_available():
+                # Get source to get project_id
+                source = db.get_source_by_source_id(source_id)
+                project_id = source.project_id if source else "scratch"
+                
+                # Prepare metadata for ANN
+                metadata_list = []
+                for i, chunk_record in enumerate(chunk_records):
+                    metadata_list.append({
+                        "embedding_id": chunk_record.id,  # Use chunk_id as embedding_id
+                        "chunk_id": chunk_record.id,
+                        "file_id": file_id,
+                        "file_path": str(path),
+                        "chunk_text": chunk_record.text,
+                        "source_id": source_id,
+                        "project_id": project_id,
+                        "filetype": filetype,
+                        "chunk_index": chunk_record.chunk_index,
+                        "start_char": chunk_record.start_char,
+                        "end_char": chunk_record.end_char,
+                        "chat_id": None,
+                        "message_id": None,
+                    })
+                
+                # Add to ANN index
+                ann_index_manager.add_embeddings(embeddings, metadata_list)
+                logger.debug(f"[ANN] Added {len(embeddings)} embeddings to ANN index for {path}")
+        except Exception as e:
+            logger.warning(f"[ANN] Failed to add embeddings to ANN index: {e}")
         
         # Update source statistics after successful indexing
         _update_source_stats_from_db(source_id)
@@ -814,7 +876,25 @@ def index_source(source_id: str) -> Tuple[int, int, int]:
 
 def delete_file(path: Path, source_db_id: int, source_id: str):
     """Delete a file and all its chunks/embeddings from the index."""
+    # Get chunk IDs before deletion so we can remove from ANN
+    file = db.get_file_by_path(source_db_id, str(path), source_id)
+    chunk_ids_to_remove = []
+    if file:
+        chunk_records = db.get_chunks_by_file_id(file.id, source_id)
+        chunk_ids_to_remove = [c.id for c in chunk_records]
+    
+    # Delete from database
     db.delete_file_by_path(source_db_id, str(path), source_id)
+    
+    # Remove from ANN index
+    if chunk_ids_to_remove:
+        try:
+            from memory_service.api import ann_index_manager
+            if ann_index_manager.is_available():
+                ann_index_manager.remove_embeddings(chunk_ids_to_remove)
+                logger.debug(f"[ANN] Removed {len(chunk_ids_to_remove)} embeddings from ANN index for {path}")
+        except Exception as e:
+            logger.warning(f"[ANN] Failed to remove embeddings from ANN index: {e}")
     
     # Update source statistics after successful deletion
     _update_source_stats_from_db(source_id)

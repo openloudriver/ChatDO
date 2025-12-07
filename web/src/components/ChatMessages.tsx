@@ -460,7 +460,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const { 
     messages: storeMessages, 
     isStreaming, 
-    streamingContent, 
+    streamingContent,
+    streamingStatus, 
     currentConversation, 
     currentProject, 
     setViewMode, 
@@ -1574,13 +1575,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           ) : (
             <div className="inline-flex flex-col">
               <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] ml-[6px] transition-colors">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                {streamingStatus ? (
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <span className="text-sm">{streamingStatus}</span>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

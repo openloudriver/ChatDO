@@ -228,5 +228,35 @@
     "updated_at": "2025-12-06T20:20:12.888007+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "5945ac8d-868a-4ab1-a0ef-1cfd44c85af6",
+    "project_id": "scratch",
+    "title": "List the Coin directory major folders",
+    "thread_id": "5945ac8d-868a-4ab1-a0ef-1cfd44c85af6",
+    "created_at": "2025-12-07T01:53:40.185838+00:00",
+    "updated_at": "2025-12-07T01:53:51.112704+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "be497256-cb2a-467f-85ce-037006a78029",
+    "project_id": "scratch",
+    "title": "Explain what the loggingminer.yml configuration...",
+    "thread_id": "be497256-cb2a-467f-85ce-037006a78029",
+    "created_at": "2025-12-07T02:38:12.751983+00:00",
+    "updated_at": "2025-12-07T03:00:21.302353+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "91a43ae1-72a1-4abd-80f7-4f916676740e",
+    "project_id": "scratch",
+    "title": "Explain what the loggingminer.yml configuration...",
+    "thread_id": "91a43ae1-72a1-4abd-80f7-4f916676740e",
+    "created_at": "2025-12-07T03:11:29.435080+00:00",
+    "updated_at": "2025-12-07T03:23:25.700801+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

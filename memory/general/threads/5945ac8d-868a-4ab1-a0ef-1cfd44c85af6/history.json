@@ -1,0 +1,62 @@
+[
+  {
+    "role": "user",
+    "content": "List the Coin directory major folders"
+  },
+  {
+    "role": "assistant",
+    "content": "The major folders in the Coin directory are: cli, archive, docker, and nebula.\n\n## TL;DR\n- cli\n- archive\n- docker\n- nebula\n\nIf you want, I can also list what’s inside any of these (e.g., the archive folder).",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue. I have this saved for future examples, themes, and suggestions.\n\n## Update it?\n- Want a specific shade (navy, royal, sky)?\n- Want to change it entirely? Just tell me the new color.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero (1st), Bitcoin (2nd), XLM (3rd), and USDT (4th).\n\n## TL;DR\n- Monero (XMR) — #1\n- Bitcoin (BTC) — #2\n- Stellar (XLM) — #3\n- Tether (USDT) — #4\n\n## Update it?\n- Want to change the order or add a #5? Just say the word.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Update it?\n- Want a specific shade (navy, royal, sky)?\n- Want to change it entirely? Just tell me the new color.\n\n## How I’ll use it\n- Default accent color in examples and mockups.\n- Personalized themes in snippets or config samples.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

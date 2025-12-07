@@ -285,6 +285,13 @@ const ChatComposer: React.FC = () => {
           if (data.type === 'chunk') {
             streamedContent += data.content;
             updateStreamingContent(streamedContent);
+            // Clear status when content starts arriving
+            const { setStreamingStatus } = useChatStore.getState();
+            setStreamingStatus(null);
+          } else if (data.type === 'status') {
+            // Handle status messages (e.g., "Searching web...")
+            const { setStreamingStatus } = useChatStore.getState();
+            setStreamingStatus(data.message || null);
           } else if (data.type === 'web_search_results') {
             // Handle structured web search results
             // Convert web search results to Source[]
@@ -391,13 +398,15 @@ const ChatComposer: React.FC = () => {
               meta: data.meta || undefined
             });
             
-            // Clear streaming state immediately after adding message
-            // Use setTimeout to ensure React has processed the addMessage state update
+            // Clear streaming state after React has rendered the message
+            // Use requestAnimationFrame to ensure the DOM has updated before clearing
             // This prevents the flash where streaming UI disappears before message appears
-            setTimeout(() => {
-              clearStreaming();
-              setLoading(false);
-            }, 50);
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                clearStreaming();
+                setLoading(false);
+              });
+            });
             // Update the conversation's updatedAt in allConversations immediately
             // Then reload all chats in the background to sync with backend
             const { allConversations, setConversations: _setConversations } = useChatStore.getState();
@@ -996,6 +1005,13 @@ const ChatComposer: React.FC = () => {
           if (data.type === 'chunk') {
             streamedContent += data.content;
             updateStreamingContent(streamedContent);
+            // Clear status when content starts arriving
+            const { setStreamingStatus } = useChatStore.getState();
+            setStreamingStatus(null);
+          } else if (data.type === 'status') {
+            // Handle status messages (e.g., "Searching web...")
+            const { setStreamingStatus } = useChatStore.getState();
+            setStreamingStatus(data.message || null);
           } else if (data.type === 'web_search_results') {
             // Handle structured web search results
             // Convert web search results to Source[]

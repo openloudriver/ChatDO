@@ -14,11 +14,12 @@ from contextlib import asynccontextmanager
 import asyncio
 import threading
 
-from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, load_sources, create_dynamic_source, BASE_DIR, BASE_STORE_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
+from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, EMBEDDING_DIM, load_sources, create_dynamic_source, BASE_DIR, BASE_STORE_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
 from memory_service.store import db
 from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.vector_cache import get_query_embedding
+from memory_service.ann_index import AnnIndexManager
 from memory_service.models import SourceStatus, IndexJob
 from memory_service.text_utils import tokenize, compute_bm25_score
 from collections import Counter, defaultdict
@@ -29,6 +30,152 @@ logger = logging.getLogger(__name__)
 
 # Global watcher manager
 watcher_manager = WatcherManager()
+
+# Global ANN index manager
+ann_index_manager = AnnIndexManager(dimension=EMBEDDING_DIM)
+
+
+def _build_ann_index():
+    """Load all embeddings from all sources and build ANN index."""
+    if not ann_index_manager.is_available():
+        logger.warning("[ANN] FAISS not available, skipping ANN index build")
+        return
+    
+    logger.info("[ANN] Building FAISS IndexFlatIP index...")
+    
+    try:
+        # Get all sources from tracking DB
+        sources_with_jobs = db.get_all_sources_with_latest_job()
+        all_sources = [source for source, _ in sources_with_jobs]
+        
+        # Also get all project IDs for chat sources
+        project_ids = set()
+        for source in all_sources:
+            if source.project_id:
+                project_ids.add(source.project_id)
+        
+        total_embeddings = 0
+        
+        # Load embeddings from all file sources
+        for source in all_sources:
+            source_id = source.id
+            try:
+                # Skip chat sources (handled separately)
+                if source_id.startswith("chat-"):
+                    continue
+                
+                # Check if source database exists
+                from memory_service.config import get_db_path_for_source
+                db_path = get_db_path_for_source(source_id)
+                if not db_path.exists():
+                    continue
+                
+                embeddings_data = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
+                
+                if len(embeddings_data) == 0:
+                    continue
+                
+                # Prepare vectors and metadata
+                vectors = []
+                metadata_list = []
+                
+                for chunk_id, embedding, file_id, file_path, chunk_text, src_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in embeddings_data:
+                    vectors.append(embedding)
+                    metadata_list.append({
+                        "embedding_id": chunk_id,  # Use chunk_id as embedding_id for now
+                        "chunk_id": chunk_id,
+                        "file_id": file_id,
+                        "file_path": file_path,
+                        "chunk_text": chunk_text,
+                        "source_id": src_id,
+                        "project_id": project_id,
+                        "filetype": filetype,
+                        "chunk_index": chunk_index,
+                        "start_char": start_char,
+                        "end_char": end_char,
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                    })
+                
+                if len(vectors) > 0:
+                    # Process in batches to avoid overwhelming FAISS and prevent crashes
+                    BATCH_SIZE = 1000  # Process 1000 embeddings at a time
+                    for batch_start in range(0, len(vectors), BATCH_SIZE):
+                        batch_end = min(batch_start + BATCH_SIZE, len(vectors))
+                        batch_vectors = vectors[batch_start:batch_end]
+                        batch_metadata = metadata_list[batch_start:batch_end]
+                        
+                        vectors_array = np.array(batch_vectors, dtype=np.float32)
+                        ann_index_manager.add_embeddings(vectors_array, batch_metadata)
+                        total_embeddings += len(batch_vectors)
+                        
+                        # Small delay between batches to avoid overwhelming the system
+                        import time
+                        time.sleep(0.01)
+                    
+                    logger.debug(f"[ANN] Loaded {len(vectors)} embeddings from source {source_id} in batches")
+                
+            except Exception as e:
+                logger.warning(f"[ANN] Error loading embeddings from source {source_id}: {e}")
+                continue
+        
+        # Load embeddings from all chat sources
+        for project_id in project_ids:
+            try:
+                chat_embeddings = db.get_chat_embeddings_for_project(project_id, EMBEDDING_MODEL, exclude_chat_id=None)
+                
+                if len(chat_embeddings) == 0:
+                    continue
+                
+                # Prepare vectors and metadata
+                vectors = []
+                metadata_list = []
+                
+                for chunk_id, embedding, file_id, file_path, chunk_text, src_id, project_id_val, filetype, chunk_index, start_char, end_char, chat_id, message_id in chat_embeddings:
+                    vectors.append(embedding)
+                    metadata_list.append({
+                        "embedding_id": chunk_id,  # Use chunk_id as embedding_id
+                        "chunk_id": chunk_id,
+                        "file_id": file_id,
+                        "file_path": file_path,
+                        "chunk_text": chunk_text,
+                        "source_id": src_id,
+                        "project_id": project_id_val,
+                        "filetype": filetype,
+                        "chunk_index": chunk_index,
+                        "start_char": start_char,
+                        "end_char": end_char,
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                    })
+                
+                if len(vectors) > 0:
+                    # Process in batches to avoid overwhelming FAISS and prevent crashes
+                    BATCH_SIZE = 1000  # Process 1000 embeddings at a time
+                    for batch_start in range(0, len(vectors), BATCH_SIZE):
+                        batch_end = min(batch_start + BATCH_SIZE, len(vectors))
+                        batch_vectors = vectors[batch_start:batch_end]
+                        batch_metadata = metadata_list[batch_start:batch_end]
+                        
+                        vectors_array = np.array(batch_vectors, dtype=np.float32)
+                        ann_index_manager.add_embeddings(vectors_array, batch_metadata)
+                        total_embeddings += len(batch_vectors)
+                        
+                        # Small delay between batches to avoid overwhelming the system
+                        import time
+                        time.sleep(0.01)
+                    
+                    logger.debug(f"[ANN] Loaded {len(vectors)} chat embeddings from project {project_id} in batches")
+                
+            except Exception as e:
+                logger.debug(f"[ANN] Error loading chat embeddings for project {project_id}: {e}")
+                continue
+        
+        logger.info(f"[ANN] FAISS index ready (dim={EMBEDDING_DIM}, size={ann_index_manager.get_index_size()}, active={ann_index_manager.get_active_count()})")
+        
+    except Exception as e:
+        logger.error(f"[ANN] Failed to build ANN index: {e}", exc_info=True)
+        logger.warning("[ANN] Falling back to brute-force vector search")
 
 
 @asynccontextmanager
@@ -53,6 +200,27 @@ async def lifespan(app: FastAPI):
     
     # Note: Per-source databases are initialized on first use
     logger.info("Database system ready")
+    
+    # Build ANN index from existing embeddings in background (non-blocking)
+    # This allows the service to start responding immediately while the index builds
+    # If FAISS causes crashes, we'll disable ANN and fall back to brute-force
+    def build_index_background():
+        try:
+            _build_ann_index()
+        except Exception as e:
+            logger.error(f"[ANN] Background index build failed: {e}", exc_info=True)
+            # Disable ANN to prevent further crashes
+            ann_index_manager.index = None
+            logger.warning("[ANN] ANN index disabled due to error, using brute-force search only")
+    
+    # Build ANN index from existing embeddings in background (non-blocking)
+    # Using IndexFlatIP instead of HNSW for better stability
+    if ann_index_manager.is_available():
+        index_thread = threading.Thread(target=build_index_background, daemon=True)
+        index_thread.start()
+        logger.info("[ANN] Started background ANN index build (service ready, index building in background)")
+    else:
+        logger.info("[ANN] FAISS not available, using brute-force vector search")
     
     # Load sources from config and start watchers
     logger.info("[WATCH] WatcherManager startup: starting all watchers")
@@ -517,6 +685,8 @@ async def search(request: SearchRequest):
     """
     Hybrid search combining vector similarity (BGE embeddings) and BM25 keyword matching.
     
+    Uses FAISS HNSW ANN for fast vector search, with fallback to brute-force if ANN unavailable.
+    
     Returns top-N matches ordered by combined score (weighted average of vector and BM25).
     If source_ids is not provided, returns empty results.
     """
@@ -540,41 +710,105 @@ async def search(request: SearchRequest):
         # Embed all query variations (using cached query embeddings)
         query_embeddings = [get_query_embedding(q) for q in all_queries]
         
-        # Search across all specified sources (files)
-        all_embeddings = []
-        if request.source_ids:  # Only search file sources if source_ids is provided
-            for source_id in request.source_ids:
-                try:
-                    source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
-                    all_embeddings.extend(source_embeddings)
-                except Exception as e:
-                    logger.warning(f"Error searching source {source_id}: {e}")
-                    continue
+        # Use primary query embedding for ANN search
+        primary_query_embedding = query_embeddings[0]
         
-        # Also search chat messages for this project (include ALL chats, including current chat)
-        try:
-            chat_embeddings = db.get_chat_embeddings_for_project(
-                request.project_id, 
-                EMBEDDING_MODEL, 
-                exclude_chat_id=None  # Include all chats, including current chat
-            )
-            all_embeddings.extend(chat_embeddings)
-        except Exception as e:
-            logger.debug(f"Error searching chat messages for project {request.project_id}: {e}")
+        # Determine which sources to search
+        filter_source_ids = request.source_ids if request.source_ids else None
         
-        if not all_embeddings:
+        # Try ANN search first
+        use_ann = ann_index_manager.is_available()
+        ann_results = []
+        
+        if use_ann:
+            try:
+                logger.info(f"[ANN] Using FAISS IndexFlatIP for vector search (k={request.limit * 2})")
+                # Search for more results to account for BM25 filtering
+                ann_results = ann_index_manager.search(
+                    primary_query_embedding,
+                    top_k=request.limit * 2,  # Get more candidates for BM25 scoring
+                    filter_source_ids=filter_source_ids
+                )
+            except Exception as e:
+                logger.warning(f"[ANN] ANN search failed, falling back to brute-force: {e}")
+                use_ann = False
+        
+        # Fallback to brute-force if ANN unavailable or failed
+        if not use_ann or len(ann_results) == 0:
+            logger.info("[ANN] ANN unavailable, falling back to brute-force")
+            
+            # Load all embeddings from specified sources
+            all_embeddings = []
+            if request.source_ids:  # Only search file sources if source_ids is provided
+                for source_id in request.source_ids:
+                    try:
+                        source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
+                        all_embeddings.extend(source_embeddings)
+                    except Exception as e:
+                        logger.warning(f"Error searching source {source_id}: {e}")
+                        continue
+            
+            # Also search chat messages for this project (include ALL chats, including current chat)
+            try:
+                chat_embeddings = db.get_chat_embeddings_for_project(
+                    request.project_id, 
+                    EMBEDDING_MODEL, 
+                    exclude_chat_id=None  # Include all chats, including current chat
+                )
+                all_embeddings.extend(chat_embeddings)
+            except Exception as e:
+                logger.debug(f"Error searching chat messages for project {request.project_id}: {e}")
+            
+            if not all_embeddings:
+                return SearchResponse(results=[])
+            
+            # Compute vector scores using brute-force
+            ann_results = []
+            for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
+                # Vector similarity (cosine similarity) - try all query variations and take best
+                best_vector_score = 0.0
+                for query_embedding in query_embeddings:
+                    dot_product = np.dot(query_embedding, embedding)
+                    norm_query = np.linalg.norm(query_embedding)
+                    norm_embedding = np.linalg.norm(embedding)
+                    
+                    if norm_query > 0 and norm_embedding > 0:
+                        similarity = dot_product / (norm_query * norm_embedding)
+                        # Normalize to [0, 1] range (cosine similarity is [-1, 1])
+                        normalized = (similarity + 1.0) / 2.0
+                        best_vector_score = max(best_vector_score, normalized)
+                
+                ann_results.append({
+                    "embedding_id": chunk_id,
+                    "score": best_vector_score,
+                    "chunk_id": chunk_id,
+                    "file_id": file_id,
+                    "file_path": file_path,
+                    "chunk_text": chunk_text,
+                    "source_id": source_id,
+                    "project_id": project_id,
+                    "filetype": filetype,
+                    "chunk_index": chunk_index,
+                    "start_char": start_char,
+                    "end_char": end_char,
+                    "chat_id": chat_id,
+                    "message_id": message_id,
+                })
+        
+        if not ann_results:
             return SearchResponse(results=[])
         
         # Tokenize query for BM25
         query_tokens = tokenize(request.query)
         
-        # Pre-compute document frequencies for BM25
-        # Count how many documents contain each token
+        # Pre-compute document frequencies for BM25 from ANN results
         doc_freqs = defaultdict(int)
         doc_token_lists = {}
         doc_lengths = []
         
-        for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
+        for result in ann_results:
+            chunk_text = result["chunk_text"]
+            chunk_id = result["chunk_id"]
             doc_tokens = tokenize(chunk_text)
             doc_token_lists[chunk_id] = doc_tokens
             doc_lengths.append(len(doc_tokens))
@@ -586,19 +820,9 @@ async def search(request: SearchRequest):
         
         # Compute hybrid scores (vector + BM25)
         scores = []
-        for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
-            # Vector similarity (cosine similarity) - try all query variations and take best
-            best_vector_score = 0.0
-            for query_embedding in query_embeddings:
-                dot_product = np.dot(query_embedding, embedding)
-                norm_query = np.linalg.norm(query_embedding)
-                norm_embedding = np.linalg.norm(embedding)
-                
-                if norm_query > 0 and norm_embedding > 0:
-                    similarity = dot_product / (norm_query * norm_embedding)
-                    # Normalize to [0, 1] range (cosine similarity is [-1, 1])
-                    normalized = (similarity + 1.0) / 2.0
-                    best_vector_score = max(best_vector_score, normalized)
+        for result in ann_results:
+            chunk_id = result["chunk_id"]
+            vector_score = result["score"]
             
             # BM25 keyword score
             doc_tokens = doc_token_lists.get(chunk_id, [])
@@ -612,24 +836,24 @@ async def search(request: SearchRequest):
             # Hybrid score: weighted combination (60% vector, 40% BM25)
             vector_weight = 0.6
             bm25_weight = 0.4
-            hybrid_score = (vector_weight * best_vector_score) + (bm25_weight * normalized_bm25)
+            hybrid_score = (vector_weight * vector_score) + (bm25_weight * normalized_bm25)
             
             # Determine source type
-            source_type = "chat" if chat_id is not None else "file"
+            source_type = "chat" if result.get("chat_id") is not None else "file"
             
             scores.append((
                 hybrid_score,
-                project_id,
-                source_id,
-                file_path,
-                filetype,
-                chunk_index,
-                chunk_text,
-                start_char,
-                end_char,
+                result["project_id"],
+                result["source_id"],
+                result["file_path"],
+                result["filetype"],
+                result["chunk_index"],
+                result["chunk_text"],
+                result["start_char"],
+                result["end_char"],
                 source_type,
-                chat_id,
-                message_id
+                result.get("chat_id"),
+                result.get("message_id")
             ))
         
         # Sort by hybrid score (descending) and take top N

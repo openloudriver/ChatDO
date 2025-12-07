@@ -103,6 +103,7 @@ interface ChatStore {
   isLoading: boolean;
   isStreaming: boolean;
   streamingContent: string;
+  streamingStatus: string | null;  // Status message like "Searching web..."
   isSummarizingArticle: boolean;  // Shared state for article summarization (deprecated - use per-conversation)
   summarizingConversations: Set<string>;  // Track which conversations are currently summarizing
   isRagTrayOpen: boolean;  // Whether RAG context tray is open
@@ -147,6 +148,7 @@ interface ChatStore {
   deleteMessage: (messageId: string) => void;
   removeMessagesAfter: (messageId: string) => void;
   updateStreamingContent: (content: string) => void;
+  setStreamingStatus: (status: string | null) => void;
   setLoading: (loading: boolean) => void;
   setStreaming: (streaming: boolean) => void;
   clearStreaming: () => void;
@@ -175,6 +177,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   isLoading: false,
   isStreaming: false,
   streamingContent: '',
+  streamingStatus: null,
   isSummarizingArticle: false,  // Deprecated - kept for backward compatibility
   summarizingConversations: new Set<string>(),
   isRagTrayOpen: false,
@@ -1155,7 +1158,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   
-  clearStreaming: () => set({ isStreaming: false, streamingContent: '' }),
+  clearStreaming: () => set({ isStreaming: false, streamingContent: '', streamingStatus: null }),
+  setStreamingStatus: (status) => set({ streamingStatus: status }),
   
   setSummarizingArticle: (summarizing) => set({ isSummarizingArticle: summarizing }),  // Deprecated - kept for backward compatibility
   setConversationSummarizing: (conversationId, isSummarizing) => set((state) => {
