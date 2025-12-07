@@ -128,7 +128,8 @@ async def stream_chat_response(
     message: str,
     rag_file_ids: Optional[List[str]] = None,
     web_mode: str = 'auto',
-    force_search: bool = False
+    force_search: bool = False,
+    model_id: Optional[str] = None  # Orchestrator model_id (e.g., "gpt-5", "web-memory-gpt-5")
 ):
     # Ensure target_name is correct by getting it from project_id
     # This ensures we always use the project-based folder structure
@@ -137,12 +138,158 @@ async def stream_chat_response(
     project = next((p for p in projects if p.get("id") == project_id), None)
     if project:
         target_name = get_target_name_from_project(project)
+    
     """
     Stream ChatDO response via WebSocket
     For now, we'll simulate streaming by chunking the response
     In the future, we can integrate with actual streaming from the LLM
     """
     try:
+        # Check if Orchestrator mode is requested
+        if model_id:
+            print(f"[ORCH-WS] Orchestrator mode requested: model_id={model_id}")
+            try:
+                from server.services.orchestrator import run_orchestrator, OrchestratorChatRequest
+                from chatdo.memory.store import load_thread_history, save_thread_history
+                
+                # Load conversation history
+                messages = []
+                if conversation_id:
+                    try:
+                        history = load_thread_history(target_name, conversation_id)
+                        # Convert to message format
+                        for msg in history:
+                            if msg.get("role") in ["user", "assistant", "system"]:
+                                # Skip structured messages without content
+                                if msg.get("type") and not msg.get("content"):
+                                    continue
+                                messages.append({
+                                    "role": msg.get("role"),
+                                    "content": msg.get("content", "")
+                                })
+                    except Exception as e:
+                        print(f"[ORCH-WS] Warning: Failed to load conversation history: {e}")
+                
+                # Add current user message
+                messages.append({
+                    "role": "user",
+                    "content": message
+                })
+                
+                # Build Orchestrator request
+                orch_request = OrchestratorChatRequest(
+                    project_id=project_id,
+                    model_id=model_id,
+                    messages=messages,
+                    use_memory=None,  # Auto-detect from model_id
+                    use_web_search=None  # Reserved for future
+                )
+                
+                # Call Orchestrator
+                print(f"[ORCH-WS] Calling Orchestrator with {len(messages)} messages")
+                orch_response = await run_orchestrator(orch_request)
+                
+                # Extract response data
+                assistant_content = orch_response.message.get("content", "")
+                metadata = orch_response.metadata or {}
+                memory_used = metadata.get("memoryUsed", False)
+                web_used = metadata.get("webUsed", False)
+                web_results = metadata.get("webResults")
+                
+                # Build model label based on actual usage
+                if web_used and memory_used:
+                    model_label = "Web + Memory + GPT-5"
+                elif web_used:
+                    model_label = "Web + GPT-5"
+                elif memory_used:
+                    model_label = "Memory + GPT-5"
+                else:
+                    model_label = "GPT-5"
+                
+                # Build sources list
+                sources = []
+                if memory_used:
+                    sources.append("Memory")
+                if web_used:
+                    sources.append("Brave Search")
+                
+                # Send web search results if available (before streaming text)
+                if web_used and web_results:
+                    print(f"[ORCH-WS] Sending web search results: {len(web_results)} results")
+                    # Format web results for frontend
+                    web_sources = []
+                    for i, result in enumerate(web_results[:5], 1):
+                        from urllib.parse import urlparse
+                        url = result.get("url", "")
+                        site_name = None
+                        if url:
+                            try:
+                                parsed = urlparse(url)
+                                site_name = parsed.netloc.replace('www.', '')
+                            except:
+                                pass
+                        
+                        web_sources.append({
+                            'id': f'web-{i}',
+                            'title': result.get("title", "Untitled"),
+                            'url': url,
+                            'description': result.get("snippet", ""),
+                            'siteName': site_name,
+                            'rank': i,
+                            'sourceType': 'web'
+                        })
+                    
+                    # Send web search results as structured data
+                    await websocket.send_json({
+                        "type": "web_search_results",
+                        "data": {
+                            "type": "web_search_results",
+                            "sources": web_sources,
+                            "query": message
+                        },
+                        "model": model_label,
+                        "provider": metadata.get("provider", "openai-gpt5"),
+                        "done": False  # Not done yet, more content coming
+                    })
+                
+                # Stream the assistant response as chunks (simulate streaming)
+                chunk_size = 50  # Characters per chunk
+                for i in range(0, len(assistant_content), chunk_size):
+                    chunk = assistant_content[i:i + chunk_size]
+                    await websocket.send_json({
+                        "type": "chunk",
+                        "content": chunk
+                    })
+                
+                # Save to thread history
+                if conversation_id:
+                    try:
+                        messages.append(orch_response.message)
+                        save_thread_history(target_name, conversation_id, messages)
+                    except Exception as e:
+                        print(f"[ORCH-WS] Warning: Failed to save conversation history: {e}")
+                
+                # Update chat timestamp
+                if conversation_id:
+                    from server.main import update_chat_timestamp
+                    update_chat_timestamp(conversation_id)
+                
+                # Send done message with meta
+                await websocket.send_json({
+                    "type": "done",
+                    "model": model_label,
+                    "provider": metadata.get("provider", "openai-gpt5"),
+                    "sources": sources if sources else None,
+                    "meta": metadata
+                })
+                
+                print(f"[ORCH-WS] Orchestrator completed: model={model_label}, memory={memory_used}, web={web_used}")
+                return
+                
+            except Exception as e:
+                print(f"[ORCH-WS] Orchestrator failed, falling back to normal chat: {e}", exc_info=True)
+                # Fall through to normal chat flow
+                pass
         # Extract URLs to check for single article summary
         urls = extract_urls(message)
         
@@ -969,8 +1116,11 @@ async def websocket_endpoint(websocket: WebSocket):
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
             web_mode = data.get("web_mode", "auto")  # Web mode: 'auto' or 'on'
             force_search = data.get("force_search", False)  # Force web search (Top Results card)
+            model_id = data.get("model_id")  # Orchestrator model_id (e.g., "gpt-5", "web-memory-gpt-5")
             print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             print(f"[WEB] WebSocket received force_search: {force_search}")
+            if model_id:
+                print(f"[ORCH-WS] WebSocket received model_id: {model_id}")
             
             if not all([project_id, conversation_id, message]):
                 await websocket.send_json({
@@ -1002,7 +1152,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 message,
                 rag_file_ids=rag_file_ids,
                 web_mode=web_mode,
-                force_search=force_search
+                force_search=force_search,
+                model_id=model_id
             )
     
     except WebSocketDisconnect:

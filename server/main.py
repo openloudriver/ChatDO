@@ -312,6 +312,7 @@ class ChatRequest(BaseModel):
     target_name: str
     message: str
     web_mode: str = "auto"  # Web mode: 'auto' (default) or 'on' (forced web)
+    model_id: Optional[str] = None  # "gpt-5" or "web-memory-gpt-5" (for Orchestrator)
 
 
 class ChatResponse(BaseModel):
@@ -625,8 +626,100 @@ async def chat(request: ChatRequest):
     - URL summaries: unchanged (YouTube transcript, yt-dlp+Whisper, Trafilatura)
     - Explicit search commands: return Brave "Top Results" card
     - Normal chat: GPT-5 with smart auto-search (Brave in background when needed)
+    - Orchestrator mode: If model_id is provided, use Orchestrator instead
     """
     try:
+        # Check if Orchestrator mode is requested
+        if request.model_id:
+            from server.services.orchestrator import run_orchestrator, OrchestratorChatRequest
+            
+            # Load conversation history
+            projects = load_projects()
+            project = next((p for p in projects if p.get("id") == request.project_id), None)
+            target_name = get_target_name_from_project(project) if project else "general"
+            
+            # Load thread history
+            messages = []
+            if request.conversation_id:
+                try:
+                    history = load_thread_history(target_name, request.conversation_id)
+                    # Convert to message format
+                    for msg in history:
+                        if msg.get("role") in ["user", "assistant", "system"]:
+                            if msg.get("type") and not msg.get("content"):
+                                continue
+                            messages.append({
+                                "role": msg.get("role"),
+                                "content": msg.get("content", "")
+                            })
+                except Exception as e:
+                    logger.warning(f"Failed to load conversation history: {e}")
+            
+            # Add current user message
+            messages.append({
+                "role": "user",
+                "content": request.message
+            })
+            
+            # Build Orchestrator request
+            orch_request = OrchestratorChatRequest(
+                project_id=request.project_id,
+                model_id=request.model_id,
+                messages=messages,
+                use_memory=None,  # Auto-detect from model_id
+                use_web_search=None  # Reserved for future
+            )
+            
+            # Call Orchestrator
+            orch_response = await run_orchestrator(orch_request)
+            
+            # Save to thread history
+            if request.conversation_id:
+                try:
+                    messages.append(orch_response.message)
+                    save_thread_history(target_name, request.conversation_id, messages)
+                except Exception as e:
+                    logger.warning(f"Failed to save conversation history: {e}")
+            
+            # Update chat timestamp
+            if request.conversation_id:
+                update_chat_timestamp(request.conversation_id)
+            
+            # Convert to ChatResponse
+            metadata = orch_response.metadata or {}
+            memory_used = metadata.get("memoryUsed", False)
+            web_used = metadata.get("webUsed", False)
+            
+            # Build model label based on actual usage (not model_id)
+            if web_used and memory_used:
+                model_label = "Web + Memory + GPT-5"
+            elif web_used:
+                model_label = "Web + GPT-5"
+            elif memory_used:
+                model_label = "Memory + GPT-5"
+            else:
+                model_label = "GPT-5"
+            
+            # Build sources list
+            sources = []
+            if memory_used:
+                sources.append("Memory")
+            if web_used:
+                sources.append("Brave Search")
+            
+            return ChatResponse(
+                reply=orch_response.message.get("content", ""),
+                model_used=model_label,
+                provider=metadata.get("provider", "openai-gpt5"),
+                message_type="text",
+                message_data={
+                    "content": orch_response.message.get("content", ""),
+                    "meta": metadata
+                },
+                sources=sources if sources else None
+            )
+        
+        # Original flow continues below for non-Orchestrator requests
         # 1. Check for single URL with "summarize" keyword - route to article summary (unchanged)
         urls = extract_urls(request.message)
         if len(urls) == 1 and ("summarize" in request.message.lower() or "summary" in request.message.lower()):

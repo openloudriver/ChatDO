@@ -266,15 +266,31 @@ const ChatComposer: React.FC = () => {
       
       ws.onopen = () => {
         setStreaming(true);
+        
+        // Determine model_id for Orchestrator
+        // For now: if webMode is "on", use web-memory-gpt-5, otherwise use gpt-5
+        // The Orchestrator will auto-detect memory usage from model_id
+        // TODO: Add explicit model selection UI in the future
+        let model_id: string | undefined;
+        if (webMode === "on") {
+          // Web mode enabled - use web-memory-gpt-5 (Orchestrator will auto-detect memory)
+          model_id = "web-memory-gpt-5";
+        } else {
+          // Auto mode - use gpt-5 (Orchestrator will auto-detect web search via keyword matrix)
+          // For now, default to gpt-5. In the future, we could check if memory is available
+          model_id = "gpt-5";
+        }
+        
         const payload = {
           project_id: currentProject.id,
           conversation_id: currentConversation.id,
           target_name: currentConversation.targetName,
           message: messageToSend,
           rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-          web_mode: webMode
+          web_mode: webMode,
+          model_id: model_id  // Orchestrator model_id
         };
-        console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds);
+        console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds, 'model_id:', model_id);
         ws.send(JSON.stringify(payload));
       };
       
@@ -463,13 +479,17 @@ const ChatComposer: React.FC = () => {
       // Message already includes file info, use as-is
       const messageToSend = message;
       
+      // Determine model_id for Orchestrator (same logic as WebSocket)
+      const model_id = webMode === "on" ? "web-memory-gpt-5" : "gpt-5";
+      
       const response = await axios.post('http://localhost:8000/api/chat', {
         project_id: currentProject.id,
         conversation_id: currentConversation.id,
         target_name: currentConversation.targetName,
         message: messageToSend,
         rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-        web_mode: webMode
+        web_mode: webMode,
+        model_id: model_id  // Orchestrator model_id
       });
       
       // Check if response is structured (web_search_results or article_card)
