@@ -8,6 +8,7 @@ pydantic
 python-dotenv
 sqlalchemy
 pyyaml
+faiss-cpu
 # Unstructured.io open-source library for MAXIMUM QUALITY document extraction
 # This replaces all individual file readers (pypdf, pdfplumber, python-docx, etc.)
 # with a single, superior extraction pipeline

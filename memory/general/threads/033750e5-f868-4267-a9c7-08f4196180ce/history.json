@@ -1,0 +1,62 @@
+[
+  {
+    "role": "user",
+    "content": "what is my favorite color? Do you remember?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- I’ve got your preference saved as blue and will use it in future themes, examples, and suggestions.\n\n## Update or tweak\n- Want a specific shade? Try navy, royal, sky, or midnight blue.\n- Want to change it entirely? Just say “make it green” (or any color) and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "List my favorite cryptocurrencies"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero first, Bitcoin second (you don’t care much about it), and XLM third.\n\n## TL;DR\n- Monero (XMR) — #1\n- Bitcoin (BTC) — #2 (low priority)\n- Stellar (XLM) — #3\n\n## Adjust anytime\n- Want to add a #4 or change the order? Just tell me the new ranking.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "You don't need to remember that BTC is a \"low priority\" or that I \"don't care much about it\", just that it's my second favorite crypto"
+  },
+  {
+    "role": "assistant",
+    "content": "Update noted — I’ll remember Bitcoin is simply your #2 favorite, without the “low priority” label.\n\n## TL;DR\n- Monero (XMR) — #1  \n- Bitcoin (BTC) — #2  \n- Stellar (XLM) — #3  \n- Tether (USDT) — #4\n\n## Adjust anytime\n- Want to change the order or drop USDT? Just tell me the new ranking.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "You can drop USDT. I don't like cross-chain cryptos"
+  },
+  {
+    "role": "assistant",
+    "content": "Done — I’ve dropped USDT and noted that you prefer to avoid cross‑chain tokens.\n\n## TL;DR\n- Monero (XMR) — #1  \n- Bitcoin (BTC) — #2  \n- Stellar (XLM) — #3  \n- No #4 for now\n\n## How I’ll use this\n- No USDT in examples or suggestions unless you ask.\n- I’ll avoid recommending cross‑chain/multi‑chain tokens (e.g., USDT/USDC across chains, wrapped assets) by default.\n- I’ll prioritize Monero, then Bitcoin, then XLM in news, comparisons, and examples.\n\n## Adjust anytime\n- Want to add a #4 that’s single‑chain? Options could include Litecoin, Dogecoin, or Nano—tell me what fits your vibe.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

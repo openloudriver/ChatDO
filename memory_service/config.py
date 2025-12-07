@@ -33,8 +33,8 @@ def get_db_path_for_source(source_id: str) -> Path:
     return source_dir / "index.sqlite"
 
 # Embedding model
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-EMBEDDING_DIM = 384
+EMBEDDING_MODEL = "BAAI/bge-large-en-v1.5"
+EMBEDDING_DIM = 1024
 
 # Chunking settings
 CHUNK_SIZE_CHARS = 2500  # Target chunk size in characters

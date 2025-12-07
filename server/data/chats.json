@@ -1,95 +1,5 @@
 [
   {
-    "id": "3dd0e578-c22f-4e99-96c0-f6bca4fea3f5",
-    "project_id": "scratch",
-    "title": "Yesterday",
-    "thread_id": "3dd0e578-c22f-4e99-96c0-f6bca4fea3f5",
-    "created_at": "2025-11-19T12:50:03.623032+00:00",
-    "updated_at": "2025-12-07T06:52:55.470992+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.470984+00:00"
-  },
-  {
-    "id": "2c2abf5d-87ed-49db-943b-024e58d577e2",
-    "project_id": "scratch",
-    "title": "Solstice",
-    "thread_id": "2c2abf5d-87ed-49db-943b-024e58d577e2",
-    "created_at": "2025-11-19T12:50:13.154920+00:00",
-    "updated_at": "2025-12-07T06:52:55.468561+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.468555+00:00"
-  },
-  {
-    "id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
-    "project_id": "privacypay",
-    "title": "Provide a grade on a scale of 1-10 of the compl...",
-    "thread_id": "517274d2-05c7-4a4d-bea9-7346d6a936d0",
-    "created_at": "2025-11-20T13:12:03.927261+00:00",
-    "updated_at": "2025-12-07T06:53:04.862295+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:53:04.862280+00:00"
-  },
-  {
-    "id": "7c46d449-ed82-4213-8204-f60fe3625e27",
-    "project_id": "scratch",
-    "title": "What's the latest news between Ukraine and Russia?",
-    "thread_id": "7c46d449-ed82-4213-8204-f60fe3625e27",
-    "created_at": "2025-11-22T18:41:17.594520+00:00",
-    "updated_at": "2025-12-07T06:52:55.467537+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.467530+00:00"
-  },
-  {
-    "id": "71aacdc5-b01a-443c-9bdb-c2223c2e49c6",
-    "project_id": "scratch",
-    "title": "Summarize and highlight the Joint Cloud, what i...",
-    "thread_id": "71aacdc5-b01a-443c-9bdb-c2223c2e49c6",
-    "created_at": "2025-11-22T21:30:41.470290+00:00",
-    "updated_at": "2025-12-07T06:52:55.466386+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.466379+00:00"
-  },
-  {
-    "id": "8668306d-91cf-4707-8329-03bd2178431c",
-    "project_id": "scratch",
-    "title": "Summarize videos",
-    "thread_id": "8668306d-91cf-4707-8329-03bd2178431c",
-    "created_at": "2025-11-23T20:35:42.928922+00:00",
-    "updated_at": "2025-12-07T06:52:55.464617+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.464607+00:00"
-  },
-  {
-    "id": "9d85a742-d505-43de-824a-95a602075e60",
-    "project_id": "scratch",
-    "title": "ChatDO responses",
-    "thread_id": "9d85a742-d505-43de-824a-95a602075e60",
-    "created_at": "2025-11-23T22:44:31.902488+00:00",
-    "updated_at": "2025-12-03T13:11:55.931196+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-03T13:11:55.931170+00:00"
-  },
-  {
-    "id": "3a5d546e-89be-4cb2-aeda-d829100f9af0",
-    "project_id": "drr",
-    "title": "What is the DRR project structure? Use project ...",
-    "thread_id": "3a5d546e-89be-4cb2-aeda-d829100f9af0",
-    "created_at": "2025-11-25T03:15:38.051994+00:00",
-    "updated_at": "2025-12-07T06:53:09.201689+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:53:09.201667+00:00"
-  },
-  {
-    "id": "ff6de4c0-b7c3-41c9-81ec-70721c7688b3",
-    "project_id": "privacypay",
-    "title": "Which repos can you see?",
-    "thread_id": "ff6de4c0-b7c3-41c9-81ec-70721c7688b3",
-    "created_at": "2025-11-26T12:36:50.732643+00:00",
-    "updated_at": "2025-12-07T06:53:04.859468+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:53:04.859438+00:00"
-  },
-  {
     "id": "d234bc6b-117b-41f3-8b16-558e4340b333",
     "project_id": "0e34171e-fc44-4419-9e65-d53fc4f16238",
     "title": "New Chat",
@@ -98,46 +8,6 @@
     "updated_at": "2025-11-27T03:29:47.155619+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
-    "project_id": "scratch",
-    "title": "Compare Bitcoin and Monero",
-    "thread_id": "385dde0f-b826-458b-bf48-2eb8a7648b0c",
-    "created_at": "2025-11-30T00:18:19.930244+00:00",
-    "updated_at": "2025-12-03T13:11:50.778998+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-03T13:11:50.778961+00:00"
-  },
-  {
-    "id": "219ebddb-6d55-457e-abea-0a7a68b62c02",
-    "project_id": "scratch",
-    "title": "What does head lice look like?",
-    "thread_id": "219ebddb-6d55-457e-abea-0a7a68b62c02",
-    "created_at": "2025-12-01T00:23:05.853748+00:00",
-    "updated_at": "2025-12-03T13:11:47.893948+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-03T13:11:47.893922+00:00"
-  },
-  {
-    "id": "a098440c-d07f-49dd-8c62-bb81415efe51",
-    "project_id": "scratch",
-    "title": "What is the current price of Monero?",
-    "thread_id": "a098440c-d07f-49dd-8c62-bb81415efe51",
-    "created_at": "2025-12-01T02:06:35.012510+00:00",
-    "updated_at": "2025-12-03T13:11:43.924459+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-03T13:11:43.924434+00:00"
-  },
-  {
-    "id": "44b82557-8ba5-4d1e-bad7-230f419d8f58",
-    "project_id": "24a85d18-a1d3-43f7-86b3-48fa6c61177c",
-    "title": "Can you see the ChatDO repo?",
-    "thread_id": "44b82557-8ba5-4d1e-bad7-230f419d8f58",
-    "created_at": "2025-12-02T19:45:07.192487+00:00",
-    "updated_at": "2025-12-07T06:53:00.698932+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:53:00.698911+00:00"
   },
   {
     "id": "589e5dc3-52ca-4816-a6bc-5adff81b7ad7",
@@ -158,56 +28,6 @@
     "updated_at": "2025-12-02T19:47:29.664718+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "553a2e21-3142-429e-86ac-246e5302bb8f",
-    "project_id": "scratch",
-    "title": "Testing Capes",
-    "thread_id": "553a2e21-3142-429e-86ac-246e5302bb8f",
-    "created_at": "2025-12-03T13:11:59.033030+00:00",
-    "updated_at": "2025-12-07T06:52:55.463008+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.462998+00:00"
-  },
-  {
-    "id": "e26866ba-018f-4c33-9be5-107460daa0e7",
-    "project_id": "scratch",
-    "title": "What are the state birds of each state in the USA?",
-    "thread_id": "e26866ba-018f-4c33-9be5-107460daa0e7",
-    "created_at": "2025-12-05T18:07:46.135315+00:00",
-    "updated_at": "2025-12-07T06:52:55.460861+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.460848+00:00"
-  },
-  {
-    "id": "1057b0a4-b330-4c52-a031-ed07bcc5a9bf",
-    "project_id": "scratch",
-    "title": "What is the great hope for 2026?",
-    "thread_id": "1057b0a4-b330-4c52-a031-ed07bcc5a9bf",
-    "created_at": "2025-12-05T18:09:40.298629+00:00",
-    "updated_at": "2025-12-07T06:52:55.456866+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.456848+00:00"
-  },
-  {
-    "id": "c4f2a94f-1188-4c50-b9a2-ec7e4489b8b2",
-    "project_id": "scratch",
-    "title": "What date and time is it?",
-    "thread_id": "c4f2a94f-1188-4c50-b9a2-ec7e4489b8b2",
-    "created_at": "2025-12-05T18:11:52.963439+00:00",
-    "updated_at": "2025-12-07T06:52:55.458886+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.458872+00:00"
-  },
-  {
-    "id": "15a2b94d-0560-4b4f-bca9-9348666927db",
-    "project_id": "scratch",
-    "title": "Memory: My favorite color is blue",
-    "thread_id": "15a2b94d-0560-4b4f-bca9-9348666927db",
-    "created_at": "2025-12-05T18:51:36.933221+00:00",
-    "updated_at": "2025-12-07T06:52:55.454451+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-07T06:52:55.454430+00:00"
   },
   {
     "id": "c94621f9-0dc5-4124-806c-5a42038165a3",
@@ -286,6 +106,16 @@
     "thread_id": "bb89105f-0f6d-4cac-a23e-d7c9f764d9d6",
     "created_at": "2025-12-07T15:22:37.311463+00:00",
     "updated_at": "2025-12-07T15:22:41.190064+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "033750e5-f868-4267-a9c7-08f4196180ce",
+    "project_id": "scratch",
+    "title": "what is my favorite color? Do you remember?",
+    "thread_id": "033750e5-f868-4267-a9c7-08f4196180ce",
+    "created_at": "2025-12-07T20:38:09.529296+00:00",
+    "updated_at": "2025-12-07T20:38:15.680733+00:00",
     "trashed": false,
     "trashed_at": null
   }

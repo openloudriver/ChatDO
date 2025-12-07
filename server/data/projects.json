@@ -13,9 +13,7 @@
     "name": "ChatDO",
     "default_target": "general",
     "sort_index": 1,
-    "memory_sources": [
-      "chatdo-dir"
-    ],
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   },
