@@ -568,6 +568,27 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
         except Exception as e:
             logger.warning(f"[ANN] Failed to add embeddings to ANN index: {e}")
         
+        # Update source stats after successful indexing
+        try:
+            # Recalculate stats from database
+            conn = db.get_db_connection(source_id)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row:
+                files_count = row[0]
+                bytes_count = row[1]
+                db.update_source_stats(
+                    source_id,
+                    files_indexed=files_count,
+                    bytes_indexed=bytes_count,
+                    last_index_completed_at=datetime.now()
+                )
+        except Exception as e:
+            logger.warning(f"Failed to update source stats after indexing {path}: {e}")
+        
         logger.info(f"Successfully indexed {path} ({len(chunks)} chunks)")
         return True
         
@@ -868,6 +889,27 @@ def delete_file(path: Path, source_db_id: int, source_id: str):
                 logger.debug(f"[ANN] Removed {len(chunk_ids_to_remove)} embeddings from ANN index for {path}")
         except Exception as e:
             logger.warning(f"[ANN] Failed to remove embeddings from ANN index: {e}")
+    
+    # Update source stats after successful deletion
+    try:
+        # Recalculate stats from database
+        conn = db.get_db_connection(source_id)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM files")
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            files_count = row[0]
+            bytes_count = row[1]
+            db.update_source_stats(
+                source_id,
+                files_indexed=files_count,
+                bytes_indexed=bytes_count,
+                last_index_completed_at=datetime.now()
+            )
+    except Exception as e:
+        logger.warning(f"Failed to update source stats after deleting {path}: {e}")
     
     logger.info(f"Deleted file from index: {path}")
 
