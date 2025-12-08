@@ -398,5 +398,45 @@
     "updated_at": "2025-12-08T02:50:01.839022+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "a220e53d-08f8-40c4-ba94-2b1fd2ef1db5",
+    "project_id": "general",
+    "title": "What are my favorite cryptos?",
+    "thread_id": "a220e53d-08f8-40c4-ba94-2b1fd2ef1db5",
+    "created_at": "2025-12-08T03:11:43.372044+00:00",
+    "updated_at": "2025-12-08T03:11:45.826210+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "d9d8932c-1fd7-42a6-9747-4e1e904a9690",
+    "project_id": "general",
+    "title": "What are my favorite cryptos?",
+    "thread_id": "d9d8932c-1fd7-42a6-9747-4e1e904a9690",
+    "created_at": "2025-12-08T03:15:23.025358+00:00",
+    "updated_at": "2025-12-08T03:15:25.034121+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "7838cbf6-82e8-4893-9728-394b125f1480",
+    "project_id": "general",
+    "title": "What are my favorite cryptocurrencies? Do you k...",
+    "thread_id": "7838cbf6-82e8-4893-9728-394b125f1480",
+    "created_at": "2025-12-08T03:18:48.468089+00:00",
+    "updated_at": "2025-12-08T03:18:58.271250+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "76621890-245c-4a8e-92c0-9a7adf41bdcc",
+    "project_id": "general",
+    "title": "In order of precedence, what are my favorite cr...",
+    "thread_id": "76621890-245c-4a8e-92c0-9a7adf41bdcc",
+    "created_at": "2025-12-08T03:24:02.749309+00:00",
+    "updated_at": "2025-12-08T03:24:12.511495+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

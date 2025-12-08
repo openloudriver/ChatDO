@@ -1,0 +1,32 @@
+[
+  {
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies? Do you know them in order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes—your favorites, in order, are Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Notes\n- USDT is not on your favorites list (you asked to remove it).\n- Want to add a #4 or change the order? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Notes\n- USDT is not on your favorites list anymore.\n- Want to add a #4 or change the order? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

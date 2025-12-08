@@ -34,5 +34,17 @@
       "siteName": "Video",
       "published": null
     }
+  },
+  {
+    "id": "934a6574-c40a-46ef-b791-34618f4caa59",
+    "kind": "url",
+    "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+    "description": "Monero (XMR) is a privacy-focused cryptocurrency launched in 2014 to enable fast, low-cost, censorship-resistant transactions with strong anonymity. It achieves privacy and fungibility by default usin",
+    "url": "https://coinmarketcap.com/currencies/monero/",
+    "createdAt": "2025-12-08T02:56:24.686014+00:00",
+    "meta": {
+      "siteName": "coinmarketcap.com",
+      "published": "2025-12-05"
+    }
   }
 ]

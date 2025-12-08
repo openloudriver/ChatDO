@@ -1,0 +1,62 @@
+[
+  {
+    "role": "user",
+    "content": "In order of precedence, what are my favorite cryptocurrencies?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Notes\n- USDT is not on your favorites list anymore.\n- Want to reorder or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptos, in order, are XMR, BTC, XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "Saved — your favorites in order are Monero (XMR), Bitcoin (BTC), and Stellar (XLM).\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptos, in order, are XMR, BTC, XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

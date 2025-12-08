@@ -8,9 +8,13 @@ Future: Llama 3.2 3B will be integrated here as an optional re-ranker.
 """
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Recency boost weight: newer messages get a small boost (0.0 to RECENCY_WEIGHT)
+RECENCY_WEIGHT = 0.15
 
 
 @dataclass
@@ -26,6 +30,7 @@ class MemoryHit:
     file_path: Optional[str] = None  # For file sources
     created_at: Optional[str] = None
     metadata: Dict[str, Any] = None
+    recency_boost: float = 0.0  # Recency boost factor (0.0 to RECENCY_WEIGHT)
 
     def __post_init__(self):
         """Ensure metadata is always a dict."""
@@ -116,30 +121,138 @@ def score_hit_for_query(hit: MemoryHit, query: str) -> float:
         if any(pattern in text for pattern in answer_patterns):
             base += 0.02
     
+    # Heuristic 5: Add recency boost (computed in get_relevant_memory)
+    base += hit.recency_boost
+    
     return base
+
+
+def make_topic_key(hit: MemoryHit) -> str:
+    """
+    Create a lightweight topic key from hit content for near-duplicate detection.
+    
+    Args:
+        hit: The memory hit
+        
+    Returns:
+        A normalized topic key string (first 160 chars, lowercased, stripped)
+    """
+    text = (hit.content or "").strip().lower()
+    # Remove multiple spaces
+    text = " ".join(text.split())
+    # Take first 160 chars
+    return text[:160]
 
 
 def deduplicate_hits(hits: List[MemoryHit]) -> List[MemoryHit]:
     """
-    Remove duplicate hits based on message_id.
+    Remove duplicate hits based on message_id and near-duplicate content.
+    
+    For near-duplicates (same topic key), keeps the newest hit (by timestamp)
+    or highest-scoring hit if timestamps are unavailable.
     
     Args:
-        hits: List of memory hits
+        hits: List of memory hits (should be pre-sorted by score descending)
         
     Returns:
-        Deduplicated list (preserves order of first occurrence)
+        Deduplicated list, sorted by score (highest first)
     """
+    # First pass: exact message_id deduplication
     seen_ids = set()
-    result: List[MemoryHit] = []
-    
+    id_deduped: List[MemoryHit] = []
     for hit in hits:
-        key = hit.message_id
-        if key in seen_ids:
+        if hit.message_id in seen_ids:
             continue
-        seen_ids.add(key)
-        result.append(hit)
+        seen_ids.add(hit.message_id)
+        id_deduped.append(hit)
+    
+    # Second pass: topic key deduplication (newest wins)
+    topic_map: Dict[str, MemoryHit] = {}
+    dropped_by_topic: Dict[str, List[str]] = {}
+    
+    for hit in id_deduped:
+        topic_key = make_topic_key(hit)
+        
+        if topic_key not in topic_map:
+            # First occurrence of this topic
+            topic_map[topic_key] = hit
+        else:
+            # We have a near-duplicate - keep the newest or highest-scoring
+            existing = topic_map[topic_key]
+            
+            # Try to compare by timestamp
+            existing_ts = _parse_timestamp(existing.created_at)
+            hit_ts = _parse_timestamp(hit.created_at)
+            
+            if existing_ts and hit_ts:
+                # Both have timestamps - keep the newer one
+                if hit_ts > existing_ts:
+                    if topic_key not in dropped_by_topic:
+                        dropped_by_topic[topic_key] = []
+                    dropped_by_topic[topic_key].append(existing.message_id)
+                    topic_map[topic_key] = hit
+                else:
+                    dropped_by_topic.setdefault(topic_key, []).append(hit.message_id)
+            else:
+                # No timestamps or only one has timestamp - use score
+                if hit.score > existing.score:
+                    if topic_key not in dropped_by_topic:
+                        dropped_by_topic[topic_key] = []
+                    dropped_by_topic[topic_key].append(existing.message_id)
+                    topic_map[topic_key] = hit
+                else:
+                    dropped_by_topic.setdefault(topic_key, []).append(hit.message_id)
+    
+    # Log deduplication at DEBUG level
+    if dropped_by_topic and logger.isEnabledFor(logging.DEBUG):
+        for topic_key, dropped_ids in dropped_by_topic.items():
+            kept = topic_map[topic_key]
+            logger.debug(
+                "[LIBRARIAN] dedupe topic_key=%r kept=message_id=%s dropped=%s",
+                topic_key[:80],
+                kept.message_id,
+                dropped_ids
+            )
+    
+    # Return deduplicated hits, sorted by score (highest first)
+    result = list(topic_map.values())
+    result.sort(key=lambda h: h.score, reverse=True)
     
     return result
+
+
+def _parse_timestamp(ts_str: Optional[str]) -> Optional[datetime]:
+    """
+    Parse a timestamp string to datetime.
+    
+    Handles ISO format strings and common variations.
+    
+    Args:
+        ts_str: Timestamp string (ISO format or None)
+        
+    Returns:
+        datetime object or None if parsing fails
+    """
+    if not ts_str:
+        return None
+    
+    try:
+        # Try ISO format (with or without Z)
+        if ts_str.endswith('Z'):
+            ts_str = ts_str[:-1] + '+00:00'
+        return datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+    except (ValueError, AttributeError):
+        try:
+            # Try common formats
+            for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:
+                try:
+                    return datetime.strptime(ts_str, fmt)
+                except ValueError:
+                    continue
+        except Exception:
+            pass
+    
+    return None
 
 
 def get_relevant_memory(
@@ -212,38 +325,98 @@ def get_relevant_memory(
         )
         hits.append(hit)
     
-    # 3) Deduplicate
-    hits = deduplicate_hits(hits)
+    # 3) Compute recency boost for all hits
+    # Find min and max timestamps to normalize age
+    timestamps: List[datetime] = []
+    for hit in hits:
+        ts = _parse_timestamp(hit.created_at)
+        if ts:
+            timestamps.append(ts)
     
-    # 4) Re-score for the specific query
+    if timestamps:
+        min_ts = min(timestamps)
+        max_ts = max(timestamps)
+        ts_range = (max_ts - min_ts).total_seconds() if max_ts > min_ts else 1.0
+        
+        # Compute recency boost for each hit
+        for hit in hits:
+            ts = _parse_timestamp(hit.created_at)
+            if ts and ts_range > 0:
+                # Normalize age: 0 = oldest, 1 = newest
+                age_seconds = (ts - min_ts).total_seconds()
+                age_norm = age_seconds / ts_range
+                hit.recency_boost = age_norm * RECENCY_WEIGHT
+                
+                # DEBUG logging for recency boost computation
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        "[LIBRARIAN] recency_boost message_id=%s age_norm=%.4f recency_boost=%.4f",
+                        hit.message_id,
+                        age_norm,
+                        hit.recency_boost
+                    )
+            else:
+                # No timestamp - treat as old (no recency boost)
+                hit.recency_boost = 0.0
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        "[LIBRARIAN] recency_boost message_id=%s age_norm=N/A recency_boost=0.0 (no timestamp)",
+                        hit.message_id
+                    )
+    else:
+        # No timestamps available - no recency boost
+        for hit in hits:
+            hit.recency_boost = 0.0
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("[LIBRARIAN] recency_boost: No timestamps available for any hits")
+    
+    # 4) Re-score for the specific query (includes recency boost)
     for hit in hits:
         hit.score = score_hit_for_query(hit, query)
     
-    # 5) Sort by score descending
+    # 5) Sort by score descending (before deduplication)
     hits.sort(key=lambda h: h.score, reverse=True)
     
-    # 6) Truncate to max_hits
+    # 6) Deduplicate (newest wins for near-duplicates)
+    hits = deduplicate_hits(hits)
+    
+    # 7) Truncate to max_hits
     final_hits = hits[:max_hits]
     
+    # 8) Enhanced logging
+    query_preview = (query[:80] + "...") if len(query) > 80 else query
     logger.info(
-        "[LIBRARIAN] %s: query=%r -> %d hits (requested=%d, raw_results=%d)",
-        project_id,
-        query[:80] if query else "",
-        len(final_hits),
-        max_hits,
-        len(raw_results)
+        "[LIBRARIAN] query=%r raw_hits=%d final_hits=%d",
+        query_preview,
+        len(raw_results),
+        len(final_hits)
     )
     
-    # Log top 5 hits for debugging
+    # Log top 10 hits with detailed info
     if final_hits:
-        logger.info("[LIBRARIAN] Top 5 hits:")
-        for i, hit in enumerate(final_hits[:5], 1):
-            content_preview = hit.content[:60].replace("\n", " ") if hit.content else ""
+        for i, hit in enumerate(final_hits[:10], 1):
+            content_preview = hit.content[:80].replace("\n", " ") if hit.content else ""
+            
+            # Calculate age
+            age_str = "unknown"
+            hit_ts = _parse_timestamp(hit.created_at)
+            if hit_ts:
+                now = datetime.now(hit_ts.tzinfo) if hit_ts.tzinfo else datetime.now()
+                age_delta = now - hit_ts
+                age_days = age_delta.total_seconds() / 86400
+                if age_days < 1:
+                    age_hours = age_delta.total_seconds() / 3600
+                    age_str = f"{age_hours:.1f}h" if age_hours >= 1 else f"{age_delta.total_seconds() / 60:.0f}m"
+                else:
+                    age_str = f"{age_days:.1f}d"
+            
             logger.info(
-                "[LIBRARIAN]   %d. [%s] score=%.4f: %s...",
-                i,
+                "[LIBRARIAN] top_hit[%d] role=%s score=%.4f age=%s recency_boost=%.4f %r",
+                i - 1,
                 hit.role,
                 hit.score,
+                age_str,
+                hit.recency_boost,
                 content_preview
             )
     
