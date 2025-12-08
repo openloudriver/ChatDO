@@ -123,6 +123,25 @@ export function AppLayout({ children }: AppLayoutProps) {
     return () => window.removeEventListener("keydown", handler);
   }, [toggleSidebar]);
 
+  // Keyboard shortcut: F8 for hard reload (works even when typing)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // F8 = Hard Reload
+      if (e.key === "F8") {
+        e.preventDefault();
+        console.log("[Hotkey] F8 hard reload triggered");
+        // Hard reload equivalent: bypass cache and force full refresh
+        // Use location.href with cache-busting parameter to force hard reload
+        const url = new URL(window.location.href);
+        url.searchParams.set('_reload', Date.now().toString());
+        window.location.href = url.toString();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Keyboard shortcut: F9 for fullscreen toggle
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
