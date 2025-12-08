@@ -222,10 +222,180 @@
   {
     "id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e",
     "project_id": "general",
-    "title": "What is my favorite color?",
+    "title": "Testing",
     "thread_id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e",
     "created_at": "2025-12-07T23:52:41.107131+00:00",
-    "updated_at": "2025-12-07T23:52:46.822263+00:00",
+    "updated_at": "2025-12-08T00:17:45.416139+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "8e57bc93-6d7a-4192-babf-263439ca46d2",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "8e57bc93-6d7a-4192-babf-263439ca46d2",
+    "created_at": "2025-12-08T00:18:37.857540+00:00",
+    "updated_at": "2025-12-08T00:18:50.585667+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T00:18:50.585642+00:00"
+  },
+  {
+    "id": "4804c2bb-1ae7-438d-ba2b-9948886c4247",
+    "project_id": "general",
+    "title": "What's my favorite color?",
+    "thread_id": "4804c2bb-1ae7-438d-ba2b-9948886c4247",
+    "created_at": "2025-12-08T00:46:26.738925+00:00",
+    "updated_at": "2025-12-08T00:47:23.226057+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "d4500ad5-13c6-4a0e-8be6-cf93597bf3d2",
+    "project_id": "general",
+    "title": "What is my spouse\u2019s favorite dessert?",
+    "thread_id": "d4500ad5-13c6-4a0e-8be6-cf93597bf3d2",
+    "created_at": "2025-12-08T00:59:03.046698+00:00",
+    "updated_at": "2025-12-08T00:59:39.270788+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "0da6cb84-8ce5-4c41-b711-d648f3b78086",
+    "project_id": "general",
+    "title": "Monero vs Bitcoin",
+    "thread_id": "0da6cb84-8ce5-4c41-b711-d648f3b78086",
+    "created_at": "2025-12-08T01:21:31.510599+00:00",
+    "updated_at": "2025-12-08T01:28:15.276560+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.276546+00:00"
+  },
+  {
+    "id": "64f30141-e403-4ef0-a229-2e9ed0b7232b",
+    "project_id": "general",
+    "title": "What's my favorite color?",
+    "thread_id": "64f30141-e403-4ef0-a229-2e9ed0b7232b",
+    "created_at": "2025-12-08T01:22:11.487577+00:00",
+    "updated_at": "2025-12-08T01:28:15.273973+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.273959+00:00"
+  },
+  {
+    "id": "d2167e5f-d1a2-413e-9de6-d6ff1f9ceccf",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "d2167e5f-d1a2-413e-9de6-d6ff1f9ceccf",
+    "created_at": "2025-12-08T01:22:40.771059+00:00",
+    "updated_at": "2025-12-08T01:28:15.283283+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.283275+00:00"
+  },
+  {
+    "id": "224d3e80-4b91-4a37-8538-8334a11f64ed",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "224d3e80-4b91-4a37-8538-8334a11f64ed",
+    "created_at": "2025-12-08T01:22:40.771810+00:00",
+    "updated_at": "2025-12-08T01:28:15.285329+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.285294+00:00"
+  },
+  {
+    "id": "dbebe6cf-b2a7-49d4-9553-d69f8c05c69e",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "dbebe6cf-b2a7-49d4-9553-d69f8c05c69e",
+    "created_at": "2025-12-08T01:22:40.772404+00:00",
+    "updated_at": "2025-12-08T01:28:15.279608+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.279602+00:00"
+  },
+  {
+    "id": "d3216f49-9445-48e4-8944-6649b05f8119",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "d3216f49-9445-48e4-8944-6649b05f8119",
+    "created_at": "2025-12-08T01:22:40.773034+00:00",
+    "updated_at": "2025-12-08T01:28:15.281702+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.281689+00:00"
+  },
+  {
+    "id": "b937a0c6-6fb5-4ffc-b321-4e921f13fc8b",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "b937a0c6-6fb5-4ffc-b321-4e921f13fc8b",
+    "created_at": "2025-12-08T01:22:40.831635+00:00",
+    "updated_at": "2025-12-08T01:28:15.278265+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T01:28:15.278258+00:00"
+  },
+  {
+    "id": "76597e7b-a352-4a4b-ba05-238c6388f0bb",
+    "project_id": "general",
+    "title": "Monero vs Bitcoin",
+    "thread_id": "76597e7b-a352-4a4b-ba05-238c6388f0bb",
+    "created_at": "2025-12-08T01:28:18.033991+00:00",
+    "updated_at": "2025-12-08T01:29:05.418342+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "fedd96d0-626b-42de-b3d5-c12df89fb134",
+    "project_id": "general",
+    "title": "youtube.com",
+    "thread_id": "fedd96d0-626b-42de-b3d5-c12df89fb134",
+    "created_at": "2025-12-08T01:29:58.010434+00:00",
+    "updated_at": "2025-12-08T01:30:24.490879+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "d87326b6-fe82-47aa-8656-2cdd7e198874",
+    "project_id": "general",
+    "title": "Explain Monero",
+    "thread_id": "d87326b6-fe82-47aa-8656-2cdd7e198874",
+    "created_at": "2025-12-08T01:30:24.489116+00:00",
+    "updated_at": "2025-12-08T01:33:16.243213+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "ba8bb863-b468-4518-8ada-2e0d6f1e8f0f",
+    "project_id": "general",
+    "title": "rumble.com",
+    "thread_id": "ba8bb863-b468-4518-8ada-2e0d6f1e8f0f",
+    "created_at": "2025-12-08T01:55:55.619151+00:00",
+    "updated_at": "2025-12-08T01:56:05.014022+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "9f2f17cb-35e5-4c83-b7f4-477ccc16a2ea",
+    "project_id": "general",
+    "title": "Monero vs Bitcoin",
+    "thread_id": "9f2f17cb-35e5-4c83-b7f4-477ccc16a2ea",
+    "created_at": "2025-12-08T01:59:23.619994+00:00",
+    "updated_at": "2025-12-08T02:00:16.382080+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "bf14d08c-a55a-482c-b3c9-02954f245b05",
+    "project_id": "general",
+    "title": "Bitcoin vs Monero",
+    "thread_id": "bf14d08c-a55a-482c-b3c9-02954f245b05",
+    "created_at": "2025-12-08T02:21:54.036862+00:00",
+    "updated_at": "2025-12-08T02:29:13.021177+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "4897ab5b-9ec4-48cc-ad27-03711bf10076",
+    "project_id": "general",
+    "title": "Monero vs Bitcoin",
+    "thread_id": "4897ab5b-9ec4-48cc-ad27-03711bf10076",
+    "created_at": "2025-12-08T02:46:45.119576+00:00",
+    "updated_at": "2025-12-08T02:50:01.839022+00:00",
     "trashed": false,
     "trashed_at": null
   }

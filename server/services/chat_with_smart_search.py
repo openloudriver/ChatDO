@@ -11,6 +11,7 @@ from chatdo.prompts import CHATDO_SYSTEM_PROMPT
 from chatdo.memory import store as memory_store
 from .smart_search_classifier import decide_web_search
 from .memory_service_client import get_project_memory_context, get_memory_client
+from . import librarian
 
 logger = logging.getLogger(__name__)
 
@@ -430,14 +431,20 @@ async def chat_with_smart_search(
     searched_memory = False  # Track if we attempted to search memory (even if no results)
     if project_id:
         try:
-            # Search ALL chats in the project (including current chat) for cross-chat memory
-            # Use a higher limit to ensure answers are included (questions often rank higher than answers)
-            memory_result = get_project_memory_context(project_id, user_message, limit=30, chat_id=None)
+            # Use Librarian for smarter ranking and deduplication
+            # Librarian handles cross-chat memory and boosts answers over questions
+            hits = librarian.get_relevant_memory(
+                project_id=project_id,
+                query=user_message,
+                chat_id=None,  # Include all chats for cross-chat memory
+                max_hits=30
+            )
             searched_memory = True  # We attempted to search, regardless of results
-            if memory_result:
-                memory_context, has_memory = memory_result
-            if has_memory:
-                logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id}")
+            if hits:
+                # Format hits into context string
+                memory_context = librarian.format_hits_as_context(hits)
+                has_memory = True
+                logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
             # Get source names from the actual sources used

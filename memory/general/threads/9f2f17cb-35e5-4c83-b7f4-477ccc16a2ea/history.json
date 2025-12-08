@@ -1,0 +1,172 @@
+[
+  {
+    "role": "user",
+    "content": "search for Monero vs Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero vs Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ..."
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "In conclusion, one of the most interesting features of Monero is that it is less volatile than other crypto assets; some even refer to it as being the ‘stable cryptocurrency.’ · Bitcoin (BTC) is the first and most well-known cryptocurrency, created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto."
+        },
+        {
+          "title": "Monero vs Bitcoin fees",
+          "url": "https://monero-bitcoin-fees.vercel.app/",
+          "snippet": "Bitcoin transaction fees are generally higher than Monero due to the fixed block size limit in Bitcoin. When the number of transactions exceeds the block size limit, users have to compete by offering higher fees to prioritize their transactions. This bidding war for limited space in blocks ..."
+        },
+        {
+          "title": "Monero XMR vs Bitcoin BTC: Which Cryptocurrency Offers the Best Privacy and Value? | SimpleSwap",
+          "url": "https://simpleswap.io/blog/monero-vs-bitcoin",
+          "snippet": "Serving as the world's first cryptocurrency, Bitcoin utilizes blockchain technology to safeguard and authenticate transactions, setting the standard for digital currencies worldwide. Contrary to BTC transparent blockchain, Monero operates on a blockchain designed to prioritize anonymity."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Full Comparison | Exolix",
+          "url": "https://exolix.com/blog/monero-vs-bitcoin",
+          "snippet": "Owing to the fact that all Bitcoin transactions are absolutely transparent, some BTC might become blacklisted by exchanges as long as any trace of money could be followed to ill intentions. Therefore, Bitcoin is not strictly fungible, since coins can be differentiated between each other given their particular history. Monero makes sure that every XMR coin is identical and untraceable, hence fully fungible."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism."
+        },
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero is that literally anyone can mine it since the PoW algorithm works best on regular CPUs (making it more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)."
+        },
+        {
+          "title": "Monero: What It Means, How It Works, and Features",
+          "url": "https://www.investopedia.com/terms/m/monero.asp",
+          "snippet": "Monero is a digital currency that offers a high level of anonymity for users and their transactions. Like Bitcoin, Monero is a decentralized peer-to-peer cryptocurrency, but unlike Bitcoin, Monero is characterized as a more anonymous or privacy-oriented virtual currency."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+      "title": "What are the main differences of Monero and Bitcoin?",
+      "siteName": "reddit.com",
+      "published": "2025-12-05",
+      "summary": "Summary: Monero differs from Bitcoin primarily by offering default, built‑in privacy for senders, recipients, and amounts. It uses a smooth, decreasing emission that transitions to a perpetual “tail emission,” rather than fixed halvings, and aims to keep mining accessible with an ASIC‑resistant proof of work. Monero also features a dynamic block size and shorter block times, and its protocol changes occur through community consensus via periodic network upgrades (hard forks), not by a simple 51% node vote. Key Points:",
+      "keyPoints": [
+        "Privacy by default: ring signatures, stealth addresses, and RingCT (with Bulletproofs) hide sender, recipient, and amount, improving fungibility versus Bitcoin’s transparent ledger.",
+        "Supply model: initial emission approaches ~18.4 million XMR, then a permanent tail emission of 0.6 XMR per block, so total supply is not strictly capped.",
+        "No halvings: rewards decline smoothly until tail emission; there are no discrete halving events like Bitcoin’s.",
+        "Consensus and governance: changes require community/economic consensus via scheduled hard forks; security still depends on majority hash power, not a “51% of nodes” vote.",
+        "Technical differences: RandomX proof of work (ASIC‑resistant), ~2‑minute blocks, and dynamic block size to adapt to demand."
+      ],
+      "whyMatters": "These differences shape trade‑offs between privacy and transparency, monetary policy predictability and long‑term security funding, and the decentralization of mining and governance—key factors when choosing between using or building on Monero versus Bitcoin."
+    },
+    "model": "Trafilatura + GPT-5",
+    "provider": "trafilatura-gpt5"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports",
+      "title": "Padres considering Japanese pitcher Tatsuya Imai. Manager Craig Stammen needs a pitching rotation.",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: With winter meetings approaching, the San Diego Padres face major roster needs, notably multiple starting pitchers and a left-handed bat, potentially at first base. They’re reportedly exploring a creative contract for Japanese right-hander Tatsuo Imae—around three years and $33 million with a pathway to re-enter free agency at age 31. Imae boasts a 1.94 ERA and a 97 mph fastball, but his smaller frame (5'10\", 154 lbs) raises durability questions. The piece questions whether GM AJ Preller can execute another unconventional move to address these needs. Key Points:",
+      "keyPoints": [
+        "Padres need starting pitchers No. 2–4 and a left-handed bat/first baseman.",
+        "Team is willing to pay market rate for a marquee free agent.",
+        "In talks with RHP Tatsuo Imae on a potential 3-year, $33M deal allowing early free agency at 31.",
+        "Imae profile: 1.94 ERA, 97 mph fastball; concerns about size and durability.",
+        "AJ Preller has a history of unconventional deals; outcome remains uncertain."
+      ],
+      "whyMatters": "How the Padres navigate these moves will shape their competitiveness next season and signal their approach to balancing short-term fixes with long-term flexibility. A creative deal for Imae could address rotation needs without a lengthy commitment, reflecting broader trends in MLB’s pursuit of NPB talent."
+    },
+    "model": "yt-dlp + Whisper-small-FP16 + GPT-5",
+    "provider": "yt-dlp-whisper-small"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=d7jJMYJbAKc"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=d7jJMYJbAKc",
+      "title": "Alex Jones Exposed by Milton William Cooper",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The speaker refutes Alex Jones’s claim that he once cut him off air for using foul language, insisting he completed the full interview and was cordial. He says he later refused further appearances after concluding Jones was a sensationalist who spread damaging rumors, citing Jones’s New Year’s Eve 1999 broadcast alleging a Russian missile launch as an example. Callers to the show corroborate that the interview ran its full course and that there was no foul language. The speaker argues that such misinformation harms the public and discredits militias and patriots. Key Points:",
+      "keyPoints": [
+        "The speaker denies being cut off or using foul language on Alex Jones’s show, stating he completed the entire interview.",
+        "He says he later refused repeated invitations from Jones to avoid lending him credibility.",
+        "He criticizes Jones’s alleged sensationalism, highlighting a 1999 New Year’s Eve broadcast claiming a Russian ICBM attack that he says caused public panic.",
+        "Multiple callers claim they heard archived audio of the interview and confirm the speaker was not removed and behaved cordially.",
+        "The speaker contends that Jones’s rumors and deceit harm both the nation and the patriot/militia movement."
+      ],
+      "whyMatters": "The exchange underscores internal disputes over credibility and ethics within alternative media circles. It highlights how sensational claims can fuel public panic and erode trust, reinforcing the importance of verification and responsible broadcasting."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  },
+  {
+    "role": "user",
+    "content": "Please summarize the Joint Cloud, it's cost, it's ROI, it's use during a wartime scenario, and whether or not you think the DOD and IC should adopt it as their CJADC2 platform."
+  },
+  {
+    "role": "assistant",
+    "content": "### Summary\nJoint Cloud is a DoD/AFRL-led, multi-level cloud architecture on Microsoft Azure that moves AISR full-motion video (FMV) and sensor data across IL2/IL5/IL6 with built-in cross-domain solutions (CDS), designed to reduce costs versus DISA UVDS while aligning directly to CJADC2 needs for rapid, resilient, and scalable data sharing [1, 2, 5].  \nIt has demonstrated operational value (e.g., Texas wildfire response), offers projected annual savings of ~$15M (reducing sustainment from ~$35M to ~$20M), and comes with a clear transition plan (parallel run with UVDS, decommission, invest in IL6→IL5 CDS) that I recommend the DoD and IC adopt as a CJADC2 transport backbone with staged rollout and ATO acceleration [2, 1].\n\n### Highlights\n- What it is: a unified AISR data transport “backbone” that supports IL2 (mission partners), IL5 (DoD unclassified missions), and IL6 (classified) with secure exchanges between IL5↔IL2, IL5↔IL6, and SIPR↔CUI, built and brokered by DAF CLOUDworks on Azure [2, 1].  \n- Core components: Azure landing zone by AFRL–DAF CLOUDworks; Azure IL2/IL5/IL6; networks spanning commercial internet and SIPR; apps like Vidterra Compass and SNC TRAX; Azure FMV CDS + AFRL FMV CDS [1].  \n- Global transport & resilience: integrates ISR Transport Network, cloud provider fiber, and satellite vendors (e.g., Starlink, Kuiper) with “plug-and-play” tool integration to sustain high-throughput FMV and rapid tech refresh [2].  \n- Operational proof: delivered value in the 2024 Texas wildfire response, demonstrating scalability and resilience under real-world pressure [2].  \n- MQ-9 mission enablement: provides any authorized user real-time MQ-9 FMV and sensor data across commercial, NIPR, and SIPR to solve training and operational gaps across MAJCOMs and Services [1].  \n- CJADC2 alignment: TACSIT/Joint Cloud pattern enables rapid information sharing, interoperability, scalability, strong cybersecurity, multinational collaboration, and AI/analytics on-ramp—core CJADC2 attributes [5].\n\n### Cost snapshot\n- Initial investment: $7.75M (w/fees) funded by CENTCOM, SOCOM, and NGB, including labor, apps (Vidterra, TRAX), VPN, Azure IL2/IL5/IL6 consumption, cybersecurity, FMV CDS, and ExpressRoute [2].  \n- Baseline sustainment: $6.54M/year (w/fees) for labor, apps, Azure consumption (IL2/IL5/IL6), cybersecurity, FMV CDS, and ExpressRoute to ANG and DISA UVDS [2].  \n- Additional capability (one-time): $5.6M to field a CONUS, cloud-native IL6→IL5 FMV CDS for 24/7 ops with no increase to baseline CDS sustainment (the baseline funds four 24/7 Azure FMV CDS streams) [2].  \n- Alternative sustainment view: a program sustain package shows ~ $8.41M core and ~$9.40M with fees for 24/7 support (16 FTE), M–F CDS support (5 FTE), Azure consumption, app licenses, and Azure IL5↔IL6 streams [4].\n\n### ROI\n- Cost reduction: Joint Cloud targets ~40% sustainment savings versus UVDS, taking costs from >$35M/year to about $20M/year (a ~$15M annual delta) while modernizing the transport architecture [2].  \n- Payback dynamics: the one-time $5.6M IL6→IL5 FMV CDS capability is effectively covered within months against a $15M/year savings delta, and it rides within a baseline that already funds four 24/7 streams [2].  \n- Value proof: operational performance during the Texas wildfire response suggests lower time-to-value and mission resilience, supporting ROI beyond cost (e.g., faster data-to-decision) [2].  \n- Strategic leverage: alignment to CJADC2 and a plug-and-play architecture reduces future integration costs and lock-in while enabling rapid AI/ML insertion and allied/partner data sharing [2, 5].\n\n### Wartime use (how it plays)\n- Edge to enterprise FMV: move unclassified FMV from tactical edge over commercial internet to CONUS, then exploit on SIPR/IL6 through CDS pathways (IL5↔IL6, SIPR↔CUI) for faster find-fix-finish cycles [2].  \n- Multi-level, coalition-ready: operate across IL2/IL5/IL6 with secure exchanges to connect DoD and allies/partners, enabling joint and combined operations under CJADC2 [2].  \n- Resilient transport: leverage cloud fiber, ISR networks, and commercial satellites (e.g., Starlink/Kuiper) to maintain throughput and availability under contested or degraded conditions [2].  \n- Mission applications: deliver real-time feeds via mission apps (Vidterra Compass, SNC TRAX) to aircrew, analysts, and commanders across NIPR/SIPR, addressing known MQ-9 training and operational gaps across MAJCOMs [1].  \n- Scale and adaptability: elastic cloud capacity and modular “plug-and-play” tooling support surge operations, rapid tech refresh, and AI/analytics to accelerate targeting and decision advantage [2, 5].  \n- Governance posture: Joint Cloud is moving toward ATO; near-term emphasis is collecting connection requirements to enable FMV functionality at scale [1].\n\n### Transition plan (from sources)\n- Accelerate adoption across AISR sensors, leveraging prior investments by CENTCOM, SOCOM, and NGB [2].  \n- Run ITN to Joint Cloud in parallel with UVDS for 30 days to ensure smooth mission transition, then decommission UVDS and retain ITN for resilience [2].  \n- Invest the one-time $5.6M to field the IL6→IL5 FMV CDS for continuous unclassified dissemination from IL6 into IL5 [2].  \n- Deploy JOE Cloud nodes in EUCOM, CENTCOM, INDOPACOM to extend reach and OCONUS transport; JOE node sustainment estimated up to ~$2M per theater (~$6–8M/year total) [2].  \n- Consider SAP integration via SAF/CDM FENCES for broader enterprise alignment [2].\n\n### Recommendation\n- Adopt Joint Cloud as the DoD/IC CJADC2 transport backbone for AISR FMV/sensor data, execute the parallel cutover with UVDS, fund the IL6→IL5 FMV CDS, and deploy regional JOE nodes to harden global operations and coalition sharing [2].  \n- Expedite ATO and connection onboarding to realize cost savings and mission agility quickly, building on proven performance and broad stakeholder interest across CCMDs and Services [1, 2].  \n- Use the DAF CLOUDworks model (brokered Azure IL2/IL5/IL6 with CDS and mission apps) as the repeatable pattern for rapid onboarding, governance, and security at scale under CJADC2 [1, 2, 5].\n\n### Bottom line\nJoint Cloud delivers a modern, multi-level, cross-domain AISR transport with proven ops value and a credible path to ~40% sustainment savings versus UVDS; it aligns squarely with CJADC2 and should be adopted as the enterprise platform with a staged transition and targeted CDS and regional node investments [2, 1, 5].",
+    "type": "rag_response",
+    "data": {
+      "content": "### Summary\nJoint Cloud is a DoD/AFRL-led, multi-level cloud architecture on Microsoft Azure that moves AISR full-motion video (FMV) and sensor data across IL2/IL5/IL6 with built-in cross-domain solutions (CDS), designed to reduce costs versus DISA UVDS while aligning directly to CJADC2 needs for rapid, resilient, and scalable data sharing [1, 2, 5].  \nIt has demonstrated operational value (e.g., Texas wildfire response), offers projected annual savings of ~$15M (reducing sustainment from ~$35M to ~$20M), and comes with a clear transition plan (parallel run with UVDS, decommission, invest in IL6→IL5 CDS) that I recommend the DoD and IC adopt as a CJADC2 transport backbone with staged rollout and ATO acceleration [2, 1].\n\n### Highlights\n- What it is: a unified AISR data transport “backbone” that supports IL2 (mission partners), IL5 (DoD unclassified missions), and IL6 (classified) with secure exchanges between IL5↔IL2, IL5↔IL6, and SIPR↔CUI, built and brokered by DAF CLOUDworks on Azure [2, 1].  \n- Core components: Azure landing zone by AFRL–DAF CLOUDworks; Azure IL2/IL5/IL6; networks spanning commercial internet and SIPR; apps like Vidterra Compass and SNC TRAX; Azure FMV CDS + AFRL FMV CDS [1].  \n- Global transport & resilience: integrates ISR Transport Network, cloud provider fiber, and satellite vendors (e.g., Starlink, Kuiper) with “plug-and-play” tool integration to sustain high-throughput FMV and rapid tech refresh [2].  \n- Operational proof: delivered value in the 2024 Texas wildfire response, demonstrating scalability and resilience under real-world pressure [2].  \n- MQ-9 mission enablement: provides any authorized user real-time MQ-9 FMV and sensor data across commercial, NIPR, and SIPR to solve training and operational gaps across MAJCOMs and Services [1].  \n- CJADC2 alignment: TACSIT/Joint Cloud pattern enables rapid information sharing, interoperability, scalability, strong cybersecurity, multinational collaboration, and AI/analytics on-ramp—core CJADC2 attributes [5].\n\n### Cost snapshot\n- Initial investment: $7.75M (w/fees) funded by CENTCOM, SOCOM, and NGB, including labor, apps (Vidterra, TRAX), VPN, Azure IL2/IL5/IL6 consumption, cybersecurity, FMV CDS, and ExpressRoute [2].  \n- Baseline sustainment: $6.54M/year (w/fees) for labor, apps, Azure consumption (IL2/IL5/IL6), cybersecurity, FMV CDS, and ExpressRoute to ANG and DISA UVDS [2].  \n- Additional capability (one-time): $5.6M to field a CONUS, cloud-native IL6→IL5 FMV CDS for 24/7 ops with no increase to baseline CDS sustainment (the baseline funds four 24/7 Azure FMV CDS streams) [2].  \n- Alternative sustainment view: a program sustain package shows ~ $8.41M core and ~$9.40M with fees for 24/7 support (16 FTE), M–F CDS support (5 FTE), Azure consumption, app licenses, and Azure IL5↔IL6 streams [4].\n\n### ROI\n- Cost reduction: Joint Cloud targets ~40% sustainment savings versus UVDS, taking costs from >$35M/year to about $20M/year (a ~$15M annual delta) while modernizing the transport architecture [2].  \n- Payback dynamics: the one-time $5.6M IL6→IL5 FMV CDS capability is effectively covered within months against a $15M/year savings delta, and it rides within a baseline that already funds four 24/7 streams [2].  \n- Value proof: operational performance during the Texas wildfire response suggests lower time-to-value and mission resilience, supporting ROI beyond cost (e.g., faster data-to-decision) [2].  \n- Strategic leverage: alignment to CJADC2 and a plug-and-play architecture reduces future integration costs and lock-in while enabling rapid AI/ML insertion and allied/partner data sharing [2, 5].\n\n### Wartime use (how it plays)\n- Edge to enterprise FMV: move unclassified FMV from tactical edge over commercial internet to CONUS, then exploit on SIPR/IL6 through CDS pathways (IL5↔IL6, SIPR↔CUI) for faster find-fix-finish cycles [2].  \n- Multi-level, coalition-ready: operate across IL2/IL5/IL6 with secure exchanges to connect DoD and allies/partners, enabling joint and combined operations under CJADC2 [2].  \n- Resilient transport: leverage cloud fiber, ISR networks, and commercial satellites (e.g., Starlink/Kuiper) to maintain throughput and availability under contested or degraded conditions [2].  \n- Mission applications: deliver real-time feeds via mission apps (Vidterra Compass, SNC TRAX) to aircrew, analysts, and commanders across NIPR/SIPR, addressing known MQ-9 training and operational gaps across MAJCOMs [1].  \n- Scale and adaptability: elastic cloud capacity and modular “plug-and-play” tooling support surge operations, rapid tech refresh, and AI/analytics to accelerate targeting and decision advantage [2, 5].  \n- Governance posture: Joint Cloud is moving toward ATO; near-term emphasis is collecting connection requirements to enable FMV functionality at scale [1].\n\n### Transition plan (from sources)\n- Accelerate adoption across AISR sensors, leveraging prior investments by CENTCOM, SOCOM, and NGB [2].  \n- Run ITN to Joint Cloud in parallel with UVDS for 30 days to ensure smooth mission transition, then decommission UVDS and retain ITN for resilience [2].  \n- Invest the one-time $5.6M to field the IL6→IL5 FMV CDS for continuous unclassified dissemination from IL6 into IL5 [2].  \n- Deploy JOE Cloud nodes in EUCOM, CENTCOM, INDOPACOM to extend reach and OCONUS transport; JOE node sustainment estimated up to ~$2M per theater (~$6–8M/year total) [2].  \n- Consider SAP integration via SAF/CDM FENCES for broader enterprise alignment [2].\n\n### Recommendation\n- Adopt Joint Cloud as the DoD/IC CJADC2 transport backbone for AISR FMV/sensor data, execute the parallel cutover with UVDS, fund the IL6→IL5 FMV CDS, and deploy regional JOE nodes to harden global operations and coalition sharing [2].  \n- Expedite ATO and connection onboarding to realize cost savings and mission agility quickly, building on proven performance and broad stakeholder interest across CCMDs and Services [1, 2].  \n- Use the DAF CLOUDworks model (brokered Azure IL2/IL5/IL6 with CDS and mission apps) as the repeatable pattern for rapid onboarding, governance, and security at scale under CJADC2 [1, 2, 5].\n\n### Bottom line\nJoint Cloud delivers a modern, multi-level, cross-domain AISR transport with proven ops value and a credible path to ~40% sustainment savings versus UVDS; it aligns squarely with CJADC2 and should be adopted as the enterprise platform with a staged transition and targeted CDS and regional node investments [2, 1, 5].",
+      "sources": [
+        "Joint Cloud Slides v4.pdf",
+        "Joint Cloud Whitepaper.docx",
+        "Joint Cloud FY26 White Paper 2_26_2025.docx",
+        "Joint Cloud Costs.xlsx",
+        "Joint Cloud (TACSIT) BBP.pdf"
+      ]
+    },
+    "model": "gpt-5-2025-08-07",
+    "provider": "openai-gpt5",
+    "sources": [
+      "RAG-Upload"
+    ]
+  }
+]

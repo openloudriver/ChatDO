@@ -1,0 +1,47 @@
+[
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Want to tweak it?\n- Prefer a shade? Try navy, royal, sky, teal, or share a hex code.\n- If you want to change it entirely, just say “Make it <new color>,” and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Update or tweak\n- Want a specific shade saved (navy, royal, sky, teal) or a hex code?\n- If you’d like to change it, just say “Make it <new color>.”",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "my spouse’s favorite dessert is cheesecake. Please remember that."
+  },
+  {
+    "role": "assistant",
+    "content": "Saved — I’ll remember that your spouse’s favorite dessert is cheesecake.\n\n## TL;DR\n- Spouse’s favorite dessert: Cheesecake\n\n## How I’ll use it\n- Suggest cheesecake for gifts, celebrations, or meal planning.\n- Prioritize cheesecake options in recommendations and menus.\n- Add reminders around special dates if you want.\n\n## Optional details\n- Any preferred style (New York, Basque, no-bake)?\n- Favorite toppings (strawberry, blueberry, chocolate)?\n- Dietary notes (gluten-free, low sugar) or a go-to bakery/recipe?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

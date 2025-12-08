@@ -1,0 +1,122 @@
+[
+  {
+    "role": "user",
+    "content": "search for Monero vs Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero vs Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses."
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ..."
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "In conclusion, one of the most interesting features of Monero is that it is less volatile than other crypto assets; some even refer to it as being the ‘stable cryptocurrency.’ · Bitcoin (BTC) is the first and most well-known cryptocurrency, created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto."
+        },
+        {
+          "title": "Monero vs Bitcoin fees",
+          "url": "https://monero-bitcoin-fees.vercel.app/",
+          "snippet": "Bitcoin transaction fees are generally higher than Monero due to the fixed block size limit in Bitcoin. When the number of transactions exceeds the block size limit, users have to compete by offering higher fees to prioritize their transactions. This bidding war for limited space in blocks ..."
+        },
+        {
+          "title": "Monero XMR vs Bitcoin BTC: Which Cryptocurrency Offers the Best Privacy and Value? | SimpleSwap",
+          "url": "https://simpleswap.io/blog/monero-vs-bitcoin",
+          "snippet": "Serving as the world's first cryptocurrency, Bitcoin utilizes blockchain technology to safeguard and authenticate transactions, setting the standard for digital currencies worldwide. Contrary to BTC transparent blockchain, Monero operates on a blockchain designed to prioritize anonymity."
+        },
+        {
+          "title": "Monero vs. Bitcoin: Full Comparison | Exolix",
+          "url": "https://exolix.com/blog/monero-vs-bitcoin",
+          "snippet": "Owing to the fact that all Bitcoin transactions are absolutely transparent, some BTC might become blacklisted by exchanges as long as any trace of money could be followed to ill intentions. Therefore, Bitcoin is not strictly fungible, since coins can be differentiated between each other given their particular history. Monero makes sure that every XMR coin is identical and untraceable, hence fully fungible."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism."
+        },
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero is that literally anyone can mine it since the PoW algorithm works best on regular CPUs (making it more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)."
+        },
+        {
+          "title": "Monero: What It Means, How It Works, and Features",
+          "url": "https://www.investopedia.com/terms/m/monero.asp",
+          "snippet": "Monero is a digital currency that offers a high level of anonymity for users and their transactions. Like Bitcoin, Monero is a decentralized peer-to-peer cryptocurrency, but unlike Bitcoin, Monero is characterized as a more anonymous or privacy-oriented virtual currency."
+        }
+      ]
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.investopedia.com/terms/m/monero.asp"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.investopedia.com/terms/m/monero.asp",
+      "title": "Monero: What It Means, How It Works, and Features",
+      "siteName": "investopedia.com",
+      "published": "2017-04-25",
+      "summary": "Monero is an open-source, decentralized cryptocurrency focused on user and transaction privacy. Launched in 2014 as a fork of Bytecoin, it uses privacy-enhancing technologies to make transactions unlinkable and amounts hidden. Unlike Bitcoin’s transparent ledger, Monero obscures senders, recipients, and values, prioritizing anonymity while allowing optional, selective disclosure.",
+      "keyPoints": [
+        "Launched in April 2014 as a grassroots project (no premine/VC), forking from Bytecoin; uses an ASIC-resistant proof-of-work algorithm.",
+        "Employs ring signatures, stealth/one-time addresses, and transaction splitting to obscure sources, recipients, and amounts.",
+        "Provides “view keys” for selective transparency and “spend keys” for authorizing transfers.",
+        "Contrasts with Bitcoin’s public ledger: Monero transactions are designed to be untraceable and unlinkable.",
+        "Legal status varies: not banned in the U.S. as of June 2024, but prohibited in some countries; in Nov. 2023, its Community Crowdfunding System wallet was breached (2,675.73 XMR stolen)."
+      ],
+      "whyMatters": "Monero illustrates the trade-offs between financial privacy and regulatory oversight, influencing policy, exchange support, and user adoption. Its design choices shape debates on anonymity, compliance, and the future of privacy in digital payments."
+    },
+    "model": "Trafilatura + GPT-5",
+    "provider": "trafilatura-gpt5"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports",
+      "title": "Padres considering Japanese pitcher Tatsuya Imai. Manager Craig Stammen needs a pitching rotation.",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The video discusses the San Diego Padres’ priorities at the MLB winter meetings, highlighting their need for multiple starting pitchers (Nos. 2–4) and a left-handed bat, potentially at first base. The team is willing to pay market rates for a marquee free agent but prefers a shorter, creative contract structure. They are in talks with Japanese right-hander Tatsuo Imae, considering a three-year, $33 million deal that would allow him to re-enter free agency at age 31. The speaker notes Imae’s strong performance (1.94 ERA, 97 mph fastball) but flags concerns about his smaller frame. Key Points:",
+      "keyPoints": [
+        "Padres need multiple starting pitchers and a left-handed bat/first baseman.",
+        "Willing to spend at market rates but avoiding 5–8 year contracts.",
+        "In discussions with RHP Tatsuo Imae on a 3-year, $33M deal with early free agency at 31.",
+        "Imae’s profile: 1.94 ERA, 97 mph fastball; concerns about size (5'10\", 154 lbs).",
+        "Question raised whether GM A.J. Preller can execute another unconventional deal."
+      ],
+      "whyMatters": "The Padres’ approach could reshape their rotation and lineup quickly while managing long-term risk. A successful short-term deal for a top international pitcher would influence market strategies across MLB."
+    },
+    "model": "yt-dlp + Whisper-small-FP16 + GPT-5",
+    "provider": "yt-dlp-whisper-small"
+  }
+]

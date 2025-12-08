@@ -80,16 +80,20 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     chatId: null,
     currentTitle: '',
   });
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const handleNewChat = async () => {
-    if (!currentProject) return;
+    if (!currentProject || isCreatingChat) return;
     
+    setIsCreatingChat(true);
     try {
       const newConversation = await createNewChatInProject(currentProject.id);
       await setCurrentConversation(newConversation);
     } catch (error) {
       console.error('Failed to create conversation:', error);
       alert('Failed to create conversation. Please try again.');
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -243,19 +247,22 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
               )}
               <button
                 onClick={handleNewChat}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                disabled={isCreatingChat}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ 
                   backgroundColor: 'var(--user-bubble-bg)',
                   color: 'var(--user-bubble-text)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.9';
+                  if (!isCreatingChat) {
+                    e.currentTarget.style.opacity = '0.9';
+                  }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.opacity = '1';
                 }}
               >
-                New Chat
+                {isCreatingChat ? 'Creating...' : 'New Chat'}
               </button>
             </div>
         </div>

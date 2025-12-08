@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useChatStore } from '../store/chat';
 import type { RagFile } from '../types/rag';
+import ConfirmDialog from './ConfirmDialog';
 
 interface RagContextTrayProps {
   isOpen: boolean;
@@ -222,8 +223,16 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
     }
   };
 
-  const handleClearAll = async () => {
-    if (!currentConversation || !confirm('Clear all context files for this chat?')) return;
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const handleClearAll = () => {
+    if (!currentConversation) return;
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearAll = async () => {
+    setShowClearConfirm(false);
+    if (!currentConversation) return;
     
     try {
       // Delete files one by one, handling individual failures gracefully
@@ -271,7 +280,7 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
       }
     } catch (error) {
       console.error('Failed to clear RAG files:', error);
-      alert('Failed to clear files. Please try again.');
+      // Error is logged to console - user will see files weren't cleared
     }
   };
 
@@ -431,6 +440,17 @@ export const RagContextTray: React.FC<RagContextTrayProps> = ({ isOpen, onClose,
           </button>
         </div>
       )}
+
+      {/* Clear All Confirmation Dialog */}
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear all context files"
+        message="Clear all context files for this chat?"
+        confirmLabel="Clear"
+        cancelLabel="Cancel"
+        onConfirm={confirmClearAll}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 };

@@ -130,9 +130,11 @@ async def stream_chat_response(
     web_mode: str = 'auto',
     force_search: bool = False
 ):
+    # Lazy import to avoid circular dependency with server.main
+    from server.main import update_chat_timestamp, load_projects, get_target_name_from_project
+    
     # Ensure target_name is correct by getting it from project_id
     # This ensures we always use the project-based folder structure
-    from server.main import load_projects, get_target_name_from_project
     projects = load_projects()
     project = next((p for p in projects if p.get("id") == project_id), None)
     if project:
@@ -346,7 +348,6 @@ Keep it concise, neutral, and factual."""
             # Send article card via WebSocket
             # Update chat's updated_at timestamp
             if conversation_id:
-                from server.main import update_chat_timestamp
                 update_chat_timestamp(conversation_id)
             
             await websocket.send_json({
@@ -403,7 +404,6 @@ Keep it concise, neutral, and factual."""
         # If force_search is true, route to run_agent which will return Top Results card
         if force_search and not has_rag_context:
             print(f"[FORCE_SEARCH] force_search=True, message='{message[:100]}...'")
-            from chatdo.agents.ai_router import run_agent
             from chatdo.tools import web_search
             
             # Prepend "search for" to ensure it gets classified as web_search intent
@@ -433,10 +433,9 @@ Keep it concise, neutral, and factual."""
                     "provider": provider,
                     "done": True
                 })
-                # Update chat's updated_at timestamp
-                if conversation_id:
-                    from server.main import update_chat_timestamp
-                    update_chat_timestamp(conversation_id)
+            # Update chat's updated_at timestamp
+            if conversation_id:
+                update_chat_timestamp(conversation_id)
                 return
             else:
                 # If run_agent didn't return web_search_results, force it directly
@@ -461,7 +460,6 @@ Keep it concise, neutral, and factual."""
                         })
                         # Update chat's updated_at timestamp
                         if conversation_id:
-                            from server.main import update_chat_timestamp
                             update_chat_timestamp(conversation_id)
                         return
                     else:
@@ -915,10 +913,9 @@ Keep it concise, neutral, and factual."""
             except Exception as e:
                 print(f"[MEMORY] Warning: Failed to index messages for cross-chat search: {e}", exc_info=True)
         
-        # Update chat's updated_at timestamp
-        if conversation_id:
-            from server.main import update_chat_timestamp
-            update_chat_timestamp(conversation_id)
+            # Update chat's updated_at timestamp
+            if conversation_id:
+                update_chat_timestamp(conversation_id)
         
         # Send completion message with model/provider info
         await websocket.send_json({
