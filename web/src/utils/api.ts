@@ -74,6 +74,19 @@ export async function deleteMemorySource(sourceId: string): Promise<void> {
   }
 }
 
+export async function moveChat(chatId: string, projectId: string): Promise<any> {
+  const res = await fetch(`http://localhost:8000/api/chats/${chatId}/move`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id: projectId }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.detail || 'Failed to move chat');
+  }
+  return res.json();
+}
+
 // Impacts
 export interface ImpactCreatePayload {
   title: string;

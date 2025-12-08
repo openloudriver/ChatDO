@@ -133,6 +133,7 @@ interface ChatStore {
   setCurrentConversation: (conversation: Conversation | null) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
+  moveChat: (id: string, projectId: string) => Promise<void>;
   restoreChat: (id: string) => Promise<void>;
   purgeChat: (id: string) => Promise<void>;
   purgeAllTrashedChats: () => Promise<void>;
@@ -705,6 +706,54 @@ export const useChatStore = create<ChatStore>((set) => ({
       await useChatStore.getState().loadTrashedChats();
     } catch (error) {
       console.error('Failed to delete chat:', error);
+      throw error;
+    }
+  },
+  
+  moveChat: async (id, projectId) => {
+    try {
+      const response = await axios.post(`http://localhost:8000/api/chats/${id}/move`, {
+        project_id: projectId
+      });
+      const movedChat = response.data;
+      
+      // Get the project to find default_target
+      const state = useChatStore.getState();
+      const project = state.projects.find(p => p.id === projectId) || state.currentProject;
+      const defaultTarget = project?.default_target || 'general';
+      
+      // Update the chat's project_id in all state arrays
+      set((state) => {
+        const updatedConversations = state.conversations.map(c =>
+          c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
+        );
+        const updatedAllConversations = state.allConversations.map(c =>
+          c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
+        );
+        const updatedTrashedChats = state.trashedChats.map(c =>
+          c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
+        );
+        const updatedCurrentConversation = state.currentConversation?.id === id
+          ? { ...state.currentConversation, projectId: projectId, targetName: defaultTarget }
+          : state.currentConversation;
+        
+        return {
+          conversations: updatedConversations,
+          allConversations: updatedAllConversations,
+          trashedChats: updatedTrashedChats,
+          currentConversation: updatedCurrentConversation
+        };
+      });
+      
+      // Reload chats for the old project (if we're viewing it) to remove the moved chat
+      const oldProjectId = state.currentProject?.id;
+      if (oldProjectId && oldProjectId !== projectId) {
+        await useChatStore.getState().loadChats(oldProjectId);
+      }
+      // Also reload all chats to update Recent Chats in sidebar
+      await useChatStore.getState().loadChats();
+    } catch (error) {
+      console.error('Failed to move chat:', error);
       throw error;
     }
   },

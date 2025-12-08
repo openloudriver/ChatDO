@@ -2370,6 +2370,84 @@ async def soft_delete_chat(chat_id: str):
     return chats[chat_index]
 
 
+class MoveChatRequest(BaseModel):
+    project_id: str
+
+
+@app.post("/api/chats/{chat_id}/move", response_model=Chat)
+async def move_chat_to_project(chat_id: str, request: MoveChatRequest):
+    """Move a chat to a different project"""
+    new_project_id = request.project_id
+    
+    chats = load_chats()
+    projects = load_projects()
+    
+    # Validate that the target project exists
+    target_project = next((p for p in projects if p.get("id") == new_project_id), None)
+    if not target_project:
+        raise HTTPException(status_code=404, detail="Target project not found")
+    
+    # Find chat by ID
+    chat_index = None
+    for i, c in enumerate(chats):
+        if c.get("id") == chat_id:
+            chat_index = i
+            break
+    
+    if chat_index is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    # Get old and new project info for thread history migration
+    old_project_id = chats[chat_index].get("project_id")
+    old_project = next((p for p in projects if p.get("id") == old_project_id), None)
+    
+    # Migrate thread history if chat has messages
+    thread_id = chats[chat_index].get("thread_id") or chat_id
+    if thread_id and old_project:
+        old_target_name = get_target_name_from_project(old_project)
+        new_target_name = get_target_name_from_project(target_project)
+        
+        # Only migrate if target_name changed
+        if old_target_name != new_target_name:
+            try:
+                from chatdo.memory.store import thread_dir, load_thread_history, save_thread_history, load_thread_sources, save_thread_sources
+                from pathlib import Path
+                import shutil
+                
+                old_thread_dir = thread_dir(old_target_name, thread_id)
+                new_thread_dir = thread_dir(new_target_name, thread_id)
+                
+                # If old thread directory exists, migrate it
+                if old_thread_dir.exists():
+                    # Load existing history and sources
+                    history = load_thread_history(old_target_name, thread_id)
+                    sources = load_thread_sources(old_target_name, thread_id)
+                    
+                    # Save to new location
+                    if history:
+                        save_thread_history(new_target_name, thread_id, history)
+                    if sources:
+                        save_thread_sources(new_target_name, thread_id, sources)
+                    
+                    # Remove old directory
+                    shutil.rmtree(old_thread_dir)
+                    
+                    logger.info(f"[CHATS] Migrated thread history for {chat_id} from {old_target_name} -> {new_target_name}")
+            except Exception as e:
+                logger.warning(f"[CHATS] Failed to migrate thread history for {chat_id}: {e}")
+                # Continue anyway - chat will still be moved, just messages might need to be reloaded
+    
+    # Update project_id
+    chats[chat_index]["project_id"] = new_project_id
+    chats[chat_index]["updated_at"] = now_iso()
+    
+    save_chats(chats)
+    
+    logger.info(f"[CHATS] Moved chat {chat_id} from project {old_project_id} -> project {new_project_id}")
+    
+    return chats[chat_index]
+
+
 @app.post("/api/chats/{chat_id}/restore", response_model=Chat)
 async def restore_chat(chat_id: str):
     """Restore a chat from trash"""

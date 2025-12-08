@@ -3,6 +3,7 @@ import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
 import ConfirmDialog from './ConfirmDialog';
 import RenameChatModal from './RenameChatModal';
+import MoveChatModal from './MoveChatModal';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Helper to format date
@@ -80,6 +81,10 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
     chatId: null,
     currentTitle: '',
   });
+  const [moveChatModal, setMoveChatModal] = useState<{ open: boolean; chatId: string | null }>({
+    open: false,
+    chatId: null,
+  });
   const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const handleNewChat = async () => {
@@ -135,6 +140,24 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
       console.error('Failed to rename chat:', error);
       throw error; // Let the modal handle the error display
     }
+  };
+
+  const handleMoveChat = (chatId: string) => {
+    setOpenMenuId(null);
+    setMenuPosition(null);
+    setMoveChatModal({
+      open: true,
+      chatId,
+    });
+  };
+
+  const handleChatMoved = async (newProjectId: string) => {
+    // Reload chats for current project to remove the moved chat
+    if (currentProject) {
+      await loadChats(currentProject.id);
+    }
+    // Also reload all chats to update Recent Chats in sidebar
+    await loadChats();
   };
 
   const handleDeleteChat = async (chatId: string, chatTitle: string) => {
@@ -365,6 +388,12 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                         Rename Chat
                       </button>
                       <button
+                        onClick={() => handleMoveChat(chat.id)}
+                        className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                      >
+                        Move Chat
+                      </button>
+                      <button
                         onClick={() => handleDeleteChat(chat.id, chat.title)}
                         className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-b-lg transition-colors"
                       >
@@ -401,6 +430,18 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
         onClose={() => setRenameChatModal({ open: false, chatId: null, currentTitle: '' })}
         onRename={confirmRenameChat}
       />
+
+      {/* Move Chat Modal */}
+      {moveChatModal.chatId && currentProject && moveChatModal.open && (
+        <MoveChatModal
+          key={`move-chat-${moveChatModal.chatId}`}
+          open={moveChatModal.open}
+          chatId={moveChatModal.chatId}
+          currentProjectId={currentProject.id}
+          onClose={() => setMoveChatModal({ open: false, chatId: null })}
+          onMoved={handleChatMoved}
+        />
+      )}
     </div>
   );
 };

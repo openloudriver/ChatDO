@@ -731,13 +731,13 @@ async def chat_with_smart_search(
     
     # Update or add system messages for web context
     system_found = False
-    for i, msg in enumerate(messages):
-        if msg.get("role") == "system":
+        for i, msg in enumerate(messages):
+            if msg.get("role") == "system":
             messages[i] = {"role": "system", "content": system_prompt_with_web}
-            # Insert web context after system prompt
-            messages.insert(i + 1, {"role": "system", "content": web_results_text})
+                # Insert web context after system prompt
+                messages.insert(i + 1, {"role": "system", "content": web_results_text})
             system_found = True
-            break
+                break
     
     if not system_found:
         # No system message found, add both

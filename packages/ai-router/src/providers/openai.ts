@@ -35,7 +35,7 @@ export const openAiGpt5Provider: AiProvider = {
     // Map messages, preserving tool_calls and tool_call_id for tool messages
     const messages = input.input.messages.map((m: any) => {
       const message: any = {
-        role: m.role,
+      role: m.role,
         content: m.content || "",
       };
       // Preserve tool_calls if present (for assistant messages)
