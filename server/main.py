@@ -15,6 +15,8 @@ from uuid import uuid4
 import re
 import os
 import logging
+import asyncio
+import time
 from pathlib import Path
 from datetime import datetime, timedelta, timezone, date as date_type
 from contextlib import asynccontextmanager
@@ -45,6 +47,9 @@ from server.services.impact_store import ImpactEntry
 from server.services.impact_templates_store import ImpactTemplate, get_template_file_path
 from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
 from server.services.template_engine import template_store, extract_template_text, analyze_template, autofill_template
+
+# Global Whisper semaphore is managed in server/services/video_transcription.py
+# to avoid circular import issues
 
 # Retention settings
 RETENTION_DAYS = int(os.getenv("CHATDO_TRASH_RETENTION_DAYS", "30"))
@@ -995,6 +1000,8 @@ async def summarize_article(request: ArticleSummaryRequest):
     """
     Summarize a URL (web page or video) using deterministic 2-tier routing.
     
+    Each chat's summarization is isolated and can run concurrently with others.
+    
     Routing Rules:
     1. If URL is YouTube (youtube.com or youtu.be)
        → Tier 1: YouTube transcript API + GPT-5
@@ -1016,6 +1023,10 @@ async def summarize_article(request: ArticleSummaryRequest):
     
     Returns a structured article_card message.
     """
+    conversation_id_str = request.conversation_id or "unknown"
+    t_pipeline_start = time.time()
+    logger.info(f"[Summary] Starting summarization pipeline for conversation={conversation_id_str} url={request.url[:80]}")
+    
     try:
         # Validate URL
         if not request.url.startswith(("http://", "https://")):
@@ -1075,7 +1086,8 @@ async def summarize_article(request: ArticleSummaryRequest):
             # yt-dlp → Whisper-small-FP16 (M1-optimized) → GPT-5
             # NO FALLBACK: If audio pipeline fails, return error (do NOT try web extraction)
             try:
-                article_text = await get_transcript_from_url(request.url)
+                # Pass conversation_id and semaphore to get_transcript_from_url for timing and locking
+                article_text = await get_transcript_from_url(request.url, conversation_id=conversation_id_str)
                 parsed = urlparse(request.url)
                 article_site_name = "Video"
                 # Try to get actual video title
@@ -1095,6 +1107,7 @@ async def summarize_article(request: ArticleSummaryRequest):
                     detail="Couldn't obtain transcript for this video. The audio download or transcription failed.",
                 ) from re
             except Exception as e:
+                logger.exception(f"[Summary] Unexpected error for video URL conversation_id={conversation_id_str} url={request.url[:80]}")
                 raise HTTPException(
                     status_code=500,
                     detail="Unexpected error while summarizing this video URL.",
@@ -1164,18 +1177,28 @@ Keep it concise, neutral, and factual."""
         }
         
         import requests
-        resp = requests.post(ai_router_url, json=payload, timeout=120)
+        # Increase timeout for video transcriptions (they can take longer)
+        timeout_seconds = 300 if is_video else 120  # 5 minutes for videos, 2 minutes for articles
+        logger.info(f"[Summary] Calling AI Router for url={request.url} timeout={timeout_seconds}s is_video={is_video}")
+        t_gpt_start = time.time()
+        resp = requests.post(ai_router_url, json=payload, timeout=timeout_seconds)
         resp.raise_for_status()
         data = resp.json()
+        t_gpt_end = time.time()
+        logger.info(f"[Summary] GPT-5 summarization finished in {t_gpt_end - t_gpt_start:.2f}s for conversation={conversation_id_str}")
         
         if not data.get("ok"):
-            raise HTTPException(status_code=500, detail=f"AI Router error: {data.get('error')}")
+            error_msg = data.get('error', 'Unknown error')
+            logger.error(f"[Summary] AI Router error conversation_id={conversation_id_str} url={request.url[:80]} error={error_msg}")
+            raise HTTPException(status_code=500, detail=f"AI Router error: {error_msg}")
         
         assistant_messages = data["output"]["messages"]
         if not assistant_messages or len(assistant_messages) == 0:
+            logger.error(f"[Summary] No response from AI Router conversation_id={conversation_id_str} url={request.url[:80]}")
             raise HTTPException(status_code=500, detail="No response from AI Router")
         
         summary_text = assistant_messages[0].get("content", "")
+        logger.info(f"[Summary] Successfully summarized conversation_id={conversation_id_str} url={request.url[:80]} summary_length={len(summary_text)}")
         
         # Parse summary into summary paragraph and bullet points
         # Simple parsing: look for bullet points (lines starting with - or •)
@@ -1317,6 +1340,9 @@ Keep it concise, neutral, and factual."""
                 provider_name = "yt-dlp-whisper-small"
         else:
             provider_name = "trafilatura-gpt5"
+        
+        t_pipeline_end = time.time()
+        logger.info(f"[Summary] Finished summarization pipeline in {t_pipeline_end - t_pipeline_start:.2f}s for conversation={conversation_id_str}")
         
         return ArticleSummaryResponse(
             message_data=message_data,
