@@ -45,7 +45,7 @@ export async function addMemorySource(params: {
     body: JSON.stringify({
       root_path: params.rootPath,
       display_name: params.displayName,
-      project_id: params.projectId ?? "scratch",
+      project_id: params.projectId ?? "general",
     }),
   });
   if (!res.ok) {

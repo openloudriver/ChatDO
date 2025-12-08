@@ -204,7 +204,7 @@ def slugify(text: str) -> str:
 
 def create_dynamic_source(root_path: str,
                           display_name: Optional[str] = None,
-                          project_id: str = "scratch") -> SourceConfig:
+                          project_id: str = "general") -> SourceConfig:
     """
     Create a new SourceConfig for a dynamically added folder, persist it, and return it.
     

@@ -431,7 +431,8 @@ async def chat_with_smart_search(
     if project_id:
         try:
             # Search ALL chats in the project (including current chat) for cross-chat memory
-            memory_result = get_project_memory_context(project_id, user_message, limit=12, chat_id=None)
+            # Use a higher limit to ensure answers are included (questions often rank higher than answers)
+            memory_result = get_project_memory_context(project_id, user_message, limit=30, chat_id=None)
             searched_memory = True  # We attempted to search, regardless of results
             if memory_result:
                 memory_context, has_memory = memory_result

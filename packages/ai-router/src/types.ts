@@ -26,7 +26,8 @@ export interface AiRouterInput {
   costTier: CostTier;
   input: {
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
-    tools?: any[];        // refine later for your tool schema
+    tools?: any[];        // OpenAI-style tool definitions
+    tool_choice?: any;    // optional tool_choice parameter (e.g., "auto", "none", or specific tool)
     systemHint?: string;  // optional routing hint
   };
 }
@@ -41,7 +42,11 @@ export interface AiRouterResult {
   modelId: string;
   usage?: AiUsage; // optional: some providers may not return usage yet
   output: {
-    messages: Array<{ role: "assistant"; content: string }>;
+    messages: Array<{ 
+      role: "assistant"; 
+      content: string;
+      tool_calls?: any[]; // OpenAI-style tool_calls array (preserved from provider response)
+    }>;
     raw?: any; // raw provider response if you want it
   };
 }

@@ -2432,7 +2432,7 @@ class UpdateMemorySourcesRequest(BaseModel):
 class AddMemorySourceRequest(BaseModel):
     root_path: str
     display_name: Optional[str] = None
-    project_id: Optional[str] = "scratch"
+    project_id: Optional[str] = "general"
 
 
 @app.put("/api/projects/{project_id}/memory-sources")

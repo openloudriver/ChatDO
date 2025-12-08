@@ -1,0 +1,150 @@
+[
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t know your favorite color yet—tell me and I’ll remember it for next time.\n\n## Quick reply\n- What’s your favorite color?\n\n## Save it for later 🔖\n- If you’d like me to remember, say: “Remember: my favorite color is <color>.”",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t have your favorite crypto saved yet.\n\n## TL;DR\n- Tell me your favorite (or top 3 in order) and I’ll remember it for next time.\n\n## Quick reply\n- “Remember: my favorite crypto is <coin>.”\n- Or: “Remember: my favorite cryptos are <coin1>, <coin2>, <coin3> (in this order).”\n\n## Note\n- If you’ve told me before, it isn’t in this session’s memory—please restate it and I’ll pin it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t know your favorite color yet—tell me and I’ll remember it for next time.\n\n## TL;DR\n- Share it once and I’ll save it.\n\n## Quick reply\n- “Remember: my favorite color is <color>.”\n\n## Note\n- If you’ve told me before, it’s not in this session’s memory—please restate it and I’ll pin it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "what is my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) is your favorite cryptocurrency.\n\n## TL;DR\n- Favorite: Monero (XMR)\n- Also noted: #2 Bitcoin (BTC), #3 Stellar (XLM), #4 Tether (USDT)\n\nIf you’d like to change the order or add more, tell me your updated ranking.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are the top-level contents of the Coin memory source, and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "The Coin memory source top level contains five folders (archive, cli, monero_ssl, monitor, nebula) and two files (inventory.yml, Test File.rtf).\n\n## TL;DR\n- Folders: archive, cli, monero_ssl, monitor, nebula\n- Files: inventory.yml, Test File.rtf\n\n## 📂 Top-level contents\n- Folders\n  - archive/\n  - cli/\n  - monero_ssl/\n  - monitor/\n  - nebula/\n\n- Files\n  - inventory.yml\n  - Test File.rtf\n\nWant me to expand any folder one level deeper (e.g., archive or nebula)?",
+    "model": "Web + Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      "Brave Search"
+    ],
+    "meta": {
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "open source - What's the best structure for a repository? - Software Engineering Stack Exchange",
+          "url": "https://softwareengineering.stackexchange.com/questions/86914/whats-the-best-structure-for-a-repository",
+          "snippet": "Reserve your root for misc bits (so you have a place for misc related directories and files which may be valuable to store in your repository), start your source tree one level down."
+        },
+        {
+          "title": "GitHub - kriasoft/Folder-Structure-Conventions: Folder / directory structure options and naming conventions for software projects",
+          "url": "https://github.com/kriasoft/Folder-Structure-Conventions",
+          "snippet": "Folder / directory structure options and naming conventions for software projects - kriasoft/Folder-Structure-Conventions"
+        },
+        {
+          "title": "COIN-OR Developer's Guide | COIN-OR Documentation",
+          "url": "https://coin-or.github.io/developer_introduction.html",
+          "snippet": "Dependencies are indicated by maintaining a file called Dependencies in the root of your repository. This is used by the coinbrew script, among others, to determine what additional projects are needed. The format of the file is lines consisting of a short name for the project, a URL, and (in the case of a git dependency), a branch name."
+        },
+        {
+          "title": "What is a top level folder?",
+          "url": "https://web.synametrics.com/syncrifytoplevel.htm",
+          "snippet": "If you delete a top-level folder ... folder is stored in a separate folder on the server side using the following convention: RepositoryPath\\UsersLoginEmail\\ProfileName\\TopLevelFolder..."
+        },
+        {
+          "title": "GitHub - webworker01/coins: coin parameters and all files needed for GUI support",
+          "url": "https://github.com/webworker01/coins",
+          "snippet": "\"pubtype\", \"p2shtype\", and \"wiftype\" is the also very specific information about coin's parameters. This is specific to Bitcoin Protocol compatible coins only, and such information can be found in source code of the project. These parameters information can be expected in files like src/init.cpp, src/base58.h, and src/chainparamsbase.h if the project is following the bitcoin source code directory/files structure."
+        }
+      ]
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Notes\n- If you have a preferred shade (navy, royal, sky, teal), tell me and I’ll use it going forward.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero (XMR), Bitcoin (BTC), Stellar (XLM), and Tether (USDT) — in that order.\n\n## TL;DR\n1) Monero (XMR) — #1  \n2) Bitcoin (BTC) — #2  \n3) Stellar (XLM) — #3  \n4) Tether (USDT) — #4\n\n## Adjust anytime\n- Want to reorder or add a #5? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Forget about USDT. I've told you this twice now. USDT is NOT a favorite crypto."
+  },
+  {
+    "role": "assistant",
+    "content": "USDT removed — your favorites are Monero (XMR) #1, Bitcoin (BTC) #2, and Stellar (XLM) #3.\n\n## TL;DR\n1) Monero (XMR) — #1  \n2) Bitcoin (BTC) — #2  \n3) Stellar (XLM) — #3  \n- USDT is not on your favorites list.\n\n## How I’ll use this\n- No USDT in suggestions, examples, or comparisons unless you explicitly ask.  \n- I’ll avoid cross‑chain/multi‑chain tokens by default.  \n- I’ll prioritize Monero, then Bitcoin, then XLM in news and examples.\n\n## Want a #4?\n- Keep it at three, or pick a single‑chain option (e.g., Litecoin, Dogecoin, Nano).",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

@@ -219,7 +219,7 @@ class MemoryServiceClient:
             return False
     
     def add_memory_source(self, root_path: str, display_name: Optional[str] = None,
-                          project_id: Optional[str] = "scratch") -> Dict:
+                          project_id: Optional[str] = "general") -> Dict:
         """
         Call the memory service to create a new memory source and start indexing it.
         """
@@ -229,7 +229,7 @@ class MemoryServiceClient:
         payload = {
             "root_path": root_path,
             "display_name": display_name,
-            "project_id": project_id or "scratch",
+            "project_id": project_id or "general",
         }
         
         try:
@@ -266,6 +266,90 @@ class MemoryServiceClient:
             except:
                 detail = str(e)
             raise requests.RequestException(f"Failed to delete memory source: {detail}")
+    
+    async def filetree_list(self, source_id: str, max_depth: int = 10, max_entries: int = 1000) -> dict:
+        """
+        List directory tree for a Memory source.
+        
+        Args:
+            source_id: The Memory source ID (e.g., "coin-dir")
+            max_depth: Maximum depth to traverse (0-10, clamped to 10)
+            max_entries: Maximum entries to return (1-1000, clamped to 1000)
+            
+        Returns:
+            Dict with FileTreeResponse structure or error dict
+        """
+        # Clamp parameters
+        max_depth = max(0, min(10, max_depth))
+        max_entries = max(1, min(1000, max_entries))
+        
+        if not self.is_available():
+            logger.warning("[FILETREE-CLIENT] Memory Service is not available")
+            return {
+                "error": "FileTree list failed",
+                "source_id": source_id
+            }
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/filetree/{source_id}",
+                params={
+                    "path": "",  # Always use root path
+                    "max_depth": max_depth,
+                    "max_entries": max_entries
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            logger.info(f"[FILETREE-CLIENT] Listed filetree for source={source_id}")
+            return response.json()
+        except Exception as e:
+            logger.warning(f"[FILETREE-CLIENT] FileTree list failed for source={source_id}: {e}")
+            return {
+                "error": "FileTree list failed",
+                "source_id": source_id
+            }
+    
+    async def filetree_read(self, source_id: str, path: str, max_bytes: int = 512000) -> dict:
+        """
+        Read a single file from a Memory source.
+        
+        Args:
+            source_id: The Memory source ID (e.g., "coin-dir")
+            path: Relative file path from source root (required)
+            max_bytes: Maximum bytes to read (clamped to 512000)
+            
+        Returns:
+            Dict with FileReadResponse structure or error dict
+        """
+        # Clamp max_bytes
+        max_bytes = max(1, min(512000, max_bytes))
+        
+        if not self.is_available():
+            logger.warning("[FILETREE-CLIENT] Memory Service is not available")
+            return {
+                "error": "FileTree read failed",
+                "source_id": source_id
+            }
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/filetree/{source_id}/file",
+                params={
+                    "path": path,
+                    "max_bytes": max_bytes
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            logger.info(f"[FILETREE-CLIENT] Read file from source={source_id} path={path} max_bytes={max_bytes}")
+            return response.json()
+        except Exception as e:
+            logger.warning(f"[FILETREE-CLIENT] FileTree read failed for source={source_id} path={path}: {e}")
+            return {
+                "error": "FileTree read failed",
+                "source_id": source_id
+            }
 
 
 # Global client instance
@@ -289,6 +373,56 @@ def get_memory_sources_for_project(project_id: str) -> List[str]:
         return []
     
     return project.get("memory_sources") or []
+
+
+def get_project_sources_with_details(project_id: str) -> List[Dict[str, str]]:
+    """
+    Get memory sources for a project with their details (id, display_name).
+    
+    Returns:
+        List of dicts with 'id' and 'display_name' for each source
+    """
+    from server.services import projects_config
+    
+    project = projects_config.get_project(project_id)
+    if not project:
+        return []
+    
+    source_ids = project.get("memory_sources") or []
+    if not source_ids:
+        return []
+    
+    # Get source details from Memory Service
+    client = MemoryServiceClient()
+    if not client.is_available():
+        # Return just IDs if service unavailable
+        return [{"id": sid, "display_name": sid} for sid in source_ids]
+    
+    try:
+        response = requests.get(f"{client.base_url}/sources", timeout=5)
+        response.raise_for_status()
+        all_sources = response.json().get("sources", [])
+        
+        # Map source_ids to their details
+        source_map = {s.get("id"): s for s in all_sources}
+        result = []
+        for sid in source_ids:
+            source = source_map.get(sid)
+            if source:
+                result.append({
+                    "id": sid,
+                    "display_name": source.get("display_name", sid)
+                })
+            else:
+                result.append({
+                    "id": sid,
+                    "display_name": sid
+                })
+        return result
+    except Exception as e:
+        logger.warning(f"Failed to get source details: {e}")
+        # Fallback: return just IDs
+        return [{"id": sid, "display_name": sid} for sid in source_ids]
 
 
 def get_project_memory_context(project_id: str | None, query: str, limit: int = 8, chat_id: Optional[str] = None) -> Optional[tuple[str, bool]]:

@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "coin-dir",
+    "project_id": "general",
+    "root_path": "/Users/christopher.peck/Coin",
+    "include_glob": "**/*",
+    "exclude_glob": "**/.git/**,**/node_modules/**,**/dist/**,**/build/**,**/.next/**,**/.turbo/**,**/.cache/**,**/.venv/**,**/venv/**,**/*.sqlite,**/*.sqlite-journal,**/*-wal",
+    "display_name": "Coin"
+  }
+]

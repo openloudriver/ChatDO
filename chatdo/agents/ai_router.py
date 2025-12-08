@@ -93,20 +93,25 @@ def classify_intent(text: str) -> str:
     
     return "general_chat"
 
-def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat", system_prompt_override: Optional[str] = None) -> tuple[List[Dict[str, str]], str, str, str]:
+def call_ai_router(messages: List[Dict[str, Any]], intent: str = "general_chat", system_prompt_override: Optional[str] = None, tools: Optional[List[Dict[str, Any]]] = None) -> tuple[List[Dict[str, Any]], str, str, str]:
     """
     Call the AI-Router HTTP service to get AI responses.
     
     Args:
-        messages: List of message dicts with 'role' and 'content' keys
+        messages: List of message dicts with 'role' and 'content' keys.
+                  May also include 'tool_calls' (for assistant messages) and
+                  'tool_call_id'/'name' (for tool role messages).
         intent: AI intent type (e.g., "general_chat", "long_planning", "code_edit")
         system_prompt_override: Optional system prompt to override the default
+        tools: Optional list of tool definitions to pass to the model
     
     Returns:
         Tuple of (list of assistant messages from the router, model_id, provider_id, model_display_name)
+        Assistant messages may include 'tool_calls' if the model decided to use tools.
     """
     # If system_prompt_override is provided, replace the system message
-    router_messages = messages.copy()
+    # Copy messages deeply to preserve tool_calls, tool_call_id, etc.
+    router_messages = [msg.copy() for msg in messages]
     if system_prompt_override:
         # Find and replace system message, or add it if not present
         system_found = False
@@ -128,6 +133,10 @@ def call_ai_router(messages: List[Dict[str, str]], intent: str = "general_chat",
             "messages": router_messages,
         },
     }
+    
+    # Add tools if provided
+    if tools:
+        payload["input"]["tools"] = tools
     try:
         # Increase timeout for complex reasoning queries (GPT-5 can take longer)
         resp = requests.post(AI_ROUTER_URL, json=payload, timeout=120)

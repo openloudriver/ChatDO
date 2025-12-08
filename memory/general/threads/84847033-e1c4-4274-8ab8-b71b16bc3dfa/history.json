@@ -1,0 +1,225 @@
+[
+  {
+    "role": "user",
+    "content": "what is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue.\n\n## Noted\n- I’ll default to blue for your preferences. If that ever changes, just tell me and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Without running anything on my machine, use the FileTree tools to list the top-level contents of the Coin memory source and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "I can’t list the top-level contents yet because the FileTree service can’t find a memory source named “Coin.”\n\n## TL;DR\n- I need the exact memory source ID (or confirmation that the “Coin” memory source is mounted) to fetch the top-level files and folders.\n\n## What I tried\n- Queried the FileTree service for these source IDs (all not found):\n  - Coin, coin, COIN\n  - CoinRepo, Coin-Repo, CoinRepoRoot, CoinProject\n\n## What I need to proceed\n- The exact source_id for the “Coin” memory source, or\n- Confirmation that the Coin memory source is available/mounted in your workspace.\n\n## Next step\n- Once you provide the correct source_id, I’ll immediately run a depth=1 listing and report all top-level files and folders.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Without running anything on my machine, use the FileTree tools to list the top-level contents of the Coin memory source and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "I can’t list the top-level contents yet because the FileTree service can’t find a memory source named “Coin.”\n\n## TL;DR\n- I need the exact memory source ID (or confirmation that “Coin” is mounted) to fetch its top-level files and folders.\n\n## What I tried\n- Just now: source_id = \"Coin\" and \"coin\" → both not found.\n- Previously also checked common variants: \"COIN\", \"CoinRepo\", \"Coin-Repo\", \"CoinRepoRoot\", \"CoinProject\" → not found.\n\n## What I need to proceed\n- The exact source_id for the Coin memory source, or\n- Confirmation that the Coin memory source is available/mounted in your workspace.\n\n## Next step\n- Share the correct source_id and I’ll immediately run a depth=1 listing and report all top-level files and folders.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Without running anything on my machine, use the FileTree tools to list the top-level contents of the Coin memory source and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "I can’t list the top-level contents yet because the FileTree service can’t find a memory source named “Coin.”\n\n## TL;DR\n- I need the exact source_id (or confirmation that “Coin” is mounted) to fetch its top-level files and folders.\n\n## What I tried\n- Checked these source IDs (all not found):\n  - Coin, coin, COIN\n  - CoinRepo, Coin-Repo, CoinRepoRoot\n\n## How to proceed\n- Share the exact source_id for the Coin memory source, or confirm that it’s mounted/available in your workspace.\n\nOnce I have the correct source_id, I’ll immediately run a depth=1 listing and report all top-level files and folders.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Without running anything on my machine, use the FileTree tools to list the top-level contents of the Coin memory source and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "The Coin memory source contains 5 folders (archive, cli, monero_ssl, monitor, nebula) and 3 files (.DS_Store, inventory.yml, Test File.rtf).\n\n## TL;DR\n- Folders: archive, cli, monero_ssl, monitor, nebula\n- Files: .DS_Store, inventory.yml, Test File.rtf\n\n## 📂 Top-level contents\n- Folders\n  - archive/\n  - cli/\n  - monero_ssl/\n  - monitor/\n  - nebula/\n\n- Files\n  - .DS_Store\n  - inventory.yml\n  - Test File.rtf\n\nIf you want, I can expand any folder (e.g., archive) and list its contents next.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Yes, please do so"
+  },
+  {
+    "role": "assistant",
+    "content": "Here are the contents of the Coin memory source’s top-level folders, expanded one level deep.\n\n## 📂 archive/\n- docker/ (folder)\n- .DS_Store\n- logging_miner.yml\n- monitor_error.log\n- monitor_miners.yml\n- monitor_output.log\n\n## 📂 cli/\n- .DS_Store\n- 0_dependencies.yml\n- 1_download.yml\n- 2_start.yml\n- 3_update.yml\n\n## 📂 monero_ssl/\n- archive/ (folder)\n- .DS_Store\n- monerod.crt\n- monerod.key\n\n## 📂 monitor/\n- .DS_Store\n- monitor_miners.log\n- monitor_miners.yml\n- xmrig_hash.yml\n\n## 📂 nebula/\n- archive/ (folder)\n- .DS_Store\n- auto_renew.sh\n- ca.crt\n- ca.key\n- check_expiry.sh\n- inventory.yml\n- macbook.crt\n- macbook.key\n- MacMini.crt\n- MacMini.key\n- nebula\n- nebula-cert\n- nebula.log\n- nebula.service\n- nebula_macbook_node_config.yml\n- nebula_macmini_lighthouse_config.yml\n- nebula_template_lighthouse_config.yml\n- nebula_template_node_config.yml\n- regen_1yr.sh\n- regen_5yr.sh\n\nTop-level files at the root remain:\n- .DS_Store\n- inventory.yml\n- Test File.rtf\n\nWant me to drill into any subfolder (e.g., archive/docker, monero_ssl/archive, or nebula/archive)?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color and cryptocurrencies?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue; your favorite cryptocurrency is Monero, and your second favorite is Bitcoin.\n\n## TL;DR\n- Color: Blue\n- Cryptos: Monero (favorite), Bitcoin (second favorite)\n\n## Details\n- Color\n  - Blue.\n- Cryptocurrencies\n  - #1 Monero (XMR)\n  - #2 Bitcoin (BTC) — you’ve said you don’t really care about it, but it’s second.\n\n## Open item\n- I don’t have a third favorite crypto on record. Want me to add one?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Wait, yes I do. I have three favorite cryptos. What are they?"
+  },
+  {
+    "role": "assistant",
+    "content": "You’ve told me #1 Monero and #2 Bitcoin; you haven’t given me your #3 yet.\n\n## TL;DR\n- #1 Monero (XMR)\n- #2 Bitcoin (BTC)\n- #3 not recorded yet\n\n## Quick set\nReply with your third favorite and I’ll lock it in:\n1) Monero\n2) Bitcoin\n3) [your pick]",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "That's not true. I told you all three of my favorite cryptocurrencies already"
+  },
+  {
+    "role": "assistant",
+    "content": "Your top three are Monero (#1), Bitcoin (#2), and XLM (#3).\n\n## TL;DR\n- #1 Monero (XMR)\n- #2 Bitcoin (BTC)\n- #3 XLM (Stellar)\n\n## Noted\n- I’ll remember this ordering going forward. If you ever change #3 (or the order), just say the word.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Thank you"
+  },
+  {
+    "role": "assistant",
+    "content": "You’re welcome!\n\n## Anything else?\n- Want me to save or reference your prefs (blue, Monero/Bitcoin/XLM) in future chats?\n- Need me to dig deeper into the Coin memory source or any specific folder?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are the top-level contents of the Coin memory source, and tell me what files and folders are there."
+  },
+  {
+    "role": "assistant",
+    "content": "The Coin memory source contains 5 folders (archive, cli, monero_ssl, monitor, nebula) and 3 files (.DS_Store, inventory.yml, Test File.rtf).\n\n## TL;DR\n- Folders: archive, cli, monero_ssl, monitor, nebula\n- Files: .DS_Store, inventory.yml, Test File.rtf\n\n## 📂 Top-level contents\n- Folders\n  - archive/\n  - cli/\n  - monero_ssl/\n  - monitor/\n  - nebula/\n\n- Files\n  - .DS_Store\n  - inventory.yml\n  - Test File.rtf\n\nWant me to expand any folder one level deeper (e.g., archive or nebula)?",
+    "model": "Web + Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      "Brave Search"
+    ],
+    "meta": {
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "GitHub - hopsoft/coin: An absurdly simple DRb based in-memory cache",
+          "url": "https://github.com/hopsoft/coin",
+          "snippet": "Coin uses Distributed Ruby (DRb) to create a simple in memory caching server that addresses many of the same needs as Memcached and other similar solutions."
+        },
+        {
+          "title": "bitcoin/src/coins.h at master · bitcoin/bitcoin",
+          "url": "https://github.com/bitcoin/bitcoin/blob/master/src/coins.h",
+          "snippet": "mutable CCoinsMapMemoryResource m_cache_coins_memory_resource{};     /* The starting sentinel of the flagged entry circular doubly linked list. */     mutable CoinsCachePair m_sentinel;     mutable CCoinsMap cacheCoins;  ·     /* Cached dynamic memory usage for the inner Coin objects."
+        },
+        {
+          "title": "GitHub - coin3d/coin: Coin3D core library",
+          "url": "https://github.com/coin3d/coin",
+          "snippet": "Some libraries have ABI compatibility in this way (OpenGL and Mesa, Motif and Lesstif) but those libraries are C libraries, and do not have to worry about different memory footprints for objects and different entry orders in the virtual function tables amongst other things. Coin is binary compatible with itself."
+        },
+        {
+          "title": "open source coin · GitHub",
+          "url": "https://github.com/oscoin",
+          "snippet": "Open source everything ✨. open source coin has 27 repositories available. Follow their code on GitHub."
+        },
+        {
+          "title": "GitHub - modelcontextprotocol/servers: Model Context Protocol Servers",
+          "url": "https://github.com/modelcontextprotocol/servers",
+          "snippet": "Base Free USDC Transfer - Send USDC on Base for free using Claude AI! Built with Coinbase CDP. Basic Memory - Local-first knowledge management system that builds a semantic graph from Markdown files, enabling persistent memory across conversations with LLMs."
+        }
+      ]
+    }
+  },
+  {
+    "role": "user",
+    "content": "Can you exclude .DS_Store files from any future pulls?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes—I’ll exclude .DS_Store files from all future FileTree listings and reports.\n\n## TL;DR\n- I’ll omit .DS_Store everywhere going forward.\n\n## Optional repo hygiene (if you want it later)\n- Add these to a .gitignore to keep them out of commits:\n  ```\n  .DS_Store\n  ._*\n  .Spotlight-V100\n  .Trashes\n  ```\n- Or set a global ignore file and include the same patterns:\n  ```\n  git config --global core.excludesfile ~/.gitignore_global\n  ```\n\nIf you want me to add a .gitignore to the Coin repo, say the word and I’ll prepare the edit.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Yes, please include inside .gitignore. Thanks!"
+  },
+  {
+    "role": "assistant",
+    "content": "I’ll add a .gitignore at the repo root that ignores common macOS files: .DS_Store, ._*, .Spotlight-V100, and .Trashes.\n\n## TL;DR\n- Creating .gitignore with macOS cruft ignored.\n\n## Contents to add\n- .DS_Store\n- ._*\n- .Spotlight-V100\n- .Trashes\n\nApplying now.\n\n<TASKS>\n{\n  \"tasks\": [\n    {\n      \"type\": \"create_file\",\n      \"path\": \".gitignore\",\n      \"content\": \"# Ignore macOS system files\\n.DS_Store\\n._*\\n.Spotlight-V100\\n.Trashes\\n\"\n    }\n  ]\n}\n</TASKS>",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

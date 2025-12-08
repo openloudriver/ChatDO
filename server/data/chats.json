@@ -81,7 +81,7 @@
   },
   {
     "id": "6f2463c4-5701-44a7-ab34-711106835d85",
-    "project_id": "scratch",
+    "project_id": "general",
     "title": "my favorite color is blue",
     "thread_id": "6f2463c4-5701-44a7-ab34-711106835d85",
     "created_at": "2025-12-07T06:53:15.955603+00:00",
@@ -91,7 +91,7 @@
   },
   {
     "id": "efbe06ea-a3d2-4a89-832b-7637e877a142",
-    "project_id": "scratch",
+    "project_id": "general",
     "title": "what is my favorite color?",
     "thread_id": "efbe06ea-a3d2-4a89-832b-7637e877a142",
     "created_at": "2025-12-07T06:54:02.858759+00:00",
@@ -101,7 +101,7 @@
   },
   {
     "id": "bb89105f-0f6d-4cac-a23e-d7c9f764d9d6",
-    "project_id": "scratch",
+    "project_id": "general",
     "title": "What is my favorite color?",
     "thread_id": "bb89105f-0f6d-4cac-a23e-d7c9f764d9d6",
     "created_at": "2025-12-07T15:22:37.311463+00:00",
@@ -111,11 +111,121 @@
   },
   {
     "id": "033750e5-f868-4267-a9c7-08f4196180ce",
-    "project_id": "scratch",
+    "project_id": "general",
     "title": "what is my favorite color? Do you remember?",
     "thread_id": "033750e5-f868-4267-a9c7-08f4196180ce",
     "created_at": "2025-12-07T20:38:09.529296+00:00",
     "updated_at": "2025-12-07T20:38:15.680733+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "d46d6221-b1dd-4db2-85d0-2885a4fc1eb7",
+    "project_id": "general",
+    "title": "Do you remember my favorite cryptos?",
+    "thread_id": "d46d6221-b1dd-4db2-85d0-2885a4fc1eb7",
+    "created_at": "2025-12-07T20:51:52.725771+00:00",
+    "updated_at": "2025-12-07T20:51:57.932422+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "eee04b8a-b506-49f1-8613-668ac0018b69",
+    "project_id": "general",
+    "title": "What is my favorite color?",
+    "thread_id": "eee04b8a-b506-49f1-8613-668ac0018b69",
+    "created_at": "2025-12-07T21:03:40.343982+00:00",
+    "updated_at": "2025-12-07T21:03:45.116616+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "388403db-fc7c-445b-aaac-a712ca529625",
+    "project_id": "general",
+    "title": "What are my favorite cryptos?",
+    "thread_id": "388403db-fc7c-445b-aaac-a712ca529625",
+    "created_at": "2025-12-07T21:21:50.095778+00:00",
+    "updated_at": "2025-12-07T21:21:55.082334+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "c0e6ab97-f037-45e1-a671-809d2ed1b7df",
+    "project_id": "general",
+    "title": "Please list the Coin directory two top-level fo...",
+    "thread_id": "c0e6ab97-f037-45e1-a671-809d2ed1b7df",
+    "created_at": "2025-12-07T22:01:30.027390+00:00",
+    "updated_at": "2025-12-07T22:01:50.669841+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "e7de9e1a-0d9a-4555-81f5-a7051fbedeea",
+    "project_id": "general",
+    "title": "Without running anything on my machine, use the...",
+    "thread_id": "e7de9e1a-0d9a-4555-81f5-a7051fbedeea",
+    "created_at": "2025-12-07T22:43:35.470074+00:00",
+    "updated_at": "2025-12-07T22:43:37.400835+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "84847033-e1c4-4274-8ab8-b71b16bc3dfa",
+    "project_id": "general",
+    "title": "what is my favorite color?",
+    "thread_id": "84847033-e1c4-4274-8ab8-b71b16bc3dfa",
+    "created_at": "2025-12-07T22:54:14.703429+00:00",
+    "updated_at": "2025-12-07T22:54:18.524960+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "6780a602-c97c-40d8-b909-16253719eeef",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "6780a602-c97c-40d8-b909-16253719eeef",
+    "created_at": "2025-12-07T23:45:09.745995+00:00",
+    "updated_at": "2025-12-07T23:48:21.201877+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-07T23:48:21.201862+00:00"
+  },
+  {
+    "id": "a7578e55-957b-4e5b-986e-7a0ad83af3f3",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "a7578e55-957b-4e5b-986e-7a0ad83af3f3",
+    "created_at": "2025-12-07T23:45:09.747278+00:00",
+    "updated_at": "2025-12-07T23:48:21.198833+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-07T23:48:21.198818+00:00"
+  },
+  {
+    "id": "311a11e6-0caa-40b0-b9a0-54f6dd34a2ec",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "311a11e6-0caa-40b0-b9a0-54f6dd34a2ec",
+    "created_at": "2025-12-07T23:45:09.748127+00:00",
+    "updated_at": "2025-12-07T23:48:21.196040+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-07T23:48:21.195994+00:00"
+  },
+  {
+    "id": "c83077cb-09b6-4068-9336-ce889a3485cf",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "c83077cb-09b6-4068-9336-ce889a3485cf",
+    "created_at": "2025-12-07T23:45:09.748767+00:00",
+    "updated_at": "2025-12-07T23:48:21.200073+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-07T23:48:21.200064+00:00"
+  },
+  {
+    "id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e",
+    "project_id": "general",
+    "title": "What is my favorite color?",
+    "thread_id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e",
+    "created_at": "2025-12-07T23:52:41.107131+00:00",
+    "updated_at": "2025-12-07T23:52:46.822263+00:00",
     "trashed": false,
     "trashed_at": null
   }

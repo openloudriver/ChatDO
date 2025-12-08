@@ -5,7 +5,7 @@ Provides REST API endpoints for health checks, source management, indexing, and 
 """
 import logging
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -20,7 +20,8 @@ from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.vector_cache import get_query_embedding
 from memory_service.ann_index import AnnIndexManager
-from memory_service.models import SourceStatus, IndexJob
+from memory_service.models import SourceStatus, IndexJob, FileTreeResponse, FileReadResponse
+from memory_service.filetree import FileTreeManager
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,9 @@ watcher_manager = WatcherManager()
 
 # Global ANN index manager
 ann_index_manager = AnnIndexManager(dimension=EMBEDDING_DIM)
+
+# Global FileTree manager
+filetree_manager = FileTreeManager()
 
 
 @asynccontextmanager
@@ -96,7 +100,7 @@ class ReindexRequest(BaseModel):
 class AddSourceRequest(BaseModel):
     root_path: str
     display_name: Optional[str] = None
-    project_id: Optional[str] = "scratch"
+    project_id: Optional[str] = "general"
 
 
 class SearchRequest(BaseModel):
@@ -353,7 +357,7 @@ async def add_source(request: AddSourceRequest):
         src = create_dynamic_source(
             root_path=request.root_path,
             display_name=request.display_name,
-            project_id=request.project_id or "scratch",
+            project_id=request.project_id or "general",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -510,7 +514,7 @@ async def reindex(request: ReindexRequest):
                     from memory_service.config import SourceConfig
                     source_config = SourceConfig({
                         "id": source_status.id,
-                        "project_id": source_status.project_id or "scratch",
+                        "project_id": source_status.project_id or "general",
                         "root_path": source_status.root_path,
                         "include_glob": "**/*",  # Default since not stored in tracking DB
                         "exclude_glob": "",  # Default since not stored in tracking DB
@@ -902,6 +906,72 @@ async def get_chunk_stats(source_id: str):
         }
     except Exception as e:
         logger.error(f"Error getting chunk stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/filetree/{source_id}", response_model=FileTreeResponse)
+async def get_filetree(
+    source_id: str,
+    path: str = Query("", description="Relative path from source root (directory or file)"),
+    max_depth: int = Query(2, ge=0, le=10, description="Maximum depth to traverse (0 = root only)"),
+    max_entries: int = Query(500, ge=1, le=5000, description="Maximum total entries to include"),
+):
+    """
+    List the directory tree for a Memory Source.
+    
+    Returns a tree structure starting at the specified path (relative to source root).
+    - If path is empty, starts at source root
+    - If path is a directory, lists its contents
+    - If path is a file, returns a single node for that file
+    
+    Safety:
+    - All paths are validated to prevent directory traversal (../ escapes)
+    - Operations are bounded by max_depth, max_entries
+    - Read-only (no write/delete/rename operations)
+    """
+    try:
+        return filetree_manager.list_tree(
+            source_id=source_id,
+            rel_path=path,
+            max_depth=max_depth,
+            max_entries=max_entries,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing filetree for source {source_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/filetree/{source_id}/file", response_model=FileReadResponse)
+async def read_file(
+    source_id: str,
+    path: str = Query(..., description="Relative file path from source root"),
+    max_bytes: int = Query(65536, ge=1, le=5_000_000, description="Maximum bytes to read (default: 64KB)"),
+):
+    """
+    Read a single file from a Memory Source.
+    
+    Returns file content with encoding detection and binary file detection.
+    - Attempts UTF-8 decoding with error replacement
+    - Detects binary files (null bytes or high replacement character ratio)
+    - Enforces max_bytes limit and sets truncated flag
+    
+    Safety:
+    - Path is validated to prevent directory traversal (../ escapes)
+    - Strictly confined to source root directory
+    - Read-only (no write/delete operations)
+    """
+    try:
+        return filetree_manager.read_file(
+            source_id=source_id,
+            rel_path=path,
+            max_bytes=max_bytes,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading file from source {source_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -312,7 +312,7 @@ def index_chat_message(
             if ann_index_manager.is_available():
                 # Get source to get project_id
                 source = db.get_source_by_source_id(source_id)
-                project_id = source.project_id if source else "scratch"
+                project_id = source.project_id if source else "general"
                 
                 # Prepare metadata for ANN
                 metadata_list = []
@@ -542,7 +542,7 @@ def index_file(path: Path, source_db_id: int, source_id: str) -> bool:
             if ann_index_manager.is_available():
                 # Get source to get project_id
                 source = db.get_source_by_source_id(source_id)
-                project_id = source.project_id if source else "scratch"
+                project_id = source.project_id if source else "general"
                 
                 # Prepare metadata for ANN
                 metadata_list = []

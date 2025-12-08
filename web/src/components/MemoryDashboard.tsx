@@ -334,8 +334,8 @@ const MemoryDashboard: React.FC = () => {
                       <div className="text-white font-medium">
                         {source.connected_projects && source.connected_projects.length > 0
                           ? source.connected_projects.join(', ')
-                          : source.project_id === 'scratch' 
-                            ? 'None (scratch)' 
+                          : source.project_id === 'general' 
+                            ? 'None (general)' 
                             : 'None'}
                       </div>
                     </div>

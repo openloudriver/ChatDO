@@ -112,3 +112,39 @@ class IndexJob:
     bytes_processed: int
     error: Optional[str]
 
+
+# FileTree models (Phase 1)
+from pydantic import BaseModel
+from typing import List
+
+
+class FileTreeNode(BaseModel):
+    """Represents a file or directory node in the file tree."""
+    name: str  # file or directory name (no path)
+    path: str  # normalized POSIX-style path relative to source root (e.g. "docs/README.md")
+    is_dir: bool
+    size_bytes: Optional[int] = None
+    modified_at: Optional[datetime] = None
+    children: Optional[List["FileTreeNode"]] = None  # only populated when depth > 0 and is_dir=True
+
+
+# Update forward refs for recursive model
+FileTreeNode.model_rebuild()
+
+
+class FileTreeResponse(BaseModel):
+    """Response for directory tree listing."""
+    source_id: str
+    root: FileTreeNode
+
+
+class FileReadResponse(BaseModel):
+    """Response for file content reading."""
+    source_id: str
+    path: str  # relative path from source root
+    encoding: Optional[str] = None  # e.g. "utf-8" or "binary"
+    size_bytes: int
+    content: Optional[str] = None  # for text mode
+    truncated: bool  # True if we cut at max_bytes
+    is_binary: bool = False  # True if file is detected as binary
+
