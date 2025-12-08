@@ -26,7 +26,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const NewProjectIcon = () => (
   <svg
-    className="w-5 h-5 flex-shrink-0"
+    className="w-6 h-6 flex-shrink-0"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -37,6 +37,31 @@ const NewProjectIcon = () => (
       strokeLinejoin="round"
       strokeWidth={2}
       d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+    />
+    {/* Plus sign overlay */}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M15 12h-3m0 0H9m3 0v-3m0 3v3"
+      className="opacity-90"
+    />
+  </svg>
+);
+
+const NewChatIcon = () => (
+  <svg
+    className="w-6 h-6 flex-shrink-0"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    {/* Chat bubble icon */}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
     />
     {/* Plus sign overlay */}
     <path
@@ -215,7 +240,8 @@ const Sidebar: React.FC = () => {
     viewMode,
     searchChats,
     setSearchQuery,
-    searchQuery
+    searchQuery,
+    createNewChatInProject
   } = useChatStore();
   
   // DnD sensors - configure activation distance so clicks still work
@@ -352,6 +378,27 @@ const Sidebar: React.FC = () => {
     setRenameModalOpen(true);
   };
 
+  const handleNewChat = async () => {
+    if (!currentProject) {
+      // If no project is selected, try to use the first available project
+      const firstProject = projects.find(p => !p.trashed && p.name !== "Bullet Workspace");
+      if (!firstProject) {
+        console.warn('No project available to create chat in');
+        return;
+      }
+      setCurrentProject(firstProject);
+      // Continue with the first project
+      const newConversation = await createNewChatInProject(firstProject.id);
+      await setCurrentConversation(newConversation);
+      setViewMode('chat');
+    } else {
+      // Create new chat in current project
+      const newConversation = await createNewChatInProject(currentProject.id);
+      await setCurrentConversation(newConversation);
+      setViewMode('chat');
+    }
+  };
+
   const handleCreateProject = async (name: string) => {
     await createProject(name);
   };
@@ -462,8 +509,20 @@ const Sidebar: React.FC = () => {
             {/* Divider above Recent Chats */}
             <div className="my-3 mx-2 border-t" style={{ borderColor: sidebarTextColor, opacity: 0.3 }}></div>
             <div className="mb-3">
-              <div className="px-2 pt-1 pb-1 text-xs uppercase font-bold underline" style={{ color: sidebarTextColor }}>
-                Recent Chats
+              <div className="flex items-center justify-between px-2 pt-1 pb-1">
+                <div className="text-base uppercase font-bold underline" style={{ color: sidebarTextColor }}>
+                  Recent Chats
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNewChat}
+                  className="rounded-md p-1 hover:bg-[var(--bg-primary)] transition-colors"
+                  style={{ color: sidebarTextColor }}
+                  aria-label="New chat"
+                  title="New chat"
+                >
+                  <NewChatIcon />
+                </button>
               </div>
             <div className="space-y-1">
               {recentChats.map((chat) => {
@@ -515,7 +574,7 @@ const Sidebar: React.FC = () => {
         )}
         
         <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-xs uppercase font-bold underline" style={{ color: sidebarTextColor }}>Projects</div>
+          <div className="text-base uppercase font-bold underline" style={{ color: sidebarTextColor }}>Projects</div>
           <button
             type="button"
             onClick={handleNewProject}

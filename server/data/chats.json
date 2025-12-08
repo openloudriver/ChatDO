@@ -438,5 +438,25 @@
     "updated_at": "2025-12-08T03:24:12.511495+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "25549fdc-191b-467b-9122-c62fe3f9fdab",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "25549fdc-191b-467b-9122-c62fe3f9fdab",
+    "created_at": "2025-12-08T03:37:20.438253+00:00",
+    "updated_at": "2025-12-08T03:37:29.517916+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T03:37:29.517885+00:00"
+  },
+  {
+    "id": "9a6614fe-6915-46df-babd-d4ddc0c8f976",
+    "project_id": "24a85d18-a1d3-43f7-86b3-48fa6c61177c",
+    "title": "New Chat",
+    "thread_id": "9a6614fe-6915-46df-babd-d4ddc0c8f976",
+    "created_at": "2025-12-08T03:37:40.812018+00:00",
+    "updated_at": "2025-12-08T03:37:45.358550+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-08T03:37:45.358527+00:00"
   }
 ]
