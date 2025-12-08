@@ -48,6 +48,32 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isRagTrayOpen } = useChatStore();
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [isAccentColorOpen, setIsAccentColorOpen] = useState(false);
+  const accentColorButtonRef = React.useRef<HTMLButtonElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isAccentColorOpen &&
+        accentColorButtonRef.current &&
+        dropdownRef.current &&
+        !accentColorButtonRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsAccentColorOpen(false);
+        setDropdownPosition(null);
+      }
+    };
+
+    if (isAccentColorOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isAccentColorOpen]);
 
   // Browser fullscreen toggle functionality
   const toggleBrowserFullscreen = () => {
@@ -136,7 +162,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Global header */}
         <header 
-          className="flex items-center gap-3 border-b px-4 py-2 transition-colors"
+          className="flex items-center gap-3 border-b px-4 py-2 transition-colors relative z-50"
           style={{ 
             backgroundColor: 'var(--bg-secondary)',
             borderBottomColor: 'var(--user-bubble-bg)',
@@ -169,8 +195,18 @@ export function AppLayout({ children }: AppLayoutProps) {
             {/* Accent color dropdown */}
             <div className="relative">
               <button
+                ref={accentColorButtonRef}
                 type="button"
-                onClick={() => setIsAccentColorOpen(!isAccentColorOpen)}
+                onClick={() => {
+                  if (accentColorButtonRef.current) {
+                    const rect = accentColorButtonRef.current.getBoundingClientRect();
+                    setDropdownPosition({
+                      top: rect.bottom + 8,
+                      right: window.innerWidth - rect.right
+                    });
+                  }
+                  setIsAccentColorOpen(!isAccentColorOpen);
+                }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors"
                 aria-label="Accent color"
                 title="Accent color"
@@ -181,15 +217,25 @@ export function AppLayout({ children }: AppLayoutProps) {
                 />
               </button>
               
-              {isAccentColorOpen && (
+              {isAccentColorOpen && dropdownPosition && (
                 <>
                   {/* Backdrop to close dropdown */}
                   <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsAccentColorOpen(false)}
+                    className="fixed inset-0 z-[9998]" 
+                    onClick={() => {
+                      setIsAccentColorOpen(false);
+                      setDropdownPosition(null);
+                    }}
                   />
-                  {/* Dropdown menu */}
-                  <div className="absolute right-0 top-10 z-50 w-48 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-lg transition-colors">
+                  {/* Dropdown menu - using fixed positioning to ensure it's always on top */}
+                  <div 
+                    ref={dropdownRef}
+                    className="fixed z-[9999] w-48 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-lg transition-colors" 
+                    style={{ 
+                      top: `${dropdownPosition.top}px`, 
+                      right: `${dropdownPosition.right}px` 
+                    }}
+                  >
                     <div className="p-2">
                       <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
                         Accent color
@@ -212,6 +258,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                             onClick={() => {
                               setAccentColor(color);
                               setIsAccentColorOpen(false);
+                              setDropdownPosition(null);
                             }}
                             className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
                           >
