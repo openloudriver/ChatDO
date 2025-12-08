@@ -58,5 +58,35 @@
       "usedWebSearch": false,
       "usedMemory": true
     }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color, do you remember?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t have your favorite color saved yet.\n\n## TL;DR\n- Not in my notes yet.\n\n## Want me to remember it?\n- Reply with: “My favorite color is [color].”\n- If you have a primary and a secondary, say both (e.g., “Primary: navy blue; Secondary: forest green”).",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color, do you remember?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Update or tweak\n- Prefer a shade? Try navy, royal, sky, teal, or share a hex code.\n- Want to change it entirely? Tell me the new color and I’ll update your preference.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
   }
 ]

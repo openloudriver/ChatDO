@@ -725,35 +725,35 @@ async def search(request: SearchRequest):
             
             # Load all embeddings from specified sources
             all_embeddings = []
-        if request.source_ids:  # Only search file sources if source_ids is provided
-            for source_id in request.source_ids:
-                try:
-                    source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
-                    all_embeddings.extend(source_embeddings)
-                except Exception as e:
-                    logger.warning(f"Error searching source {source_id}: {e}")
-                    continue
-        
-        # Also search chat messages for this project (include ALL chats, including current chat)
-        try:
-            chat_embeddings = db.get_chat_embeddings_for_project(
-                request.project_id, 
-                EMBEDDING_MODEL, 
-                exclude_chat_id=None  # Include all chats, including current chat
-            )
-            all_embeddings.extend(chat_embeddings)
-        except Exception as e:
-            logger.debug(f"Error searching chat messages for project {request.project_id}: {e}")
-        
-        if not all_embeddings:
-            return SearchResponse(results=[])
-        
+            if request.source_ids:  # Only search file sources if source_ids is provided
+                for source_id in request.source_ids:
+                    try:
+                        source_embeddings = db.get_all_embeddings_for_source(source_id, EMBEDDING_MODEL)
+                        all_embeddings.extend(source_embeddings)
+                    except Exception as e:
+                        logger.warning(f"Error searching source {source_id}: {e}")
+                        continue
+            
+            # Also search chat messages for this project (include ALL chats, including current chat)
+            try:
+                chat_embeddings = db.get_chat_embeddings_for_project(
+                    request.project_id, 
+                    EMBEDDING_MODEL, 
+                    exclude_chat_id=None  # Include all chats, including current chat
+                )
+                all_embeddings.extend(chat_embeddings)
+            except Exception as e:
+                logger.debug(f"Error searching chat messages for project {request.project_id}: {e}")
+            
+            if not all_embeddings:
+                return SearchResponse(results=[])
+            
             # Compute vector scores using brute-force
             ann_results = []
             for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
                 # Vector similarity (cosine similarity) - try all query variations and take best
                 best_vector_score = 0.0
-            for query_embedding in query_embeddings:
+                for query_embedding in query_embeddings:
                     dot_product = np.dot(query_embedding, embedding)
                     norm_query = np.linalg.norm(query_embedding)
                     norm_embedding = np.linalg.norm(embedding)
