@@ -332,18 +332,30 @@ const OptionsRenderer: React.FC<{ content: string; bulletMode?: '1206_2LINE' | '
     }
 
     // Try to detect bullet-style Award/OPB responses
-    const hasBulletPattern =
+    // Check for explicit "Option" labels, numbered bullets, or specific phrases
+    const hasExplicitPattern =
       content.match(/Options?|bullet options?/i) ||
       content.match(/Option\s+[ABC\d]/i) ||
       content.match(/^\d+[.)]\s+/m) ||
       content.match(/Acted\s+Dir|Assumed\s+DAF|Led\s+DAF/i) ||
       content.match(/ops—?0\s+outages?|0\s+cuts/i);
 
-    if (hasBulletPattern) {
+    // Also check for multiple bullet points (lines starting with "- ") - this indicates bullet options
+    // even without explicit "Option" labels
+    const bulletLines = content.split('\n').filter(line => {
+      const trimmed = line.trim();
+      return trimmed.match(/^[-•*]\s+/);
+    });
+    const hasMultipleBullets = bulletLines.length >= 2;
+
+    // Extract bullets if we have explicit patterns OR multiple bullet points
+    if (hasExplicitPattern || hasMultipleBullets) {
       let extracted = extractBulletOptionsFromMessage(content);
       
-      // For Award (215) bullets, ensure each option starts with "- "
-      if (bulletMode === '1206_2LINE') {
+      // For Award (215) bullets and when we detect multiple bullets, ensure each option starts with "- "
+      // This preserves the bullet format that users expect in the Bullet Workspace
+      // Note: bulletMode is guaranteed to not be 'FREE' at this point (checked above)
+      if (bulletMode === '1206_2LINE' || hasMultipleBullets) {
         extracted = extracted.map(bullet => {
           const trimmed = bullet.trim();
           // If it doesn't start with "- ", add it

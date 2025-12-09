@@ -735,6 +735,15 @@ export const ImpactWorkspacePage: React.FC = () => {
           setSelectedImpactIds(new Set());
           loadImpacts();
         }}
+        onOpenWorkspace={(entry) => {
+          if (entry) {
+            // Select the newly created impact and open workspace
+            setSelectedImpactIds(new Set([entry.id]));
+            loadImpacts();
+          }
+          setImpactModalOpen(false);
+          setEditingImpact(null);
+        }}
       />
     </div>
   );

@@ -7,7 +7,7 @@ interface ImpactCaptureModalProps {
   open: boolean;
   onClose: () => void;
   onSaved?: (entry: ImpactEntry) => void;
-  onOpenWorkspace?: () => void;
+  onOpenWorkspace?: (entry?: ImpactEntry) => void;
   initialImpact?: ImpactEntry | null;
 }
 
@@ -134,6 +134,48 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
     onClose();
   };
 
+  const handleAdd = async () => {
+    if (saving) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      // Create a minimal impact with just the title (or default)
+      const payload: ImpactCreatePayload = {
+        title: title.trim() || "New Bullet",
+        date: null,
+        context: null,
+        actions: actions.trim() || "",
+        impact: impact.trim() || null,
+        metrics: metrics.trim() || null,
+        tags: [],
+        notes: notes.trim() || null,
+      };
+
+      const entry = await createImpact(payload);
+      
+      // Dispatch custom event so ImpactWorkspacePage can reload impacts
+      window.dispatchEvent(new CustomEvent('impactSaved', { detail: entry }));
+      
+      // Call onSaved callback with the new entry
+      onSaved?.(entry);
+      
+      // Open workspace for this new impact
+      if (onOpenWorkspace) {
+        onOpenWorkspace(entry);
+      }
+      
+      onClose();
+      reset();
+    } catch (e: any) {
+      console.error("Error creating impact:", e);
+      setError(e?.message ?? "Failed to create impact");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-xl rounded-lg bg-[var(--bg-primary)] p-6 shadow-xl border border-[var(--border-color)] transition-colors">
@@ -226,6 +268,20 @@ export const ImpactCaptureModal: React.FC<ImpactCaptureModalProps> = ({
           >
             Cancel
           </button>
+          {!initialImpact && (
+            <button
+              type="button"
+              disabled={saving}
+              className={`rounded px-3 py-2 text-sm font-semibold transition-colors ${
+                !saving
+                  ? "bg-blue-500 text-white hover:bg-blue-400"
+                  : "bg-[var(--bg-tertiary)] text-[var(--text-secondary)] cursor-not-allowed"
+              }`}
+              onClick={handleAdd}
+            >
+              {saving ? "Adding…" : "Add"}
+            </button>
+          )}
           <button
             type="button"
             className="rounded px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] transition-colors"
