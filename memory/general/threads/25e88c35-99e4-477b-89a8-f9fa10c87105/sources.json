@@ -46,5 +46,149 @@
       "siteName": "crypto.com",
       "published": "2025-12-08"
     }
+  },
+  {
+    "id": "e1f7c5f6-ba69-41da-b2f0-be4030145016",
+    "kind": "url",
+    "title": "No one can explain the first panoramic photograph of San Francisco (1878)",
+    "description": "Summary: The video examines the oldest known photographs of San Francisco—largely attributed (the creator asserts) to British photographer Edward “Mybridge”—to explore the city’s rapid 19th‑century ri",
+    "url": "https://www.youtube.com/watch?v=4NMVcLdTCBw",
+    "createdAt": "2025-12-12T02:29:13.202979+00:00",
+    "meta": {
+      "siteName": "Video",
+      "published": null
+    }
+  },
+  {
+    "id": "b986b18a-7f61-4576-99de-316e7a979090",
+    "kind": "url",
+    "title": "We Had 400 People Shop For Groceries. What We Found Will Shock You.",
+    "description": "Summary: An investigation by researchers, Consumer Reports, and volunteers found that Instacart shoppers were often charged different prices for the same items at the same store and time, with basket ",
+    "url": "https://www.youtube.com/watch?v=osxr7xSxsGo",
+    "createdAt": "2025-12-13T12:07:47.640923+00:00",
+    "meta": {
+      "siteName": "Video",
+      "published": null
+    }
+  },
+  {
+    "id": "0ecfe80d-853b-4015-a2f1-f94a44b23a05",
+    "kind": "url",
+    "title": "🚨IMMEDIATE RELEASE 🚨 Rep. Dan Crenshaw Threatens to Sue Shawn Ryan...",
+    "description": "The host says he received a December 9, 2025 legal demand from lawyers for Congressman Dan Crenshaw threatening a defamation suit over podcast comments questioning Crenshaw’s wealth and a lavish party",
+    "url": "https://www.youtube.com/watch?v=ojGa8e_NnDM",
+    "createdAt": "2025-12-13T12:10:50.055073+00:00",
+    "meta": {
+      "siteName": "Video",
+      "published": null
+    }
+  },
+  {
+    "id": "1cf8d8ef-9ea0-4c63-b065-56c45aadd903",
+    "kind": "url",
+    "title": "Trump proposes no income tax for earners under $150K",
+    "description": "Summary: Donald Trump is floating a proposal to eliminate federal income taxes for individuals earning under $150,000, alongside exempting tips, overtime, and Social Security benefits from taxation. T",
+    "url": "https://www.taxesforexpats.com/articles/news/trump-proposes-eliminating-income-taxes-for-americans-earning-under-150-000.html",
+    "createdAt": "2025-12-13T12:52:31.066692+00:00",
+    "meta": {
+      "siteName": "taxesforexpats.com",
+      "published": "2025-03-27"
+    }
+  },
+  {
+    "id": "b7aef036-65e9-4f68-8b33-4d4f793ca1db",
+    "kind": "url",
+    "title": "We May Be Watching The Death Of The Federal Income Tax",
+    "description": "Summary: The article argues that actions by President Trump and congressional Republicans—large tax-cut plans and deep IRS staffing reductions—risk undermining the federal income tax and could push th",
+    "url": "https://taxpolicycenter.org/taxvox/we-may-be-watching-death-federal-income-tax",
+    "createdAt": "2025-12-13T13:01:10.453193+00:00",
+    "meta": {
+      "siteName": "taxpolicycenter.org",
+      "published": "2025-03-26"
+    }
+  },
+  {
+    "id": "80481455-5750-4ed8-bc4b-dbe7d435986c",
+    "kind": "url",
+    "title": "Podcasters and influencers covered under Trump's 'no tax on tips' plan",
+    "description": "The Treasury Department released a preliminary list of occupations eligible for the new federal income tax exemption on tips, a provision in Republicans’ recently enacted tax bill signed by President ",
+    "url": "https://www.pbs.org/newshour/politics/podcasters-and-influencers-covered-under-trumps-no-tax-on-tips-plan",
+    "createdAt": "2025-12-13T13:02:40.064684+00:00",
+    "meta": {
+      "siteName": "pbs.org",
+      "published": "2025-09-03"
+    }
+  },
+  {
+    "id": "e88f7196-5428-4524-9a06-396b058ff430",
+    "kind": "url",
+    "title": "Denmark sets up ‘night watch’ to monitor Trump after Greenland row",
+    "description": "Denmark’s foreign ministry has created an overnight “night watch” to track Donald Trump’s statements and movements while Copenhagen sleeps. The team works from 5pm to produce a 7am report for governme",
+    "url": "https://www.theguardian.com/world/2025/nov/27/denmark-sets-up-night-watch-to-monitor-trump-since-greenland-row",
+    "createdAt": "2025-12-13T14:15:22.500732+00:00",
+    "meta": {
+      "siteName": "theguardian.com",
+      "published": "2025-11-27"
+    }
+  },
+  {
+    "id": "386ce392-750c-4214-b9c7-3ecb4dad3d30",
+    "kind": "url",
+    "title": "Why does Trump want Greenland and what do its people think?",
+    "description": "Summary: Greenland has condemned planned visits by senior U.S. figures as President Donald Trump renews talk of taking control of the island, intensifying debate over independence and foreign influenc",
+    "url": "https://www.bbc.com/news/articles/c74x4m71pmjo",
+    "createdAt": "2025-12-13T15:15:14.759421+00:00",
+    "meta": {
+      "siteName": "bbc.com",
+      "published": "2025-01-08"
+    }
+  },
+  {
+    "id": "91fe0cd8-e13b-4ce6-9dd7-f77679656979",
+    "kind": "url",
+    "title": "Greenland: why does Trump want US control of Arctic island? | Reuters",
+    "description": "Summary: U.S. Vice President JD Vance is visiting Greenland as President Donald Trump renews calls for the United States to take over the semi-autonomous Danish territory. Washington cites Greenland’s",
+    "url": "https://www.reuters.com/world/why-does-trump-want-greenland-could-he-get-it-2025-01-08/",
+    "createdAt": "2025-12-13T15:17:57.371985+00:00",
+    "meta": {
+      "siteName": "reuters.com",
+      "published": null
+    }
+  },
+  {
+    "id": "09787cf6-e026-4a7b-a455-4974edc39c17",
+    "kind": "url",
+    "title": "NATO ally says Trump's US poses security threat",
+    "description": "Denmark’s Defence Intelligence Service (DDIS) has, for the first time, identified the United States as a security risk, citing Washington’s use of economic and technological power—even toward allies—a",
+    "url": "https://www.newsweek.com/nato-denmark-trump-security-threat-russia-greenland-arctic-11186411",
+    "createdAt": "2025-12-13T15:18:33.221186+00:00",
+    "meta": {
+      "siteName": "newsweek.com",
+      "published": "2025-12-10"
+    }
+  },
+  {
+    "id": "548390db-43a0-48c9-a4ac-5542b2de1704",
+    "kind": "url",
+    "title": "Donald Trump says he believes the US will 'get Greenland'",
+    "description": "Summary: President Donald Trump said he believes the United States will ultimately “get” Greenland, claiming the island’s residents “want to be with us,” and framing U.S. control as essential for glob",
+    "url": "https://www.bbc.com/news/articles/crkezj07rzro",
+    "createdAt": "2025-12-13T15:19:53.361900+00:00",
+    "meta": {
+      "siteName": "bbc.com",
+      "published": "2025-01-26"
+    }
+  },
+  {
+    "id": "3c45bec5-8729-4276-979b-b7414b8a3f41",
+    "kind": "url",
+    "title": "Trump accounts explained: How they work, who qualifies",
+    "description": "The article outlines “Trump accounts,” a new tax-advantaged savings vehicle for minors created by the One Big Beautiful Bill Act. Accounts are seeded with $1,000 for U.S. citizens born from 2025–2028,",
+    "url": "https://finance.yahoo.com/personal-finance/taxes/article/trump-accounts-205705429.html",
+    "createdAt": "2025-12-13T17:57:07.655112+00:00",
+    "meta": {
+      "siteName": "finance.yahoo.com",
+      "published": "2025-12-04"
+    }
   }
 ]

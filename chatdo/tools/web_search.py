@@ -1,9 +1,10 @@
 """Web search tools for ChatDO - Brave Search API only"""
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 from ..utils.html_clean import strip_tags
 
 # Load .env file from project root
@@ -97,4 +98,105 @@ def search_web(query: str, max_results: int = 10, freshness: str = None) -> List
     except Exception as e:
         raise ValueError(f"Brave Search API request failed: {str(e)}")
 
+
+def _extract_domain(url: str) -> str:
+    """Extract domain from URL for citations."""
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.replace('www.', '')
+        return domain
+    except:
+        return url
+
+
+def brave_summarize(query: str) -> Optional[Dict[str, any]]:
+    """
+    Get a Brave-only summary for a search query using Brave's Chat Completions API.
+    This uses Brave's OpenAI-compatible endpoint which provides AI-generated summaries
+    grounded in web search results. This does NOT use GPT-5 - it's purely Brave's AI.
+    
+    Args:
+        query: Search query string
+        
+    Returns:
+        Dictionary with 'text' (summary text) and optional 'citations' array, or None if unavailable
+    """
+    brave_api_key = os.getenv("BRAVE_SEARCH_API_KEY")
+    
+    if not brave_api_key:
+        print(f"[BRAVE_SUMMARY] No API key found")
+        return None
+    
+    try:
+        # Use Brave's OpenAI-compatible chat completions endpoint
+        # This is simpler and more reliable than the polling approach
+        chat_url = "https://api.search.brave.com/res/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {brave_api_key}",
+            "X-Subscription-Token": brave_api_key  # Some endpoints use this instead
+        }
+        
+        payload = {
+            "model": "brave-pro",  # Use Pro AI model for summaries
+            "messages": [
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ],
+            "stream": False
+        }
+        
+        # Try with Authorization header first
+        response = requests.post(chat_url, headers=headers, json=payload, timeout=15)
+        
+        # If that fails, try with X-Subscription-Token only
+        if response.status_code == 401:
+            headers = {
+                "Content-Type": "application/json",
+                "X-Subscription-Token": brave_api_key
+            }
+            response = requests.post(chat_url, headers=headers, json=payload, timeout=15)
+        
+        response.raise_for_status()
+        data = response.json()
+        
+        # Extract the summary text from the response
+        if "choices" in data and len(data["choices"]) > 0:
+            summary_text = data["choices"][0].get("message", {}).get("content", "").strip()
+            
+            if summary_text:
+                print(f"[BRAVE_SUMMARY] Successfully generated summary ({len(summary_text)} chars)")
+                
+                # Extract citations if available (Brave may include source references)
+                citations = []
+                # Note: Brave's chat completions may not always include explicit citations
+                # in the same format, but the summary is grounded in web search results
+                
+                result = {"text": summary_text}
+                if citations:
+                    result["citations"] = citations
+                return result
+            else:
+                print(f"[BRAVE_SUMMARY] Empty summary in response")
+                return None
+        else:
+            print(f"[BRAVE_SUMMARY] No choices in response. Response keys: {list(data.keys())}")
+            return None
+        
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 401:
+            print(f"[BRAVE_SUMMARY] Authentication failed - check API key")
+        elif e.response.status_code == 402:
+            print(f"[BRAVE_SUMMARY] Payment required - Pro AI plan required for summaries")
+        else:
+            print(f"[BRAVE_SUMMARY] HTTP error {e.response.status_code}: {e.response.text[:200]}")
+        return None
+    except Exception as e:
+        # Don't raise - summary is optional, search results should still work
+        print(f"[BRAVE_SUMMARY] Summary failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 

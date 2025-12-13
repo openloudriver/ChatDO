@@ -1305,6 +1305,52 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                       {/* Display web_search_results if message type is web_search_results */}
                       {message.type === 'web_search_results' && message.data && (
                         <AssistantCard>
+                          {/* Brave Summary section - show first if present */}
+                          {message.data.summary && (
+                            <div className="mb-4">
+                              <div className="font-semibold text-sm mb-2 text-[var(--text-secondary)]">
+                                Summary
+                              </div>
+                              {typeof message.data.summary === 'string' ? (
+                                <div className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+                                  {message.data.summary}
+                                </div>
+                              ) : (
+                                (() => {
+                                  const summaryObj = message.data.summary as { text: string; citations?: Array<{ title: string; url: string; domain: string }> } | null;
+                                  if (summaryObj && summaryObj.text) {
+                                    return (
+                                      <div>
+                                        <div className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+                                          {summaryObj.text}
+                                        </div>
+                                        {summaryObj.citations && summaryObj.citations.length > 0 && (
+                                          <div className="mt-3 pt-3 border-t border-[var(--border-color)]/30">
+                                            <div className="text-xs text-[var(--text-secondary)] mb-2">Sources:</div>
+                                            <div className="space-y-1">
+                                              {summaryObj.citations.map((citation: { title: string; url: string; domain: string }, idx: number) => (
+                                                <a
+                                                  key={idx}
+                                                  href={citation.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="block text-xs text-blue-400 hover:text-blue-300 hover:underline"
+                                                >
+                                                  {citation.domain} - {citation.title}
+                                                </a>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()
+                              )}
+                            </div>
+                          )}
+                          
                           <div className="font-semibold text-lg mb-3 text-center">
                             Top Results
                           </div>
@@ -1533,27 +1579,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               );
                             })}
                           </div>
-                          
-                          {message.data.summary && (
-                            <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
-                              <div className="font-semibold text-lg mb-4 text-center text-[var(--text-primary)]">Summary</div>
-                              <div className="prose prose-sm max-w-none">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    p: ({ children }) => <p className="mb-3 text-[var(--text-primary)] leading-relaxed">{children}</p>,
-                                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-[var(--text-primary)]">{children}</ul>,
-                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-[var(--text-primary)]">{children}</ol>,
-                                    li: ({ children }) => <li className="ml-4 text-[var(--text-primary)]">{children}</li>,
-                                    strong: ({ children }) => <strong className="font-semibold text-[var(--text-primary)]">{children}</strong>,
-                                    em: ({ children }) => <em className="italic text-[var(--text-primary)]">{children}</em>,
-                                  }}
-                                >
-                                  {message.data.summary}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                          )}
                         </AssistantCard>
                       )}
                       
@@ -1563,7 +1588,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           fileName={message.data.fileName || 'Document'}
                           fileType={message.data.fileType}
                           filePath={message.data.filePath}
-                          summary={message.data.summary || ''}
+                          summary={typeof message.data.summary === 'string' ? message.data.summary : (message.data.summary?.text || '')}
                           keyPoints={message.data.keyPoints || []}
                           whyMatters={message.data.whyMatters}
                           estimatedReadTimeMinutes={message.data.estimatedReadTimeMinutes}
@@ -1579,7 +1604,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           title={message.data.title || 'Untitled'}
                           siteName={message.data.siteName}
                           published={message.data.published}
-                          summary={message.data.summary || ''}
+                          summary={typeof message.data.summary === 'string' ? message.data.summary : (message.data.summary?.text || '')}
                           keyPoints={message.data.keyPoints || []}
                           whyMatters={message.data.whyMatters}
                         />

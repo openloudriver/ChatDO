@@ -191,17 +191,43 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 search_query = task[len(prefix):].strip()
                 break
         
-        # Perform web search using Brave Search API
+        # Perform web search and summary concurrently using Brave Search API
         # Don't use freshness filter for explicit web_search intent - return all results
         try:
-            search_results = web_search.search_web(search_query, max_results=10, freshness=None)
+            from concurrent.futures import ThreadPoolExecutor
+            
+            search_results = None
+            summary = None
+            
+            # Run search and summary concurrently for speed
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                search_future = executor.submit(web_search.search_web, search_query, 10, None)
+                summarize_future = executor.submit(web_search.brave_summarize, search_query)
+                
+                # Wait for search results (required)
+                try:
+                    search_results = search_future.result(timeout=5)
+                except Exception as e:
+                    raise ValueError(f"Search failed: {str(e)}")
+                
+                # Try to get summary (optional - don't fail if it times out)
+                try:
+                    summary = summarize_future.result(timeout=15)  # Increased timeout for summarization
+                    print(f"[AI_ROUTER] Summary result: {summary is not None}")
+                    if summary:
+                        print(f"[AI_ROUTER] Summary text length: {len(summary.get('text', ''))}")
+                except Exception as e:
+                    print(f"[AI_ROUTER] Summary failed or timed out: {e}")
+                    summary = None  # Summary is optional
+            
             if search_results and len(search_results) > 0:
-                # Return structured results (no LLM call, no summarization)
+                # Return structured results with optional summary (no LLM call, no GPT-5)
                 structured_result = {
                     "type": "web_search_results",
                     "query": search_query,
                     "provider": "brave",
-                    "results": search_results
+                    "results": search_results,
+                    "summary": summary  # Brave-only summary, or None if unavailable
                 }
                 
                 # Set model/provider for web search

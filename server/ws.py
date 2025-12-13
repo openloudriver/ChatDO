@@ -407,18 +407,45 @@ Keep it concise, neutral, and factual."""
             from chatdo.tools import web_search
             
             try:
-                # Perform web search directly using Brave Search API only (no LLM calls, no intent classification)
-                # This is fast - just a direct API call with 10 second timeout
-                search_results = web_search.search_web(message, max_results=10, freshness=None)
+                # Perform web search and summary concurrently using Brave Search API only (no LLM calls, no GPT-5)
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+                
+                search_results = None
+                summary = None
+                
+                # Run search and summary concurrently for speed
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    search_future = executor.submit(web_search.search_web, message, 10, None)
+                    summarize_future = executor.submit(web_search.brave_summarize, message)
+                    
+                    # Wait for search results (required)
+                    try:
+                        search_results = search_future.result(timeout=5)
+                    except Exception as e:
+                        raise ValueError(f"Search failed: {str(e)}")
+                    
+                    # Try to get summary (optional - don't fail if it times out)
+                    try:
+                        summary = summarize_future.result(timeout=15)  # Increased timeout for summarization
+                        print(f"[FORCE_SEARCH] Summary result: {summary is not None}")
+                        if summary:
+                            print(f"[FORCE_SEARCH] Summary text length: {len(summary.get('text', ''))}")
+                    except Exception as e:
+                        print(f"[FORCE_SEARCH] Summary failed or timed out: {e}")
+                        summary = None  # Summary is optional
                 
                 if search_results and len(search_results) > 0:
                     structured_result = {
                         "type": "web_search_results",
                         "query": message,
                         "provider": "brave",
-                        "results": search_results
+                        "results": search_results,
+                        "summary": summary  # Brave-only summary, or None if unavailable
                     }
                     print(f"[FORCE_SEARCH] ✅ Direct Brave Search succeeded, returning {len(search_results)} results")
+                    print(f"[FORCE_SEARCH] Summary included in response: {summary is not None}")
+                    if summary:
+                        print(f"[FORCE_SEARCH] Summary preview: {str(summary.get('text', ''))[:100]}...")
                     
                     # Save to memory store if thread_id is provided
                     if conversation_id:

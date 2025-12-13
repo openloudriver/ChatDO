@@ -324,8 +324,18 @@ const ChatComposer: React.FC = () => {
             const sources: Source[] = data.data?.results?.map((result: { title: string; url: string; snippet: string }, index: number) =>
               webResultToSource(result, index)
             ) || [];
-            
-            addMessage({ 
+
+            // Debug: Log summary data
+            console.log('[WebSearch] Summary in response:', data.data?.summary);
+            if (data.data?.summary) {
+              console.log('[WebSearch] Summary type:', typeof data.data.summary);
+              if (typeof data.data.summary === 'object') {
+                console.log('[WebSearch] Summary keys:', Object.keys(data.data.summary));
+                console.log('[WebSearch] Summary text length:', data.data.summary.text?.length);
+              }
+            }
+
+            addMessage({
               role: 'assistant', 
               content: '',
               type: 'web_search_results',
@@ -1035,8 +1045,18 @@ const ChatComposer: React.FC = () => {
             const sources: Source[] = data.data?.results?.map((result: { title: string; url: string; snippet: string }, index: number) =>
               webResultToSource(result, index)
             ) || [];
-            
-            addMessage({ 
+
+            // Debug: Log summary data
+            console.log('[WebSearch] Summary in response:', data.data?.summary);
+            if (data.data?.summary) {
+              console.log('[WebSearch] Summary type:', typeof data.data.summary);
+              if (typeof data.data.summary === 'object') {
+                console.log('[WebSearch] Summary keys:', Object.keys(data.data.summary));
+                console.log('[WebSearch] Summary text length:', data.data.summary.text?.length);
+              }
+            }
+
+            addMessage({
               role: 'assistant', 
               content: '',
               type: 'web_search_results',

@@ -33,8 +33,11 @@ export interface Message {
   data?: {
     query?: string;
     provider?: string;
-    results?: Array<{ title: string; url: string; snippet: string }>;
-    summary?: string;
+    results?: Array<{ title: string; url: string; snippet: string; published_at?: string; age?: string; page_age?: string }>;
+    summary?: string | {
+      text: string;
+      citations?: Array<{ title: string; url: string; domain: string }>;
+    } | null;
     url?: string;
     domain?: string;
     content?: string;
