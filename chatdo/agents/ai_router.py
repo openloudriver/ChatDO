@@ -231,7 +231,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 }
                 
                 # Set model/provider for web search
-                model_display = "Brave Search"
+                model_display = "Brave"
                 provider = "brave_search"
                 
                 # Save to memory store if thread_id is provided
@@ -260,7 +260,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                     history.append({"role": "user", "content": task})
                     history.append({"role": "assistant", "content": error_msg})
                     memory_store.save_thread_history(storage_target_name, thread_id, history)
-                return error_msg, "Brave Search", "brave_search"
+                return error_msg, "Brave", "brave_search"
         except ValueError as e:
             # If API key is missing or invalid, return helpful error message
             error_msg = f"Web search is not configured. {str(e)}"
@@ -270,7 +270,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 history.append({"role": "user", "content": task})
                 history.append({"role": "assistant", "content": error_msg})
                 memory_store.save_thread_history(storage_target_name, thread_id, history)
-            return error_msg, "Brave Search", "brave_search"
+            return error_msg, "Brave", "brave_search"
         except Exception as e:
             # If search fails for other reasons, return error
             error_msg = f"Web search failed: {str(e)}. Please try again or check your BRAVE_SEARCH_API_KEY configuration."
@@ -280,7 +280,7 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 history.append({"role": "user", "content": task})
                 history.append({"role": "assistant", "content": error_msg})
                 memory_store.save_thread_history(storage_target_name, thread_id, history)
-            return error_msg, "Brave Search", "brave_search"
+            return error_msg, "Brave", "brave_search"
     
     # Build message history
     messages: List[Dict[str, str]] = []

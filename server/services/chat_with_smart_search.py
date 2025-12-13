@@ -361,13 +361,13 @@ def build_model_label(used_web: bool, used_memory: bool) -> str:
     Returns:
         - "GPT-5" if neither web nor memory
         - "Memory + GPT-5" if only memory
-        - "Web + GPT-5" if only web
-        - "Web + Memory + GPT-5" if both
+        - "Brave + GPT-5" if only web
+        - "Brave + Memory + GPT-5" if both
     """
     if used_web and used_memory:
-        return "Web + Memory + GPT-5"
+        return "Brave + Memory + GPT-5"
     elif used_web:
-        return "Web + GPT-5"
+        return "Brave + GPT-5"
     elif used_memory:
         return "Memory + GPT-5"
     else:

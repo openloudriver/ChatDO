@@ -556,6 +556,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   
   // Helper function to format model names for display
   const formatModelName = (model: string): string => {
+    // Map old labels to new labels for backward compatibility
+    if (model === "Web + GPT-5") {
+      return "Brave + GPT-5";
+    }
+    if (model === "Web + Memory + GPT-5") {
+      return "Brave + Memory + GPT-5";
+    }
+    if (model === "Brave Search") {
+      return "Brave";
+    }
     if (model.startsWith('gpt-5')) {
       return 'GPT-5';
     }
@@ -1793,7 +1803,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                        message.type !== 'document_card' && (
                         <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
                           {message.type === 'web_search_results' ? (
-                            <div>Model: Brave Search</div>
+                            <div>Model: Brave</div>
                           ) : (() => {
                             const ragUsed = hasRagSources(message);
                             const baseModel = message.model ? formatModelName(message.model) : null;

@@ -371,18 +371,102 @@ Keep it concise, neutral, and factual."""
             web_mode=web_toggle
         )
         
-        # Fetch web sources if needed
+        # Fetch web sources and Brave Pro AI summary if needed (for normal chat composer)
         sources: List[Dict[str, Any]] = []
+        web_summary: Optional[Dict[str, Any]] = None
         web_context_prompt = ""
         
         if use_web:
             try:
-                sources = fetch_web_sources(message, max_results=5)
+                # For normal chat composer, use Brave Pro AI (Summary + Top Results)
+                from chatdo.tools import web_search
+                from concurrent.futures import ThreadPoolExecutor
+                
+                search_results = None
+                summary = None
+                
+                # Run search and summary concurrently using Brave Pro AI
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    search_future = executor.submit(web_search.search_web, message, 5)
+                    summarize_future = executor.submit(web_search.brave_summarize, message)
+                    
+                    # Wait for search results (required)
+                    try:
+                        search_results = search_future.result(timeout=5)
+                    except Exception as e:
+                        print(f"[WEB] Search failed: {e}")
+                        search_results = []
+                    
+                    # Try to get summary (optional - don't fail if it times out)
+                    try:
+                        summary = summarize_future.result(timeout=15)
+                        if summary:
+                            print(f"[WEB] Brave Pro AI summary generated for composer chat ({len(summary.get('text', ''))} chars)")
+                            web_summary = summary
+                    except Exception as e:
+                        print(f"[WEB] Brave Pro AI summary failed or timed out: {e}")
+                        summary = None
+                
+                # Convert search results to sources format
+                if search_results:
+                    for index, result in enumerate(search_results):
+                        site_name = None
+                        if result.get('url'):
+                            try:
+                                from urllib.parse import urlparse
+                                parsed = urlparse(result['url'])
+                                site_name = parsed.netloc.replace('www.', '')
+                            except:
+                                pass
+                        
+                        source = {
+                            'id': f'web-{index}',
+                            'title': result.get('title', 'Untitled'),
+                            'url': result.get('url'),
+                            'description': result.get('snippet', ''),
+                            'siteName': site_name,
+                            'rank': index,
+                            'sourceType': 'web'
+                        }
+                        sources.append(source)
+                
+                # Build context prompt with summary if available
                 if sources:
-                    web_context_prompt = build_web_context_prompt(sources)
+                    prompt_parts = []
+                    
+                    # Add Brave Pro AI summary if available
+                    if web_summary and web_summary.get('text'):
+                        prompt_parts.append('=== Brave Pro AI Summary ===')
+                        prompt_parts.append(web_summary.get('text'))
+                        prompt_parts.append('')
+                    
+                    # Add web sources
+                    lines = []
+                    for i, source in enumerate(sources):
+                        n = i + 1
+                        url = source.get('url', '')
+                        url_str = f" ({url})" if url else ""
+                        title = source.get('title', 'Untitled')
+                        description = source.get('description', '')
+                        lines.append(f"{n}. {title}{url_str}\n{description}".strip())
+                    
+                    prompt_parts.extend([
+                        'You have access to the following up-to-date web sources.',
+                        'When you use a specific fact from a source, add a citation like [1] or [2] at the end of the relevant sentence.',
+                        'Use these sources only when needed; otherwise, answer normally.',
+                        '',
+                        '\n\n'.join(lines)
+                    ])
+                    
+                    web_context_prompt = '\n'.join(prompt_parts)
+                    if web_summary:
+                        print(f"[WEB] Brave Pro AI summary included in context for GPT-5")
             except Exception as e:
                 print(f"[WEB] Web search failed, falling back to GPT only: {e}")
+                import traceback
+                traceback.print_exc()
                 sources = []
+                web_summary = None
                 web_context_prompt = ""
         
         # Build RAG context if RAG files are provided
@@ -475,7 +559,7 @@ Keep it concise, neutral, and factual."""
                             "content": "",  # Empty content for structured messages
                             "type": "web_search_results",
                             "data": structured_result,
-                            "model": "Brave Search",
+                            "model": "Brave",
                             "provider": "brave_search"
                         }
                         history.append(assistant_message)
@@ -485,7 +569,7 @@ Keep it concise, neutral, and factual."""
                     await websocket.send_json({
                         "type": "web_search_results",
                         "data": structured_result,
-                        "model": "Brave Search",
+                        "model": "Brave",
                         "provider": "brave_search",
                         "done": True
                     })
@@ -584,7 +668,7 @@ Keep it concise, neutral, and factual."""
                 return
             
             content = assistant_messages[0].get("content", "")
-            model_display = "Web + GPT-5"
+            model_display = "Brave + GPT-5"
             provider = data.get("provider", "openai-gpt5")
             
             # Save to memory store
