@@ -551,6 +551,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const previousConversationIdRef = useRef<string | null>(null);
   const hasScrolledToBottomRef = useRef(false);
+  const lastUserMessageIdRef = useRef<string | null>(null);
+  const userMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   
   // Helper function to format model names for display
   const formatModelName = (model: string): string => {
@@ -701,9 +703,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   useEffect(() => {
     const currentId = currentConversation?.id || null;
     if (currentId !== previousConversationIdRef.current) {
-      // Conversation changed - reset scroll flag for instant scroll on initial load
+      // Conversation changed - reset scroll flag and tracking refs
       hasScrolledToBottomRef.current = false;
       previousConversationIdRef.current = currentId;
+      lastUserMessageIdRef.current = null;
+      previousMessagesLengthRef.current = 0;
+      previousLastMessageRoleRef.current = null;
       
       // Immediately scroll to bottom on conversation change (no animation)
       // Use requestAnimationFrame to ensure DOM is ready
@@ -715,47 +720,172 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }, [currentConversation?.id]);
 
-  // Auto-scroll to bottom when messages change
+  // Track last user message and detect when a new user message or assistant response arrives
+  const previousMessagesLengthRef = useRef(0);
+  const previousLastMessageRoleRef = useRef<'user' | 'assistant' | null>(null);
+  
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      const lastMessageRole = lastMessage.role;
+      const messagesLength = messages.length;
+      
+      // Find the last user message
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          const userMessageId = messages[i].id;
+          // If this is a new user message (different from last tracked), update ref and scroll to it
+          if (userMessageId !== lastUserMessageIdRef.current) {
+            lastUserMessageIdRef.current = userMessageId;
+            
+            // Scroll to show the new user question (so user can see it and thinking indicator)
+            // Use multiple requestAnimationFrame calls and setTimeout to ensure DOM is fully updated
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  const userMessageElement = userMessageRefs.current.get(userMessageId);
+                  const container = messagesContainerRef.current;
+                  if (userMessageElement && container) {
+                    // Calculate exact scroll position to put user message at top
+                    const containerRect = container.getBoundingClientRect();
+                    const elementRect = userMessageElement.getBoundingClientRect();
+                    const scrollTop = container.scrollTop;
+                    const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
+                    // Scroll so user message is at the very top
+                    container.scrollTop = elementTopRelativeToContainer;
+                  }
+                }, 50);
+              });
+            });
+          }
+          break;
+        }
+      }
+      
+      // Update tracking refs
+      previousMessagesLengthRef.current = messagesLength;
+      previousLastMessageRoleRef.current = lastMessageRole;
+    }
+  }, [messages]);
+
+  // Auto-scroll to user's question when assistant responds (not to bottom)
   useEffect(() => {
     if (!isStreaming && messages.length > 0) {
-      // Use instant scroll for initial load, smooth scroll for subsequent updates
       const isInitialLoad = !hasScrolledToBottomRef.current;
+      const lastMessage = messages[messages.length - 1];
+      const isNewAssistantResponse = 
+        lastMessage.role === 'assistant' &&
+        previousLastMessageRoleRef.current === 'user';
       
       if (isInitialLoad) {
-        // For initial load, set scroll position directly (no animation)
-        // Use requestAnimationFrame to ensure messages are rendered
+        // For initial load, scroll to bottom (showing latest messages)
         requestAnimationFrame(() => {
           if (messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
             hasScrolledToBottomRef.current = true;
           }
         });
-      } else if (messagesEndRef.current) {
-        // For subsequent updates, use smooth scroll
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      } else if (isNewAssistantResponse && lastUserMessageIdRef.current) {
+        // For new assistant responses, scroll to the user's question at the top
+        // This allows reading from the top of the response
+        requestAnimationFrame(() => {
+          const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
+          const container = messagesContainerRef.current;
+          if (userMessageElement && container) {
+            // Use scrollIntoView with start alignment to position at top
+            // Then adjust slightly to account for any container padding
+            userMessageElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+            // Small delay to ensure scrollIntoView completes, then fine-tune
+            setTimeout(() => {
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = userMessageElement.getBoundingClientRect();
+              const offset = elementRect.top - containerRect.top;
+              if (offset > 0) {
+                container.scrollTop -= offset;
+              }
+            }, 100);
+          }
+        });
       }
     }
   }, [messages, isStreaming]);
 
-  // Separate effect for streaming content - debounced to prevent vibrating
+  // Scroll to user's question when streaming starts (thinking indicator appears)
   useEffect(() => {
-    if (isStreaming && messagesEndRef.current) {
-      // Use instant scroll (no smooth) and debounce to prevent jumping
-      const timeoutId = setTimeout(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    if (isStreaming && lastUserMessageIdRef.current) {
+      // When streaming starts, immediately scroll to show user's question and thinking indicator
+      const scrollToQuestion = () => {
+        const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
+        const container = messagesContainerRef.current;
+        if (userMessageElement && container) {
+          // Calculate exact position to put user message at top
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = userMessageElement.getBoundingClientRect();
+          const scrollTop = container.scrollTop;
+          const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
+          // Scroll so user message is at the very top
+          container.scrollTop = elementTopRelativeToContainer;
         }
-      }, 150); // Debounce to every 150ms during streaming
-      return () => clearTimeout(timeoutId);
-    } else if (!isStreaming && messages.length > 0 && messagesEndRef.current) {
-      // When streaming finishes, ensure we scroll to bottom
+      };
+      
+      // Try multiple times to ensure it works
       requestAnimationFrame(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
+        scrollToQuestion();
+        requestAnimationFrame(() => {
+          scrollToQuestion();
+          setTimeout(() => scrollToQuestion(), 50);
+          setTimeout(() => scrollToQuestion(), 200);
+        });
       });
     }
-  }, [streamingContent, isStreaming, messages.length]);
+  }, [isStreaming]);
+
+  // Keep user's question visible during streaming (thinking indicator) and when response completes
+  useEffect(() => {
+    if (isStreaming && lastUserMessageIdRef.current) {
+      // During streaming (thinking indicator), keep user's question visible at the top
+      // This ensures user can see their question and the thinking indicator
+      const timeoutId = setTimeout(() => {
+        const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
+        const container = messagesContainerRef.current;
+        if (userMessageElement && container) {
+          // Scroll to user's question at the top so thinking indicator is visible below it
+          userMessageElement.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
+          // Fine-tune position to ensure it's at the very top
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = userMessageElement.getBoundingClientRect();
+          const offset = elementRect.top - containerRect.top;
+          if (offset > 0) {
+            container.scrollTop -= offset;
+          }
+        }
+      }, 100); // Check periodically during streaming to keep question visible
+      return () => clearTimeout(timeoutId);
+    } else if (!isStreaming && messages.length > 0 && lastUserMessageIdRef.current) {
+      // When streaming finishes, ensure user's question is still visible at the top
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.role === 'assistant' && previousLastMessageRoleRef.current === 'user') {
+        // New assistant response just finished - scroll to user's question at the top
+        requestAnimationFrame(() => {
+          const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
+          const container = messagesContainerRef.current;
+          if (userMessageElement && container) {
+            // Use scrollIntoView with start alignment
+            userMessageElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+            // Small delay to ensure scrollIntoView completes, then fine-tune
+            setTimeout(() => {
+              const containerRect = container.getBoundingClientRect();
+              const elementRect = userMessageElement.getBoundingClientRect();
+              const offset = elementRect.top - containerRect.top;
+              if (offset > 0) {
+                container.scrollTop -= offset;
+              }
+            }, 100);
+          }
+        });
+      }
+    }
+  }, [streamingContent, isStreaming, messages]);
 
   const handleBack = () => {
     if (currentConversation?.trashed) {
@@ -959,6 +1089,36 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         return (
           <div
             key={message.id}
+            ref={(el) => {
+              if (el && message.role === 'user') {
+                userMessageRefs.current.set(message.id, el);
+                // If this is the last user message, ALWAYS scroll to it immediately
+                // This ensures the question is visible when sent, during thinking, and when response arrives
+                if (message.id === lastUserMessageIdRef.current) {
+                  const scrollToThis = () => {
+                    const container = messagesContainerRef.current;
+                    if (container && el) {
+                      const containerRect = container.getBoundingClientRect();
+                      const elementRect = el.getBoundingClientRect();
+                      const scrollTop = container.scrollTop;
+                      const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
+                      container.scrollTop = elementTopRelativeToContainer;
+                    }
+                  };
+                  // Try multiple times to ensure it works
+                  requestAnimationFrame(() => {
+                    scrollToThis();
+                    requestAnimationFrame(() => {
+                      scrollToThis();
+                      setTimeout(() => scrollToThis(), 50);
+                      setTimeout(() => scrollToThis(), 200);
+                    });
+                  });
+                }
+              } else if (message.role === 'user') {
+                userMessageRefs.current.delete(message.id);
+              }
+            }}
             className="group relative mb-3"
           >
             {/* Assistant: Avatar floats outside left edge */}

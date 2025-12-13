@@ -162,6 +162,14 @@ def brave_summarize(query: str) -> Optional[Dict[str, any]]:
         response.raise_for_status()
         data = response.json()
         
+        # DEBUG: Log full response structure to investigate what's available
+        print(f"[BRAVE_SUMMARY] Full response keys: {list(data.keys())}")
+        if "choices" in data and len(data["choices"]) > 0:
+            choice = data["choices"][0]
+            print(f"[BRAVE_SUMMARY] Choice keys: {list(choice.keys())}")
+            if "message" in choice:
+                print(f"[BRAVE_SUMMARY] Message keys: {list(choice['message'].keys())}")
+        
         # Extract the summary text from the response
         if "choices" in data and len(data["choices"]) > 0:
             summary_text = data["choices"][0].get("message", {}).get("content", "").strip()
