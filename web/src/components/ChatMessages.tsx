@@ -740,6 +740,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       const lastMessageRole = lastMessage.role;
       const messagesLength = messages.length;
       
+      // Skip aggressive scroll behavior for web_search_results messages to avoid layout shifts
+      const isWebSearchResults = lastMessage.type === 'web_search_results';
+      
       // Find the last user message
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'user') {
@@ -748,25 +751,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           if (userMessageId !== lastUserMessageIdRef.current) {
             lastUserMessageIdRef.current = userMessageId;
             
-            // Scroll to show the new user question (so user can see it and thinking indicator)
-            // Use multiple requestAnimationFrame calls and setTimeout to ensure DOM is fully updated
-            requestAnimationFrame(() => {
+            // Only scroll aggressively if it's NOT a web_search_results message
+            // For web_search_results, let it render naturally without forcing scroll
+            if (!isWebSearchResults) {
+              // Scroll to show the new user question (so user can see it and thinking indicator)
+              // Use multiple requestAnimationFrame calls and setTimeout to ensure DOM is fully updated
               requestAnimationFrame(() => {
-                setTimeout(() => {
-                  const userMessageElement = userMessageRefs.current.get(userMessageId);
-                  const container = messagesContainerRef.current;
-                  if (userMessageElement && container) {
-                    // Calculate exact scroll position to put user message at top
-                    const containerRect = container.getBoundingClientRect();
-                    const elementRect = userMessageElement.getBoundingClientRect();
-                    const scrollTop = container.scrollTop;
-                    const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
-                    // Scroll so user message is at the very top
-                    container.scrollTop = elementTopRelativeToContainer;
-                  }
-                }, 50);
+                requestAnimationFrame(() => {
+                  setTimeout(() => {
+                    const userMessageElement = userMessageRefs.current.get(userMessageId);
+                    const container = messagesContainerRef.current;
+                    if (userMessageElement && container) {
+                      // Calculate exact scroll position to put user message at top
+                      const containerRect = container.getBoundingClientRect();
+                      const elementRect = userMessageElement.getBoundingClientRect();
+                      const scrollTop = container.scrollTop;
+                      const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
+                      // Scroll so user message is at the very top
+                      container.scrollTop = elementTopRelativeToContainer;
+                    }
+                  }, 50);
+                });
               });
-            });
+            }
           }
           break;
         }
@@ -787,6 +794,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         lastMessage.role === 'assistant' &&
         previousLastMessageRoleRef.current === 'user';
       
+      // Skip aggressive scroll for web_search_results to avoid layout shifts
+      const isWebSearchResults = lastMessage.type === 'web_search_results';
+      
       if (isInitialLoad) {
         // For initial load, scroll to bottom (showing latest messages)
         requestAnimationFrame(() => {
@@ -795,8 +805,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             hasScrolledToBottomRef.current = true;
           }
         });
-      } else if (isNewAssistantResponse && lastUserMessageIdRef.current) {
-        // For new assistant responses, scroll to the user's question at the top
+      } else if (isNewAssistantResponse && lastUserMessageIdRef.current && !isWebSearchResults) {
+        // For new assistant responses (but NOT web_search_results), scroll to the user's question at the top
         // This allows reading from the top of the response
         requestAnimationFrame(() => {
           const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
@@ -814,6 +824,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 container.scrollTop -= offset;
               }
             }, 100);
+          }
+        });
+      } else if (isWebSearchResults) {
+        // For web_search_results, just smoothly scroll to show the results without aggressive positioning
+        // This prevents the rapid shift up/down
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            // Smooth scroll to bottom to show the new web search results
+            messagesContainerRef.current.scrollTo({ 
+              top: messagesContainerRef.current.scrollHeight, 
+              behavior: 'smooth' 
+            });
           }
         });
       }
@@ -874,8 +896,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     } else if (!isStreaming && messages.length > 0 && lastUserMessageIdRef.current) {
       // When streaming finishes, ensure user's question is still visible at the top
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage && lastMessage.role === 'assistant' && previousLastMessageRoleRef.current === 'user') {
-        // New assistant response just finished - scroll to user's question at the top
+      const isWebSearchResults = lastMessage?.type === 'web_search_results';
+      
+      if (lastMessage && lastMessage.role === 'assistant' && previousLastMessageRoleRef.current === 'user' && !isWebSearchResults) {
+        // New assistant response just finished (but NOT web_search_results) - scroll to user's question at the top
         requestAnimationFrame(() => {
           const userMessageElement = userMessageRefs.current.get(lastUserMessageIdRef.current!);
           const container = messagesContainerRef.current;
@@ -1102,28 +1126,38 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             ref={(el) => {
               if (el && message.role === 'user') {
                 userMessageRefs.current.set(message.id, el);
-                // If this is the last user message, ALWAYS scroll to it immediately
-                // This ensures the question is visible when sent, during thinking, and when response arrives
+                // If this is the last user message, scroll to it immediately
+                // BUT skip if the next message is web_search_results to avoid layout shifts
                 if (message.id === lastUserMessageIdRef.current) {
-                  const scrollToThis = () => {
-                    const container = messagesContainerRef.current;
-                    if (container && el) {
-                      const containerRect = container.getBoundingClientRect();
-                      const elementRect = el.getBoundingClientRect();
-                      const scrollTop = container.scrollTop;
-                      const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
-                      container.scrollTop = elementTopRelativeToContainer;
-                    }
-                  };
-                  // Try multiple times to ensure it works
-                  requestAnimationFrame(() => {
-                    scrollToThis();
+                  // Check if the next message after this user message is web_search_results
+                  const messageIndex = messages.findIndex(m => m.id === message.id);
+                  const nextMessage = messageIndex >= 0 && messageIndex < messages.length - 1 
+                    ? messages[messageIndex + 1] 
+                    : null;
+                  const isNextWebSearchResults = nextMessage?.type === 'web_search_results';
+                  
+                  // Only do aggressive scroll if next message is NOT web_search_results
+                  if (!isNextWebSearchResults) {
+                    const scrollToThis = () => {
+                      const container = messagesContainerRef.current;
+                      if (container && el) {
+                        const containerRect = container.getBoundingClientRect();
+                        const elementRect = el.getBoundingClientRect();
+                        const scrollTop = container.scrollTop;
+                        const elementTopRelativeToContainer = elementRect.top - containerRect.top + scrollTop;
+                        container.scrollTop = elementTopRelativeToContainer;
+                      }
+                    };
+                    // Try multiple times to ensure it works
                     requestAnimationFrame(() => {
                       scrollToThis();
-                      setTimeout(() => scrollToThis(), 50);
-                      setTimeout(() => scrollToThis(), 200);
+                      requestAnimationFrame(() => {
+                        scrollToThis();
+                        setTimeout(() => scrollToThis(), 50);
+                        setTimeout(() => scrollToThis(), 200);
+                      });
                     });
-                  });
+                  }
                 }
               } else if (message.role === 'user') {
                 userMessageRefs.current.delete(message.id);

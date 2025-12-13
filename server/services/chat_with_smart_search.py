@@ -603,12 +603,36 @@ async def chat_with_smart_search(
             "sources": sources if sources else None
         }
     
-    # 2b. Use Brave + GPT-5
+    # 2b. Use Brave Pro AI (Summary + Top Results) + GPT-5
     search_query = decision.query or user_message
-    logger.info(f"Performing web search for query: {search_query}")
+    logger.info(f"Performing Brave Pro AI search (Summary + Top Results) for query: {search_query}")
     
     try:
-        web_results = web_search.search_web(search_query, max_results=5)
+        # Use Brave Pro AI: Get both search results and summary concurrently
+        from concurrent.futures import ThreadPoolExecutor
+        
+        web_results = None
+        web_summary = None
+        
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            search_future = executor.submit(web_search.search_web, search_query, 5)
+            summarize_future = executor.submit(web_search.brave_summarize, search_query)
+            
+            # Wait for search results (required)
+            try:
+                web_results = search_future.result(timeout=5)
+            except Exception as e:
+                logger.warning(f"Web search failed: {e}")
+                web_results = []
+            
+            # Try to get summary (optional - don't fail if it times out)
+            try:
+                web_summary = summarize_future.result(timeout=15)
+                if web_summary:
+                    logger.info(f"[BRAVE] Pro AI summary generated ({len(web_summary.get('text', ''))} chars)")
+            except Exception as e:
+                logger.warning(f"Brave Pro AI summary failed or timed out: {e}")
+                web_summary = None
     except Exception as e:
         logger.warning(f"Web search failed: {e}, falling back to GPT-5 only")
         # Fall back to GPT-5 without search results
@@ -715,15 +739,25 @@ async def chat_with_smart_search(
         }
         web_sources.append(source)
     
-    # Format web results for GPT-5 with citation instructions
-    web_results_text = "You have access to the following up-to-date web sources.\n"
-    web_results_text += "When you use a specific fact from a source, add a citation like [1] or [2] at the end of the relevant sentence.\n"
-    web_results_text += "Use these sources only when needed; otherwise, answer normally.\n\n"
+    # Format web results for GPT-5 with Brave Pro AI summary and citation instructions
+    web_results_text_parts = []
+    
+    # Add Brave Pro AI summary if available
+    if web_summary and web_summary.get('text'):
+        web_results_text_parts.append('=== Brave Pro AI Summary ===')
+        web_results_text_parts.append(web_summary.get('text'))
+        web_results_text_parts.append('')
+    
+    web_results_text_parts.append('You have access to the following up-to-date web sources.')
+    web_results_text_parts.append('When you use a specific fact from a source, add a citation like [1] or [2] at the end of the relevant sentence.')
+    web_results_text_parts.append('Use these sources only when needed; otherwise, answer normally.')
+    web_results_text_parts.append('')
     
     for i, result in enumerate(web_results[:5], 1):
         url_str = f" ({result.get('url', '')})" if result.get('url') else ""
-        web_results_text += f"{i}. {result.get('title', 'No title')}{url_str}\n"
-        web_results_text += f"{result.get('snippet', 'No snippet')}\n\n"
+        web_results_text_parts.append(f"{i}. {result.get('title', 'No title')}{url_str}\n{result.get('snippet', '')}".strip())
+    
+    web_results_text = '\n'.join(web_results_text_parts)
     
     # Web search succeeded - add web context to existing messages
     # Update system prompt to include web citation instructions
