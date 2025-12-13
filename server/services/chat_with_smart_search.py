@@ -354,22 +354,28 @@ FILETREE_READ_TOOL = {
 }
 
 
-def build_model_label(used_web: bool, used_memory: bool) -> str:
+def build_model_label(used_web: bool, used_memory: bool, escalated: bool = True) -> str:
     """
     Build model label based on what was used.
     
+    Args:
+        used_web: Whether Brave web search was used
+        used_memory: Whether Memory was used
+        escalated: Whether GPT-5 was used (False means Llama-only for Memory)
+    
     Returns:
-        - "GPT-5" if neither web nor memory
-        - "Memory + GPT-5" if only memory
+        - "GPT-5" if nothing special
+        - "Memory" if only memory and not escalated (Llama-only)
+        - "Memory + GPT-5" if only memory and escalated
         - "Brave + GPT-5" if only web
-        - "Brave + Memory + GPT-5" if both
+        - "Brave + Memory + GPT-5" if both web and memory
     """
     if used_web and used_memory:
         return "Brave + Memory + GPT-5"
     elif used_web:
         return "Brave + GPT-5"
     elif used_memory:
-        return "Memory + GPT-5"
+        return "Memory + GPT-5" if escalated else "Memory"
     else:
         return "GPT-5"
 
@@ -429,6 +435,7 @@ async def chat_with_smart_search(
     sources = []
     has_memory = False
     searched_memory = False  # Track if we attempted to search memory (even if no results)
+    hits = []  # Initialize hits to empty list so it's always defined
     if project_id:
         try:
             # Use Librarian for smarter ranking and deduplication
@@ -445,8 +452,10 @@ async def chat_with_smart_search(
                 memory_context = librarian.format_hits_as_context(hits)
                 has_memory = True
                 logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
+                logger.info(f"[MEMORY] Will route to Llama: has_memory={has_memory}, hits_count={len(hits)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
+                logger.info(f"[MEMORY] Will NOT route to Llama: has_memory={has_memory}, hits_count=0")
             # Get source names from the actual sources used
             from server.services.memory_service_client import get_memory_sources_for_project
             from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
@@ -500,23 +509,73 @@ async def chat_with_smart_search(
     logger.info(f"Smart search decision: use_search={decision.use_search}, reason={decision.reason}")
     
     if not decision.use_search:
-        # 2a. Plain GPT-5 chat (no Brave)
-        # messages, tools, and system prompt are already set up above
-        
-        # Call AI Router with tool loop processing
-        content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-            messages=messages,
-            tools=tools,
-            intent="general_chat",
-            project_id=project_id
-        )
-        
-        # Build model label based on what was used
+        # 2a. Memory-only or GPT-5 chat (no Brave)
+        # If we have Memory hits, use Llama Librarian first
         used_web = False
-        used_memory = has_memory  # Only show Memory if we actually found and used memory results
+        used_memory = has_memory
         
-        model_display = build_model_label(used_web=used_web, used_memory=used_memory)
-        logger.info(f"[MODEL] model label = {model_display}")
+        if has_memory and hits:
+            # Route through Llama Librarian for Memory responses
+            logger.info(f"[MEMORY] Routing through Llama Librarian ({len(hits)} hits)")
+            logger.info(f"[MEMORY] has_memory={has_memory}, hits_count={len(hits)}, hits_empty={not hits}")
+            try:
+                # Generate response using Llama
+                llama_response = librarian.generate_memory_response_with_llama(
+                    query=user_message,
+                    hits=hits,
+                    conversation_history=conversation_history
+                )
+                
+                # Check if escalation is needed
+                should_escalate, escalation_reason = librarian.should_escalate_to_gpt5(
+                    query=user_message,
+                    hits=hits,
+                    response=llama_response
+                )
+                
+                if should_escalate:
+                    logger.info(f"[MEMORY] Escalating to GPT-5: {escalation_reason}")
+                    # Escalate to GPT-5 with Memory context
+                    content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+                        messages=messages,
+                        tools=tools,
+                        intent="general_chat",
+                        project_id=project_id
+                    )
+                    # Model label: Memory + GPT-5 (escalated)
+                    model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
+                    logger.info(f"[MODEL] model label = {model_display} (escalated)")
+                else:
+                    # Use Llama's response directly
+                    content = llama_response
+                    model_id = "llama3.2:3b"
+                    provider_id = "ollama-llama"
+                    model_display = "Memory"  # Just "Memory" when no GPT-5
+                    logger.info(f"[MODEL] model label = {model_display} (Llama only)")
+                    
+            except Exception as e:
+                logger.error(f"[MEMORY] Llama Librarian failed, falling back to GPT-5: {e}", exc_info=True)
+                # Fallback to GPT-5 if Llama fails
+                # This typically means Ollama is not running or llama3.2:3b model is not available
+                content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+                    messages=messages,
+                    tools=tools,
+                    intent="general_chat",
+                    project_id=project_id
+                )
+                model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
+                logger.info(f"[MODEL] model label = {model_display} (fallback - Llama unavailable)")
+        else:
+            # No Memory hits - use GPT-5 directly
+            logger.info(f"[MEMORY] Skipping Llama: has_memory={has_memory}, hits_count={len(hits) if hits else 0}, hits_empty={not hits if hits else True}")
+            content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+                messages=messages,
+                tools=tools,
+                intent="general_chat",
+                project_id=project_id
+            )
+            model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
+            logger.info(f"[MODEL] model label = {model_display}")
         
         # Save to memory store if thread_id is provided
         if thread_id:
@@ -833,7 +892,7 @@ async def chat_with_smart_search(
             assistant_message = {
                 "role": "assistant",
                 "content": content,
-                "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory),
+                "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory, escalated=True),
                 "provider": provider_id,
                 "sources": all_sources if all_sources else None,
                 "meta": {
@@ -881,7 +940,7 @@ async def chat_with_smart_search(
             "usedMemory": has_memory,
             "webResultsPreview": web_results[:5]  # Top 5 for sources display
         },
-        "model": build_model_label(used_web=bool(web_sources), used_memory=searched_memory),
+        "model": build_model_label(used_web=bool(web_sources), used_memory=searched_memory, escalated=True),
         "provider": provider_id,
         "sources": all_sources if all_sources else None
     }

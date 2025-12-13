@@ -460,3 +460,194 @@ def format_hits_as_context(hits: List[MemoryHit]) -> str:
     client = memory_service_client.get_memory_client()
     return client.format_context(results)
 
+
+def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) -> tuple[bool, str]:
+    """
+    Determine if Llama's response should be escalated to GPT-5.
+    
+    Escalation triggers:
+    - Complex reasoning required (compare, analyze, plan, design)
+    - Contradictions detected in Memory sources
+    - Missing context (response indicates uncertainty)
+    - Multi-step planning required
+    - Response quality is low (too short, generic, or indicates confusion)
+    
+    Args:
+        query: The user's original query
+        hits: The Memory hits used to generate the response
+        response: Llama's generated response
+        
+    Returns:
+        Tuple of (should_escalate: bool, reason: str)
+    """
+    query_lower = query.lower()
+    response_lower = response.lower()
+    
+    # Check for complex reasoning keywords
+    complex_keywords = [
+        "compare", "comparison", "analyze", "analysis", "plan", "planning",
+        "design", "strategy", "evaluate", "assessment", "recommend", "recommendation",
+        "explain why", "why did", "how should", "what should", "which is better",
+        "pros and cons", "trade-off", "tradeoff", "versus", "vs"
+    ]
+    
+    if any(keyword in query_lower for keyword in complex_keywords):
+        return True, "Complex reasoning required (compare/analyze/plan/design)"
+    
+    # Check for contradictions in Memory sources
+    # Look for conflicting information patterns
+    # NOTE: We should NOT escalate for temporal differences (e.g., "I don't know" vs "It's blue")
+    # Only escalate for actual conflicting facts about the same thing
+    if len(hits) >= 2:
+        # Simple heuristic: if we have multiple hits with different answers to the same question
+        assistant_hits = [h for h in hits if h.role == "assistant"]
+        if len(assistant_hits) >= 2:
+            # Check if they seem to contradict each other
+            contents = [h.content.lower() for h in assistant_hits[:3]]
+            
+            # Look for actual contradictions: same topic, different facts
+            # Examples of real contradictions:
+            # - "Your favorite color is blue" vs "Your favorite color is red"
+            # - "Monero is #1" vs "Bitcoin is #1"
+            # NOT contradictions:
+            # - "I don't know" vs "It's blue" (temporal progression)
+            # - "Tell me" vs "It's blue" (question vs answer)
+            
+            # Check for uncertainty/unknown patterns that shouldn't trigger escalation
+            uncertainty_patterns = [
+                "i don't know", "i don't have", "not sure", "haven't told",
+                "tell me", "what is", "unknown", "not saved", "not found"
+            ]
+            
+            # If all hits contain uncertainty patterns, don't escalate (they're all uncertain)
+            all_uncertain = all(any(pattern in content for pattern in uncertainty_patterns) for content in contents)
+            if all_uncertain:
+                return False, ""  # All uncertain, no contradiction
+            
+            # Check for actual conflicting facts (same attribute, different values)
+            # This is a simplified check - we'll be conservative and only escalate
+            # if we see clear conflicting statements about the same thing
+            # For now, disable this heuristic as it's too aggressive
+            # TODO: Implement smarter contradiction detection that understands context
+            return False, ""  # Disabled - too many false positives
+    
+    # Check for missing context indicators in response
+    uncertainty_indicators = [
+        "i don't know", "i'm not sure", "unclear", "uncertain", "not clear",
+        "i cannot", "i can't", "unable to", "no information", "not found",
+        "not available", "missing", "incomplete"
+    ]
+    
+    if any(indicator in response_lower for indicator in uncertainty_indicators):
+        return True, "Missing context or uncertainty detected"
+    
+    # Check for low-quality response
+    if len(response.strip()) < 50:
+        return True, "Response too short or generic"
+    
+    # Check if response indicates confusion
+    confusion_indicators = [
+        "i'm confused", "not sure what", "unclear what", "don't understand"
+    ]
+    
+    if any(indicator in response_lower for indicator in confusion_indicators):
+        return True, "Response indicates confusion"
+    
+    # Default: don't escalate
+    return False, ""
+
+
+def generate_memory_response_with_llama(
+    query: str,
+    hits: List[MemoryHit],
+    conversation_history: Optional[List[Dict[str, str]]] = None
+) -> str:
+    """
+    Generate a response using Llama 3.2 3B based on Memory hits.
+    
+    This is the "Librarian" function that produces final responses from Memory
+    without requiring GPT-5.
+    
+    Args:
+        query: The user's query
+        hits: List of relevant Memory hits (already ranked and deduplicated)
+        conversation_history: Optional conversation history for context
+        
+    Returns:
+        Generated response text with Memory citations
+    """
+    import os
+    import requests
+    
+    # Build context from Memory hits
+    memory_context = format_hits_as_context(hits[:10])  # Use top 10 hits
+    
+    # Build system prompt for Llama
+    system_prompt = """You are ChatDO's Librarian, a helpful assistant that answers questions using information from the project's Memory.
+
+When you use information from Memory sources, add inline citations like [M1], [M2], or [M1, M2] at the end of the relevant sentence.
+The Memory sources are numbered below (M1, M2, M3, etc.).
+
+Answer the user's question clearly and concisely using the Memory context provided. If the Memory doesn't contain enough information to answer fully, say so clearly."""
+    
+    # Build messages for Ollama API
+    messages = []
+    
+    # Combine system prompt with Memory context
+    full_system_content = system_prompt
+    if memory_context:
+        full_system_content = f"{system_prompt}\n\n{memory_context}"
+    
+    messages.append({
+        "role": "system",
+        "content": full_system_content
+    })
+    
+    # Add conversation history if provided
+    if conversation_history:
+        for msg in conversation_history[-5:]:  # Last 5 messages for context
+            if msg.get("role") in ["user", "assistant"]:
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg.get("content", "")
+                })
+    
+    # Add user query
+    messages.append({
+        "role": "user",
+        "content": query
+    })
+    
+    # Call Ollama API directly
+    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    ollama_api_url = f"{ollama_url}/api/chat"
+    
+    payload = {
+        "model": "llama3.2:3b",
+        "messages": messages,
+        "stream": False,
+        "options": {
+            "temperature": 0.7,
+            "top_p": 0.9,
+        }
+    }
+    
+    try:
+        resp = requests.post(ollama_api_url, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        content = data.get("message", {}).get("content", "")
+        if not content:
+            raise RuntimeError("Empty response from Llama")
+        
+        logger.info(f"[LIBRARIAN] Generated Llama response ({len(content)} chars)")
+        return content
+        
+    except requests.exceptions.ConnectionError:
+        logger.error("[LIBRARIAN] Failed to connect to Ollama. Is Ollama running?")
+        raise RuntimeError("Ollama service is not available. Please ensure Ollama is running.")
+    except Exception as e:
+        logger.error(f"[LIBRARIAN] Llama response generation failed: {e}")
+        raise
+

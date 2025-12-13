@@ -99,9 +99,10 @@ class MemoryServiceClient:
             
             if source_type == "chat":
                 # Format chat message source
-                chat_id = result.get("chat_id", "unknown")
-                message_id = result.get("message_id", "unknown")
-                context_parts.append(f"\n[M{i}] Source: Chat message (chat_id: {chat_id[:8]}...)")
+                chat_id = result.get("chat_id") or "unknown"
+                message_id = result.get("message_id") or "unknown"
+                chat_id_display = chat_id[:8] if chat_id != "unknown" else "unknown"
+                context_parts.append(f"\n[M{i}] Source: Chat message (chat_id: {chat_id_display}...)")
             else:
                 # Format file source
                 file_path = result.get("file_path", "unknown")

@@ -31,6 +31,12 @@ export const PRICING: PricingEntry[] = [
     inputPerMillion: 3.0,
     outputPerMillion: 15.0,
   },
+  {
+    providerId: "ollama-llama",
+    // Ollama runs locally, so it's free
+    inputPerMillion: 0.0,
+    outputPerMillion: 0.0,
+  },
 ];
 
 export function findPricing(providerId: string): PricingEntry | null {
