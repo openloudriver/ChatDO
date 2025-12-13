@@ -47,6 +47,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",
       "mistral-large": "Mistral Large",
+      "brave-pro": "Brave-Pro AI",
     };
     
     // Always include GPT-5, even if it has $0 spend

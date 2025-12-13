@@ -177,6 +177,19 @@ def brave_summarize(query: str) -> Optional[Dict[str, any]]:
             if summary_text:
                 print(f"[BRAVE_SUMMARY] Successfully generated summary ({len(summary_text)} chars)")
                 
+                # Record cost: $0.009 per Brave-Pro AI API call
+                try:
+                    cost_record_url = "http://localhost:8081/v1/ai/spend/record"
+                    cost_payload = {
+                        "providerId": "brave-pro",
+                        "modelId": "brave-pro",
+                        "costUsd": 0.009
+                    }
+                    requests.post(cost_record_url, json=cost_payload, timeout=2)
+                except Exception as e:
+                    # Don't fail if cost tracking fails - just log it
+                    print(f"[BRAVE_SUMMARY] Failed to record cost: {e}")
+                
                 # Extract citations if available (Brave may include source references)
                 citations = []
                 # Note: Brave's chat completions may not always include explicit citations
@@ -200,6 +213,8 @@ def brave_summarize(query: str) -> Optional[Dict[str, any]]:
             print(f"[BRAVE_SUMMARY] Payment required - Pro AI plan required for summaries")
         else:
             print(f"[BRAVE_SUMMARY] HTTP error {e.response.status_code}: {e.response.text[:200]}")
+        import traceback
+        traceback.print_exc()
         return None
     except Exception as e:
         # Don't raise - summary is optional, search results should still work

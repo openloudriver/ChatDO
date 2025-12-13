@@ -128,7 +128,8 @@ async def stream_chat_response(
     message: str,
     rag_file_ids: Optional[List[str]] = None,
     web_mode: str = 'auto',
-    force_search: bool = False
+    force_search: bool = False,
+    top_results_only: bool = False
 ):
     # Lazy import to avoid circular dependency with server.main
     from server.main import update_chat_timestamp, load_projects, get_target_name_from_project
@@ -403,36 +404,48 @@ Keep it concise, neutral, and factual."""
         
         # If force_search is true, perform direct Brave Search (skip run_agent for speed)
         if force_search and not has_rag_context:
-            print(f"[FORCE_SEARCH] force_search=True, performing direct Brave Search for: '{message[:100]}...'")
+            print(f"[FORCE_SEARCH] force_search=True, top_results_only={top_results_only}, performing direct Brave Search for: '{message[:100]}...'")
             from chatdo.tools import web_search
             
             try:
-                # Perform web search and summary concurrently using Brave Search API only (no LLM calls, no GPT-5)
-                from concurrent.futures import ThreadPoolExecutor, as_completed
-                
                 search_results = None
                 summary = None
                 
-                # Run search and summary concurrently for speed
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    search_future = executor.submit(web_search.search_web, message, 10, None)
-                    summarize_future = executor.submit(web_search.brave_summarize, message)
+                if top_results_only:
+                    # Top Results only: Use Free API (no summary, no cost)
+                    print(f"[FORCE_SEARCH] Top Results only mode - using Free API (no summary)")
+                    search_results = web_search.search_web(message, 10, None)
+                    # No summary call, no cost tracking
+                else:
+                    # Default: Summary + Top Results using Pro AI (with cost tracking)
+                    print(f"[FORCE_SEARCH] Summary + Top Results mode - using Pro AI")
+                    # Perform web search and summary concurrently using Brave Search API only (no LLM calls, no GPT-5)
+                    from concurrent.futures import ThreadPoolExecutor, as_completed
                     
-                    # Wait for search results (required)
-                    try:
-                        search_results = search_future.result(timeout=5)
-                    except Exception as e:
-                        raise ValueError(f"Search failed: {str(e)}")
-                    
-                    # Try to get summary (optional - don't fail if it times out)
-                    try:
-                        summary = summarize_future.result(timeout=15)  # Increased timeout for summarization
-                        print(f"[FORCE_SEARCH] Summary result: {summary is not None}")
-                        if summary:
-                            print(f"[FORCE_SEARCH] Summary text length: {len(summary.get('text', ''))}")
-                    except Exception as e:
-                        print(f"[FORCE_SEARCH] Summary failed or timed out: {e}")
-                        summary = None  # Summary is optional
+                    # Run search and summary concurrently for speed
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        search_future = executor.submit(web_search.search_web, message, 10, None)
+                        summarize_future = executor.submit(web_search.brave_summarize, message)
+                        
+                        # Wait for search results (required)
+                        try:
+                            search_results = search_future.result(timeout=5)
+                        except Exception as e:
+                            raise ValueError(f"Search failed: {str(e)}")
+                        
+                        # Try to get summary (optional - don't fail if it times out)
+                        try:
+                            summary = summarize_future.result(timeout=15)  # Increased timeout for summarization
+                            print(f"[FORCE_SEARCH] Summary result: {summary is not None}")
+                            if summary:
+                                print(f"[FORCE_SEARCH] Summary text length: {len(summary.get('text', ''))}")
+                            else:
+                                print(f"[FORCE_SEARCH] WARNING: Summary is None - brave_summarize returned None")
+                        except Exception as e:
+                            print(f"[FORCE_SEARCH] Summary failed or timed out: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            summary = None  # Summary is optional
                 
                 if search_results and len(search_results) > 0:
                     structured_result = {
@@ -444,8 +457,11 @@ Keep it concise, neutral, and factual."""
                     }
                     print(f"[FORCE_SEARCH] ✅ Direct Brave Search succeeded, returning {len(search_results)} results")
                     print(f"[FORCE_SEARCH] Summary included in response: {summary is not None}")
+                    print(f"[FORCE_SEARCH] Summary value: {summary}")
                     if summary:
                         print(f"[FORCE_SEARCH] Summary preview: {str(summary.get('text', ''))[:100]}...")
+                    else:
+                        print(f"[FORCE_SEARCH] WARNING: Summary is None - will not be displayed in UI")
                     
                     # Save to memory store if thread_id is provided
                     if conversation_id:
@@ -976,8 +992,10 @@ async def websocket_endpoint(websocket: WebSocket):
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
             web_mode = data.get("web_mode", "auto")  # Web mode: 'auto' or 'on'
             force_search = data.get("force_search", False)  # Force web search (Top Results card)
+            top_results_only = data.get("top_results_only", False)  # Top Results only (Free API, no summary)
             print(f"[RAG] WebSocket received rag_file_ids: {rag_file_ids}")
             print(f"[WEB] WebSocket received force_search: {force_search}")
+            print(f"[WEB] WebSocket received top_results_only: {top_results_only} (type: {type(top_results_only)})")
             
             if not all([project_id, conversation_id, message]):
                 await websocket.send_json({
@@ -1009,7 +1027,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 message,
                 rag_file_ids=rag_file_ids,
                 web_mode=web_mode,
-                force_search=force_search
+                force_search=force_search,
+                top_results_only=top_results_only
             )
     
     except WebSocketDisconnect:

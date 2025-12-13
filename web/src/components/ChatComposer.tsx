@@ -968,7 +968,7 @@ const ChatComposer: React.FC = () => {
     setIsSearchDialogOpen(true);
   };
 
-  const handleSearchDialogSubmit = async (query: string) => {
+  const handleSearchDialogSubmit = async (query: string, topResultsOnly: boolean = false) => {
     if (!currentProject || !currentConversation) return;
     
     // Auto-name chat based on first message if it's still "New Chat"
@@ -1027,7 +1027,8 @@ const ChatComposer: React.FC = () => {
           target_name: currentConversation.targetName,
           message: query,
           rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-          force_search: true
+          force_search: true,
+          top_results_only: topResultsOnly
         };
         ws.send(JSON.stringify(payload));
       };

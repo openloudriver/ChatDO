@@ -4,7 +4,7 @@ interface WebSearchDialogProps {
   isOpen: boolean;
   initialQuery?: string;
   onClose: () => void;
-  onSubmit: (query: string) => void;
+  onSubmit: (query: string, topResultsOnly: boolean) => void;
 }
 
 const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
@@ -14,12 +14,14 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
   onSubmit,
 }) => {
   const [query, setQuery] = useState(initialQuery);
+  const [topResultsOnly, setTopResultsOnly] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset form and focus input when dialog opens
   useEffect(() => {
     if (isOpen) {
       setQuery(initialQuery);
+      setTopResultsOnly(false); // Reset checkbox to default (unchecked = Summary + Top Results)
       // Focus input after a short delay to ensure dialog is rendered
       setTimeout(() => {
         inputRef.current?.focus();
@@ -32,7 +34,7 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    onSubmit(query.trim());
+    onSubmit(query.trim(), topResultsOnly);
     onClose();
   };
 
@@ -64,6 +66,20 @@ const WebSearchDialog: React.FC<WebSearchDialogProps> = ({
             }}
             placeholder="Enter your search query..."
           />
+
+          <div className="flex items-center gap-2 mt-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={topResultsOnly}
+                onChange={(e) => setTopResultsOnly(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--user-bubble-bg)] focus:ring-[var(--user-bubble-bg)] focus:ring-2"
+              />
+              <span className="text-xs text-[var(--text-secondary)]">
+                Top Results only (Free API - no cost)
+              </span>
+            </label>
+          </div>
 
           <div className="flex items-center justify-end mt-2">
             <div className="flex items-center gap-2">
