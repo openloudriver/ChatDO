@@ -151,43 +151,87 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
     });
 
     // Pre-scan the entire content for citations in order of appearance
-    const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-    const firstAppearanceOrder: number[] = []; // Track order of first appearance
-    const seenNumbers = new Set<number>();
+    // Support [1], [R1], [M1], [W1] patterns
+    const citationPattern = /\[([RMW]?\d+(?:\s*,\s*[RMW]?\d+)*)\]/g;
+    const firstAppearanceOrder: string[] = []; // Track citation keys (e.g., "1", "R1", "M2")
+    const seenCitations = new Set<string>();
 
     let scanMatch: RegExpExecArray | null;
     citationPattern.lastIndex = 0;
     while ((scanMatch = citationPattern.exec(content)) !== null) {
-      const nums = scanMatch[1]
-        .split(',')
-        .map(n => parseInt(n.trim(), 10))
-        .filter(n => !Number.isNaN(n) && n > 0);
+      const citationStrs = scanMatch[1].split(',').map(s => s.trim());
       
-      // Track first appearance of each number
-      nums.forEach(n => {
-        if (!seenNumbers.has(n)) {
-          seenNumbers.add(n);
-          firstAppearanceOrder.push(n);
+      citationStrs.forEach(citationStr => {
+        // Parse citation: extract prefix and number
+        const trimmed = citationStr.trim();
+        let prefix: 'R' | 'M' | 'W' | null = null;
+        let number: number;
+        
+        if (trimmed.startsWith('R')) {
+          prefix = 'R';
+          number = parseInt(trimmed.substring(1), 10);
+        } else if (trimmed.startsWith('M')) {
+          prefix = 'M';
+          number = parseInt(trimmed.substring(1), 10);
+        } else if (trimmed.startsWith('W')) {
+          prefix = 'W';
+          number = parseInt(trimmed.substring(1), 10);
+        } else {
+          number = parseInt(trimmed, 10);
+        }
+        
+        if (!Number.isNaN(number) && number > 0) {
+          const citationKey = prefix ? `${prefix}${number}` : String(number);
+          if (!seenCitations.has(citationKey)) {
+            seenCitations.add(citationKey);
+            firstAppearanceOrder.push(citationKey);
+          }
         }
       });
     }
 
-    // Build usedSources array in order of first appearance in text
-    const usedSources: Source[] = [];
-    const usedNumberToIndex = new Map<number, number>();
+    // Group sources by type
+    const webSources: Source[] = [];
+    const ragSources: Source[] = [];
+    const memorySources: Source[] = [];
 
-    // Process citations in order of first appearance
-    firstAppearanceOrder.forEach((originalNumber) => {
-      const sourceIndex = originalNumber - 1; // Convert to 0-based index
-      if (sourceIndex >= 0 && sourceIndex < sortedSources.length) {
-        const source = sortedSources[sourceIndex];
-        const sequentialIndex = usedSources.length; // Sequential index (0, 1, 2, ...)
-        usedSources.push(source);
-        usedNumberToIndex.set(originalNumber, sequentialIndex);
+    sortedSources.forEach(source => {
+      const prefix = source.citationPrefix ?? (source.sourceType === 'rag' ? 'R' : source.sourceType === 'memory' ? 'M' : null);
+      if (prefix === 'R') {
+        ragSources.push(source);
+      } else if (prefix === 'M') {
+        memorySources.push(source);
+      } else {
+        webSources.push(source);
       }
     });
 
-    return { usedSources, usedNumberToIndex };
+    // Build citation to source mapping
+    const citationToSource = new Map<string, Source>();
+    webSources.forEach((source, idx) => {
+      citationToSource.set(String(idx + 1), source);
+    });
+    ragSources.forEach((source, idx) => {
+      citationToSource.set(`R${idx + 1}`, source);
+    });
+    memorySources.forEach((source, idx) => {
+      citationToSource.set(`M${idx + 1}`, source);
+    });
+
+    // Build usedSources array in order of first appearance
+    const usedSources: Source[] = [];
+    const usedNumberToIndex = new Map<string, number>();
+
+    firstAppearanceOrder.forEach((citationKey) => {
+      const source = citationToSource.get(citationKey);
+      if (source) {
+        const sequentialIndex = usedSources.length;
+        usedSources.push(source);
+        usedNumberToIndex.set(citationKey, sequentialIndex);
+      }
+    });
+
+    return { usedSources, usedNumberToIndex: usedNumberToIndex as Map<string, number> | Map<number, number> };
   }, [content, sources, hasSources]);
 
   // Helper to process children for citations
@@ -199,9 +243,12 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
 
     // Only process simple string/number children - don't process already-rendered React elements
     // This prevents invalid HTML nesting (e.g., div inside p)
+    // Support [1], [R1], [M1], [W1] patterns
+    const citationPattern = /\[([RMW]?\d+(?:\s*,\s*[RMW]?\d+)*)\]/;
+    
     if (typeof children === 'string') {
       // Only process if there are citations in the text
-      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(children)) {
+      if (citationPattern.test(children)) {
         return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
       }
       return children;
@@ -209,7 +256,7 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
 
     if (typeof children === 'number') {
       const text = String(children);
-      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+      if (citationPattern.test(text)) {
         return <InlineSourceCitations text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
       }
       return children;
@@ -220,14 +267,14 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
       return children.map((child, idx) => {
         // Only process primitive types - React elements are already rendered correctly
         if (typeof child === 'string') {
-          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(child)) {
+          if (citationPattern.test(child)) {
             return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
           }
           return child;
         }
         if (typeof child === 'number') {
           const text = String(child);
-          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+          if (citationPattern.test(text)) {
             return <InlineSourceCitations key={idx} text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
           }
           return child;

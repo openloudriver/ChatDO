@@ -21,6 +21,7 @@ const ragFileToSource = (ragFile: RagFile, onOpenFile: (file: RagFile) => void):
     description: ragFile.mime_type ? `File type: ${ragFile.mime_type}` : undefined,
     rank: ragFile.index, // Use index as rank (1-based)
     sourceType: 'rag',
+    citationPrefix: 'R', // RAG uses R prefix: [R1], [R2], [R3]
     meta: {
       ragFile: ragFile,
       onOpenFile: onOpenFile, // Store the handler in meta for later use
@@ -109,43 +110,63 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
     if (!hasSources) return null;
 
     // Pre-scan the entire content for citations in order of appearance
-    const citationPattern = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
-    const firstAppearanceOrder: number[] = []; // Track order of first appearance
-    const seenNumbers = new Set<number>();
+    // Support [R1], [R2], [R1, R3] patterns for RAG
+    const citationPattern = /\[([RMW]?\d+(?:\s*,\s*[RMW]?\d+)*)\]/g;
+    const firstAppearanceOrder: string[] = []; // Track citation keys (e.g., "R1", "R2")
+    const seenCitations = new Set<string>();
 
     let scanMatch: RegExpExecArray | null;
     citationPattern.lastIndex = 0;
     while ((scanMatch = citationPattern.exec(content)) !== null) {
-      const nums = scanMatch[1]
-        .split(',')
-        .map(n => parseInt(n.trim(), 10))
-        .filter(n => !Number.isNaN(n) && n > 0);
+      const citationStrs = scanMatch[1].split(',').map(s => s.trim());
       
-      // Track first appearance of each number
-      nums.forEach(n => {
-        if (!seenNumbers.has(n)) {
-          seenNumbers.add(n);
-          firstAppearanceOrder.push(n);
+      citationStrs.forEach(citationStr => {
+        // Parse citation: extract prefix and number
+        const trimmed = citationStr.trim();
+        let prefix: 'R' | 'M' | 'W' | null = null;
+        let number: number;
+        
+        if (trimmed.startsWith('R')) {
+          prefix = 'R';
+          number = parseInt(trimmed.substring(1), 10);
+        } else if (trimmed.startsWith('M')) {
+          prefix = 'M';
+          number = parseInt(trimmed.substring(1), 10);
+        } else if (trimmed.startsWith('W')) {
+          prefix = 'W';
+          number = parseInt(trimmed.substring(1), 10);
+        } else {
+          number = parseInt(trimmed, 10);
+        }
+        
+        if (!Number.isNaN(number) && number > 0) {
+          const citationKey = prefix ? `${prefix}${number}` : String(number);
+          if (!seenCitations.has(citationKey)) {
+            seenCitations.add(citationKey);
+            firstAppearanceOrder.push(citationKey);
+          }
         }
       });
     }
 
     // Build usedSources array in order of first appearance in text
     const usedSources: Source[] = [];
-    const usedNumberToIndex = new Map<number, number>();
+    const usedNumberToIndex = new Map<string, number>();
 
     // Process citations in order of first appearance
-    firstAppearanceOrder.forEach((originalNumber) => {
-      // Find source with matching rank (index)
-      const source = sources.find(s => s.rank === originalNumber);
+    firstAppearanceOrder.forEach((citationKey) => {
+      // For RAG, citations should be [R1], [R2], etc.
+      // Match by extracting the number and finding source with matching rank
+      const number = parseInt(citationKey.replace(/^[RMW]/, ''), 10);
+      const source = sources.find(s => s.rank === number);
       if (source) {
         const sequentialIndex = usedSources.length; // Sequential index (0, 1, 2, ...)
         usedSources.push(source);
-        usedNumberToIndex.set(originalNumber, sequentialIndex);
+        usedNumberToIndex.set(citationKey, sequentialIndex);
       }
     });
 
-    return { usedSources, usedNumberToIndex };
+    return { usedSources, usedNumberToIndex: usedNumberToIndex as Map<string, number> | Map<number, number> };
   }, [content, sources, hasSources]);
 
   // Helper to process children for citations
@@ -155,8 +176,11 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
     }
 
     // Only process simple string/number children - don't process already-rendered React elements
+    // Support [R1], [M1], [W1], [1] patterns
+    const citationPattern = /\[([RMW]?\d+(?:\s*,\s*[RMW]?\d+)*)\]/;
+    
     if (typeof children === 'string') {
-      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(children)) {
+      if (citationPattern.test(children)) {
         return <InlineSourceCitations text={children} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
       }
       return children;
@@ -164,7 +188,7 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
 
     if (typeof children === 'number') {
       const text = String(children);
-      if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+      if (citationPattern.test(text)) {
         return <InlineSourceCitations text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
       }
       return children;
@@ -174,14 +198,14 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
     if (Array.isArray(children)) {
       return children.map((child, idx) => {
         if (typeof child === 'string') {
-          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(child)) {
+          if (citationPattern.test(child)) {
             return <InlineSourceCitations key={idx} text={child} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
           }
           return child;
         }
         if (typeof child === 'number') {
           const text = String(child);
-          if (/\[\d+(?:\s*,\s*\d+)*\]/.test(text)) {
+          if (citationPattern.test(text)) {
             return <InlineSourceCitations key={idx} text={text} sources={sources} sharedUsedSources={sharedUsedSources.usedSources} sharedUsedNumberToIndex={sharedUsedSources.usedNumberToIndex} />;
           }
           return child;

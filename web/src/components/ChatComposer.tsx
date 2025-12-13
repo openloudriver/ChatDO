@@ -27,6 +27,7 @@ const webResultToSource = (result: { title: string; url: string; snippet: string
     description: result.snippet,
     rank: index,
     sourceType: 'web',
+    citationPrefix: null, // Web uses no prefix: [1], [2], [3]
   };
 };
 
@@ -34,12 +35,13 @@ const webResultToSource = (result: { title: string; url: string; snippet: string
 const ragFileToSource = (file: RagFile, index: number): Source => {
   return {
     id: file.id || `rag-${index}`,
-    url: file.file_path ? `file://${file.file_path}` : undefined,
+    url: file.path ? `file://${file.path}` : undefined,
     title: file.filename || 'Document',
     siteName: 'My documents',
     description: file.text_extracted ? 'Ready' : 'Processing...',
     rank: index,
     sourceType: 'rag',
+    citationPrefix: 'R', // RAG uses R prefix: [R1], [R2], [R3]
     fileName: file.filename,
   };
 };
@@ -54,11 +56,42 @@ const convertLegacySources = (sources?: string[] | Source[]): Source[] | undefin
   }
   
   // Convert string[] to Source[]
-  return (sources as string[]).map((source, index) => ({
-    id: `legacy-${index}`,
-    title: source,
-    rank: index,
-  }));
+  // First pass: identify Memory vs Web sources
+  const memorySources: string[] = [];
+  const webSources: string[] = [];
+  
+  (sources as string[]).forEach(source => {
+    if (source.startsWith('Memory-')) {
+      memorySources.push(source);
+    } else {
+      webSources.push(source);
+    }
+  });
+  
+  // Second pass: create Source objects with proper ranks
+  return [
+    // Web sources first (rank 0, 1, 2...)
+    ...webSources.map((source, index) => ({
+      id: `web-${index}`,
+      title: source,
+      rank: index,
+      sourceType: 'web' as const,
+      citationPrefix: null as const, // Web uses no prefix: [1], [2], [3]
+    })),
+    // Memory sources second (rank 0, 1, 2... within Memory group)
+    ...memorySources.map((source, index) => {
+      const sourceName = source.substring(7); // Remove "Memory-" prefix
+      return {
+        id: `memory-${index}`,
+        title: sourceName,
+        siteName: 'Memory',
+        description: 'Project memory source',
+        rank: index, // Rank within Memory group (0-based, will map to M1, M2, M3)
+        sourceType: 'memory' as const,
+        citationPrefix: 'M' as const, // Memory uses M prefix: [M1], [M2], [M3]
+      };
+    })
+  ];
 };
 
 const ChatComposer: React.FC = () => {

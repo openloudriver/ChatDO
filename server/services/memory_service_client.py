@@ -73,17 +73,26 @@ class MemoryServiceClient:
     def format_context(self, results: List[Dict]) -> str:
         """
         Format search results into a context block for the AI prompt.
+        Includes citation instructions for Memory sources using [M1], [M2], etc.
         
         Args:
             results: List of search result dictionaries (can include both files and chat messages)
             
         Returns:
-            Formatted context string
+            Formatted context string with citation instructions
         """
         if not results:
             return ""
         
-        context_parts = ["[PROJECT MEMORY]"]
+        context_parts = [
+            "[PROJECT MEMORY]",
+            "",
+            "You have access to the following memory sources from this project. Use them when relevant.",
+            "",
+            "CITATION FORMAT: When you use information from these memory sources, add inline citations like [M1] or [M2] at the end of the relevant sentence.",
+            "Use [M1, M2] when referencing multiple memory sources. The sources are numbered below (M1, M2, M3, etc.).",
+            "",
+        ]
         
         for i, result in enumerate(results, 1):
             source_type = result.get("source_type", "file")
@@ -92,7 +101,7 @@ class MemoryServiceClient:
                 # Format chat message source
                 chat_id = result.get("chat_id", "unknown")
                 message_id = result.get("message_id", "unknown")
-                context_parts.append(f"\n{i}) Source: Chat message (chat_id: {chat_id[:8]}...)")
+                context_parts.append(f"\n[M{i}] Source: Chat message (chat_id: {chat_id[:8]}...)")
             else:
                 # Format file source
                 file_path = result.get("file_path", "unknown")
@@ -103,7 +112,7 @@ class MemoryServiceClient:
                     if len(parts) > 2:
                         # Show last 2 parts
                         file_path = "/".join(parts[-2:])
-                context_parts.append(f"\n{i}) Source: {file_path}")
+                context_parts.append(f"\n[M{i}] Source: {file_path}")
             
             chunk_text = result.get("text", "")
             context_parts.append("---")

@@ -242,15 +242,21 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           onMouseEnter={handlePopoverMouseEnter}
           onMouseLeave={handlePopoverMouseLeave}
         >
-          {(source.siteName || source.fileName) && (
+          {(source.siteName || source.fileName || source.sourceType) && (
             <div className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
-              {source.siteName || (source.fileName ? 'RAG File' : '')}
+              {source.siteName || 
+               (source.fileName ? 'RAG File' : '') ||
+               (source.sourceType === 'memory' ? 'Memory' : '') ||
+               (source.sourceType === 'rag' ? 'RAG Document' : '') ||
+               (source.sourceType === 'web' ? 'Web Source' : '')}
             </div>
           )}
           <div 
             className={`mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)] ${
               source.meta?.onOpenFile && source.meta?.ragFile 
                 ? 'cursor-pointer hover:underline' 
+                : source.url
+                ? 'cursor-pointer hover:underline'
                 : ''
             }`}
             onClick={e => {
@@ -258,10 +264,12 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
               // Handle RAG files (stored in meta.onOpenFile)
               if (source.meta?.onOpenFile && source.meta?.ragFile) {
                 source.meta.onOpenFile(source.meta.ragFile);
+              } else if (source.url) {
+                window.open(source.url, '_blank', 'noopener,noreferrer');
               }
             }}
           >
-            {source.title}
+            {source.title || 'Untitled Source'}
           </div>
           {source.fileName && source.fileName !== source.title && (
             <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
@@ -273,9 +281,10 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
               {formatDate(source.publishedAt)}
             </div>
           )}
-          {source.description && (
+          {(source.description || source.sourceType === 'memory') && (
             <p className="mb-2 line-clamp-3 text-[11px] text-[var(--text-secondary)]">
-              {source.description}
+              {source.description || 
+               (source.sourceType === 'memory' ? 'This information comes from your project memory, which includes past conversations and indexed files.' : '')}
             </p>
           )}
           {source.url && (

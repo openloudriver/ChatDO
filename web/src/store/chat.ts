@@ -137,8 +137,6 @@ interface ChatStore {
   restoreChat: (id: string) => Promise<void>;
   purgeChat: (id: string) => Promise<void>;
   purgeAllTrashedChats: () => Promise<void>;
-  ensureGeneralProject: () => Promise<Project>;
-  createNewChatInProject: (projectId: string) => Promise<Conversation>;
   searchChats: (query: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
@@ -164,6 +162,7 @@ interface ChatStore {
   setWebMode: (mode: WebMode) => void;
 }
 
+// @ts-ignore - Zustand circular reference pattern (store references itself)
 export const useChatStore = create<ChatStore>((set) => ({
   // Initial state
   projects: [],
@@ -192,7 +191,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   sources: [],
   ragFileIds: [],
   ragFilesByConversationId: {},
-    connectProjectModal: { open: false },
+  connectProjectModal: { open: false },
+  webMode: 'auto' as WebMode,
   
   // Actions
   setProjects: (projects) => set({ projects }),
@@ -225,7 +225,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     try {
       const response = await axios.get('http://localhost:8000/api/projects');
       const projects = response.data;
-      set((state) => {
+      set(() => {
         // Don't auto-select project - let startup logic handle it
         // This allows session restore to work properly
         return { 
@@ -371,13 +371,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       
       // Get the project to find default_target
       const state = useChatStore.getState();
-      const project = projectId 
-        ? state.projects.find(p => p.id === projectId) || state.currentProject
-        : state.currentProject;
-      const defaultTarget = project?.default_target || 'general';
       
       // Find General project for fallback
-      const generalProject = state.projects.find(p => p.name === 'General');
+      const generalProject = state.projects.find((p: Project) => p.name === 'General');
       
       // Convert to Conversation format and split active/trashed
       const activeChats: Conversation[] = [];
@@ -394,7 +390,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         }
         
         // Get the actual project for this chat to determine target
-        const chatProject = state.projects.find(p => p.id === chatProjectId);
+        const chatProject = state.projects.find((p: Project) => p.id === chatProjectId);
         const chatTarget = chatProject?.default_target || 'general';
         
         const conversation: Conversation = {
@@ -440,7 +436,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         // If current conversation was deleted, clear it or select another
         let newCurrentConversation = state.currentConversation;
         if (state.currentConversation) {
-          const stillExists = allChats.some(c => c.id === state.currentConversation?.id);
+          const stillExists = allChats.some((c: any) => c.id === state.currentConversation?.id);
           if (!stillExists) {
             newCurrentConversation = activeChats.length > 0 ? activeChats[0] : null;
           }
@@ -504,8 +500,8 @@ export const useChatStore = create<ChatStore>((set) => ({
                 .then(response => {
                   // Verify the chat still exists in activeChats before updating
                   const state = useChatStore.getState();
-                  const chatStillExists = state.conversations.some(c => c.id === chat.id) || 
-                                         state.allConversations.some(c => c.id === chat.id);
+                  const chatStillExists = state.conversations.some((c: Conversation) => c.id === chat.id) || 
+                                         state.allConversations.some((c: Conversation) => c.id === chat.id);
                   
                   if (!chatStillExists) {
                     // Chat was deleted, don't update
@@ -514,25 +510,6 @@ export const useChatStore = create<ChatStore>((set) => ({
                   
                   const previewMessages = response.data.messages || [];
                   if (previewMessages.length > 0) {
-                    // Find the last user message (go backwards)
-                    let lastUserMsg = null;
-                    for (let i = previewMessages.length - 1; i >= 0; i--) {
-                      if (previewMessages[i].role === 'user') {
-                        lastUserMsg = previewMessages[i];
-                        break;
-                      }
-                    }
-                    
-                    // If no user message found, use the last message anyway
-                    const msgToShow = lastUserMsg || previewMessages[previewMessages.length - 1];
-                    
-                    const previewMessage: Message = {
-                      id: `${chat.id}-preview`,
-                      role: msgToShow.role,
-                      content: msgToShow.content,
-                      timestamp: new Date()
-                    };
-                    
                     // Store all messages for preview (so getPreview can find user messages)
                     const allPreviewMessages: Message[] = previewMessages.map((msg: any, idx: number) => ({
                       id: `${chat.id}-preview-${idx}`,
@@ -575,7 +552,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       
       for (const chat of allChats) {
         if (chat.trashed) {
-          const project = state.projects.find(p => p.id === chat.project_id);
+          const project = state.projects.find((p: Project) => p.id === chat.project_id);
           const defaultTarget = project?.default_target || 'general';
           
           const conversation: Conversation = {
@@ -656,7 +633,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       
       // Get the project to find default_target
       const state = useChatStore.getState();
-      const project = state.projects.find(p => p.id === deletedChat.project_id) || state.currentProject;
+      const project = state.projects.find((p: Project) => p.id === deletedChat.project_id) || state.currentProject;
       const defaultTarget = project?.default_target || 'general';
       
       // Convert backend response to Conversation format
@@ -712,25 +689,24 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   moveChat: async (id, projectId) => {
     try {
-      const response = await axios.post(`http://localhost:8000/api/chats/${id}/move`, {
+      await axios.post(`http://localhost:8000/api/chats/${id}/move`, {
         project_id: projectId
       });
-      const movedChat = response.data;
       
       // Get the project to find default_target
       const state = useChatStore.getState();
-      const project = state.projects.find(p => p.id === projectId) || state.currentProject;
+      const project = state.projects.find((p: Project) => p.id === projectId) || state.currentProject;
       const defaultTarget = project?.default_target || 'general';
       
       // Update the chat's project_id in all state arrays
       set((state) => {
-        const updatedConversations = state.conversations.map(c =>
+        const updatedConversations = state.conversations.map((c: Conversation) =>
           c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
         );
-        const updatedAllConversations = state.allConversations.map(c =>
+        const updatedAllConversations = state.allConversations.map((c: Conversation) =>
           c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
         );
-        const updatedTrashedChats = state.trashedChats.map(c =>
+        const updatedTrashedChats = state.trashedChats.map((c: Conversation) =>
           c.id === id ? { ...c, projectId: projectId, targetName: defaultTarget } : c
         );
         const updatedCurrentConversation = state.currentConversation?.id === id
@@ -800,13 +776,13 @@ export const useChatStore = create<ChatStore>((set) => ({
     try {
       // Get the chat's project before purging so we can reload its chats
       const state = useChatStore.getState();
-      const chatToPurge = state.trashedChats.find(c => c.id === id);
+      const chatToPurge = state.trashedChats.find((c: Conversation) => c.id === id);
       const projectId = chatToPurge?.projectId;
       
       await axios.post(`http://localhost:8000/api/chats/${id}/purge`);
       
       set((state) => {
-        const updatedTrashedChats = state.trashedChats.filter(c => c.id !== id);
+        const updatedTrashedChats = state.trashedChats.filter((c: Conversation) => c.id !== id);
         
         // If purged chat was current, clear it
         const updatedCurrentConversation = state.currentConversation?.id === id
@@ -833,9 +809,9 @@ export const useChatStore = create<ChatStore>((set) => ({
     try {
       // Get all project IDs that have trashed chats before purging
       const state = useChatStore.getState();
-      const projectIds = new Set(state.trashedChats.map(c => c.projectId).filter(Boolean));
+      const projectIds = new Set(state.trashedChats.map((c: Conversation) => c.projectId).filter(Boolean));
       
-      const response = await axios.post('http://localhost:8000/api/chats/purge_all_trashed');
+      await axios.post('http://localhost:8000/api/chats/purge_all_trashed');
       
       // Clear all trashed chats and reload
       set((state) => {
@@ -977,11 +953,42 @@ export const useChatStore = create<ChatStore>((set) => ({
               sources = msg.sources as Source[];
             } else {
               // Convert string[] to Source[]
-              sources = (msg.sources as string[]).map((source, index) => ({
-                id: `legacy-${index}`,
-                title: source,
-                rank: index,
-              }));
+              // First pass: identify Memory vs Web sources
+              const memorySources: string[] = [];
+              const webSources: string[] = [];
+              
+              (msg.sources as string[]).forEach(source => {
+                if (typeof source === 'string' && source.startsWith('Memory-')) {
+                  memorySources.push(source);
+                } else {
+                  webSources.push(source);
+                }
+              });
+              
+              // Second pass: create Source objects with proper ranks
+              sources = [
+                // Web sources first (rank 0, 1, 2...)
+                ...webSources.map((source, index) => ({
+                  id: `web-${index}`,
+                  title: source,
+                  rank: index,
+                  sourceType: 'web' as const,
+                  citationPrefix: null, // Web uses no prefix: [1], [2], [3]
+                })),
+                // Memory sources second (rank 0, 1, 2... within Memory group)
+                ...memorySources.map((source, index) => {
+                  const sourceName = source.substring(7); // Remove "Memory-" prefix
+                  return {
+                    id: `memory-${index}`,
+                    title: sourceName,
+                    siteName: 'Memory',
+                    description: 'Project memory source',
+                    rank: index, // Rank within Memory group (0-based, will map to M1, M2, M3)
+                    sourceType: 'memory' as const,
+                    citationPrefix: 'M' as const, // Memory uses M prefix: [M1], [M2], [M3]
+                  };
+                })
+              ];
             }
           }
         }
@@ -1005,6 +1012,7 @@ export const useChatStore = create<ChatStore>((set) => ({
               description: result.snippet,
               rank: index,
               sourceType: 'web' as const,
+              citationPrefix: null, // Web uses no prefix: [1], [2], [3]
             };
           });
         }
@@ -1017,12 +1025,13 @@ export const useChatStore = create<ChatStore>((set) => ({
           if (readyFiles.length > 0) {
             sources = readyFiles.map((file: RagFile, index: number) => ({
               id: file.id || `rag-${index}`,
-              url: file.file_path ? `file://${file.file_path}` : undefined,
+              url: file.path ? `file://${file.path}` : undefined,
               title: file.filename || 'Document',
               siteName: 'My documents',
               description: 'Ready',
-              rank: index,
+              rank: file.index || index, // Use file.index if available (1-based)
               sourceType: 'rag' as const,
+              citationPrefix: 'R' as const, // RAG uses R prefix: [R1], [R2], [R3]
               fileName: file.filename,
             }));
           }
@@ -1217,6 +1226,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     return { summarizingConversations: newSet };
   }),
   isConversationSummarizing: (conversationId) => {
+    // @ts-ignore - Zustand circular reference pattern
     const state = useChatStore.getState();
     return conversationId ? state.summarizingConversations.has(conversationId) : false;
   },
@@ -1266,8 +1276,9 @@ export const useChatStore = create<ChatStore>((set) => ({
   setWebMode: (mode: WebMode) => set({ webMode: mode }),
   
   ensureGeneralProject: async () => {
+    // @ts-ignore - Zustand circular reference pattern
     const state = useChatStore.getState();
-    let generalProject = state.projects.find(p => p.name === 'General');
+    let generalProject = state.projects.find((p: Project) => p.name === 'General');
     
     if (!generalProject) {
       // Create General project if it doesn't exist
@@ -1301,8 +1312,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       await useChatStore.getState().loadChats(projectId);
       
       // Find and return the new conversation
+      // @ts-ignore - Zustand circular reference pattern
       const state = useChatStore.getState();
-      const newConversation = state.conversations.find(c => c.id === conversationId);
+      const newConversation = state.conversations.find((c: Conversation) => c.id === conversationId);
       
       if (!newConversation) {
         throw new Error('Failed to find newly created conversation');
@@ -1395,7 +1407,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         }
         
         if (titleMatch || contentMatch) {
-          const project = state.projects.find(p => p.id === chat.project_id);
+          const project = state.projects.find((p: Project) => p.id === chat.project_id);
           const defaultTarget = project?.default_target || 'general';
           
           const conversation: Conversation = {

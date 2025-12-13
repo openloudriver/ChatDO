@@ -1452,13 +1452,13 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
         "FORMATTING RULES (MANDATORY):\n",
         "\n",
         "- Use markdown headings and bullet lists.\n",
-        "- For EVERY bullet or sentence that uses information from the sources, you MUST include one or more inline citations in square brackets, like `[1]` or `[1, 3]`, at the **end** of the sentence or bullet.\n",
+        "- For EVERY bullet or sentence that uses information from the sources, you MUST include one or more inline citations in square brackets, like `[R1]` or `[R1, R3]`, at the **end** of the sentence or bullet.\n",
         "- Do NOT invent source numbers. Only use IDs that correspond to the provided source list.\n",
         "- There must be **no bullets or paragraphs without at least one citation** unless they are purely meta text (e.g., 'Bottom line:' heading).\n",
-        "- If you summarize multiple sources in a single bullet, include all relevant numbers, e.g. `[1, 2, 4]`.\n",
-        "- The documents are numbered in the order they appear below (1, 2, 3, etc.).\n",
-        "- For example: 'Joint Cloud provides multi-level transport [1] with cost advantages [2].'\n",
-        "- If referencing multiple sources: 'The system supports both IL5 and IL6 operations [1, 2].'\n",
+        "- If you summarize multiple sources in a single bullet, include all relevant numbers, e.g. `[R1, R2, R4]`.\n",
+        "- The documents are numbered in the order they appear below (R1, R2, R3, etc.).\n",
+        "- For example: 'Joint Cloud provides multi-level transport [R1] with cost advantages [R2].'\n",
+        "- If referencing multiple sources: 'The system supports both IL5 and IL6 operations [R1, R2].'\n",
         "\n",
         "CRITICAL: Every bullet point and paragraph that references information from the documents MUST end with at least one citation. This is mandatory.\n"
     ]
@@ -1512,10 +1512,11 @@ def build_rag_context(rag_file_ids: List[str], user_message: str, chat_id: Optio
                 num_chunks = 5 if relevance_score > 0 else 3
                 selected_chunks = chunks[:num_chunks]
                 # Include file number in the source header so model knows which number to use for citations
-                context_parts.append(f"\n----\nSource [{file_number}]: {rag_file['filename']}\n")
+                # Use R prefix (R1, R2, R3) to distinguish RAG sources from Web and Memory
+                context_parts.append(f"\n----\nSource [R{file_number}]: {rag_file['filename']}\n")
                 context_parts.append('\n\n'.join(selected_chunks))
                 context_parts.append("\n----\n")
-                print(f"[RAG] Added context from {rag_file['filename']} ({len(selected_chunks)} chunks) as source [{file_number}]")
+                print(f"[RAG] Added context from {rag_file['filename']} ({len(selected_chunks)} chunks) as source [R{file_number}]")
                 file_number += 1
         except Exception as e:
             print(f"Error loading RAG file text: {e}")
