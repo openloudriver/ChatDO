@@ -53,7 +53,8 @@ def search_web(query: str, max_results: int = 10, freshness: str = None) -> List
         if freshness:
             params["freshness"] = freshness
         
-        response = requests.get(url, headers=headers, params=params, timeout=10)
+        # Use a shorter timeout for faster failure - Brave Search API should respond quickly
+        response = requests.get(url, headers=headers, params=params, timeout=5)
         response.raise_for_status()
         data = response.json()
         
@@ -64,11 +65,22 @@ def search_web(query: str, max_results: int = 10, freshness: str = None) -> List
                 clean_title = strip_tags(r.get("title", ""))
                 clean_snippet = strip_tags(r.get("description", ""))
                 
-                results.append({
+                result = {
                     "title": clean_title,
                     "url": r.get("url", ""),
                     "snippet": clean_snippet
-                })
+                }
+                
+                # Extract date information if available
+                # Brave Search API may return: age, page_age, or published_at
+                if "age" in r:
+                    result["age"] = r.get("age")
+                if "page_age" in r:
+                    result["page_age"] = r.get("page_age")
+                if "published_at" in r:
+                    result["published_at"] = r.get("published_at")
+                
+                results.append(result)
         
         return results
     except requests.exceptions.HTTPError as e:

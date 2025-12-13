@@ -560,6 +560,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     return model;
   };
 
+  // Check if RAG was used in a message
+  const hasRagSources = (message: Message): boolean => {
+    // Check if message type is rag_response
+    if (message.type === 'rag_response') {
+      return true;
+    }
+    // Check if message has RAG sources
+    if (message.sources && message.sources.some((s: Source) => s.sourceType === 'rag' || s.citationPrefix === 'R')) {
+      return true;
+    }
+    // Check if content has RAG citations [R1], [R2], etc.
+    if (message.content && /\[R\d+/.test(message.content)) {
+      return true;
+    }
+    return false;
+  };
+
   
   // Get RAG files from store (conversation-scoped) - reactively subscribe to store changes
   const ragFiles = useMemo(() => {
@@ -1292,7 +1309,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             Top Results
                           </div>
                           <div className="space-y-3">
-                            {message.data.results?.map((result: { title: string; url: string; snippet: string }, index: number) => {
+                            {message.data.results?.map((result: { title: string; url: string; snippet: string; published_at?: string; age?: string; page_age?: string }, index: number) => {
                               const articleState = articleStates[result.url] || 'idle';
                               // Brave Search button only shows spinner for its own article state
                               const isSummarizing = articleState === 'summarizing';
@@ -1320,9 +1337,55 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               const domain = getDomain(result.url);
                               const faviconUrl = getFaviconUrl(result.url);
                               
+                              // Format date label from available date fields
+                              const formatDateLabel = (): string | null => {
+                                // Prefer published_at (ISO date string)
+                                if (result.published_at) {
+                                  try {
+                                    const date = new Date(result.published_at);
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                      });
+                                    }
+                                  } catch {
+                                    // If date parsing fails, try to use as-is
+                                    return result.published_at;
+                                  }
+                                }
+                                
+                                // Try page_age (ISO date string like "2024-08-16T17:41:12")
+                                if (result.page_age) {
+                                  try {
+                                    const date = new Date(result.page_age);
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                      });
+                                    }
+                                  } catch {
+                                    // If date parsing fails, try to use as-is
+                                    return result.page_age;
+                                  }
+                                }
+                                
+                                // Fall back to age (relative time like "2h ago", "3d ago", "August 16, 2024")
+                                if (result.age) {
+                                  return result.age;
+                                }
+                                
+                                return null;
+                              };
+                              
+                              const dateLabel = formatDateLabel();
+                              
                               return (
                                 <div key={index} className={index > 0 ? "pt-3 border-t border-[var(--border-color)]/30" : ""}>
-                                  {/* Domain + Favicon */}
+                                  {/* Domain + Favicon + Date */}
                                   <div className="flex items-center gap-2 mb-1">
                                     {faviconUrl && (
                                       <img
@@ -1334,7 +1397,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                         }}
                                       />
                                     )}
-                                    <span className="text-xs text-[var(--text-secondary)]">{domain}</span>
+                                    <span className="text-xs text-[var(--text-secondary)]">
+                                      {domain}
+                                      {dateLabel && (
+                                        <>
+                                          <span className="mx-1">·</span>
+                                          <span>{dateLabel}</span>
+                                        </>
+                                      )}
+                                    </span>
                                   </div>
                                   
                                   {/* Title + Summarize Button */}
@@ -1538,9 +1609,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
                           {message.type === 'web_search_results' ? (
                             <div>Model: Brave Search</div>
-                          ) : message.model ? (
-                            <div>Model: {formatModelName(message.model)}</div>
-                          ) : null}
+                          ) : (() => {
+                            const ragUsed = hasRagSources(message);
+                            const baseModel = message.model ? formatModelName(message.model) : null;
+                            
+                            if (ragUsed && baseModel) {
+                              return <div>Model: RAG + {baseModel}</div>;
+                            } else if (ragUsed) {
+                              return <div>Model: RAG</div>;
+                            } else if (baseModel) {
+                              return <div>Model: {baseModel}</div>;
+                            }
+                            return null;
+                          })()}
                         </div>
                       )}
                     </div>

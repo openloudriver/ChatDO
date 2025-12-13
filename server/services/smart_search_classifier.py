@@ -58,7 +58,19 @@ async def decide_web_search(user_message: str) -> SearchDecision:
         # Explicit search commands are handled by the main endpoint, not here
         return SearchDecision(use_search=False, reason="explicit-search-command", query="")
     
-    # LLM classifier for better accuracy
+    # If heuristic strongly suggests search (multiple triggers or very clear patterns), skip LLM for speed
+    strong_heuristic_patterns = [
+        'latest', 'what\'s the latest', 'what is the latest', 'current', 'today', 'this week',
+        'breaking', 'news about', 'update on', 'what happened', 'what\'s happening'
+    ]
+    strong_heuristic = any(pattern in lower for pattern in strong_heuristic_patterns)
+    
+    # For strong heuristic matches, skip LLM call for instant results
+    if strong_heuristic:
+        logger.info(f"Strong heuristic match detected, skipping LLM classifier for speed: {user_message[:100]}")
+        return SearchDecision(use_search=True, reason="strong-heuristic", query=user_message)
+    
+    # LLM classifier for better accuracy (only for ambiguous cases)
     try:
         prompt = f"""You are a classifier that decides if we must use live web search to answer a question.
 
@@ -103,7 +115,8 @@ Be conservative - only use search when it's clearly necessary for up-to-date inf
             },
         }
         
-        resp = requests.post(AI_ROUTER_URL, json=payload, timeout=30)
+        # Use shorter timeout for faster classification - classifier should be quick
+        resp = requests.post(AI_ROUTER_URL, json=payload, timeout=5)
         resp.raise_for_status()
         data = resp.json()
         

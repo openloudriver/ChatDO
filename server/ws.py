@@ -401,85 +401,73 @@ Keep it concise, neutral, and factual."""
         # Load target configuration
         target_cfg = load_target(target_name)
         
-        # If force_search is true, route to run_agent which will return Top Results card
+        # If force_search is true, perform direct Brave Search (skip run_agent for speed)
         if force_search and not has_rag_context:
-            print(f"[FORCE_SEARCH] force_search=True, message='{message[:100]}...'")
+            print(f"[FORCE_SEARCH] force_search=True, performing direct Brave Search for: '{message[:100]}...'")
             from chatdo.tools import web_search
             
-            # Prepend "search for" to ensure it gets classified as web_search intent
-            search_message = message if message.lower().startswith(("search", "find", "look for")) else f"search for {message}"
-            print(f"[FORCE_SEARCH] Modified message to: '{search_message[:100]}...'")
-            
-            raw_result, model_display, provider = run_agent(
-                target=target_cfg,
-                task=search_message,
-                thread_id=conversation_id if conversation_id else None,
-                skip_web_search=False,  # Don't skip web search when force_search is true
-                thread_target_name=target_name  # Use project-based target name for thread storage
-            )
-            
-            print(f"[FORCE_SEARCH] run_agent returned: type={type(raw_result)}, model={model_display}, provider={provider}")
-            if isinstance(raw_result, dict):
-                print(f"[FORCE_SEARCH] Result dict keys: {raw_result.keys()}, type={raw_result.get('type')}")
-            
-            # Check if result is structured (web_search_results)
-            if isinstance(raw_result, dict) and raw_result.get("type") == "web_search_results":
-                print(f"[FORCE_SEARCH] ✅ Returning web_search_results")
-                # Send structured web search results
-                await websocket.send_json({
-                    "type": "web_search_results",
-                    "data": raw_result,
-                    "model": model_display,
-                    "provider": provider,
-                    "done": True
-                })
-            # Update chat's updated_at timestamp
-            if conversation_id:
-                update_chat_timestamp(conversation_id)
-                return
-            else:
-                # If run_agent didn't return web_search_results, force it directly
-                print(f"[FORCE_SEARCH] ⚠️ run_agent didn't return web_search_results, forcing direct web search")
-                try:
-                    # Perform web search directly (no freshness filter for force_search)
-                    search_results = web_search.search_web(message, max_results=10, freshness=None)
-                    if search_results and len(search_results) > 0:
-                        structured_result = {
-                            "type": "web_search_results",
-                            "query": message,
-                            "provider": "brave",
-                            "results": search_results
-                        }
-                        print(f"[FORCE_SEARCH] ✅ Direct web search succeeded, returning {len(search_results)} results")
-                        await websocket.send_json({
+            try:
+                # Perform web search directly using Brave Search API only (no LLM calls, no intent classification)
+                # This is fast - just a direct API call with 10 second timeout
+                search_results = web_search.search_web(message, max_results=10, freshness=None)
+                
+                if search_results and len(search_results) > 0:
+                    structured_result = {
+                        "type": "web_search_results",
+                        "query": message,
+                        "provider": "brave",
+                        "results": search_results
+                    }
+                    print(f"[FORCE_SEARCH] ✅ Direct Brave Search succeeded, returning {len(search_results)} results")
+                    
+                    # Save to memory store if thread_id is provided
+                    if conversation_id:
+                        from chatdo.memory.store import load_thread_history, save_thread_history
+                        history = load_thread_history(target_name, conversation_id)
+                        # Add user message
+                        history.append({"role": "user", "content": message})
+                        # Add assistant message with structured data
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": "",  # Empty content for structured messages
                             "type": "web_search_results",
                             "data": structured_result,
                             "model": "Brave Search",
-                            "provider": "brave_search",
-                            "done": True
-                        })
-                        # Update chat's updated_at timestamp
-                        if conversation_id:
-                            update_chat_timestamp(conversation_id)
-                        return
-                    else:
-                        print(f"[FORCE_SEARCH] ❌ Direct web search returned no results")
-                        await websocket.send_json({
-                            "type": "error",
-                            "content": "No search results found. Please try a different query.",
-                            "done": True
-                        })
-                        return
-                except Exception as e:
-                    print(f"[FORCE_SEARCH] ❌ Direct web search failed: {e}")
-                    import traceback
-                    traceback.print_exc()
+                            "provider": "brave_search"
+                        }
+                        history.append(assistant_message)
+                        save_thread_history(target_name, conversation_id, history)
+                    
+                    # Send structured web search results
+                    await websocket.send_json({
+                        "type": "web_search_results",
+                        "data": structured_result,
+                        "model": "Brave Search",
+                        "provider": "brave_search",
+                        "done": True
+                    })
+                    # Update chat's updated_at timestamp
+                    if conversation_id:
+                        update_chat_timestamp(conversation_id)
+                    return
+                else:
+                    print(f"[FORCE_SEARCH] ❌ Direct Brave Search returned no results")
                     await websocket.send_json({
                         "type": "error",
-                        "content": f"Web search failed: {str(e)}",
+                        "content": "No search results found. Please try a different query.",
                         "done": True
                     })
                     return
+            except Exception as e:
+                print(f"[FORCE_SEARCH] ❌ Direct Brave Search failed: {e}")
+                import traceback
+                traceback.print_exc()
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"Web search failed: {str(e)}. Please check your BRAVE_SEARCH_API_KEY configuration.",
+                    "done": True
+                })
+                return
         
         # If web is used and no RAG context, handle web + GPT flow directly
         if use_web and sources and not has_rag_context:
