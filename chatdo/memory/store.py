@@ -8,10 +8,10 @@ from pathlib import Path
 
 from typing import List, Dict, Any
 
-BASE_DIR_NAME = "memory"
+BASE_DIR_NAME = "memory_service/projects"
 
 def memory_root() -> Path:
-    # memory/ at the repo root
+    # memory_service/projects/ at the repo root
     return Path(__file__).resolve().parent.parent.parent / BASE_DIR_NAME
 
 def thread_dir(target_name: str, thread_id: str) -> Path:

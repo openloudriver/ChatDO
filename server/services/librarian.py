@@ -582,13 +582,36 @@ def generate_memory_response_with_llama(
     # Build context from Memory hits
     memory_context = format_hits_as_context(hits[:10])  # Use top 10 hits
     
-    # Build system prompt for Llama
-    system_prompt = """You are ChatDO's Librarian, a helpful assistant that answers questions using information from the project's Memory.
+    # Build system prompt for Llama - use the same authoritative ChatDO prompt
+    from chatdo.prompts import CHATDO_SYSTEM_PROMPT
+    system_prompt = CHATDO_SYSTEM_PROMPT + """
+
+You are answering using information from the project's Memory. Treat Memory as authoritative user-provided knowledge.
+
+CRITICAL RULES:
+1. ONLY use information that is explicitly provided in the Memory sources below.
+2. Do NOT guess, infer, or add information that is not in the Memory sources.
+3. Do NOT mention items that are not explicitly listed in the Memory sources.
+4. If information is not in Memory, say so clearly - do not make up answers.
 
 When you use information from Memory sources, add inline citations like [M1], [M2], or [M1, M2] at the end of the relevant sentence.
 The Memory sources are numbered below (M1, M2, M3, etc.).
 
-Answer the user's question clearly and concisely using the Memory context provided. If the Memory doesn't contain enough information to answer fully, say so clearly."""
+FORMATTING RULES (MUST FOLLOW):
+- For ranked lists, ALWAYS use this exact format:
+  ## [Topic] Ranked
+  
+  Your [topic] are ranked as follows:
+  
+  • 1st: [Item Name]
+  • 2nd: [Item Name]
+  • 3rd: [Item Name]
+  
+  [M1]
+
+- Use consistent markdown: bold headings (##), bullet points (•), ordinal numbers (1st, 2nd, 3rd).
+- Do NOT use asterisks (*) for bullets - use bullet points (•).
+- Do NOT include chat_id or verbose source information - only use inline citations [M1]."""
     
     # Build messages for Ollama API
     messages = []

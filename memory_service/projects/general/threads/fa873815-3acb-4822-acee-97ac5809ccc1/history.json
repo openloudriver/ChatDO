@@ -1,0 +1,80 @@
+[
+  {
+    "id": "c7cc48f3-10cd-4e88-a3b5-e82b3a811eb7",
+    "role": "user",
+    "content": "What day is it?",
+    "created_at": "2025-12-14T17:15:22.518064+00:00"
+  },
+  {
+    "id": "da0d312a-1df2-49c3-b760-e5b0dd8979c2",
+    "role": "assistant",
+    "content": "## Current Date and Time\nIt's a bit tricky to determine the current date and time without any additional context or access to external sources. However, I can suggest that you check your device's clock or search for the current date and time online.\n\n\n### No Direct Answer from Memory\n\n\nSince I don't have direct access to the current date and time, I won't provide a specific answer. If you need to know the current date and time, you may want to check with an external source such as a search engine or your device's clock.\n\n\n### Tips\nIf you're looking for the current date and time, try searching online or checking your device's clock for the most accurate information.\n[No direct citation from Memory]",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-project-35d84290-1603-4c37-b773-2423d3c51643-0",
+        "title": "What day is it?",
+        "description": "What day is it?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fa873815-3acb-4822-acee-97ac5809ccc1",
+          "message_id": "fa873815-3acb-4822-acee-97ac5809ccc1-user-0",
+          "file_path": null,
+          "source_id": "project-35d84290-1603-4c37-b773-2423d3c51643",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What day is it?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-14T17:15:22.517248+00:00"
+  },
+  {
+    "id": "c48133e2-7502-404a-8ab1-2b41b23e0a24",
+    "role": "user",
+    "content": "Can you not read from my system?",
+    "created_at": "2025-12-14T18:02:10.564729+00:00"
+  },
+  {
+    "id": "3efbb6d0-2ef9-4974-987c-a935edcfcf5d",
+    "role": "assistant",
+    "content": "## Limitation of Access\n\nI'm designed to process and understand human language inputs, but I don't have direct access to external systems or devices. My ability to interact with your system is limited to the data provided within our conversation.\n\n\n### No Direct Answer from Memory\n\n\nSince you've already asked this question, I'll provide a similar response. If you need to know more about my capabilities or limitations, feel free to ask, and I'll do my best to clarify.\n\n[No direct citation from Memory]",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-project-35d84290-1603-4c37-b773-2423d3c51643-0",
+        "title": "Can you not read from my system?",
+        "description": "Can you not read from my system?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fa873815-3acb-4822-acee-97ac5809ccc1",
+          "message_id": "fa873815-3acb-4822-acee-97ac5809ccc1-user-2",
+          "file_path": null,
+          "source_id": "project-35d84290-1603-4c37-b773-2423d3c51643",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Can you not read from my system?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-14T18:02:10.564061+00:00"
+  }
+]

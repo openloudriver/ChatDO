@@ -10,7 +10,7 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from typing import Dict
 
 from memory_service.config import load_sources
-from memory_service.store import db
+from memory_service.memory_dashboard import db
 from memory_service.indexer import index_file, delete_file, should_index_file
 
 logger = logging.getLogger(__name__)

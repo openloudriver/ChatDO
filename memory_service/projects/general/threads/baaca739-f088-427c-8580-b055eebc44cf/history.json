@@ -1,0 +1,77 @@
+[
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "You haven't told me your favorite color yet [M8, M9]. Please share it with me, and I'll remember it for future conversations. You can also choose a common pick like blue, green, black, purple, red, or orange [M4], or be specific with a hex code if you're picky [M10].",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite color is blue"
+  },
+  {
+    "role": "assistant",
+    "content": "I've got it! Your favorite color is indeed blue. I'll default to that for our conversations from now on [M1, M3, M9]. If you want a specific shade (e.g., navy, royal, sky), feel free to let me know and I'll use it going forward [M14, M30].",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "You've told me before that your favorite cryptocurrency is Monero (XMR).",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Okay, what about my third favorite?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your third favorite cryptocurrency is Stellar (XLM) [M3, M4].",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "And my second?"
+  },
+  {
+    "role": "assistant",
+    "content": "According to our previous conversation, your second favorite cryptocurrency is Bitcoin (BTC) [M4].",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

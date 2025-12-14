@@ -113,6 +113,20 @@ class IndexJob:
     error: Optional[str]
 
 
+@dataclass
+class Fact:
+    """Represents a structured fact (ranked list item or single preference)."""
+    id: int
+    project_id: str
+    chat_id: Optional[str]
+    topic_key: str  # Normalized topic key (e.g., "favorite_colors", "favorite_tv_show")
+    kind: str  # "ranked" or "single"
+    rank: Optional[int]  # For ranked lists (1-based), None for single facts
+    value: str  # The actual fact value
+    source_message_id: str  # ID of the message that contained this fact
+    created_at: datetime
+
+
 # FileTree models (Phase 1)
 from pydantic import BaseModel
 from typing import List

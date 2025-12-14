@@ -1,0 +1,28 @@
+[
+  {
+    "role": "user",
+    "content": "Summarize: https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://rumble.com/v72qh2c-padres-considering-japanese-pitcher-tatsuya-imai.-manager-craig-stammen-nee.html?e9s=src_v1_sports",
+      "title": "Padres considering Japanese pitcher Tatsuya Imai. Manager Craig Stammen needs a pitching rotation.",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The commentator outlines the San Diego Padres’ priorities heading into the winter meetings: adding multiple starting pitchers (spots 2–4) and a left-handed bat, potentially at first base. The team is reportedly in talks with Japanese right-hander Tatsuo Imae and is open to paying market rates, but prefers a creative, shorter-term contract—around three years, $33 million—that would let him re-enter free agency at age 31. While Imae’s performance (1.94 ERA, 97 mph fastball) is enticing, his smaller frame (5'10\", 154 lbs) raises durability questions. The piece closes by questioning whether the Padres’ front office can make another unconventional deal work. Key Points:",
+      "keyPoints": [
+        "Padres need multiple rotation starters (No. 2–4) and a left-handed bat, possibly a first baseman.",
+        "They are discussing a deal with Japanese RHP Tatsuo Imae.",
+        "Preference is for a shorter, creative contract (reported concept: 3 years, $33M with early free agency at 31), not a 5–8 year pact.",
+        "Imae’s upside: 1.94 ERA and 97 mph fastball; concern: smaller stature and potential durability.",
+        "The team’s GM has a track record of unconventional deals, with questions about repeating that success."
+      ],
+      "whyMatters": "San Diego’s approach signals a strategy to fill multiple needs while managing long-term risk, using flexible contracts to attract top talent. How they navigate this could shape their competitiveness and payroll structure for the next several seasons."
+    },
+    "model": "yt-dlp + Whisper-small-FP16 + GPT-5",
+    "provider": "yt-dlp-whisper-small"
+  }
+]

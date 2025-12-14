@@ -4,6 +4,7 @@ When web search is needed, it's done in the background and results are fed to GP
 """
 import json
 import logging
+import re
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -435,18 +436,21 @@ async def chat_with_smart_search(
     # CRITICAL: Index user message BEFORE searching memory to avoid race condition
     # This ensures that if the user asks a follow-up question immediately, the Memory Service
     # can find the message they just sent
+    # Also extract and store facts (ranked lists) from user messages into facts DB
     if thread_id and project_id:
         try:
             from server.services.memory_service_client import get_memory_client
+            from server.services.ranked_lists import extract_ranked_lists
+            from server.services.facts import normalize_topic_key
             from uuid import uuid4
             
             history = memory_store.load_thread_history(target_name, thread_id)
             message_index = len(history)
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
+            user_message_id = f"{thread_id}-user-{message_index}"
             
             # Index user message immediately (before memory search)
             memory_client = get_memory_client()
-            user_message_id = f"{thread_id}-user-{message_index}"
             logger.info(f"[MEMORY] Indexing user message BEFORE memory search: {user_message_id} for project {project_id}")
             success = memory_client.index_chat_message(
                 project_id=project_id,
@@ -461,8 +465,307 @@ async def chat_with_smart_search(
                 logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (before search)")
             else:
                 logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+            
+            # Extract and store ranked facts ONLY when extraction is valid + topic is known
+            from server.services.facts import extract_ranked_facts
+            
+            # Compute topic_key and ranked facts
+            topic_key = normalize_topic_key(user_message)
+            ranked_facts = extract_ranked_facts(user_message)
+            
+            # Store ONLY if both topic_key and ranked facts exist
+            if topic_key and ranked_facts:
+                logger.info(f"[FACTS] Storing {len(ranked_facts)} ranked fact(s) for topic_key={topic_key}")
+                for rank, value in ranked_facts:
+                    success = memory_client.store_fact(
+                        project_id=project_id,
+                        topic_key=topic_key,
+                        kind="ranked",
+                        value=value,
+                        source_message_id=user_message_id,
+                        chat_id=thread_id,
+                        rank=rank
+                    )
+                    if success:
+                        logger.info(f"[FACTS] ✅ Stored fact: topic_key={topic_key}, rank={rank}, value={value}")
+                    else:
+                        logger.warning(f"[FACTS] ❌ Failed to store fact: topic_key={topic_key}, rank={rank}")
+            elif topic_key and not ranked_facts:
+                logger.debug(f"[FACTS] Topic key found ({topic_key}) but no ranked facts extracted - skipping storage")
+            elif not topic_key and ranked_facts:
+                logger.debug(f"[FACTS] Ranked facts found but no topic key - skipping storage")
+            else:
+                logger.debug(f"[FACTS] No topic key and no ranked facts - skipping storage")
         except Exception as e:
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
+    
+    # ============================================================================
+    # HARD PRE-ROUTE: Facts retrieval (deterministic, no LLM)
+    # ============================================================================
+    # Before calling Llama, check if this is an ordinal/list query and answer
+    # directly from facts DB. If found, return immediately (do NOT call Llama).
+    
+    if project_id:
+        from server.services.ranked_lists import detect_ordinal_query
+        from server.services.facts import extract_topic_from_query, normalize_topic_key
+        memory_client = get_memory_client()
+        
+        # Check if this is an ordinal query (e.g., "second favorite color", "#2 favorite crypto")
+        ordinal_result = detect_ordinal_query(user_message)
+        if ordinal_result:
+            rank, topic = ordinal_result
+            logger.info(f"[FACTS] Detected ordinal query: rank={rank}, topic={topic}")
+            
+            # Determine topic_key STRICTLY
+            # If query includes topic noun → use that topic_key only
+            topic_key = normalize_topic_key(topic) if topic else None
+            
+            # If query does NOT include topic noun, use most recent topic_key in this chat_id ONLY
+            if not topic_key and thread_id:
+                from memory_service.memory_dashboard import db
+                topic_key = db.get_most_recent_topic_key_in_chat(project_id, thread_id)
+                if topic_key:
+                    logger.info(f"[FACTS] Using most recent topic_key in chat: {topic_key}")
+            
+            # If topic_key still None → return clarification question (no Llama)
+            if not topic_key:
+                clarification = "Which category (colors/cryptos/tv/candies)?"
+                logger.info(f"[FACTS] Topic key is None - returning clarification question")
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id)
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        model_label = "Model: Memory"
+                        history.append({
+                            "id": str(uuid4()),
+                            "role": "assistant",
+                            "content": clarification,
+                            "model": "Memory",
+                            "model_label": model_label,
+                            "provider": "memory",
+                            "created_at": assistant_msg_created_at
+                        })
+                        memory_store.save_thread_history(target_name, thread_id, history)
+                    except Exception as e:
+                        logger.warning(f"Failed to save clarification to history: {e}")
+                
+                return {
+                    "type": "assistant_message",
+                    "content": clarification,
+                    "meta": {"usedFacts": True, "clarification": True},
+                    "model": "Memory",
+                    "model_label": "Model: Memory",
+                    "provider": "memory",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                # Query facts DB for this rank
+                fact = memory_client.get_fact_by_rank(
+                    project_id=project_id,
+                    topic_key=topic_key,
+                    rank=rank,
+                    chat_id=thread_id
+                )
+                
+                if fact:
+                    answer = fact.get("value")
+                    logger.info(f"[FACTS] ✅ Answering ordinal query from facts DB: rank={rank}, topic_key={topic_key}, answer={answer}")
+                    
+                    # Format response
+                    ordinal_words = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 
+                                    6: "sixth", 7: "seventh", 8: "eighth", 9: "ninth", 10: "tenth"}
+                    ordinal_word = ordinal_words.get(rank, f"#{rank}")
+                    topic_display = topic_key.replace("_", " ").replace("favorite ", "")
+                    formatted_answer = f"Your {topic_display} ranked {ordinal_word} is **{answer}**. [M1]"
+                    
+                    # Save to history
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            model_label = "Model: Memory"
+                            history.append({
+                                "id": str(uuid4()),
+                                "role": "assistant",
+                                "content": formatted_answer,
+                                "model": "Memory",
+                                "model_label": model_label,
+                                "provider": "memory",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history)
+                        except Exception as e:
+                            logger.warning(f"Failed to save ordinal answer to history: {e}")
+                    
+                    # Return direct answer WITHOUT calling Llama
+                    return {
+                        "type": "assistant_message",
+                        "content": formatted_answer,
+                        "meta": {"usedFacts": True},
+                        "model": "Memory",
+                        "model_label": "Model: Memory",
+                        "provider": "memory",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                else:
+                    logger.info(f"[FACTS] Ordinal query detected but no fact found: rank={rank}, topic_key={topic_key}")
+                    # Return "I don't have that stored yet" - do NOT call Llama
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            model_label = "Model: Memory"
+                            response_text = "I don't have that stored yet."
+                            history.append({
+                                "id": str(uuid4()),
+                                "role": "assistant",
+                                "content": response_text,
+                                "model": "Memory",
+                                "model_label": model_label,
+                                "provider": "memory",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history)
+                        except Exception as e:
+                            logger.warning(f"Failed to save 'not found' answer to history: {e}")
+                    
+                    return {
+                        "type": "assistant_message",
+                        "content": "I don't have that stored yet.",
+                        "meta": {"usedFacts": True, "factNotFound": True},
+                        "model": "Memory",
+                        "model_label": "Model: Memory",
+                        "provider": "memory",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+        
+        # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
+        if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
+            # Determine topic_key STRICTLY
+            # If query includes topic noun → use that topic_key only
+            topic_key = extract_topic_from_query(user_message)
+            
+            # If query does NOT include topic noun, use most recent topic_key in this chat_id ONLY
+            if not topic_key and thread_id:
+                from memory_service.memory_dashboard import db
+                topic_key = db.get_most_recent_topic_key_in_chat(project_id, thread_id)
+                if topic_key:
+                    logger.info(f"[FACTS] Using most recent topic_key in chat for list query: {topic_key}")
+            
+            # If topic_key still None → return clarification question (no Llama)
+            if not topic_key:
+                clarification = "Which category (colors/cryptos/tv/candies)?"
+                logger.info(f"[FACTS] Topic key is None for list query - returning clarification question")
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id)
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        model_label = "Model: Memory"
+                        history.append({
+                            "id": str(uuid4()),
+                            "role": "assistant",
+                            "content": clarification,
+                            "model": "Memory",
+                            "model_label": model_label,
+                            "provider": "memory",
+                            "created_at": assistant_msg_created_at
+                        })
+                        memory_store.save_thread_history(target_name, thread_id, history)
+                    except Exception as e:
+                        logger.warning(f"Failed to save clarification to history: {e}")
+                
+                return {
+                    "type": "assistant_message",
+                    "content": clarification,
+                    "meta": {"usedFacts": True, "clarification": True},
+                    "model": "Memory",
+                    "model_label": "Model: Memory",
+                    "provider": "memory",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            
+            logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
+            
+            # Get all facts for this topic (chat-scoped)
+            facts = memory_client.get_facts(
+                project_id=project_id,
+                topic_key=topic_key,
+                chat_id=thread_id
+            )
+            
+            # Filter to only ranked facts (kind="ranked")
+            ranked_facts = [f for f in facts if f.get("kind") == "ranked"]
+            
+            if ranked_facts:
+                # Sort by rank
+                ranked_facts.sort(key=lambda f: f.get("rank", 0))
+                
+                # Format: Output exactly "1) <value>\n2) <value>\n3) <value>" - NO markdown headings, NO ##, NO M1
+                list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value')}" for f in ranked_facts])
+                list_text = list_items
+                
+                logger.info(f"[FACTS] ✅ Returning full ranked list from facts DB: topic_key={topic_key}, items={len(ranked_facts)}")
+                
+                # Save to history
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id)
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        model_label = "Model: Memory"
+                        history.append({
+                            "id": str(uuid4()),
+                            "role": "assistant",
+                            "content": list_text,
+                            "model": "Memory",
+                            "model_label": model_label,
+                            "provider": "memory",
+                            "created_at": assistant_msg_created_at
+                        })
+                        memory_store.save_thread_history(target_name, thread_id, history)
+                    except Exception as e:
+                        logger.warning(f"Failed to save list answer to history: {e}")
+                
+                # Return direct answer WITHOUT calling Llama
+                return {
+                    "type": "assistant_message",
+                    "content": list_text,
+                    "meta": {"usedFacts": True},
+                    "model": "Memory",
+                    "model_label": "Model: Memory",
+                    "provider": "memory",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                logger.info(f"[FACTS] Full list query detected but no ranked facts found: topic_key={topic_key}")
+                # Return "I don't have that stored yet" - do NOT call Llama
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id)
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        model_label = "Model: Memory"
+                        response_text = "I don't have that stored yet."
+                        history.append({
+                            "id": str(uuid4()),
+                            "role": "assistant",
+                            "content": response_text,
+                            "model": "Memory",
+                            "model_label": model_label,
+                            "provider": "memory",
+                            "created_at": assistant_msg_created_at
+                        })
+                        memory_store.save_thread_history(target_name, thread_id, history)
+                    except Exception as e:
+                        logger.warning(f"Failed to save 'not found' answer to history: {e}")
+                
+                return {
+                    "type": "assistant_message",
+                    "content": "I don't have that stored yet.",
+                    "meta": {"usedFacts": True, "factNotFound": True},
+                    "model": "Memory",
+                    "model_label": "Model: Memory",
+                    "provider": "memory",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
     
     # 0. Get memory context if project_id is available
     memory_context = ""
@@ -694,12 +997,14 @@ async def chat_with_smart_search(
                 
                 # Add user message with timestamp
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
-                history.append({
+                user_msg = {
                     "id": str(uuid4()),
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at
-                })
+                }
+                # NOTE: Ranked lists are now stored in facts DB, not thread metadata
+                history.append(user_msg)
                 
                 # Index user message into Memory Service for cross-chat search
                 # NOTE: This is redundant since we index early (before memory search), but kept for safety
@@ -1003,12 +1308,14 @@ async def chat_with_smart_search(
             # Add user message with timestamp
             from uuid import uuid4
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
-            history.append({
+            user_msg = {
                 "id": str(uuid4()),
                 "role": "user",
                 "content": user_message,
                 "created_at": user_msg_created_at
-            })
+            }
+            # NOTE: Ranked lists are now stored in facts DB, not thread metadata
+            history.append(user_msg)
             
             # Index user message into Memory Service for cross-chat search
             # NOTE: This is redundant since we index early (before memory search), but kept for safety

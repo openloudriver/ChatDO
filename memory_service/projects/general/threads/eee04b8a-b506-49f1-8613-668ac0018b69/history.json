@@ -1,0 +1,62 @@
+[
+  {
+    "role": "user",
+    "content": "What is my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- I have your preference saved as blue and will use it in future examples, themes, and suggestions.\n\n## Update it?\n- Want a different shade or a new color? Just tell me, e.g.:\n  - “Make it navy blue”\n  - “Switch to sky blue”\n  - “Change it to green”",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero (XMR) first, Bitcoin (BTC) second (you don’t care much about it), and Stellar (XLM) third.\n\n## TL;DR\n- #1: Monero (XMR)\n- #2: Bitcoin (BTC) — low priority for you\n- #3: Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Just tell me (e.g., “swap XLM and BTC” or “add ETH as #4”).",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "You can forget the part about BTC being the \"low priority\" or that \"I don't care much about it. Thanks."
+  },
+  {
+    "role": "assistant",
+    "content": "Done — I’ve removed the “low priority/don’t care” note for BTC; your favorites are Monero #1, Bitcoin #2, and Stellar (XLM) #3.\n\n## TL;DR\n- Monero (XMR) — #1\n- Bitcoin (BTC) — #2 (no special label)\n- Stellar (XLM) — #3\n\n## How I’ll use this\n- No negative weighting or sentiment on BTC.\n- Prioritize Monero, then BTC, then XLM in examples and news.\n- Continue avoiding cross‑chain tokens by default unless you ask.\n\n## Adjust anytime\n- Want to add a #4 or reorder? Tell me the new ranking.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Cool. So what are my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorites are Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n- #1: Monero (XMR)\n- #2: Bitcoin (BTC)\n- #3: Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or swap in a different #3? Just tell me (e.g., “make ETH #3”).",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

@@ -117,8 +117,8 @@
     "memory_sources": [
       "coin-dir"
     ],
-    "trashed": false,
-    "trashed_at": null
+    "trashed": true,
+    "trashed_at": "2025-12-14T14:12:49.895278+00:00"
   },
   {
     "id": "4351fc37-daef-4d42-bcad-795a90481fa6",
@@ -126,8 +126,8 @@
     "default_target": "general",
     "sort_index": 13,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null
+    "trashed": true,
+    "trashed_at": "2025-12-14T14:12:47.052756+00:00"
   },
   {
     "id": "d4fddf32-85c7-47ef-89a3-5f1af1c42d1c",
@@ -135,8 +135,8 @@
     "default_target": "general",
     "sort_index": 14,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null
+    "trashed": true,
+    "trashed_at": "2025-12-14T02:48:46.161311+00:00"
   },
   {
     "id": "61f7a24e-2d07-418f-b1e8-b845b88ae968",
@@ -161,6 +161,51 @@
     "name": "Test",
     "default_target": "general",
     "sort_index": 17,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-14T02:32:13.304781+00:00"
+  },
+  {
+    "id": "1caf97f2-b765-4dac-88fa-ae388f49eb18",
+    "name": "Test",
+    "default_target": "general",
+    "sort_index": 18,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-14T02:48:42.796215+00:00"
+  },
+  {
+    "id": "a7f1cd6c-2790-4a9e-99d7-991b293c1204",
+    "name": "Testing",
+    "default_target": "general",
+    "sort_index": 19,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-14T02:51:23.315448+00:00"
+  },
+  {
+    "id": "24da8d93-c23a-4d55-8ff8-0398a57a5d86",
+    "name": "Test",
+    "default_target": "general",
+    "sort_index": 20,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-14T03:57:34.247128+00:00"
+  },
+  {
+    "id": "a7e11de6-ffa3-4a9b-b52e-7d3a494305b2",
+    "name": "Testing",
+    "default_target": "general",
+    "sort_index": 21,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-14T14:12:44.888266+00:00"
+  },
+  {
+    "id": "35d84290-1603-4c37-b773-2423d3c51643",
+    "name": "Testing",
+    "default_target": "general",
+    "sort_index": 22,
     "memory_sources": [],
     "trashed": false,
     "trashed_at": null

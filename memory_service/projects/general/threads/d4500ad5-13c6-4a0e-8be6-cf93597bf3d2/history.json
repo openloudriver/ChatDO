@@ -1,0 +1,47 @@
+[
+  {
+    "role": "user",
+    "content": "What is my spouse’s favorite dessert?"
+  },
+  {
+    "role": "assistant",
+    "content": "Cheesecake.\n\n## TL;DR\n- Your spouse’s favorite dessert is cheesecake.\n\n## Optional details\n- Preferred style: New York, Basque, no-bake?\n- Favorite toppings: strawberry, blueberry, chocolate, caramel?\n- Want me to set a reminder for an upcoming date or suggest a local bakery/recipe?",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Explain CAP theorem like I’m 12"
+  },
+  {
+    "role": "assistant",
+    "content": "The CAP theorem says that when parts of a network can’t talk to each other, a system can only promise two of these three: Consistency, Availability, and Partition tolerance.\n\n## TL;DR\n- C = Everyone sees the same, correct data right now.\n- A = The system always answers your request.\n- P = It keeps working even if the network splits.\n- During a split, you must pick C or A—you can’t have both.\n\n## The three letters (kid-friendly)\n- Consistency (C): Like a shared notebook where every copy shows the exact same page instantly—no old pages.\n- Availability (A): Like a vending machine that always gives a snack—never “come back later.”\n- Partition tolerance (P): Like friends on walkie-talkies who keep trying to talk even if a tunnel blocks the signal.\n\n## Why you can’t have all three\nWhen the connection between servers breaks (a partition):\n- If you keep answering (A) and keep running (P), different places might give different answers (lose C).\n- If you insist on matching answers (C) while staying up (P), some requests must wait or fail (lose A).\n\n## Scenarios\n- CP (Consistency + Partition tolerance): Stays correct; might say “wait” during outages.\n- AP (Availability + Partition tolerance): Always answers; might be a bit out of date.\n- CA (Consistency + Availability): Works only when there’s no network break—basically one computer.\n\n## Comparison\n| Choice | What you get | What you give up | Typical use |\n| --- | --- | --- | --- |\n| CP | Correct, in-sync data | Some timeouts during splits | Bank balances, inventory |\n| AP | Always responds | Data can be slightly stale | Social feeds, reviews |\n| CA | Correct and responsive | Breaks on real splits | Single-machine apps |\n\n## Everyday examples\n- Bank account: Better to be right than fast (CP). If the network breaks, block the transaction.\n- Social media likes: Better to always show something (AP). Show slightly old counts and fix later.\n- Single laptop spreadsheet: No network to break, so it feels like CA.\n\n## Practical tips\n- If mistakes are expensive (money, orders, medical data), lean CP.\n- If uptime matters more than perfect freshness (feeds, analytics, caches), lean AP.\n- Mix and match: CP for critical writes; AP for read-only views or caches.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR).\n\n## TL;DR\n- Favorite: Monero (XMR)\n- Also on record: #2 Bitcoin (BTC), #3 Stellar (XLM), #4 Tether (USDT)\n\n## Adjust anytime\n- Want to reorder or add more? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

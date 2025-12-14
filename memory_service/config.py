@@ -17,20 +17,80 @@ BASE_DIR = Path(__file__).parent.parent
 CONFIG_DIR = BASE_DIR / "config"
 MEMORY_SOURCES_YAML = CONFIG_DIR / "memory_sources.yaml"
 
-# Database base path (per-source databases will be in subfolders)
-BASE_STORE_PATH = BASE_DIR / "memory_service" / "store"
+# Memory Dashboard path (for indexed file sources only)
+MEMORY_DASHBOARD_PATH = BASE_DIR / "memory_service" / "memory_dashboard"
+
+# Projects path (for project chat threads and indexes)
+PROJECTS_PATH = BASE_DIR / "memory_service" / "projects"
 
 # Global tracking database for dashboard (tracks all sources)
-TRACKING_DB_PATH = BASE_STORE_PATH / "tracking.sqlite"
+TRACKING_DB_PATH = MEMORY_DASHBOARD_PATH / "tracking.sqlite"
 
 # Dynamic sources JSON file (for UI-created sources)
-DYNAMIC_SOURCES_PATH = BASE_STORE_PATH / "dynamic_sources.json"
+DYNAMIC_SOURCES_PATH = MEMORY_DASHBOARD_PATH / "dynamic_sources.json"
 
-def get_db_path_for_source(source_id: str) -> Path:
-    """Get the database path for a specific source."""
-    source_dir = BASE_STORE_PATH / source_id
-    source_dir.mkdir(parents=True, exist_ok=True)
-    return source_dir / "index.sqlite"
+# Legacy alias for backward compatibility (will be removed)
+BASE_STORE_PATH = MEMORY_DASHBOARD_PATH
+
+def get_db_path_for_source(source_id: str, project_id: Optional[str] = None) -> Path:
+    """
+    Get the database path for a specific source.
+    
+    For project chat message indexes (source_id starts with "project-"):
+    - Stores in projects/<project_name>/index/index.sqlite
+    
+    For file source indexes (all other source_ids):
+    - Stores in memory_dashboard/<source_id>/index.sqlite
+    
+    Args:
+        source_id: Source ID (e.g., "project-{project_id}" for chat indexes, or "coin-dir" for file sources)
+        project_id: Optional project_id (used to look up project name for project indexes)
+    """
+    if source_id.startswith("project-"):
+        # This is a project chat message index
+        # Extract project_id from source_id (format: "project-<project_id>")
+        actual_project_id = source_id.replace("project-", "")
+        
+        # Use passed project_id if available, otherwise use extracted one
+        lookup_project_id = project_id if project_id else actual_project_id
+        
+        # Get project name - prioritize existing folder name in projects/, then lookup
+        project_name = None
+        
+        # First, check if project_id itself is a folder name in projects/
+        if (PROJECTS_PATH / actual_project_id).exists():
+            project_name = actual_project_id
+        else:
+            # Try to get project name from projects.json
+            try:
+                projects_path = BASE_DIR / "server" / "data" / "projects.json"
+                if projects_path.exists():
+                    with open(projects_path, 'r') as f:
+                        projects = json.load(f)
+                        for project in projects:
+                            if project.get("id") == lookup_project_id:
+                                # Use default_target as the folder name
+                                project_name = project.get("default_target", actual_project_id)
+                                # Verify this folder exists, if not use project_id
+                                if not (PROJECTS_PATH / project_name).exists():
+                                    project_name = actual_project_id
+                                break
+            except Exception:
+                pass
+            
+            # Fallback to project_id if lookup failed
+            if not project_name:
+                project_name = actual_project_id
+        
+        # Store in projects/<project_name>/index/index.sqlite
+        index_dir = PROJECTS_PATH / project_name / "index"
+        index_dir.mkdir(parents=True, exist_ok=True)
+        return index_dir / "index.sqlite"
+    else:
+        # This is a file source index - store in memory_dashboard
+        source_dir = MEMORY_DASHBOARD_PATH / source_id
+        source_dir.mkdir(parents=True, exist_ok=True)
+        return source_dir / "index.sqlite"
 
 # Embedding model
 EMBEDDING_MODEL = "BAAI/bge-large-en-v1.5"
@@ -138,7 +198,7 @@ def load_dynamic_sources() -> List[SourceConfig]:
 
 def save_dynamic_sources(sources: List[SourceConfig]) -> None:
     """Save dynamic sources to JSON file atomically."""
-    BASE_STORE_PATH.mkdir(parents=True, exist_ok=True)
+    MEMORY_DASHBOARD_PATH.mkdir(parents=True, exist_ok=True)
     
     # Convert to dicts
     sources_data = [
@@ -154,7 +214,7 @@ def save_dynamic_sources(sources: List[SourceConfig]) -> None:
     ]
     
     # Atomic write
-    with tempfile.NamedTemporaryFile(mode='w', dir=BASE_STORE_PATH, delete=False, suffix='.json') as f:
+    with tempfile.NamedTemporaryFile(mode='w', dir=MEMORY_DASHBOARD_PATH, delete=False, suffix='.json') as f:
         json.dump(sources_data, f, indent=2)
         temp_path = Path(f.name)
     

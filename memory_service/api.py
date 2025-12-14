@@ -14,8 +14,8 @@ from contextlib import asynccontextmanager
 import asyncio
 import threading
 
-from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, EMBEDDING_DIM, load_sources, create_dynamic_source, BASE_DIR, BASE_STORE_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
-from memory_service.store import db
+from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, EMBEDDING_DIM, load_sources, create_dynamic_source, BASE_DIR, MEMORY_DASHBOARD_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
+from memory_service.memory_dashboard import db
 from memory_service.indexer import index_source, index_chat_message
 from memory_service.watcher import WatcherManager
 from memory_service.vector_cache import get_query_embedding
@@ -140,6 +140,38 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
 
 
+class StoreFactRequest(BaseModel):
+    project_id: str
+    topic_key: str
+    kind: str  # "ranked" or "single"
+    value: str
+    source_message_id: str
+    chat_id: Optional[str] = None
+    rank: Optional[int] = None
+
+
+class GetFactsRequest(BaseModel):
+    project_id: str
+    topic_key: str
+    chat_id: Optional[str] = None
+
+
+class FactResponse(BaseModel):
+    id: int
+    project_id: str
+    chat_id: Optional[str]
+    topic_key: str
+    kind: str
+    rank: Optional[int]
+    value: str
+    source_message_id: str
+    created_at: str
+
+
+class FactsResponse(BaseModel):
+    facts: List[FactResponse]
+
+
 def _build_ann_index():
     """Load all embeddings from all sources and build ANN index."""
     if not ann_index_manager.is_available():
@@ -166,7 +198,7 @@ def _build_ann_index():
             source_id = source.id
             try:
                 # Skip chat sources (handled separately)
-                if source_id.startswith("chat-"):
+                if source_id.startswith("project-"):
                     continue
                 
                 # Check if source database exists
@@ -477,13 +509,48 @@ async def delete_source(source_id: str):
         logger.info(f"Removed {source_id} from tracking database")
     
     # Delete the index directory (frees up disk space; can always re-index if source is re-added)
-    source_dir = BASE_STORE_PATH / source_id
-    if source_dir.exists():
+    # Handle project sources vs file sources differently
+    if source_id.startswith("project-"):
+        # Project sources are in projects/<project_name>/index/
+        from memory_service.config import PROJECTS_PATH, BASE_DIR
+        project_id = source_id.replace("project-", "")
+        
+        # Try to get project name from projects.json
+        project_name = project_id
         try:
-            shutil.rmtree(source_dir, ignore_errors=True)
-            logger.info(f"Deleted index directory for source: {source_id}")
-        except Exception as e:
-            logger.warning(f"Could not delete index directory for {source_id}: {e}")
+            projects_path = BASE_DIR / "server" / "data" / "projects.json"
+            if projects_path.exists():
+                import json
+                with open(projects_path, 'r') as f:
+                    projects = json.load(f)
+                    for project in projects:
+                        if project.get("id") == project_id:
+                            project_name = project.get("default_target", project_id)
+                            # Verify folder exists, if not use project_id
+                            if not (PROJECTS_PATH / project_name).exists():
+                                project_name = project_id
+                            break
+        except Exception:
+            pass
+        
+        index_dir = PROJECTS_PATH / project_name / "index"
+        if index_dir.exists():
+            try:
+                # Delete the index.sqlite file and related files
+                for file in index_dir.glob("index.sqlite*"):
+                    file.unlink()
+                logger.info(f"Deleted project index directory for source: {source_id} (project: {project_name})")
+            except Exception as e:
+                logger.warning(f"Could not delete project index directory for {source_id}: {e}")
+    else:
+        # File sources are in memory_dashboard/<source_id>/
+        source_dir = MEMORY_DASHBOARD_PATH / source_id
+        if source_dir.exists():
+            try:
+                shutil.rmtree(source_dir, ignore_errors=True)
+                logger.info(f"Deleted index directory for source: {source_id}")
+            except Exception as e:
+                logger.warning(f"Could not delete index directory for {source_id}: {e}")
     
     return {
         "status": "ok",
@@ -541,8 +608,7 @@ async def reindex(request: ReindexRequest):
         
         # Clear old index data (files, chunks, embeddings) but keep the source record
         # We do this by deleting files/chunks/embeddings from the database, not deleting the directory
-        from memory_service.config import BASE_STORE_PATH
-        source_dir = BASE_STORE_PATH / request.source_id
+        # Note: For project sources, the path is in projects/<project_name>/index/, but we don't need it here
         
         # Delete all files/chunks/embeddings for this source from the database
         conn = db.get_db_connection(request.source_id)
@@ -996,6 +1062,145 @@ async def read_file(
         raise
     except Exception as e:
         logger.error(f"Error reading file from source {source_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Facts API Endpoints
+# ============================================================================
+
+@app.post("/facts/store")
+async def store_fact_endpoint(request: StoreFactRequest):
+    """
+    Store a structured fact (ranked list item or single preference).
+    
+    This is the authoritative storage for facts - all facts retrieval
+    must come from this database, not from thread metadata.
+    """
+    try:
+        fact_id = db.store_fact(
+            project_id=request.project_id,
+            topic_key=request.topic_key,
+            kind=request.kind,
+            value=request.value,
+            source_message_id=request.source_message_id,
+            chat_id=request.chat_id,
+            rank=request.rank
+        )
+        logger.info(f"[FACTS] Stored fact: project_id={request.project_id}, topic_key={request.topic_key}, kind={request.kind}, rank={request.rank}")
+        return {"status": "ok", "fact_id": fact_id}
+    except Exception as e:
+        logger.error(f"Error storing fact: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/facts/get", response_model=FactsResponse)
+async def get_facts_endpoint(request: GetFactsRequest):
+    """
+    Get all facts for a topic (project-scoped, optionally chat-scoped).
+    
+    Returns facts ordered by rank (for ranked) or created_at (for single).
+    """
+    try:
+        facts = db.get_facts_by_topic(
+            project_id=request.project_id,
+            topic_key=request.topic_key,
+            chat_id=request.chat_id
+        )
+        return FactsResponse(facts=[
+            FactResponse(
+                id=f.id,
+                project_id=f.project_id,
+                chat_id=f.chat_id,
+                topic_key=f.topic_key,
+                kind=f.kind,
+                rank=f.rank,
+                value=f.value,
+                source_message_id=f.source_message_id,
+                created_at=f.created_at.isoformat()
+            )
+            for f in facts
+        ])
+    except Exception as e:
+        logger.error(f"Error getting facts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/facts/get-by-rank")
+async def get_fact_by_rank(
+    project_id: str,
+    topic_key: str,
+    rank: int,
+    chat_id: Optional[str] = None
+):
+    """
+    Get a specific ranked fact by rank (e.g., "second favorite color").
+    
+    Returns the fact at the specified rank, or None if not found.
+    """
+    try:
+        fact = db.get_fact_by_rank(
+            project_id=project_id,
+            topic_key=topic_key,
+            rank=rank,
+            chat_id=chat_id
+        )
+        if not fact:
+            return {"status": "not_found"}
+        return {
+            "status": "ok",
+            "fact": FactResponse(
+                id=fact.id,
+                project_id=fact.project_id,
+                chat_id=fact.chat_id,
+                topic_key=fact.topic_key,
+                kind=fact.kind,
+                rank=fact.rank,
+                value=fact.value,
+                source_message_id=fact.source_message_id,
+                created_at=fact.created_at.isoformat()
+            )
+        }
+    except Exception as e:
+        logger.error(f"Error getting fact by rank: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/facts/get-single")
+async def get_single_fact(
+    project_id: str,
+    topic_key: str,
+    chat_id: Optional[str] = None
+):
+    """
+    Get a single fact (non-ranked) for a topic.
+    
+    Returns the most recent single fact for the topic, or None if not found.
+    """
+    try:
+        fact = db.get_single_fact(
+            project_id=project_id,
+            topic_key=topic_key,
+            chat_id=chat_id
+        )
+        if not fact:
+            return {"status": "not_found"}
+        return {
+            "status": "ok",
+            "fact": FactResponse(
+                id=fact.id,
+                project_id=fact.project_id,
+                chat_id=fact.chat_id,
+                topic_key=fact.topic_key,
+                kind=fact.kind,
+                rank=fact.rank,
+                value=fact.value,
+                source_message_id=fact.source_message_id,
+                created_at=fact.created_at.isoformat()
+            )
+        }
+    except Exception as e:
+        logger.error(f"Error getting single fact: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

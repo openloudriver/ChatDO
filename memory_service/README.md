@@ -100,11 +100,11 @@ Memory Service v1.1 adds a comprehensive dashboard for monitoring indexing progr
 
 ### New Database Tables
 
-**SourceStatus Table** (in `store/tracking.sqlite`):
+**SourceStatus Table** (in `memory_dashboard/tracking.sqlite`):
 - Tracks status, statistics, and last index times for each source
 - Fields: `id`, `display_name`, `root_path`, `status`, `files_indexed`, `bytes_indexed`, `last_index_started_at`, `last_index_completed_at`, `last_error`, `project_id`
 
-**IndexJob Table** (in `store/tracking.sqlite`):
+**IndexJob Table** (in `memory_dashboard/tracking.sqlite`):
 - Tracks individual indexing jobs with progress
 - Fields: `id`, `source_id`, `status`, `started_at`, `completed_at`, `files_total`, `files_processed`, `bytes_processed`, `error`
 
@@ -163,8 +163,9 @@ Memory Service provides automatic file indexing and semantic search capabilities
 ## Architecture
 
 - **FastAPI HTTP Service**: Runs on `http://127.0.0.1:5858`
-- **Per-Source SQLite Databases**: Each source has its own database at `memory_service/store/<source_id>/index.sqlite`
-- **Global Tracking Database**: Status and job tracking in `memory_service/store/tracking.sqlite`
+- **Per-Source SQLite Databases**: Each file source has its own database at `memory_service/memory_dashboard/<source_id>/index.sqlite`
+- **Project Chat Indexes**: Each project has its chat message index at `memory_service/projects/<project_name>/index/index.sqlite`
+- **Global Tracking Database**: Status and job tracking in `memory_service/memory_dashboard/tracking.sqlite`
 - **File Watchers**: Automatically index files when they're created, modified, or deleted
 - **Embeddings**: Uses sentence-transformers with all-MiniLM-L6-v2 model (384-dimensional vectors)
 

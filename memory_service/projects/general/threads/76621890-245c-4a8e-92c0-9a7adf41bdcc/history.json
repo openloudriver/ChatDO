@@ -1,0 +1,92 @@
+[
+  {
+    "role": "user",
+    "content": "In order of precedence, what are my favorite cryptocurrencies?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What are my favorite cryptos?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Notes\n- USDT is not on your favorites list anymore.\n- Want to reorder or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptos, in order, are XMR, BTC, XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "Saved — your favorites in order are Monero (XMR), Bitcoin (BTC), and Stellar (XLM).\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptos, in order, are XMR, BTC, XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) first, Bitcoin (BTC) second, and Stellar (XLM) third.\n\n## TL;DR\n1. Monero (XMR)\n2. Bitcoin (BTC)\n3. Stellar (XLM)\n\n## Adjust anytime\n- Want to change the order or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color, do you remember?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t have your favorite color saved yet.\n\n## TL;DR\n- Not in my notes yet.\n\n## Want me to remember it?\n- Reply with: “My favorite color is [color].”\n- If you have a primary and a secondary, say both (e.g., “Primary: navy blue; Secondary: forest green”).",
+    "model": "GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite color, do you remember?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue.\n\n## TL;DR\n- Blue\n\n## Update or tweak\n- Prefer a shade? Try navy, royal, sky, teal, or share a hex code.\n- Want to change it entirely? Tell me the new color and I’ll update your preference.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

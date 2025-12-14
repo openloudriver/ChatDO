@@ -17,8 +17,8 @@ from typing import List, Tuple, Optional
 import fnmatch
 
 from memory_service.config import CHUNK_SIZE_CHARS, CHUNK_OVERLAP_CHARS, EMBEDDING_MODEL
-from memory_service import store
-from memory_service.store import db
+from memory_service import memory_dashboard
+from memory_service.memory_dashboard import db
 from memory_service.embeddings import embed_texts
 
 logger = logging.getLogger(__name__)
@@ -247,7 +247,7 @@ def index_chat_message(
     """
     Index a chat message into the Memory Service.
     
-    Uses a special source_id format: f"chat-{project_id}" to store all chat messages
+    Uses a special source_id format: f"project-{project_id}" to store all chat messages
     for a project in a single source.
     
     Args:
@@ -263,11 +263,11 @@ def index_chat_message(
         True if indexed successfully, False otherwise
     """
     try:
-        # Use a special source_id for chat messages: "chat-{project_id}"
-        source_id = f"chat-{project_id}"
+        # Use a special source_id for chat messages: "project-{project_id}"
+        source_id = f"project-{project_id}"
         
-        # Initialize DB for this source if needed
-        db.init_db(source_id)
+        # Initialize DB for this source if needed (pass project_id for path lookup)
+        db.init_db(source_id, project_id=project_id)
         
         # Upsert source (chat messages don't have a root_path, use empty string)
         source_db_id = db.upsert_source(source_id, project_id, "", None, None)

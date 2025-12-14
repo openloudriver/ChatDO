@@ -289,11 +289,11 @@ class AnnIndexManager:
                     continue  # Skip embeddings from other projects
                 
                 # Apply source filter if provided
-                # BUT: Always include chat embeddings (source_id starts with "chat-") for cross-chat memory
+                # BUT: Always include chat embeddings (source_id starts with "project-") for cross-chat memory
                 source_id = metadata.get("source_id")
                 if filter_source_ids and source_id not in filter_source_ids:
                     # Skip file sources that don't match, but always include chat sources
-                    if not (source_id and source_id.startswith("chat-")):
+                    if not (source_id and source_id.startswith("project-")):
                         continue
                 
                 # Convert inner product to normalized cosine similarity [0, 1]

@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import HTTPException
 
 from memory_service.models import FileTreeResponse, FileReadResponse, FileTreeNode
-from memory_service.store import db
+from memory_service.memory_dashboard import db
 
 logger = logging.getLogger(__name__)
 

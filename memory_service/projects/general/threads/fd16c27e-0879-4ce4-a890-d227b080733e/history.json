@@ -1,0 +1,54 @@
+[
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "I don’t know your favorite color yet—tell me and I’ll remember it for next time [MM1, M2]. You can choose from a few options: blue, green, black, purple, red, or orange.",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-general-0",
+        "title": "I don’t know your favorite color yet.",
+        "description": "I don’t know your favorite color yet.\n\n## Quick follow-up\n- Tell me your favorite color and I’ll remember it for next time.\n- If you’re undecided, pic...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "25e88c35-99e4-477b-89a8-f9fa10c87105",
+          "message_id": "25e88c35-99e4-477b-89a8-f9fa10c87105-assistant-15",
+          "file_path": null,
+          "source_id": "chat-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite color yet.\n\n## Quick follow-up\n- Tell me your favorite color and I’ll remember it for next time.\n- If you’re undecided, pick from a few: blue, green, black, purple, red, orange."
+        }
+      },
+      {
+        "id": "memory-chat-general-5",
+        "title": "I don’t know your favorite color yet—tell me and I’ll rememb...",
+        "description": "I don’t know your favorite color yet—tell me and I’ll remember it for next time.\n\n## TL;DR\n- Share it once and I’ll save it.\n\n## Quick reply\n- “Rememb...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e",
+          "message_id": "ae420c32-5bc0-4737-a3b8-9eba2d4a112e-assistant-5",
+          "file_path": null,
+          "source_id": "chat-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite color yet—tell me and I’ll remember it for next time.\n\n## TL;DR\n- Share it once and I’ll save it.\n\n## Quick reply\n- “Remember: my favorite color is <color>.”\n\n## Note\n- If you’ve told me before, it’s not in this session’s memory—please restate it and I’ll pin it."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]
