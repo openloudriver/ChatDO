@@ -1,0 +1,36 @@
+[
+  {
+    "role": "user",
+    "content": "My favorite crypto is XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "XLM stands for Stellar Lumens. It's a decentralized, open-source cryptocurrency that uses the XLM blockchain. [M1]",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-0b54c59e-9385-4948-b5b2-305e44a2c015-1",
+        "title": "My favorite color is blue",
+        "description": "My favorite color is blue",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "d34ac5fa-544a-4ae2-a2a9-0b0c513a302c",
+          "message_id": "d34ac5fa-544a-4ae2-a2a9-0b0c513a302c-user-0",
+          "file_path": null,
+          "source_id": "chat-0b54c59e-9385-4948-b5b2-305e44a2c015",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color is blue"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

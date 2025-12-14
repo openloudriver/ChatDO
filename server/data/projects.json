@@ -108,5 +108,34 @@
     "memory_sources": [],
     "trashed": true,
     "trashed_at": "2025-12-05T21:16:44.801240+00:00"
+  },
+  {
+    "id": "0b54c59e-9385-4948-b5b2-305e44a2c015",
+    "name": "MemoryTest",
+    "default_target": "general",
+    "sort_index": 12,
+    "memory_sources": [
+      "coin-dir"
+    ],
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "4351fc37-daef-4d42-bcad-795a90481fa6",
+    "name": "MemoryTest2",
+    "default_target": "general",
+    "sort_index": 13,
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "d4fddf32-85c7-47ef-89a3-5f1af1c42d1c",
+    "name": "MemoryTest3",
+    "default_target": "general",
+    "sort_index": 14,
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null
   }
 ]

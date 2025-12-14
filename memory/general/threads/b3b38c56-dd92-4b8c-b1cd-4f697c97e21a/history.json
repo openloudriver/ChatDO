@@ -1,0 +1,122 @@
+[
+  {
+    "role": "user",
+    "content": "My favorite cryptocurrency is USDT"
+  },
+  {
+    "role": "assistant",
+    "content": "I'll keep that in mind for any future conversations related to cryptocurrencies.\n\nWould you like me to incorporate the use of USDT into a hypothetical project, perhaps as a basis for currency exchange rates or conversions?",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-4351fc37-daef-4d42-bcad-795a90481fa6-0",
+        "title": "My favorite color is red.",
+        "description": "My favorite color is red.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b6560e37-226a-44dd-9778-99c517090fb8",
+          "message_id": "b6560e37-226a-44dd-9778-99c517090fb8-user-0",
+          "file_path": null,
+          "source_id": "chat-4351fc37-daef-4d42-bcad-795a90481fa6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color is red."
+        }
+      },
+      {
+        "id": "memory-chat-4351fc37-daef-4d42-bcad-795a90481fa6-1",
+        "title": "Noted—I'll remember your favorite color is red and use it wh...",
+        "description": "Noted—I'll remember your favorite color is red and use it when suggesting themes, examples, or visuals.\n\n## TL;DR\n- Preference saved: red.\n- Want me t...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b6560e37-226a-44dd-9778-99c517090fb8",
+          "message_id": "b6560e37-226a-44dd-9778-99c517090fb8-assistant-1",
+          "file_path": null,
+          "source_id": "chat-4351fc37-daef-4d42-bcad-795a90481fa6",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—I'll remember your favorite color is red and use it when suggesting themes, examples, or visuals.\n\n## TL;DR\n- Preference saved: red.\n- Want me to apply it to a site palette, slide theme, or code examples?\n\n## Quick picker\n- Primary red: #dc2626 (bold, good for buttons)\n- Soft red: #f87171 (backgrounds/badges)\n- Deep red: #991b1b (accents, dark mode)\n\n## Practical tips\n- Tailwind example (set a primary brand color):\n  ```js\n  // tailwind.config.js\n  const colors = require('tailwindcss/colors');\n\n  module.exports = {\n    theme: {\n      extend: {\n        colors: {\n          primary: colors.red, // use Tailwind’s red scale (50–900)\n        },\n      },\n    },\n  };\n  ```\n  Use classes like bg-primary-600, text-primary-500, hover:bg-primary-700.\n\n- CSS variables approach:\n  ```css\n  :root { --brand: #dc2626; }\n  .btn { background: var(--brand); }\n  ```\n\n## Question\nWant me to apply a red palette to anything specific (e.g., your website, terminal theme, slide deck, or app UI)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Unfortunately, I don't have any information about your personal preferences, including favorite colors. Our previous conversation was about cryptocurrencies, and I didn't gather any additional context about you. If you'd like to share your favorite color, I'm happy to chat with you about it! [M1]",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-4351fc37-daef-4d42-bcad-795a90481fa6-0",
+        "title": "My favorite cryptocurrency is USDT",
+        "description": "My favorite cryptocurrency is USDT",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b3b38c56-dd92-4b8c-b1cd-4f697c97e21a",
+          "message_id": "b3b38c56-dd92-4b8c-b1cd-4f697c97e21a-user-0",
+          "file_path": null,
+          "source_id": "chat-4351fc37-daef-4d42-bcad-795a90481fa6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrency is USDT"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "You've mentioned before that your favorite color is red [M1]. Would you like to know something interesting about the color red or perhaps discuss its significance in different cultures or contexts?",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-4351fc37-daef-4d42-bcad-795a90481fa6-3",
+        "title": "My favorite color is red.",
+        "description": "My favorite color is red.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b6560e37-226a-44dd-9778-99c517090fb8",
+          "message_id": "b6560e37-226a-44dd-9778-99c517090fb8-user-2",
+          "file_path": null,
+          "source_id": "chat-4351fc37-daef-4d42-bcad-795a90481fa6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color is red."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

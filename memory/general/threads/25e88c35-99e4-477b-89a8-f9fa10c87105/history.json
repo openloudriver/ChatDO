@@ -1755,5 +1755,2131 @@
       "usedWebSearch": false,
       "usedMemory": true
     }
+  },
+  {
+    "role": "user",
+    "content": "Why is Trump trying to take over Greenland?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Why is Trump trying to take over Greenland?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Why does Trump want Greenland and what do its people think?",
+          "url": "https://www.bbc.com/news/articles/c74x4m71pmjo",
+          "snippet": "The US president claims that control of the island is essential to American national and economic security.",
+          "age": "March 24, 2025",
+          "page_age": "2025-03-24T13:10:22"
+        },
+        {
+          "title": "Greenland: why does Trump want US control of Arctic island? | Reuters",
+          "url": "https://www.reuters.com/world/why-does-trump-want-greenland-could-he-get-it-2025-01-08/",
+          "snippet": "The island, whose capital Nuuk is closer to New York than the Danish capital Copenhagen, boasts mineral, oil and natural gas wealth, but development has been slow and the mining sector has seen very limited U.S. investment.",
+          "age": "January 14, 2025",
+          "page_age": "2025-01-14T16:43:45"
+        },
+        {
+          "title": "NATO ally says Trump's US poses security threat - Newsweek",
+          "url": "https://www.newsweek.com/nato-denmark-trump-security-threat-russia-greenland-arctic-11186411",
+          "snippet": "Among its conclusions was that there was greater competition between the U.S., China and Russia regarding the Arctic and Greenland, an autonomous territory sought by President Donald Trump which is part of the Kingdom of Denmark.",
+          "age": "3 days ago",
+          "page_age": "2025-12-10T14:48:26"
+        },
+        {
+          "title": "Danish intelligence report warns of US military threat under Trump | AP News",
+          "url": "https://apnews.com/article/denmark-nato-trump-russia-china-greenland-907b309f213322a437771521fce5a08c",
+          "snippet": "U.S. President Donald Trump has expressed a desire to see Greenland, a semiautonomous and mineral-rich territory of Denmark, become part of the United States, a move opposed by Russia and much of Europe.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T15:17:54"
+        },
+        {
+          "title": "Why does Trump want to take over Greenland - and could he actually do it? | US News | Sky News",
+          "url": "https://news.sky.com/story/greenland-why-does-trump-want-buy-the-arctic-island-and-could-he-actually-do-it-13285350",
+          "snippet": "Mr Trump's aims to take control of Greenland coincides with his repeated claims that Canada should become the 51st state of the US - and him directing the US military to draw up options to achieve his goal of \"reclaiming\" the Panama Canal.",
+          "age": "March 29, 2025",
+          "page_age": "2025-03-29T20:56:29"
+        },
+        {
+          "title": "For Danish Army, the Threat to Greenland Isn’t Trump But Russia",
+          "url": "https://www.bloomberg.com/news/features/2025-10-31/denmark-sees-greenland-s-main-threat-as-russia-not-trump",
+          "snippet": "With NATO’s Arctic footprint expanding, Denmark is raising its military commitment to a territory seen as crucial to security — and focusing east.",
+          "age": "October 31, 2025",
+          "page_age": "2025-10-31T05:00:07"
+        },
+        {
+          "title": "Donald Trump says he believes the US will 'get Greenland'",
+          "url": "https://www.bbc.com/news/articles/crkezj07rzro",
+          "snippet": "Trump floated the prospect of buying the vast Arctic territory during his first term in 2019, and has said US control of Greenland is an \"absolute necessity\" for international security.",
+          "age": "January 26, 2025",
+          "page_age": "2025-01-26T04:39:54"
+        },
+        {
+          "title": "Is President Trump Thinking About Greenland Again? | National Review",
+          "url": "https://www.nationalreview.com/2025/11/is-president-trump-thinking-about-greenland-again/",
+          "snippet": "Donald Trump's declaration that Medicare and Medicaid will soon pay for weight loss drugs such as Zepbound and Wegovy could be the key that unlocks his Greenland ambitions.",
+          "age": "3 weeks ago",
+          "page_age": "2025-11-21T07:57:05"
+        },
+        {
+          "title": "Why Trump wants Greenland and what makes it a strategic polar outpost | PBS News",
+          "url": "https://www.pbs.org/newshour/show/why-trump-wants-greenland-and-what-makes-it-a-strategic-polar-outpost",
+          "snippet": "It's meant to expedite a negotiation process with Denmark, which protects Greenland’s autonomy, given Trump's repeated desire to buy the Arctic territory. Greenland’s prime minister said that while the massive island is not for sale, Greenland ...",
+          "age": "January 14, 2025",
+          "page_age": "2025-01-14T02:11:46"
+        },
+        {
+          "title": "Proposed United States acquisition of Greenland - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Proposed_United_States_acquisition_of_Greenland",
+          "snippet": "Among Greenlandic politicians, ... already treating her island differently because of Trump. Frederiksen's \"Greenland is not Danish. Greenland is Greenlandic\" statement was, Gad said, the first time a Danish prime minister said that the island had some control over foreign or ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-04T16:51:15"
+        }
+      ],
+      "summary": {
+        "text": "Donald Trump has expressed interest in acquiring Greenland primarily for national security and economic reasons, particularly its strategic location and rich natural resources.\n\nGreenland, a semi-autonomous territory of Denmark, occupies a crucial geopolitical position straddling the Arctic Circle between the U.S., Canada, Russia, and Europe. This location provides a strategic advantage in monitoring and defending against long-range missile threats, especially from Russia, as the shortest flight path for intercontinental ballistic missiles to reach the U.S. passes over the Arctic. The U.S. already operates Pituffik Space Base (formerly Thule Air Base) in northern Greenland, which plays a key role in missile warning systems. Trump has argued that greater U.S. control over Greenland is essential for national security, stating that the island's ownership is an \"absolute necessity\" for protecting American interests.\n\nAdditionally, Greenland is believed to hold vast untapped reserves of critical minerals, rare earth elements, oil, and natural gas. These resources are vital for modern technologies, defense systems, and energy production. With China currently dominating the global supply chain for many rare earth minerals, the U.S. sees Greenland as a potential domestic source to reduce reliance on foreign suppliers. Climate change is accelerating the melting of Arctic ice, making resource extraction and shipping routes like the Northwest Passage increasingly accessible, further heightening the region’s strategic value.\n\nTrump has not ruled out using military or economic pressure to achieve control over Greenland. In response, Denmark and Greenland have firmly rejected the idea. Danish Prime Minister Mette Frederiksen has stated, \"Greenland is not for sale,\" emphasizing respect for Greenlandic self-determination. All five parties in Greenland’s parliament have jointly opposed any U.S. takeover, and an opinion poll showed that 85% of Greenlanders oppose becoming part of the United States, with nearly half viewing Trump’s interest as a threat.\n\nDespite historical U.S. interest in purchasing Greenland dating back to the 19th century and renewed discussions during Trump’s first term, no formal acquisition mechanism exists, and any attempt to annex the territory would face significant legal, diplomatic, and international obstacles. The idea has raised concerns among NATO allies about the future of collective security and the principle of territorial integrity, with some European leaders warning against attempts to redraw borders by force or coercion.\n\nA recent report from November 2025 indicates that Denmark has established a \"night watch\" policy to monitor Trump’s statements and actions regarding Greenland due to fears he may pursue coercive measures to gain control of the island."
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What is Trump's thoughts on Bitcoin?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What is Trump's thoughts on Bitcoin?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Trump Administration Overlooks Bitcoin, Blockchain in National Security Strategy",
+          "url": "https://www.coindesk.com/opinion/2025/12/07/trump-s-national-security-strategy-ignores-bitcoin-and-blockchain",
+          "snippet": "U.S. President Donald Trump's latest national security strategy omits digital assets, focusing instead on AI, biotech, and quantum computing. The administration's strategic Bitcoin reserve was created using seized BTC, not new purchases.",
+          "age": "5 days ago",
+          "page_age": "2025-12-08T08:06:59"
+        },
+        {
+          "title": "Trump shifts stance on cryptocurrency to win over new bloc of voters and mega-donors | PBS News",
+          "url": "https://www.pbs.org/newshour/show/trump-shifts-stance-on-cryptocurrency-to-win-over-new-bloc-of-voters-and-mega-donors",
+          "snippet": "Donald Trump, Former President of the United States (R) and Current U.S. Presidential Candidate: If crypto is going to define the future, I want to be mined, minted and made in the USA.",
+          "age": "July 30, 2024",
+          "page_age": "2024-07-30T14:10:21"
+        },
+        {
+          "title": "Bitcoin’s Predicted Sky-High Prices Have Not Panned Out - The New York Times",
+          "url": "https://www.nytimes.com/2025/12/03/technology/cryptocurrencies-tumble-trump-rally.html",
+          "snippet": "“Crypto remains a volatile investment and certainly isn’t for the faint of heart.” · The downturn arrived just as the crypto industry was reaching a new level of mainstream acceptance. President Trump ended a regulatory crackdown on crypto and signed legislation that gave a seal of government approval to one of the industry’s most profitable products.",
+          "age": "1 week ago",
+          "page_age": "2025-12-03T15:56:28"
+        },
+        {
+          "title": "Eric Trump’s cryptocurrency firm tumbles nearly 40% amid ‘crypto winter’ | Eric Trump | The Guardian",
+          "url": "https://www.theguardian.com/us-news/2025/dec/02/eric-trump-american-bitcoin-stock",
+          "snippet": "He was for years a crypto sceptic, calling it variously “not money” and “based on thin air”, but he reconsidered the controversial asset class during his second presidential campaign and became the first major US presidential candidate ...",
+          "age": "2 weeks ago",
+          "page_age": "2025-12-02T23:52:20"
+        },
+        {
+          "title": "Trump’s Bungled Bet On Bitcoin Is Costing Him Bigtime",
+          "url": "https://www.forbes.com/sites/danalexander/2025/11/07/trump-bet-big-on-bitcoin-his-timing-couldnt-have-been-much-worse/",
+          "snippet": "Volatility is inherent in crypto, as Donald Trump pointed out in 2019. “I am not a fan of Bitcoin and other Cryptocurrencies, which are not money, and whose value is highly volatile and based on thin air,” he tweeted at the time.",
+          "age": "November 7, 2025",
+          "page_age": "2025-11-07T13:16:03"
+        },
+        {
+          "title": "Nobel laureate Paul Krugman says Bitcoin’s meltdown is deeply connected to Trump’s waning power: ‘Think of it as the unraveling of the Trump trade’ | Fortune",
+          "url": "https://fortune.com/2025/11/26/nobel-laureate-paul-krugman-bitcoin-meltdown-trump-approval-waning-power/",
+          "snippet": "To be sure, Krugman may be generous in how much credit he gives Trump for his control over cryptocurrency, which operates in its own environment, only adjacent to whomever holds political power. White House spokesperson Kush Desai said the Trump administration is implementing policies meant to help cryptocurrency prosper and rebuked the idea that non-policy factors in Trump’s presidency would have the ability to move the price of Bitcoin.",
+          "age": "2 weeks ago",
+          "page_age": "2025-12-01T23:17:03"
+        },
+        {
+          "title": "Trump Family 'S Wealth Slashed by $1 Billion in Latest Crypto Crash - Business Insider",
+          "url": "https://www.businessinsider.com/crypto-crash-trump-family-trumpcoin-bitcoin-djt-btc-meme-coin-2025-11",
+          "snippet": "The $1 trillion cryptocurrency wipeout has dealt a big blow to the president's wealth and that of his family in a year that was supposed to see crypto riding high on bullish support from the White House. President Donald Trump helped ignite a new rally after winning the presidency a year ago, with bitcoin and other tokens soaring to records in the months after the election.",
+          "age": "3 weeks ago",
+          "page_age": "2025-11-24T16:08:43"
+        },
+        {
+          "title": "Election 2024: Where Trump And Harris Stand On Crypto | Bankrate",
+          "url": "https://www.bankrate.com/investing/where-trump-and-harris-stand-on-crypto/",
+          "snippet": "At the Bitcoin 2024 conference in Nashville, Trump detailed a set of crypto-friendly policies. He also claimed that Bitcoin’s price would soar under his administration.",
+          "age": "September 24, 2024",
+          "page_age": "2024-09-24T18:58:48"
+        },
+        {
+          "title": "Inside the Trump family’s global crypto cash machine | Reuters",
+          "url": "https://www.reuters.com/investigations/inside-trump-familys-global-crypto-cash-machine-2025-10-28/",
+          "snippet": "In his letter to Reuters, Parlatore ... criticized cryptocurrencies as a threat to U.S. dollar supremacy and said bitcoin “seems like a scam.” Three years later, his take on crypto had changed....",
+          "age": "October 28, 2025",
+          "page_age": "2025-10-28T11:29:59"
+        },
+        {
+          "title": "Donald Trump calls Bitcoin 'a scam against the dollar'",
+          "url": "https://www.bbc.com/news/business-57392734",
+          "snippet": "\"The means by which America exerts influence over the world is predominantly by the dollar, and it's not going to give that up, so I don't see Bitcoin as a threat whatsoever,\" he says.",
+          "age": "June 8, 2021",
+          "page_age": "2021-06-08T01:12:59"
+        }
+      ],
+      "summary": {
+        "text": "Donald Trump's views on Bitcoin have evolved significantly over time, shifting from strong skepticism to vocal support.\n\nIn the past, Trump was highly critical of Bitcoin. In 2019, he tweeted that he was not a fan of cryptocurrencies, calling them \"not money\" and stating their value was \"highly volatile and based on thin air.\" In June 2021, he referred to Bitcoin as a \"scam\" and expressed concern that it was a threat to the US dollar, saying, \"I don't like it because it's another currency competing against the dollar.\"\n\nHowever, by 2024, Trump's stance had changed dramatically. He began positioning himself as a pro-crypto candidate, particularly in contrast to the Biden administration. At the Bitcoin 2024 conference in Nashville, he declared, \"If crypto is going to define the future, I want it to be mined, minted and made in the USA!!!\" He promised to make the United States the \"crypto capital of the world\" and even floated the idea of creating a federal Bitcoin reserve. He also claimed that Bitcoin could take pressure off the dollar and argued that the previous administration was \"vicious on crypto.\"\n\nAs of late 2025, Trump, now President, has framed his support for Bitcoin as part of a broader ambition for U.S. technological leadership, stating his goal is for the U.S. to become \"the Bitcoin superpower\" and warning of competition from countries like China. His administration has taken actions such as signing executive orders to end what he described as a \"federal war on crypto.\"\n\nThis shift has been interpreted by some, including economist Paul Krugman, as politically motivated, linking Trump's fortunes with the cryptocurrency's performance. Meanwhile, Trump's company, Trump Media, made a significant $2 billion investment in Bitcoin in mid-2025, although this move has been criticized following a subsequent drop in Bitcoin's price and a decline in the company's stock"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What is the current price of Monero?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What is the current price of Monero?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Monero Price, XMR Price, Live Charts, and Marketcap: monero price, xrm crypto, xmr price",
+          "url": "https://www.coinbase.com/price/monero",
+          "snippet": "Monero (XMR) is a cryptocurrency . Users are able to generate XMR through the process of mining. Monero has a current supply of 18,446,744.07370955. The last known price of Monero is 400.6304382 USD and is up 3.49 over the last 24 hours."
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "The price of Monero (XMR) is BTC0.004543 today with a 24-hour trading volume of $139,731,111.30. This represents a 0.50% price increase in the last 24 hours and a 4.40% price increase in the past 7 days."
+        },
+        {
+          "title": "Monero (XMR) Price | XMR to USD Price and Live Chart",
+          "url": "https://www.coindesk.com/price/monero",
+          "snippet": "The price of Monero (XMR) is $403.36 today as of Dec 10, 2025, 10:28 am EST, with a 24-hour trading volume of $180.53M."
+        },
+        {
+          "title": "Monero (XMR) Price Today: XMR/USD Live Price, News, Charts | Crypto.com",
+          "url": "https://crypto.com/en/price/monero",
+          "snippet": "Monero (XMR) price today is $406.22. See XMR live price charts, market cap, latest news, trading volume and more key market metrics."
+        },
+        {
+          "title": "Monero price today - XMR price chart & live trends",
+          "url": "https://www.kraken.com/prices/monero",
+          "snippet": "In the last 24 hours Monero's price moved -1.36%. The current XMR to USD conversion rate is $406.35 per XMR. The circulating supply of Monero is 18,466,100 XMR and the current Monero market cap is $7,503,699,728. 388,007 XMR was purchased today on Kraken worth $157,666,576."
+        },
+        {
+          "title": "Monero Price (XMR), Market Cap, Price Today & Chart History - Blockworks",
+          "url": "https://blockworks.co/price/xmr",
+          "snippet": "Get the latest Monero price, XMR market cap, charts and data today. The live Monero price today is $361.84 with a market cap of 6.67B and a 24-hour trading volume of 130.54M. The price of XMR is down -0.42% since last hour, down -3.59% since yesterday. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Monero Price | XMR Price Today, Live Chart, USD converter, Market Capitalization | CryptoRank.io",
+          "url": "https://cryptorank.io/price/monero",
+          "snippet": "Individuals pay a fee for using the processing power and do not have to invest in rigs and mining hardware. Some popular XMR cloud mining service providers include Minergate and CCGMining. XMR can be bought at any of the DEXS and CEXs as listed here. Monero's current price is $ 399.62, it has ..."
+        },
+        {
+          "title": "Monero Price USD, XMR Price Live Charts, Market Cap & News",
+          "url": "https://www.bitget.com/price/monero",
+          "snippet": "Bitget offers the lowest transaction fees among all major trading platforms. The higher your VIP level, the more favorable the rates. ... The live Monero price today is $405.21 USD, with a current market cap of $7.47B. The Monero price is up by 1.29% in the last 24 hours, and the 24-hour trading ...",
+          "age": "2 days ago",
+          "page_age": "2025-12-11T11:21:37"
+        },
+        {
+          "title": "Monero (XMR) live coin price, charts, markets & liquidity",
+          "url": "https://www.livecoinwatch.com/price/Monero-XMR",
+          "snippet": "Track current Monero prices in real-time with historical XMR USD charts, liquidity, and volume. Get top exchanges, markets, and more."
+        }
+      ],
+      "summary": {
+        "text": "Monero (XMR) is currently trading at $415.62, reflecting a 24-hour price increase of 9.85%. The market capitalization stands at approximately $7.66 billion, with the all-time high previously reached at $542.33. After a period of consolidation, XMR has shown renewed momentum, recently breaking above key resistance levels near $400 and forming a cup-and-handle pattern on the daily chart. It had previously pulled back from a November high of $440 but has since regained strength, with technical indicators suggesting higher highs and higher lows, signaling potential trend recovery.\n\nRecent news highlights Monero's dominance in the privacy coin sector despite heightened hype around Zcash (ZEC). According to MEXC Research, Monero accounted for 93% of total privacy coin trading volume and 72% of users in Q3–Q4 2025, underscoring its strong adoption and user preference. The price surge has been attributed to broader market expectations of Federal Reserve rate cuts, which tend to benefit assets like XMR, as well as increased on-chain activity, including notable Bitcoin-to-XMR conversions driven by rising demand for transaction privacy.\n\nThe combination of strong fundamentals, growing on-chain activity, and favorable macroeconomic sentiment may support further upward movement in XMR’s price. Technical analysis suggests that a sustained close above $410 could open a path toward $438, the previous swing high, and potentially higher targets if momentum continues. However, broader market stability and macroeconomic developments, particularly around monetary policy, will likely play a key role in determining Monero’s near-term trajectory.\n\nThis is not financial advice"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "How's Bitcoin look today?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "How's Bitcoin look today?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin price today, BTC to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/bitcoin/",
+          "snippet": "The live Bitcoin price today is $90,231.50 USD with a 24-hour trading volume of $80,955,216,172.30 USD. We update our BTC to USD price in real-time."
+        },
+        {
+          "title": "Bitcoin Price: BTC Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/bitcoin",
+          "snippet": "The price of Bitcoin (BTC) is BTC1.0000 today with a 24-hour trading volume of $40,061,011,260.10. This represents a -0.20% price decline in the last 24 hours and a 0.40% price increase in the past 7 days. With a circulating supply of 20 Million BTC, Bitcoin is valued at a market cap of ..."
+        },
+        {
+          "title": "Bitcoin Price, BTC Price, Live Charts, and Marketcap: bitcoin price, bitcoin price usd, btc price",
+          "url": "https://www.coinbase.com/price/bitcoin",
+          "snippet": "The daily chart still looks slow, but the 4-hour chart shows early strength building. Since short-term charts capture shifts faster, the next few sessions may decide whether Bitcoin finally tests $95,000 — a level e... ... Crypto Markets Today: Bitcoin Stuck in Post-Fed Range as Altcoins ..."
+        },
+        {
+          "title": "Bitcoin BTC (BTC-USD) Live Price, News, Chart & Price History - Yahoo Finance",
+          "url": "https://finance.yahoo.com/quote/BTC-USD/",
+          "snippet": "Users are able to generate BTC through the process of mining. Bitcoin has a current supply of 19,961,559. The last known price of Bitcoin is 90,494.96157713 USD and is down -1.81 over the last 24 hours. It is currently trading on 12497 active market(s) with $81,809,255,349.99 traded over the ..."
+        },
+        {
+          "title": "Bitcoin (BTC) Price | BTC to USD Price and Live Chart",
+          "url": "https://www.coindesk.com/price/bitcoin",
+          "snippet": "The price of Bitcoin (BTC) is $90,366.71 today as of Dec 13, 2025, 2:55 am EST, with a 24-hour trading volume of $17.13B."
+        },
+        {
+          "title": "BTC USD — Bitcoin Price and Chart",
+          "url": "https://www.tradingview.com/symbols/BTCUSD/",
+          "snippet": "Just one more step · Complete the test below to access the page"
+        },
+        {
+          "title": "Bitcoin: Bitcoin news today, Bitcoin price, Bitcoin share price | The Economic Times",
+          "url": "https://economictimes.indiatimes.com/news/bitcoin",
+          "snippet": "US stock market edged higher today as the Dow rose 0.05% to 47,315, the S&P 500 gained 0.32% to 6,834, and the Nasdaq jumped 0.79% to 23,459. Bitcoin steadied above $89,000 after Monday’s sharp drop. Nvidia climbed nearly 3% and led tech sentiment, while traders looked for signs of a year-end ..."
+        },
+        {
+          "title": "Bitcoin Price (BTC) | Bitcoin Value - Investing.com",
+          "url": "https://www.investing.com/crypto/bitcoin",
+          "snippet": "Vote to see community's results!BearishorBullish · Summarize BTC/USD's latest news · Bitcoin Holds 92.5k as Markets Weigh Fed Pause and Look to Key US Data Ahead · BTC trades at 92.5k as it remains in consolidation mode The Fed cut rates by 25bps, but is cautious about further cuts US CPI and..."
+        },
+        {
+          "title": "Latest Crypto & Bitcoin News",
+          "url": "https://finance.yahoo.com/topic/crypto/",
+          "snippet": "Bitcoin, ethereum, and other cryptocurrencies are rapidly evolving. Follow the latest developments from Yahoo Finance and others here. ... U.S."
+        },
+        {
+          "title": "Bitcoin Price | BTC USD | Chart | Bitcoin US-Dollar | Markets Insider",
+          "url": "https://markets.businessinsider.com/currencies/btc-usd",
+          "snippet": "Historically, the currency has been extremely volatile. But go by its recent boom — and a forecast by Snapchat's first investor, Jeremy Liew, that it will hit a bitcoin price of $500,000 by 2030 — and nabbing even a fraction of a bitcoin starts to look a lot more enticing."
+        }
+      ],
+      "summary": {
+        "text": "Bitcoin is currently trading at $90,116, down from its all-time high of $126,080 reached in October 2025. Over the past 24 hours, the price has declined by approximately 0.09%, reflecting ongoing volatility. The market remains in a tight range above $80,000, with resistance near $94,500 and recent dips influenced by broader tech market weakness, particularly following a 10% drop in Broadcom shares amid AI sector concerns. Despite brief recoveries, Bitcoin has not sustained a breakout, and sentiment remains cautious as it trades well below its peak.\n\nRecent news highlights that Bitcoin's price movement is being affected by macroeconomic factors, including Federal Reserve policy signals and investor sentiment toward AI-related equities. Michael Saylor has warned of serious consequences if his firm is removed from major equity benchmarks, potentially triggering a price downturn. At the same time, analysts suggest that falling capital costs and growing spot ETF inflows could reignite bullish momentum, possibly pushing Bitcoin past $100,000. Long-term predictions speculate on prices reaching $500,000 to $1 million by 2030, driven by supply scarcity post-2028 halving and increased institutional adoption.\n\nThe convergence of macroeconomic pressures, ETF dynamics, and on-chain supply constraints suggests Bitcoin’s price could face short-term volatility with potential for significant long-term appreciation if institutional demand strengthens. Near-term resistance at $94,500 must be overcome to shift sentiment decisively bullish, while continued weakness in tech stocks or benchmark-related sell-offs could lead to further downside. Conversely, accelerated ETF inflows or a risk-on shift in financial markets may catalyze a rally toward six-figure levels.\n\nThis is not financial advice"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's going on with immigration in America?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What's going on with immigration in America?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "US immigration | The Guardian",
+          "url": "https://www.theguardian.com/us-news/usimmigration",
+          "snippet": "The administration is heightening its anti-immigrant crackdown – and punishing people from a country the US helped destroy ... A harrowing US podcast documents a community’s struggle against immigration raids – and warns us about herd mentality, says Guardian columnist Zoe Williams"
+        },
+        {
+          "title": "What the data says about immigrants in the U.S.",
+          "url": "https://www.pewresearch.org/short-reads/2025/08/21/key-findings-about-us-immigrants/",
+          "snippet": "As of June 2025, the country’s foreign-born population had shrunk by more than a million people, marking its first decline since the 1960s.",
+          "age": "August 26, 2025",
+          "page_age": "2025-08-26T14:00:54"
+        },
+        {
+          "title": "Home | USCIS",
+          "url": "https://www.uscis.gov/",
+          "snippet": "government. ... Learn how you could receive $1000 and a free plane ticket. DHS is using the CBP Home App to incentivize the voluntary self-departure of aliens illegally in the United States. ... DHS has implemented an alien registration system as directed by President Trump. Learn who this affects and how to register. ... USCIS is proud to support DHS efforts to Make America Safe Again. ... Protecting the integrity of the immigration process is a priority for USCIS."
+        },
+        {
+          "title": "Immigration News",
+          "url": "https://www.aila.org/immigration-news",
+          "snippet": "Aggregated local and national media ... Lawyers Association (AILA), responded to news that the Trump Administration will reopen vetting for refugees who entered between January 20, 2021, and February 20, 2025...."
+        },
+        {
+          "title": "Immigration Gone Wild › American Greatness",
+          "url": "https://amgreatness.com/2025/12/08/immigration-gone-wild/",
+          "snippet": "Three, if millions of legal immigrants are not asked to assume fully American identities, and further, if they feel that there are exemptions and largesse to be had by emphasizing their tribal and victimized status, then will they also feel they are not subject to any American customs and laws? Instead, immigrants under these new protocols will seek to carve out their own tribal communities, based both on ethnic chauvinism and a sense of exemption from accountability. And if they insist on identifying as collectives rather than unique individuals, they will become increasingly unpopular not just as ingrates, but as hypocrites whose greater affinity with the nation they abandoned does not extend to returning to it.",
+          "age": "3 days ago",
+          "page_age": "2025-12-10T08:16:49"
+        },
+        {
+          "title": "Trump Administration Responds to Tragedy By Putting Hundreds of Thousands of Legal Immigrants’ Lives On Hold - American Immigration Council",
+          "url": "https://www.americanimmigrationcouncil.org/blog/trump-administration-halts-immigration-benefits/",
+          "snippet": "What is happening: U.S. Citizenship and Immigration Services officials have been instructed to freeze processing of all immigration benefits (which includes permanent and temporary status within the U.S.) for these individuals.",
+          "age": "2 days ago",
+          "page_age": "2025-12-11T20:19:26"
+        },
+        {
+          "title": "ICE Arrest Data Shows Many Immigrants With No Criminal Record - The New York Times",
+          "url": "https://www.nytimes.com/interactive/2025/12/04/us/ice-arrests-criminal-records-data.html",
+          "snippet": "The share of people with any past conviction includes those with a violent conviction. Based on data available through Oct. 15. The Trump administration has said that the aggressive operations are necessary because so-called sanctuary city policies have made it harder for ICE agents to go after immigrants who have committed crimes.",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T13:41:19"
+        },
+        {
+          "title": "ICE has arrested nearly 75,000 people with no criminal records, data shows",
+          "url": "https://www.nbcnews.com/politics/immigration/ice-arrested-nearly-75000-people-no-criminal-records-data-shows-rcna247377",
+          "snippet": "15, shows that nearly 75,000 people with no criminal records have been swept up in immigration operations that the president and his top officials have said would target murderers, rapists and gang members. “It contradicts what the administration has been saying about people who are convicted criminals and that they are going after the worst of the worst,” said Ariel Ruiz Soto, senior policy analyst at the Migration Policy Institute.",
+          "age": "5 days ago",
+          "page_age": "2025-12-08T15:35:32"
+        },
+        {
+          "title": "Records reviewed by AP detail online monitoring, arrests in New Orleans immigration crackdown",
+          "url": "https://apnews.com/article/immigration-new-orleans-online-monitoring-b2c300245ea4ffbef335502245760a1d",
+          "snippet": "State and federal authorities are monitoring online criticism and protests against the immigration crackdown in New Orleans.",
+          "age": "5 days ago",
+          "page_age": "2025-12-08T17:18:04"
+        },
+        {
+          "title": "Trump vows to slam America’s doors shut as he heaps scorn on immigrants | US immigration | The Guardian",
+          "url": "https://www.theguardian.com/us-news/2025/dec/07/trump-immigration-ice",
+          "snippet": "Coming after months of mass arrests carried out by Immigration Customs and Enforcement (ICE) agents, it seemed to foretell a fearful intensification of actions against US citizens and legal residents with origins in a startling range of foreign countries. Such fears were borne out in the following days as the president focused on the US’s Somali community, mainly based in Minnesota. He also insulted the state’s Democratic governor, Tim Walz, with an offensive slur after he defended ethnic Somalis and one of its members of Congress, Ilhan Omar, who emigrated from Somalia.",
+          "age": "1 week ago",
+          "page_age": "2025-12-07T18:34:09"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's going on with the southern border?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What's going on with the southern border?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Mexico Border and Immigration News | BorderReport.com",
+          "url": "https://www.borderreport.com/",
+          "snippet": "EL PASO, Texas (Border Report) – Mexico says it’s ready to compromise after President Trump threatened to impose a 5% tariff over a massive water debt to Texas farmers. Mexico last October failed to deliver almost half of the water required by a …"
+        },
+        {
+          "title": "Trump administration creates new militarized zone in California along southern US border | US news | The Guardian",
+          "url": "https://www.theguardian.com/us-news/2025/dec/11/trump-militarized-zone-california-southern-us-border",
+          "snippet": "The US’s southern border is poised to become more militarized following an announcement by Trump administration officials that armed forces would now oversee 760 acres of public land for a three-year period.",
+          "age": "2 days ago",
+          "page_age": "2025-12-11T21:04:48"
+        },
+        {
+          "title": "What’s behind the influx of migrants crossing the U.S. southern border? | PBS News",
+          "url": "https://www.pbs.org/newshour/politics/whats-behind-the-influx-of-migrants-crossing-the-u-s-southern-border",
+          "snippet": "Republicans say it’s not enough and accuse the administration of doing little to control the southern border. Julia Gelatt, of the Migration Policy Institute, said there are key differences between what’s going on now and during past immigration surges. In the late 1990s and early 2000s, there were more single adults coming to the U.S. Now, families with children are increasingly arriving, and they have different needs.",
+          "age": "September 21, 2023",
+          "page_age": "2023-09-21T20:30:47"
+        },
+        {
+          "title": "Securing the Border | Homeland Security",
+          "url": "https://www.dhs.gov/archive/securing-border",
+          "snippet": "President Biden signed Presidential Proclamation 10773 to temporarily suspend and limit the entry of certain noncitizens at the southern border because there were high numbers of encounters straining the U.S. immigration system, and the Departments ..."
+        },
+        {
+          "title": "Operation Lone Star | Office of the Texas Governor | Greg Abbott",
+          "url": "https://gov.texas.gov/operationlonestar",
+          "snippet": "Border Patrol agents, directed ... and more. Governor Abbott launched Operation Lone Star in 2021, deploying the Texas National Guard and Texas Department of Public Safety to the southern border...."
+        },
+        {
+          "title": "Southwest Land Border Encounters | U.S. Customs and Border Protection",
+          "url": "https://www.cbp.gov/newsroom/stats/southwest-land-border-encounters",
+          "snippet": "When using a mobile device, the charts are best displayed in landscape mode. 1 Beginning in March FY2020, USBP and OFO Encounter statistics include both Title 8 Apprehensions, Title 8 Inadmissibles, and Title 42 Expulsions. To learn more, visit Title 8 and Title 42 Statistics. ... You have been selected to participate in a brief survey about your experience today with CBP.gov."
+        },
+        {
+          "title": "Border Patrol’s Charlotte sting reaches into country clubs, upscale shops - The Washington Post",
+          "url": "https://www.washingtonpost.com/immigration/2025/11/23/border-patrol-charlotte-web-north-carolina-arrests/",
+          "snippet": "As undocumented immigrants stayed home and federal agents swept through the city, even the wealthiest neighborhoods got a glimpse of what life without migrants might look like. ... Border Patrol agents stand outside a Home Depot during an immigration crackdown on Nov.",
+          "age": "3 weeks ago",
+          "page_age": "2025-11-24T10:31:10"
+        },
+        {
+          "title": "Border Report | NewsNation",
+          "url": "https://www.newsnationnow.com/us-news/immigration/border-coverage/",
+          "snippet": "Dozens of unaccompanied migrant children are being sent by the Trump administration to the Rio Grande Valley of South Texas to await deportation, Border Report has learned. ... The Office of Refugee Resettlement works to protect migrant minors ..."
+        },
+        {
+          "title": "Mexico–United States border crisis - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Mexico–United_States_border_crisis",
+          "snippet": "Additionally, there is inadequate infrastructure to identify and return remains to families. In 2014, the US declared a crisis at the border due to an influx of unaccompanied minors and women making their way through checkpoints.",
+          "age": "2 days ago",
+          "page_age": "2025-12-12T01:13:40"
+        },
+        {
+          "title": "Securing Our Borders – The White House",
+          "url": "https://www.whitehouse.gov/presidential-actions/2025/01/securing-our-borders/",
+          "snippet": "As soon as practicable, the Secretary of Homeland Security, in coordination with the Secretary of State and the Attorney General, shall take all appropriate action to resume the Migrant Protection Protocols in all sectors along the southern border of the United States and ensure that, pending removal proceedings, aliens described in section 235(b)(2)(C) of the INA (8 U.S.C. 1225(b)(2)(C)) are returned to the territory from which they came. Sec. 7. Adjusting Parole Policies. The Secretary of Homeland Security shall, consistent with applicable law, take all appropriate action to: (a) Cease using the “CBP One” application as a method of paroling or facilitating the entry of otherwise inadmissible aliens into the United States;",
+          "age": "January 21, 2025",
+          "page_age": "2025-01-21T02:22:31"
+        }
+      ],
+      "summary": {
+        "text": "As of December 13, 2025, the U.S. southern border has seen a significant decline in migrant encounters, reaching record-low levels under the Trump administration’s second term. According to U.S. Border Patrol data released on December 4, 2025, there were 117,105 total enforcement encounters along the southwest border from January 21 through the end of November, which is 37% lower than the monthly average of 185,625 during the Biden administration. Apprehensions have averaged under 10,000 per month since President Trump took office, marking a level of deterrence described as unmatched in modern border history.\n\nFor the seventh consecutive month, zero illegal aliens were released into the United States, with every apprehended individual processed according to law. In December 2023, border agents apprehended 336 individuals per hour; by late 2025, that number had dropped to less than one day’s worth of apprehensions in a single hour.\n\nAt the same time, drug seizures have surged. In November 2025, authorities seized 1,543 pounds of fentanyl—a 59% increase from October and the highest monthly total since the previous October—along with 21,935 pounds of methamphetamine and 8,240 pounds of cocaine.\n\nThe border has also become more militarized. On December 11, 2025, the Trump administration designated 760 acres of public land in California as a new defense zone under military control for a three-year period. This allows U.S. military personnel to apprehend migrants on military bases and increases the potential for criminal charges and longer prison sentences. Over 7,000 service members have been deployed to the border, along with military surveillance equipment.\n\nThis expansion follows President Trump’s January 21, 2025 executive actions to resume the Migrant Protection Protocols (MPP), commonly known as “Remain in Mexico,” and end categorical parole programs like the one for Cubans, Haitians, Nicaraguans, and Venezuelans. The administration has framed these measures as necessary to restore border security and the rule of law.\n\nTexas Governor Greg Abbott, who launched Operation Lone Star in 2021, has aligned with the Trump administration’s approach, deputizing the Texas National Guard for immigration arrests and deploying tactical forces to support U.S. Border Patrol.\n\nDespite the sharp drop in border crossings, humanitarian concerns persist. Prior to the current administration, many asylum seekers—fleeing violence, poverty, and climate disasters in countries like Haiti, Venezuela, and the Northern Triangle of Central America—undertook dangerous journeys to seek protection in the U.S. While seeking asylum remains legal under U.S. and international law, access has been restricted in recent years through policies like Title 42 expulsions and MPP.\n\nThe current situation reflects a major shift in border enforcement strategy, emphasizing deterrence, military involvement, and strict immigration controls"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's going on with Monero vs Bitcoin?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What's going on with Monero vs Bitcoin?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "Monero achieves around 90 tps, making it faster than Bitcoin but still slower than many Proof of Stake (PoS) networks. Bitcoin has a capped supply of 21 million BTC, driving its scarcity and value as a digital gold-like asset; Monero has no ..."
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "As of right now, Monero is unable to compete with large payment networks because its small transaction volume has already caused scalability concerns. While Bitcoin has been accepted by many governments and countries all around the world, Monero ...",
+          "age": "October 27, 2025",
+          "page_age": "2025-10-27T12:06:45"
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "The Bitcoin algorithm runs dramatically faster on custom made mining chips (known as ASICs) than on standard PCs and laptops. This means it is almost completely pointless for any ordinary computer user to attempt to participate in the mining process for Bitcoin, and leads to a relative concentration of miners in countries with the cheapest electricity costs."
+        },
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "No, like every software it needs ... Bitcoin, in Bitcoin the so called hard-forks which are nothing more than protocol updates are seen as wrong where in Monero we see them as a good thing that makes Monero better....",
+          "age": "November 30, 2023",
+          "page_age": "2023-11-30T00:56:10"
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Anyone can trace the movement of Bitcoin from one address to another, making it less private compared to Monero. Monero takes a different approach by defaulting to complete anonymity.",
+          "age": "August 25, 2025",
+          "page_age": "2025-08-25T06:48:27"
+        },
+        {
+          "title": "security - What are the primary differences between Monero and Bitcoin? - Monero Stack Exchange",
+          "url": "https://monero.stackexchange.com/questions/415/what-are-the-primary-differences-between-monero-and-bitcoin",
+          "snippet": "There has been talk of switching PoW to Cuckoo Cycle, another hash algorithm with the same goals as Cryptonight, to alleviate this. Last, since Monero is ambiguous wrt which outputs are spent, the TXO set never decreases (or very, very seldom does), whereas with Bitcoin, spent outputs can be removed from the UTXO set."
+        },
+        {
+          "title": "Monero vs Bitcoin: Which Cryptocurrency is Better for Privacy?",
+          "url": "https://arcticwallet.io/blog/cryptocurrency-comparison/monero-vs-bitcoin-comparison-differences-in-privacy-and-anonymity",
+          "snippet": "Monero, however, has a more flexible block size designed to be scalable while remaining fast and cheap as the network expands. Considering the time verifications take, Bitcoin is twice slower as Monero, but only on paper."
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "Digital Gold and Store of Value: Bitcoin's primary goal is to serve as a digital alternative to traditional currencies and a store of value. It aims to provide a secure and censorship-resistant means of transferring and storing wealth. Cryptography for Privacy: Monero places a strong emphasis on privacy and uses advanced cryptographic techniques like ring signatures and stealth addresses to obscure transaction details. Ring signatures mix the sender's transaction with several others, making it difficult to trace the origin.",
+          "age": "June 24, 2024",
+          "page_age": "2024-06-24T05:05:49"
+        },
+        {
+          "title": "Monero vs. Bitcoin: Full Comparison | Exolix",
+          "url": "https://exolix.com/blog/monero-vs-bitcoin",
+          "snippet": "But far from the efficiency in implementing on-chain privacy features carried out in Monero, they are really less effective. Bitcoin mixers have also fallen under regulatory scrutiny and have been shut down in many places. In that respect, Monero remains the most viable option for privacy without using any kind of external tool.",
+          "age": "June 2, 2025",
+          "page_age": "2025-06-02T12:20:25"
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "Despite the rise of newer technologies, Bitcoin remains one of the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden.",
+          "age": "June 3, 2025",
+          "page_age": "2025-06-03T12:03:41"
+        }
+      ],
+      "summary": {
+        "text": "Bitcoin and Monero are two prominent cryptocurrencies with fundamentally different design philosophies, leading to distinct roles in the digital asset ecosystem as of December 2025.\n\n**Privacy and Anonymity**  \nMonero (XMR) is designed for complete privacy by default. It uses advanced cryptographic techniques—ring signatures, stealth addresses, and confidential transactions—to obscure the sender, receiver, and transaction amount on the blockchain. This makes Monero highly fungible and untraceable, positioning it as a preferred option for users prioritizing financial confidentiality. In contrast, Bitcoin (BTC) operates on a transparent ledger where all transactions are publicly visible. While Bitcoin addresses are pseudonymous, sophisticated blockchain analysis can often link them to real-world identities, making Bitcoin less private despite optional privacy tools like CoinJoin.\n\n**Scalability and Transaction Efficiency**  \nMonero benefits from a dynamic block size that adjusts based on network demand, allowing it to handle transaction surges more smoothly and maintain lower, more predictable fees. Its block time is approximately 2 minutes, enabling faster confirmations. Bitcoin has a fixed block size and a 10-minute block time, which can lead to network congestion and high fee volatility during peak usage. Bitcoin addresses scalability through off-chain solutions like the Lightning Network, while Monero handles scaling more organically on-chain, albeit with larger transaction data due to privacy features.\n\n**Mining and Decentralization**  \nMonero uses the RandomX proof-of-work algorithm, which is ASIC-resistant and optimized for CPUs, promoting broader and more decentralized participation in mining. This aligns with its cypherpunk ethos of egalitarian access. Bitcoin uses SHA-256, which is dominated by specialized ASIC miners, leading to concentration of mining power in large pools and raising concerns about centralization and regulatory vulnerability.\n\n**Monetary Policy**  \nBitcoin has a hard cap of 21 million coins, reinforcing its \"digital gold\" narrative as a deflationary store of value. Monero, however, implements a \"tail emission\" model: after the majority of coins are mined, a constant block reward of 0.6 XMR per block continues indefinitely. This creates a near-zero asymptotic inflation rate (currently around 0.86%, lower than Bitcoin’s 1.74% at present), ensuring ongoing miner incentives and network security without risking coin loss from forgotten keys.\n\n**Adoption and Regulatory Landscape**  \nBitcoin dominates in adoption, liquidity, and institutional recognition. It is widely traded, accepted by merchants, and integrated into financial products like ETFs. Monero, while smaller in market cap and ecosystem, maintains a strong niche as privacy-preserving digital cash. However, its privacy features have attracted regulatory scrutiny, leading to delistings from some major exchanges, which limits its accessibility.\n\n**Use Cases and Investment Outlook**  \nBitcoin is primarily viewed as a long-term store of value and a macro hedge, often compared to gold. Monero serves as a tool for private, censorship-resistant transactions, appealing to users in high-surveillance environments or those valuing financial sovereignty. Some investors hold both: using Bitcoin for wealth preservation and Monero for private transactions.\n\nIn summary, Bitcoin leads in mainstream adoption and stability, while Monero excels in privacy, decentralization, and on-chain scalability. The choice between them depends on whether one prioritizes institutional credibility and liquidity (Bitcoin) or financial anonymity and egalitarian mining (Monero)."
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Is Bitcoin the king of crypto? Or is Monero the king of crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Is Bitcoin the king of crypto? Or is Monero the king of crypto?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Monero vs. Bitcoin: Which is the True King of Privacy?",
+          "url": "https://www.exodus.com/news/monero-vs-bitcoin/",
+          "snippet": "Monero vs Bitcoin is a tough comparison to make. Bitcoin, the original cryptocurrency, is still considered the \"king of crypto\", and its market capitalization towers above those of other crypto assets.",
+          "age": "November 10, 2023",
+          "page_age": "2023-11-10T15:30:50"
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "We believe that Monero is a superior product, which has come along at the right time in history when massive new adoption of cryptocurrencies is about to occur. Roger Ver, known as “Bitcoin Jesus” for his evangelical support of the currency during its early years…"
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Bitcoin was the first cryptocurrency and is still the most well-known today. It operates on a blockchain that serves as a public ledger, recording every transaction made across the network.",
+          "age": "August 25, 2025",
+          "page_age": "2025-08-25T06:48:27"
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Reuters reported in 2019 that three of the five largest darknet markets accepted Monero, though bitcoin was still the most widely used form of payment in those markets. In late 2017, malware and antivirus service providers blocked Coinhive, ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "Despite the rise of newer technologies, Bitcoin remains one of the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden.",
+          "age": "June 3, 2025",
+          "page_age": "2025-06-03T12:03:41"
+        },
+        {
+          "title": "Monero vs Bitcoin: Which Is Better? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "When it comes to crypto investments, many investors wonder if swapping Bitcoin for Monero as the main digital asset in their portfolio would be more profitable and even safer. This article compares Monero (XMR) and Bitcoin (BTC), focusing on their technology, characteristics, privacy, and investment potential.",
+          "age": "October 27, 2025",
+          "page_age": "2025-10-27T12:06:45"
+        },
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "And that shit is packed outafter lunchtime in highschool. XMR = Shitting in a public bathroom w/ the door closed & locked, & nobody in there. ... Monero is superior in every way possible. It's more fair to compare Monero to Bitcoin Cash.",
+          "age": "November 30, 2023",
+          "page_age": "2023-11-30T00:56:10"
+        },
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "In 2018, Monero added ‘bulletproofs’, a Zero-Knowledge (ZK) proof method that cut transaction sizes by more than 80% to enhance efficiency. Additionally, the ‘Dandelion++’ protocol launched in 2020, protecting the origin IP address of the transaction by routing it through a series of nodes before broadcasting it publicly. Check out XMR’s current value and recent price trends. Bitcoin is the first cryptocurrency to use a PoW consensus mechanism, where new transactions must be included in a block with a mathematical proof of work."
+        },
+        {
+          "title": "Is Bitcoin Still a King? Relationships between Prices, Volatility and Liquidity of Cryptocurrencies during the Pandemic - PMC",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8624574/",
+          "snippet": "We observe the growing role of Ripple in this process, and we link it to the fast transaction processing algorithm of this coin. According to the DTW results, Bitcoin leads all cryptocurrencies in terms of liquidity, but we observe that Monero is its close follower (probably due to the growing ..."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism. But XMR's particular hashing algorithm, CryptoNightV7, is designed to be more resistant to ASIC miners and more optimal for individuals to mine profitably using general-purpose hardware, such as central processing units (CPUs) and graphics processing units (GPUs).",
+          "age": "October 13, 2024",
+          "page_age": "2024-10-13T23:12:53"
+        }
+      ],
+      "summary": {
+        "text": "Bitcoin is widely regarded as the \"king of crypto\" due to its status as the first cryptocurrency, its dominant market capitalization, widespread adoption, and recognition as \"digital gold.\" It has the largest network effect, highest liquidity, and is increasingly accepted by institutions and merchants worldwide. Bitcoin's transparent and secure blockchain, combined with its fixed supply of 21 million BTC, reinforces its role as a long-term store of value.\n\nMonero, while not the overall \"king of crypto,\" is often considered the \"king of privacy coins.\" It excels in providing anonymous, untraceable transactions through advanced cryptographic techniques like ring signatures, stealth addresses, and Ring Confidential Transactions (RingCT). Monero prioritizes privacy, fungibility, and decentralized mining, making it a preferred choice for users seeking financial confidentiality. However, its focus on privacy has led to regulatory scrutiny and limited adoption compared to Bitcoin.\n\nIn summary, **Bitcoin is the king of crypto** in terms of market dominance, recognition, and investment appeal, while **Monero is the king of privacy** within the cryptocurrency space. The \"king\" depends on the context: Bitcoin for mainstream adoption and value storage, Monero for privacy and anonymity."
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Bitcoin vs Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin vs Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero ... more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)....",
+          "age": "November 30, 2023",
+          "page_age": "2023-11-30T00:56:10"
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Through technologies like Ring Signatures and Stealth Addresses, Monero ensures that the sender, receiver, and transaction amount remain private. This makes Monero the preferred choice for users who prioritize security and privacy in their digital transactions. With Bitcoin’s transparent ledger, anyone can inspect the blockchain and verify every transaction.",
+          "age": "August 25, 2025",
+          "page_age": "2025-08-25T06:48:27"
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism.",
+          "age": "October 13, 2024",
+          "page_age": "2024-10-13T23:12:53"
+        },
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "Bitcoin transactions are publicly visible on its blockchain, providing transparency but limiting privacy, while Monero obscures sender, receiver, and transaction amounts through advanced privacy features like ring signatures, stealth addresses, and bulletproofs.",
+          "age": "January 29, 2025",
+          "page_age": "2025-01-29T00:00:00"
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "It means that if someone can associate a Bitcoin address with a specific person, they can potentially trace their transaction history. When it comes to privacy, it is primarily about stealth addresses. These are disorganized, one-time addresses that have nothing to do with any shared or previously put regular addresses. Put simply, on the public ledger, a few transactions sent to the same standard Monero address will appear to have been sent to completely different addresses.",
+          "age": "October 27, 2025",
+          "page_age": "2025-10-27T12:06:45"
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "These qualities have earned the ... the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden....",
+          "age": "June 3, 2025",
+          "page_age": "2025-06-03T12:03:41"
+        },
+        {
+          "title": "Monero vs Bitcoin: Comparing Privacy, Utility & Investment Potential",
+          "url": "https://rubic.exchange/blog/monero-vs-bitcoin-comparing-privacy-utility-investment-potential/",
+          "snippet": "Monero wins on privacy, anonymity, and fungibility. From an investment perspective, Bitcoin behaves more like a blue-chip asset in crypto, while Monero is a focused bet on the future of financial privacy.",
+          "age": "4 weeks ago",
+          "page_age": "2025-11-18T09:37:04"
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses.",
+          "age": "March 4, 2025",
+          "page_age": "2025-03-04T14:21:00"
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ...",
+          "age": "June 24, 2024",
+          "page_age": "2024-06-24T05:05:49"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Bitcoin vs Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin vs Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "r/Monero on Reddit: What are the main differences of Monero and Bitcoin?",
+          "url": "https://www.reddit.com/r/Monero/comments/1875cu9/what_are_the_main_differences_of_monero_and/",
+          "snippet": "Another big advantage to monero ... more decentralized, also truer to the one-cpu-one-vote concept). Bitcoin on the other hand is mainly mined by ASIC (i.e. expensive custom processors made only to mine btc)....",
+          "age": "November 30, 2023",
+          "page_age": "2023-11-30T00:56:10"
+        },
+        {
+          "title": "Bitcoin vs Monero: A Comprehensive Comparison for Investors",
+          "url": "https://komodoplatform.com/en/academy/bitcoin-vs-monero/",
+          "snippet": "Through technologies like Ring Signatures and Stealth Addresses, Monero ensures that the sender, receiver, and transaction amount remain private. This makes Monero the preferred choice for users who prioritize security and privacy in their digital transactions. With Bitcoin’s transparent ledger, anyone can inspect the blockchain and verify every transaction.",
+          "age": "August 25, 2025",
+          "page_age": "2025-08-25T06:48:27"
+        },
+        {
+          "title": "The Merits of Monero: Why Monero vs Bitcoin",
+          "url": "https://www.monero.how/why-monero-vs-bitcoin",
+          "snippet": "Furthermore, the always-on nature of Monero’s privacy features means that even if the majority of Monero users are not privacy sensitive, they will still automatically participate with the strengthening of the privacy mechanisms for other users that are privacy conscious. ‘Mining’ is the name given to running a program on a computer which verifies and processes the cryptocurrency transactions that other people announce to the worldwide network. We believe the creators of Bitcoin chose poorly when it came to their mining algorithm."
+        },
+        {
+          "title": "Monero (XMR) Cryptocurrency: Definition, Mining, vs. Bitcoin",
+          "url": "https://www.investopedia.com/tech/introduction-monero-xmr/",
+          "snippet": "Monero is more scalable, as it can handle more transactions per second. Bitcoin and Monero both validate new blocks of transactions and expand their blockchains with a mining-based Proof-of-Work (PoW) consensus mechanism.",
+          "age": "October 13, 2024",
+          "page_age": "2024-10-13T23:12:53"
+        },
+        {
+          "title": "Bitcoin vs Monero: Comparing Two Well-Established PoW Protocols",
+          "url": "https://crypto.com/en/university/bitcoin-vs-monero",
+          "snippet": "Bitcoin transactions are publicly visible on its blockchain, providing transparency but limiting privacy, while Monero obscures sender, receiver, and transaction amounts through advanced privacy features like ring signatures, stealth addresses, and bulletproofs.",
+          "age": "January 29, 2025",
+          "page_age": "2025-01-29T00:00:00"
+        },
+        {
+          "title": "Monero vs Bitcoin: What Are the Main Differences? The Ultimate Comparison",
+          "url": "https://stealthex.io/blog/monero-vs-bitcoin-what-are-the-main-differences-the-ultimate-comparison/",
+          "snippet": "It means that if someone can associate a Bitcoin address with a specific person, they can potentially trace their transaction history. When it comes to privacy, it is primarily about stealth addresses. These are disorganized, one-time addresses that have nothing to do with any shared or previously put regular addresses. Put simply, on the public ledger, a few transactions sent to the same standard Monero address will appear to have been sent to completely different addresses.",
+          "age": "October 27, 2025",
+          "page_age": "2025-10-27T12:06:45"
+        },
+        {
+          "title": "Bitcoin (BTC) vs Monero (XMR): Complete Comparison",
+          "url": "https://cryptomus.com/blog/bitcoin-vs-monero-complete-comparison",
+          "snippet": "These qualities have earned the ... the most reliablestable and influential digital assets in modern finance. Monero is a type of digital money made with the aim of keeping things secret and hidden....",
+          "age": "June 3, 2025",
+          "page_age": "2025-06-03T12:03:41"
+        },
+        {
+          "title": "Monero vs Bitcoin: Comparing Privacy, Utility & Investment Potential",
+          "url": "https://rubic.exchange/blog/monero-vs-bitcoin-comparing-privacy-utility-investment-potential/",
+          "snippet": "Monero wins on privacy, anonymity, and fungibility. From an investment perspective, Bitcoin behaves more like a blue-chip asset in crypto, while Monero is a focused bet on the future of financial privacy.",
+          "age": "4 weeks ago",
+          "page_age": "2025-11-18T09:37:04"
+        },
+        {
+          "title": "Monero vs. Bitcoin: Which is better in 2025? | Academy Guarda.com",
+          "url": "https://guarda.com/academy/blockchain/monero-vs-bitcoin/",
+          "snippet": "Bitcoin remains the dominant cryptocurrency, with widespread institutional support, robust infrastructure, and recognition as “digital gold.” Its transparent blockchain, however, limits privacy, which could be a concern as global regulations tighten. Monero, on the other hand, excels in privacy and fungibility, offering unmatched anonymity with features like ring signatures and stealth addresses.",
+          "age": "March 4, 2025",
+          "page_age": "2025-03-04T14:21:00"
+        },
+        {
+          "title": "Monero vs. Bitcoin: The Ultimate Comparison",
+          "url": "https://coinbureau.com/analysis/monero-vs-bitcoin/",
+          "snippet": "While Bitcoin's transactions are pseudonymous, meaning they are not directly linked to real-world identities, the blockchain's transparency allows for traceability. Monero, on the other hand, takes privacy to a whole new level. Launched in 2014, Monero is designed to be truly private and ...",
+          "age": "June 24, 2024",
+          "page_age": "2024-06-24T05:05:49"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Why does Trump want Greenland?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Why does Trump want Greenland?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Why does Trump want Greenland and what do its people think?",
+          "url": "https://www.bbc.com/news/articles/c74x4m71pmjo",
+          "snippet": "The US president claims that control of the island is essential to American national and economic security.",
+          "age": "March 24, 2025",
+          "page_age": "2025-03-24T13:10:22"
+        },
+        {
+          "title": "Greenland’s strategic appeal to Trump explained",
+          "url": "https://dornsife.usc.edu/news/stories/why-trump-finds-greenland-strategically-appealing/",
+          "snippet": "This area was essential to protecting the North Atlantic and the U.S. East Coast during World War II, leading the U.S. to establish and maintain many bases in Greenland. Today, the U.S. maintains only the Pituffick Space, and Danish Arctic forces provide the island’s security. As Arctic ice melts, the region is more open to ship traffic, including Chinese and Russian warships, icebreakers and submarines. The Trump administration wants control of these minerals and blocks Chinese efforts to do so.",
+          "age": "April 11, 2025",
+          "page_age": "2025-04-11T16:49:34"
+        },
+        {
+          "title": "Danish intelligence report warns of US military threat under Trump | AP News",
+          "url": "https://apnews.com/article/denmark-nato-trump-russia-china-greenland-907b309f213322a437771521fce5a08c",
+          "snippet": "Perhaps most sensitive to Denmark — a NATO and European Union member country, and a U.S. ally — is growing competition between those great powers in the Arctic. U.S. President Donald Trump has expressed a desire to see Greenland, a semiautonomous and mineral-rich territory of Denmark, become part of the United States, a move opposed by Russia and much of Europe.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T15:17:54"
+        },
+        {
+          "title": "Why on Earth would Donald Trump want to buy Greenland? | The Arctic Institute – Center for Circumpolar Security Studies",
+          "url": "https://www.thearcticinstitute.org/why-on-earth-would-donald-trump-want-to-buy-greenland/",
+          "snippet": "Marc Jacobsen states that Donald Trump’s alleged idea of purchasing Greenland is rooted in an outdated worldview.",
+          "age": "September 13, 2022",
+          "page_age": "2022-09-13T11:14:06"
+        },
+        {
+          "title": "r/AskALiberal on Reddit: Why does Trump want to take Greenland from Denmark?",
+          "url": "https://www.reddit.com/r/AskALiberal/comments/1iarke6/why_does_trump_want_to_take_greenland_from_denmark/",
+          "snippet": "Greenland has a lot of unmined minerals that China banned being sold to us. There’s also just Trump being vain and having an oversized ego. Also he’s lazy and doesn’t want to maintain international relationships if he doesn’t have to.",
+          "age": "January 26, 2025",
+          "page_age": "2025-01-26T21:51:25"
+        },
+        {
+          "title": "Why does Trump want Greenland? - YouTube",
+          "url": "https://www.youtube.com/shorts/qexV6m5jULM",
+          "snippet": "As a high-profile US delegation prepares to visit Greenland this week, Sky's Dominic Waghorn reports on why Donald Trump wants the strategic Danish territory...",
+          "age": "March 24, 2025",
+          "page_age": "2025-03-24T20:04:20"
+        },
+        {
+          "title": "NATO ally says Trump's US poses security threat - Newsweek",
+          "url": "https://www.newsweek.com/nato-denmark-trump-security-threat-russia-greenland-arctic-11186411",
+          "snippet": "The Danish agency's conclusion that there was \"uncertainty about the U.S. role as guarantor of Europe's security,\" shows Copenhagen's concern, shared among NATO members in Europe, about Trump's commitment to the continent in the event of a future conflict as the alliance faces increasing threats from Russia. The DDIS report was released Wednesday and was covered by Danish media. Among its conclusions was that there was greater competition between the U.S., China and Russia regarding the Arctic and Greenland, an autonomous territory sought by President Donald Trump which is part of the Kingdom of Denmark.",
+          "age": "3 days ago",
+          "page_age": "2025-12-10T14:48:26"
+        },
+        {
+          "title": "Proposed United States acquisition of Greenland - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Proposed_United_States_acquisition_of_Greenland",
+          "snippet": "Poul Krarup, editor-in-chief of Sermitsiaq, said that the American interest started a new domestic debate that might result in the island becoming more autonomous or independent from Denmark. He said that Greenlanders do not want to sell to the United States but want to cooperate as an equal partner, suggesting that Trump visit the island instead of Denmark to negotiate.",
+          "age": "1 week ago",
+          "page_age": "2025-12-04T16:51:15"
+        },
+        {
+          "title": "Explainer: The Geopolitical Significance of Greenland | The Belfer Center for Science and International Affairs",
+          "url": "https://www.belfercenter.org/research-analysis/explainer-geopolitical-significance-greenland",
+          "snippet": "President Donald Trump has repeatedly ... or military force, describing it as vital to safeguarding U.S. national security and countering the growing influence of China and Russia in the Arctic....",
+          "age": "January 16, 2025",
+          "page_age": "2025-01-16T00:00:00"
+        },
+        {
+          "title": "Greenland: why does Trump want US control of Arctic island? | Reuters",
+          "url": "https://www.reuters.com/world/why-does-trump-want-greenland-could-he-get-it-2025-01-08/",
+          "snippet": "According to Ulrik Pram Gad, senior ... Greenland is based on a misunderstanding of international law and the principle of self-determination, which gives people the right to choose their own political status....",
+          "age": "January 14, 2025",
+          "page_age": "2025-01-14T16:43:45"
+        }
+      ],
+      "summary": {
+        "text": "President Donald Trump's interest in acquiring Greenland is driven by a combination of strategic, economic, and personal motivations, as outlined in various analyses and reports.\n\nStrategically, Greenland holds significant importance due to its location in the Arctic, particularly in relation to the Greenland-Iceland-United Kingdom (GIUK) gap—a critical maritime corridor for naval and submarine movements. Control over Greenland enhances U.S. defense capabilities, especially as melting Arctic ice opens new shipping routes like the Northwest Passage. The Pituffik Space Base (formerly Thule Air Base), operated by the U.S., plays a vital role in missile warning systems and space surveillance. With increasing military activities by Russia and China in the Arctic, securing Greenland is seen as essential to counter their growing influence.\n\nEconomically, Greenland is rich in rare earth minerals and critical resources such as lithium, titanium, and uranium, which are vital for advanced technologies and renewable energy infrastructure. The U.S. currently imports a large portion of these minerals, with China dominating global refining capacity. Acquiring Greenland would reduce American dependence on China and bolster domestic supply chains for strategic materials.\n\nTrump’s approach reflects a transactional view of foreign policy, prioritizing material interests over traditional alliances. His administration has shown interest in using economic leverage or even military threats to achieve control, diverging from past U.S. support for multilateral cooperation. This stance has raised concerns about undermining NATO unity, as coercive actions against an ally like Denmark could lead to a reevaluation of transatlantic security arrangements.\n\nPersonal and political legacy also appear to be factors. Trump has expressed a desire to be remembered for major territorial expansion, drawing parallels to historical figures like William H. Seward, who oversaw the purchase of Alaska. His interest was reportedly encouraged during his first term by figures such as Estée Lauder heir Ronald Lauder and National Security Advisor John Bolton, framing it as both a real estate opportunity and a geopolitical maneuver.\n\nDespite these motivations, the idea faces strong opposition. Both Denmark and Greenland have repeatedly stated that \"Greenland is not for sale.\" Polls indicate that while many Greenlanders support independence from Denmark, over 85% reject becoming part of the United States. Local leaders emphasize self-determination, with the sentiment widely expressed: \"Greenland belongs to Greenlanders.\"\n\nHistorically, the U.S. has made multiple attempts to acquire Greenland—in 1867, 1946, and 2019—highlighting long-standing strategic interest, though none have succeeded. As of 2025, Trump continues to push the idea, but significant legal, diplomatic, and political barriers remain"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Why does Trump want Greenland?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Why does Trump want Greenland?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Why does Trump want Greenland and what do its people think?",
+          "url": "https://www.bbc.com/news/articles/c74x4m71pmjo",
+          "snippet": "The US president claims that control of the island is essential to American national and economic security.",
+          "age": "March 24, 2025",
+          "page_age": "2025-03-24T13:10:22"
+        },
+        {
+          "title": "Greenland’s strategic appeal to Trump explained",
+          "url": "https://dornsife.usc.edu/news/stories/why-trump-finds-greenland-strategically-appealing/",
+          "snippet": "This area was essential to protecting the North Atlantic and the U.S. East Coast during World War II, leading the U.S. to establish and maintain many bases in Greenland. Today, the U.S. maintains only the Pituffick Space, and Danish Arctic forces provide the island’s security. As Arctic ice melts, the region is more open to ship traffic, including Chinese and Russian warships, icebreakers and submarines. The Trump administration wants control of these minerals and blocks Chinese efforts to do so.",
+          "age": "April 11, 2025",
+          "page_age": "2025-04-11T16:49:34"
+        },
+        {
+          "title": "Danish intelligence report warns of US military threat under Trump | AP News",
+          "url": "https://apnews.com/article/denmark-nato-trump-russia-china-greenland-907b309f213322a437771521fce5a08c",
+          "snippet": "Perhaps most sensitive to Denmark — a NATO and European Union member country, and a U.S. ally — is growing competition between those great powers in the Arctic. U.S. President Donald Trump has expressed a desire to see Greenland, a semiautonomous and mineral-rich territory of Denmark, become part of the United States, a move opposed by Russia and much of Europe.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T15:17:54"
+        },
+        {
+          "title": "Why on Earth would Donald Trump want to buy Greenland? | The Arctic Institute – Center for Circumpolar Security Studies",
+          "url": "https://www.thearcticinstitute.org/why-on-earth-would-donald-trump-want-to-buy-greenland/",
+          "snippet": "Marc Jacobsen states that Donald Trump’s alleged idea of purchasing Greenland is rooted in an outdated worldview.",
+          "age": "September 13, 2022",
+          "page_age": "2022-09-13T11:14:06"
+        },
+        {
+          "title": "r/AskALiberal on Reddit: Why does Trump want to take Greenland from Denmark?",
+          "url": "https://www.reddit.com/r/AskALiberal/comments/1iarke6/why_does_trump_want_to_take_greenland_from_denmark/",
+          "snippet": "Greenland has a lot of unmined minerals that China banned being sold to us. There’s also just Trump being vain and having an oversized ego. Also he’s lazy and doesn’t want to maintain international relationships if he doesn’t have to.",
+          "age": "January 26, 2025",
+          "page_age": "2025-01-26T21:51:25"
+        },
+        {
+          "title": "Why does Trump want Greenland? - YouTube",
+          "url": "https://www.youtube.com/shorts/qexV6m5jULM",
+          "snippet": "As a high-profile US delegation prepares to visit Greenland this week, Sky's Dominic Waghorn reports on why Donald Trump wants the strategic Danish territory...",
+          "age": "March 24, 2025",
+          "page_age": "2025-03-24T20:04:20"
+        },
+        {
+          "title": "NATO ally says Trump's US poses security threat - Newsweek",
+          "url": "https://www.newsweek.com/nato-denmark-trump-security-threat-russia-greenland-arctic-11186411",
+          "snippet": "The Danish agency's conclusion that there was \"uncertainty about the U.S. role as guarantor of Europe's security,\" shows Copenhagen's concern, shared among NATO members in Europe, about Trump's commitment to the continent in the event of a future conflict as the alliance faces increasing threats from Russia. The DDIS report was released Wednesday and was covered by Danish media. Among its conclusions was that there was greater competition between the U.S., China and Russia regarding the Arctic and Greenland, an autonomous territory sought by President Donald Trump which is part of the Kingdom of Denmark.",
+          "age": "3 days ago",
+          "page_age": "2025-12-10T14:48:26"
+        },
+        {
+          "title": "Proposed United States acquisition of Greenland - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Proposed_United_States_acquisition_of_Greenland",
+          "snippet": "Poul Krarup, editor-in-chief of Sermitsiaq, said that the American interest started a new domestic debate that might result in the island becoming more autonomous or independent from Denmark. He said that Greenlanders do not want to sell to the United States but want to cooperate as an equal partner, suggesting that Trump visit the island instead of Denmark to negotiate.",
+          "age": "1 week ago",
+          "page_age": "2025-12-04T16:51:15"
+        },
+        {
+          "title": "Explainer: The Geopolitical Significance of Greenland | The Belfer Center for Science and International Affairs",
+          "url": "https://www.belfercenter.org/research-analysis/explainer-geopolitical-significance-greenland",
+          "snippet": "President Donald Trump has repeatedly ... or military force, describing it as vital to safeguarding U.S. national security and countering the growing influence of China and Russia in the Arctic....",
+          "age": "January 16, 2025",
+          "page_age": "2025-01-16T00:00:00"
+        },
+        {
+          "title": "Greenland: why does Trump want US control of Arctic island? | Reuters",
+          "url": "https://www.reuters.com/world/why-does-trump-want-greenland-could-he-get-it-2025-01-08/",
+          "snippet": "According to Ulrik Pram Gad, senior ... Greenland is based on a misunderstanding of international law and the principle of self-determination, which gives people the right to choose their own political status....",
+          "age": "January 14, 2025",
+          "page_age": "2025-01-14T16:43:45"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's Trump's stance on digital assets?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What's Trump's stance on digital assets?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "A Closer Look at the Trump Administration’s Comprehensive Report on Digital Assets | Insights | Skadden, Arps, Slate, Meagher & Flom LLP",
+          "url": "https://www.skadden.com/insights/publications/2025/08/a-closer-look-at-the-trump-administrations-comprehensive-report-on-digital-assets",
+          "snippet": "What to do next: Companies should review the report’s recommendations to assess potential impacts on compliance, operations and strategic planning, and monitor forthcoming regulatory and legislative actions in the digital asset sector. ... On July 30, 2025, the Trump administration’s Working Group on Digital Asset Markets issued its long-awaited report on digital assets, “Strengthening American Leadership in Digital Financial Technology” (the Report).1 The Report is the culmination of a mandate from President Donald Trump’s January 23, 2025, executive order on digital assets that established the working group and gave it 180 days to develop pro-innovation regulatory and legislative recommendations in the digital asset sector."
+        },
+        {
+          "title": "President Trump Issues Executive Order on Digital Assets",
+          "url": "https://www.hunton.com/blockchain-legal-resource/president-trump-issues-executive-order-on-digital-assets",
+          "snippet": "Next, the executive order revokes President Biden’s executive order on digital assets, and it orders the Secretary of the Treasury to revoke the Department of the Treasury’s Framework for International Engagement on Digital Assets."
+        },
+        {
+          "title": "President Trump signs Executive Order on Digital Assets entitled “Strengthening American Leadership in Digital Financial Technology” | Perspectives | Reed Smith LLP",
+          "url": "https://www.reedsmith.com/en/perspectives/2025/02/trump-signs-executive-order-digital-assets-american-financial-technology",
+          "snippet": "The Order indicates that it is the policy of the Trump Administration to “support the responsible growth and use of digital assets, blockchain technology, and related technologies across all sectors of the economy”. It goes on to enumerate ..."
+        },
+        {
+          "title": "President Trump Issues Executive Order on Digital Assets | Global Fintech & Digital Assets Blog",
+          "url": "https://www.fintechanddigitalassets.com/2025/01/president-trump-issues-executive-order-on-digital-assets/",
+          "snippet": "With its pro-crypto stance and ... anticipated executive order on digital assets titled “Strengthening American Leadership in Digital Financial Technology” (the Order)....",
+          "age": "January 27, 2025",
+          "page_age": "2025-01-27T19:29:08"
+        },
+        {
+          "title": "Trump 2.0: A New Era for Cryptocurrency and Digital Assets Regulation",
+          "url": "https://www.pillsburylaw.com/en/news-and-insights/cryptocurrency-digital-assets-trump.html",
+          "snippet": "The Executive Order itself directly repeals one aspect of the Biden administration’s crypto policy: Executive Order 14067 of March 9, 2022, which set forth the Biden administration’s policy objectives for the regulation of digital assets. In other words, the Trump administration appears to be moving swiftly to remove perceived obstacles to the widespread use of blockchain technology and development of the crypto asset markets."
+        },
+        {
+          "title": "New Administration Outlook: Trump Administration Transforms U.S. Policy on Digital Assets | Davis Wright Tremaine",
+          "url": "https://www.dwt.com/blogs/financial-services-law-advisor/2025/01/trump-transforms-digital-assets-policy",
+          "snippet": "The Trump Administration has embarked on a fundamental shift on how the United States approaches digital assets—in marked contrast with the Biden Administration's policies—likely changing the prospects of the crypto market in the United States for the foreseeable future."
+        },
+        {
+          "title": "Trump Administration’s Executive Order on Digital Assets: A Significant Shift in U.S. Crypto Policy | Carlton Fields",
+          "url": "https://www.carltonfields.com/insights/publications/2025/trump-administrations-executive-order-on-digital-assets-a-significant-shift-in-u-s-crypto-policy",
+          "snippet": "It revokes Executive Order 14067 (“Ensuring Responsible Development of Digital Assets”) and rescinds prior Treasury policies, emphasizing regulatory clarity, financial inclusivity, and the protection of blockchain-based activities."
+        },
+        {
+          "title": "President Trump’s Sweeping Executive Order on Digital Assets and the Repeal of SAB 121 | Winston & Strawn",
+          "url": "https://www.winston.com/en/blogs-and-podcasts/non-fungible-insights-blockchain-decrypted/president-trumps-sweeping-executive-order-on-digital-assets-and-the-repeal-of-sab-121",
+          "snippet": "On January 23, 2025, President Trump signed an Executive Order (EO) on digital assets, blockchain technology, “and related technologies across all sectors of the economy,” demonstrating a dramatic shift in tone and approach from the Biden Administration. On the same day, the Securities and Exchange Commission (SEC) rescinded Staff Accounting Bulletin (SAB) No."
+        },
+        {
+          "title": "What A Trump Presidency Could Mean For Digital Assets",
+          "url": "https://www.forbes.com/sites/digital-assets/2024/12/23/what-a-trump-presidency-could-mean-for-digital-assets/",
+          "snippet": "In some ways, this shift is reflective of the broader public warming to digital assets as a legitimate investment class, particularly with the SEC’s recent regulatory approval of spot bitcoin and spot ether ETFs. Trump’s evolving perspective on cryptocurrency, coupled with the appointment of pro-business Republican, Paul Atkins, as the new chair of the SEC, offers potential for growth across the blockchain and Web3 ecosystem. Atkins, a former SEC commissioner known for his pro-innovation stance, is expected to guide the agency toward clearer crypto guidelines to facilitate industry growth.",
+          "age": "December 26, 2024",
+          "page_age": "2024-12-26T08:09:34"
+        },
+        {
+          "title": "President $Trump’s Foray into Digital Assets Signals Big Changes for Crypto - The Temple 10-Q",
+          "url": "https://law.temple.edu/10q/president-trumps-foray-into-digital-assets-signals-big-changes-for-crypto/",
+          "snippet": "How crypto is classified, of course, ... SEC’s stance was that crypto is a commodity, and thus should be regulated not by the SEC, but by the Commodity Futures Trading Commission (CFTC). Trump’s administration seems likely to depart from Gensler’s view, as the SEC announced it was instituting a new cryptocurrency task force in January.",
+          "age": "February 7, 2025",
+          "page_age": "2025-02-07T18:54:52"
+        }
+      ],
+      "summary": {
+        "text": "Donald Trump's stance on digital assets has undergone a significant transformation, shifting from criticism to strong advocacy. Previously dismissive of cryptocurrencies—calling Bitcoin a \"scam\" in 2019 and 2021 due to its competition with the U.S. dollar—Trump reversed course during his 2024 re-election campaign, positioning himself as a pro-crypto leader and pledging to make the United States the \"crypto capital of the planet.\"\n\nUpon returning to office, Trump solidified this pro-digital asset position by signing an executive order on January 23, 2025, titled *“Strengthening American Leadership in Digital Financial Technology.”* This order marked a sharp departure from the Biden administration’s regulatory approach, which emphasized consumer protection and oversight. Trump’s policy asserts that digital assets and blockchain technology play a “crucial role in innovation and economic development” and commits to supporting their responsible growth.\n\nKey elements of Trump’s digital asset stance include:\n\n- **Revocation of Biden-era policies**: The executive order repealed Executive Order 14067, which had prioritized regulatory scrutiny and international coordination on digital assets.\n- **Ban on central bank digital currency (CBDC)**: Trump explicitly prohibited any federal agency from developing or promoting a U.S. CBDC, arguing it would give the government “absolute control over your money.” Instead, his administration supports private-sector innovations like dollar-backed stablecoins to maintain the dollar’s global dominance.\n- **Regulatory reform and industry support**: The order established the Presidential Working Group on Digital Asset Markets, tasked with creating a clear, innovation-friendly regulatory framework. It also rescinded the SEC’s Staff Accounting Bulletin (SAB) 121, removing barriers for financial institutions offering crypto custody services.\n- **Pro-crypto appointments and deregulation**: Trump appointed known crypto advocates, such as SEC Commissioners Mark Uyeda and Hester Peirce (nicknamed “Crypto Mom”), and directed agencies to reduce enforcement actions against crypto innovators unless willful violations are proven.\n- **Personal involvement in crypto**: Trump launched his own meme coins, $Trump and $Melania, shortly before his inauguration. While this move drew criticism over potential conflicts of interest and “pump-and-dump” concerns—given that Trump-affiliated entities retained 80% of the tokens—it further underscored his alignment with the crypto community.\n\nOverall, Trump’s current stance is characterized by strong support for blockchain innovation, deregulation, private-sector leadership, and a firm opposition to government-issued digital currencies, reflecting a broader vision of American economic leadership in digital finance"
+      }
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What is Trump's stance on digital assets?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "What is Trump's stance on digital assets?",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "A Closer Look at the Trump Administration’s Comprehensive Report on Digital Assets | Insights | Skadden, Arps, Slate, Meagher & Flom LLP",
+          "url": "https://www.skadden.com/insights/publications/2025/08/a-closer-look-at-the-trump-administrations-comprehensive-report-on-digital-assets",
+          "snippet": "What to do next: Companies should review the report’s recommendations to assess potential impacts on compliance, operations and strategic planning, and monitor forthcoming regulatory and legislative actions in the digital asset sector. ... On July 30, 2025, the Trump administration’s Working Group on Digital Asset Markets issued its long-awaited report on digital assets, “Strengthening American Leadership in Digital Financial Technology” (the Report).1 The Report is the culmination of a mandate from President Donald Trump’s January 23, 2025, executive order on digital assets that established the working group and gave it 180 days to develop pro-innovation regulatory and legislative recommendations in the digital asset sector."
+        },
+        {
+          "title": "President Trump Issues Executive Order on Digital Assets | Global Fintech & Digital Assets Blog",
+          "url": "https://www.fintechanddigitalassets.com/2025/01/president-trump-issues-executive-order-on-digital-assets/",
+          "snippet": "With its pro-crypto stance and ... anticipated executive order on digital assets titled “Strengthening American Leadership in Digital Financial Technology” (the Order)....",
+          "age": "January 27, 2025",
+          "page_age": "2025-01-27T19:29:08"
+        },
+        {
+          "title": "President Trump Issues Executive Order on Digital Assets",
+          "url": "https://www.hunton.com/blockchain-legal-resource/president-trump-issues-executive-order-on-digital-assets",
+          "snippet": "Next, the executive order revokes President Biden’s executive order on digital assets, and it orders the Secretary of the Treasury to revoke the Department of the Treasury’s Framework for International Engagement on Digital Assets."
+        },
+        {
+          "title": "President Trump signs Executive Order on Digital Assets entitled “Strengthening American Leadership in Digital Financial Technology” | Perspectives | Reed Smith LLP",
+          "url": "https://www.reedsmith.com/en/perspectives/2025/02/trump-signs-executive-order-digital-assets-american-financial-technology",
+          "snippet": "The Order indicates that it is the policy of the Trump Administration to “support the responsible growth and use of digital assets, blockchain technology, and related technologies across all sectors of the economy”. It goes on to enumerate ..."
+        },
+        {
+          "title": "President Trump’s Sweeping Executive Order on Digital Assets and the Repeal of SAB 121 | Winston & Strawn",
+          "url": "https://www.winston.com/en/blogs-and-podcasts/non-fungible-insights-blockchain-decrypted/president-trumps-sweeping-executive-order-on-digital-assets-and-the-repeal-of-sab-121",
+          "snippet": "The EO emphasizes that the digital ... the Administration’s policy is “to support the responsible growth and use of digital assets, blockchain technology, and related technologies.”..."
+        },
+        {
+          "title": "New Administration Outlook: Trump Administration Transforms U.S. Policy on Digital Assets | Davis Wright Tremaine",
+          "url": "https://www.dwt.com/blogs/financial-services-law-advisor/2025/01/trump-transforms-digital-assets-policy",
+          "snippet": "While the SEC's new course is welcome and substantial, the broad and powerful series of actions mandated by President Trump's Executive Order titled \"Strengthening American Leadership In Digital Financial Technology\" (the \"Trump EO\") are far more significant. They set forth a forward-looking and optimistic view of digital assets and their potential within the U.S."
+        },
+        {
+          "title": "Trump 2.0: A New Era for Cryptocurrency and Digital Assets Regulation",
+          "url": "https://www.pillsburylaw.com/en/news-and-insights/cryptocurrency-digital-assets-trump.html",
+          "snippet": "The Executive Order itself directly repeals one aspect of the Biden administration’s crypto policy: Executive Order 14067 of March 9, 2022, which set forth the Biden administration’s policy objectives for the regulation of digital assets. In other words, the Trump administration appears to be moving swiftly to remove perceived obstacles to the widespread use of blockchain technology and development of the crypto asset markets."
+        },
+        {
+          "title": "President $Trump’s Foray into Digital Assets Signals Big Changes for Crypto - The Temple 10-Q",
+          "url": "https://law.temple.edu/10q/president-trumps-foray-into-digital-assets-signals-big-changes-for-crypto/",
+          "snippet": "How crypto is classified, of course, affects which agency regulates its trading: as of February 2023, the SEC’s stance was that crypto is a commodity, and thus should be regulated not by the SEC, but by the Commodity Futures Trading Commission (CFTC). Trump’s administration seems likely to depart from Gensler’s view, as the SEC announced it was instituting a new cryptocurrency task force in January. SEC Commissioners Mark Uyeda and Hester Peirce will head the new group, which will be developing regulatory frameworks for digital assets and the compliance challenges that come with them.",
+          "age": "February 7, 2025",
+          "page_age": "2025-02-07T18:54:52"
+        },
+        {
+          "title": "Trump issues executive order on crypto: Here’s what it says",
+          "url": "https://finance.yahoo.com/news/trump-issues-executive-order-crypto-233523767.html",
+          "snippet": "President Donald Trump solidified his pro-crypto stance in an executive order on Thursday, saying that his administration will support the growth and use of digital assets and blockchain technology.",
+          "age": "January 23, 2025",
+          "page_age": "2025-01-23T23:35:23"
+        },
+        {
+          "title": "Trump Administration’s Executive Order on Digital Assets: A Significant Shift in U.S. Crypto Policy | Carlton Fields",
+          "url": "https://www.carltonfields.com/insights/publications/2025/trump-administrations-executive-order-on-digital-assets-a-significant-shift-in-u-s-crypto-policy",
+          "snippet": "It revokes Executive Order 14067 (“Ensuring Responsible Development of Digital Assets”) and rescinds prior Treasury policies, emphasizing regulatory clarity, financial inclusivity, and the protection of blockchain-based activities."
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave Search",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue. [M26, M24]\n\n## Update or tweak\n- Prefer a shade saved (navy, royal, sky, teal, or a hex code)?\n- Want to change it entirely? Tell me the new color and I’ll update your preference.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Explain Trump's stance on why America should take over Greenland"
+  },
+  {
+    "role": "assistant",
+    "content": "Trump’s pitch for the U.S. to “take over” (or acquire) Greenland hinges on its Arctic strategic value, resources, and existing U.S. defense footprint, but Denmark and Greenland reject any transfer and legal experts say it’s not feasible under self‑determination principles [M1, M2].\n\n## TL;DR\n- Rationale: Arctic position, potential resources, and the Thule Air Base make Greenland strategically attractive to Washington [M1, M2].  \n- Reality: Greenland is “not for sale,” and post‑WWII self‑determination norms make a purchase or forced transfer legally impractical; there are no formal negotiations [M1, M2, M3].  \n- Latest: After renewed 2025 remarks, Denmark set up a foreign‑ministry “night watch” to monitor Trump’s statements; the move didn’t change the legal status quo [M1, M2, M3].\n\n## Why he says it matters\n- Geostrategy: Control of Arctic approaches as sea lanes open up seasonally, plus broader great‑power competition in the region [M1].  \n- Resources and transit: Interest in Arctic resources and future shipping corridors increases Greenland’s value [M1].  \n- Defense basing: The long‑standing U.S. presence at Thule Air Base (missile warning/space surveillance) underscores military utility [M1, M2].\n\n## Legal and political reality\n- “Not for sale”: Greenland’s leaders and Denmark have repeatedly rejected the idea of a sale or transfer [M1, M2].  \n- Self‑determination: International norms (also backed historically by the U.S.) make literal purchase or forced transfer infeasible; Greenlanders would have to consent to any status change [M1, M2].  \n- No process underway: There is no official path or active negotiation toward U.S. acquisition [M1, M2, M3].\n\n## Latest developments (2025)\n- Denmark’s “night watch”: The foreign ministry created an evening‑overnight monitoring cell to track Trump’s Greenland‑related remarks after a spring diplomatic row; it produces morning reports but doesn’t alter the legal landscape [M1, M2, M3].\n\n## Bottom line\nTrump frames Greenland as a strategic asset worth acquiring, but Greenlandic self‑determination, Danish sovereignty, and international law make acquisition a non‑starter; U.S. engagement will likely remain via defense, economic, and scientific cooperation—not territorial transfer [M1, M2, M3].",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's the latest happening with Venezuela?"
+  },
+  {
+    "role": "assistant",
+    "content": "Tensions spiked after the U.S. seized a Venezuelan-linked oil supertanker off the country’s coast, prompting sharp diplomatic blowback, expanded sanctions, and disrupted tanker traffic around Venezuela [1, 2, 3, 5].\n\n## TL;DR\n- U.S. seized the VLCC “Skipper” on Dec 10–11, escalating pressure on Maduro’s government; oil prices jumped on the news [1, 5].  \n- Caracas, Havana, and Tehran denounced the action as “piracy”; ship movements near Venezuela slowed amid heightened risk [2, 3, 4].  \n- Washington widened sanctions on ships and Maduro-linked entities, signaling a broader clampdown on Venezuela’s oil trade [1, 3].\n\n## Key developments\n- Tanker seizure: The FBI, Coast Guard, and U.S. military boarded and seized the VLCC Skipper in international waters, with Trump calling it the largest tanker ever seized and saying the U.S. would keep the oil cargo [1, 5].  \n- Sanctions surge: The U.S. added more ships and Maduro-linked individuals/entities to sanctions, intensifying the pressure campaign launched since 2019 [1, 3].  \n- Diplomatic fallout: Venezuela labeled the seizure “international piracy,” with Cuba and Iran echoing the condemnation; maritime advisories note disrupted tanker traffic in and out of Venezuelan waters [2, 3, 4].  \n- Market impact: Oil prices rose following the seizure, reflecting supply and geopolitical risk concerns [1].\n\n## Why it matters\n- Energy flows: Disruptions to Venezuelan crude shipments could ripple into regional supply chains and global pricing [1, 3].  \n- Regional security: Heightened U.S.–Venezuela friction raises the risk of further maritime confrontations and legal disputes over sanctions enforcement [1, 3].  \n- Domestic stakes: Caracas uses the incident to rally support against U.S. pressure, while Washington signals continued enforcement against sanctioned oil trades [1, 3].\n\n## What to watch\n- Additional seizures or interdictions targeting sanctioned cargoes [1, 3].  \n- Any backchannel talks or regional mediation to defuse tensions [2].  \n- Changes in tanker routing, AIS behavior, and insurance costs for vessels serving Venezuelan ports [4].  \n\nSources: Reuters, BBC, the Guardian, Liveuamap, and CNN coverage of the Dec 10–11 tanker seizure and ensuing diplomatic and market fallout [1, 2, 3, 4, 5].",
+    "model": "Web + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "web-0",
+        "title": "US seizes sanctioned oil tanker off coast of Venezuela, Trump says | Reuters",
+        "url": "https://www.reuters.com/world/americas/trump-administration-seizes-oil-tanker-off-venezuela-coast-us-officials-say-2025-12-10/",
+        "description": "The U.S. has seized a sanctioned oil tanker off the coast of Venezuela, President Donald Trump said, a move that sent oil prices higher and sharply escalated tensions between Washington and Caracas.",
+        "siteName": "reuters.com",
+        "rank": 0,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-1",
+        "title": "Venezuela - BBC News",
+        "url": "https://www.bbc.com/news/topics/cg41ylwvwgxt",
+        "description": "The Venezuelan opposition leader talked about she escaped Venezuela after months in hiding. ... The move is a sharp escalation in Washington's pressure campaign against Nicolás Maduro's government. ... The US seizure of a crude oil ship is the latest in a series of escalations in the Trump ...",
+        "siteName": "bbc.com",
+        "rank": 1,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-2",
+        "title": "Venezuela | The Guardian",
+        "url": "https://www.theguardian.com/world/venezuela",
+        "description": "The seizure of the Skipper on Wednesday marked the first US capture of Venezuelan oil cargo since sanctions were imposed in 2019 · Editorial: The US is ramping up the pressure on Nicolás Maduro with a tanker seizure and expanded sanctions following threats and boat strikes",
+        "siteName": "theguardian.com",
+        "rank": 2,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-3",
+        "title": "Explore Venezuela local news alerts & today's headlines geolocated on live map on website or application. Focus on politics, military news and security alerts",
+        "url": "https://venezuela.liveuamap.com/",
+        "description": "Putin expressed solidarity with the Venezuelan people and reaffirmed his support for the Maduro government's policy aimed at protecting national interests and sovereignty in the face of growing external pressure.Caracas, Distrito Capital Venezuela's National Guard committed crimes against humanity over decade, UN report saysCaracas, Distrito Capital Maduro: \"I say to the people of Colombia: sooner rather than later we must refound Gran Colombia\"Caribbean Sea British maritime risk management group Vanguard said the tanker Skipper was believed to have been seized off Venezuela early on Wednesday.",
+        "siteName": "venezuela.liveuamap.com",
+        "rank": 3,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-4",
+        "title": "US seizes oil tanker off Venezuelan coast | CNN Politics",
+        "url": "https://www.cnn.com/2025/12/10/politics/oil-tanker-seized-venezuela",
+        "description": "Link Copied! ... The United States seized an oil tanker off the coast of Venezuela on Wednesday, President Donald Trump said, escalating US pressure on President Nicolas Maduro’s regime.",
+        "siteName": "cnn.com",
+        "rank": 4,
+        "sourceType": "web"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "What's the latest updates on Trump's southern border policy?"
+  },
+  {
+    "role": "assistant",
+    "content": "The latest update is that the administration created a new militarized zone on the California–Mexico border by transferring about 760 acres of public land in San Diego and Imperial counties to the U.S. Navy for border security operations, expanding similar zones already in New Mexico, Texas, and Arizona [1, 2, 4].\n\n## TL;DR\n- New California militarized zone added; land transferred to the Navy to support border enforcement along a high‑traffic corridor [1, 2, 4].\n- 7,000+ troops are deployed across the southern border with helicopters, drones, and other surveillance assets; critics raise legal concerns over the military’s role in enforcement [1, 4].\n- DHS says migration flows have sharply declined in 2025 alongside border infrastructure efforts, though independent verification varies by metric and time frame [5, 3].\n\n## Key updates\n- California zone established: About 760 acres of public land now under Navy jurisdiction for border security, covering a corridor from near the Otay Mountain Wilderness Area east toward the CA–AZ line [1, 4].  \n- Expansion of prior zones: Follows zones previously set up in New Mexico, Texas, and Arizona under a national emergency declaration [1, 2].  \n- Force posture: More than 7,000 U.S. troops are deployed along the southern border with air and ISR support (helicopters, drones, surveillance systems) [1].\n\n## Claims and data\n- DHS statements: The department highlights steep reductions in migration flows in 2025 and continued wall construction, citing broad deterrence effects [5].  \n- Early‑term trend note: DHS previously pointed to an immediate decline in encounters at the start of the administration, though these short‑window comparisons fluctuate over time [3].\n\n## Legal context and concerns\n- Role of the military: The use of militarized zones and military personnel has prompted questions about the limits on armed forces in domestic law enforcement (e.g., Posse Comitatus concerns), especially regarding detentions on military‑controlled lands [1, 4].\n\n## What to watch next\n- Court challenges and congressional oversight on the military’s authorities and the scope of the national emergency [1, 4].  \n- Any additional corridor designations or land transfers, and how quickly capabilities expand along the California sector [1, 2, 4].  \n- Updated CBP encounter data and third‑party analyses to assess the durability of claimed reductions [5, 3].\n\nSources: Military.com, The Hill, CBS News coverage of the new California militarized zone; DHS press releases on 2025 border actions and reported migration trends [1, 2, 4, 5, 3].",
+    "model": "Brave + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "web-0",
+        "title": "Trump Administration Adds Militarized Zone in California Along Southern US Border | Military.com",
+        "url": "https://www.military.com/daily-news/2025/12/11/trump-administration-adds-militarized-zone-california-along-southern-us-border.html",
+        "description": "The Trump administration is adding another militarized zone to the southern U.S. border to support border security operations — this time in California.",
+        "siteName": "military.com",
+        "rank": 0,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-1",
+        "title": "Trump administration setting up another militarized zone on California-Mexico border",
+        "url": "https://thehill.com/homenews/state-watch/5644285-trump-militarized-zone-california/",
+        "description": "“The complexity of the current situation requires that our military take a more direct role in securing our southern border than in the recent past.” · The Pentagon has established militarized zones in New Mexico, Texas and Arizona.",
+        "siteName": "thehill.com",
+        "rank": 1,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-2",
+        "title": "President Trump is Already Securing Our Border and Deporting Criminal Aliens | Homeland Security",
+        "url": "https://www.dhs.gov/news/2025/01/26/president-trump-already-securing-our-border-and-deporting-criminal-aliens",
+        "description": "“The Trump administration is ... · “The number of Border Patrol encounters at the southern border in the first three days of the Trump administration is 35% lower than the final three days of the Biden administration, the sources ...",
+        "siteName": "dhs.gov",
+        "rank": 2,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-3",
+        "title": "Trump administration moves to set up militarized zone on California-Mexico border - CBS News",
+        "url": "https://www.cbsnews.com/news/california-mexico-border-militarized-zone/",
+        "description": "The Trump administration announced plans Wednesday to add another militarized zone to the southern border — this time in California — as part of a major shift that has thrust troops into border enforcement with Mexico like never before.",
+        "siteName": "cbsnews.com",
+        "rank": 3,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-4",
+        "title": "Six Months of Keeping America Safe Under President Trump and Secretary Noem | Homeland Security",
+        "url": "https://www.dhs.gov/news/2025/07/20/six-months-keeping-america-safe-under-president-trump-and-secretary-noem",
+        "description": "Migrants are turning BACK before they even reach our border— migration through Panama’s Darien Gap is down 99%. President Trump—with $46.5 billion from the Big Beautiful Bill—is finishing the border wall.",
+        "siteName": "dhs.gov",
+        "rank": 4,
+        "sourceType": "web"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "What's the latest updates on Trump's southern border policy?"
+  },
+  {
+    "role": "assistant",
+    "content": "The latest change is a new militarized zone on the California–Mexico border, created by transferring about 760 acres of public land in San Diego and Imperial counties to the U.S. Navy to support border security operations [1, 2, 4].\n\n## TL;DR\n- New California militarized zone added to support enforcement along a high‑traffic corridor [1, 2, 4].\n- Thousands of U.S. troops are deployed along the southern border with air and ISR support; critics raise legal concerns about the military’s role [1, 4, M2].\n- DHS touts sharp declines in 2025 migration flows and continued wall work; independent verification varies by metric and time frame [5, 3].\n\n## Key updates\n- California zone established: ~760 acres of public land moved under Navy control for border operations, extending from near Otay Mountain east toward the CA–AZ line [1, 4].  \n- Expansion of prior zones: Follows earlier militarized zones set up in New Mexico, Texas, and Arizona under the national emergency posture [1, 2].  \n- Force posture: Thousands of troops with helicopters, drones, and surveillance systems are supporting DHS along the border [1, 4, M2].\n\n## Claims and data\n- DHS statements: The department highlights steep reductions in migration flows in 2025 and ongoing border infrastructure efforts, citing deterrence effects [5].  \n- Early‑term trend note: DHS previously pointed to a sharp drop in encounters right at the start of the administration; short‑window comparisons fluctuate over time [3].\n\n## Legal context and concerns\n- Military role: The militarized zones and use of uniformed personnel in proximity to enforcement raise questions about the limits of armed forces in domestic law enforcement (e.g., Posse Comitatus, detention authority on military‑controlled lands) [1, 4].\n\n## What to watch next\n- Court challenges and congressional oversight on the scope and authorities of militarized zones and any emergency declarations [1, 4].  \n- Additional corridor designations or land transfers in California and elsewhere [1, 2, 4].  \n- Updated CBP encounter data and third‑party analyses to test DHS claims of sustained declines [5, 3].\n\nSources: Military.com, The Hill, CBS News coverage of the California militarized zone; DHS press releases on 2025 border actions and reported migration trends [1, 2, 4, 5, 3].",
+    "model": "Brave + Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      "Brave Search"
+    ],
+    "meta": {
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "Trump Administration Adds Militarized Zone in California Along Southern US Border | Military.com",
+          "url": "https://www.military.com/daily-news/2025/12/11/trump-administration-adds-militarized-zone-california-along-southern-us-border.html",
+          "snippet": "The Trump administration is adding another militarized zone to the southern U.S. border to support border security operations — this time in California.",
+          "age": "2 days ago",
+          "page_age": "2025-12-11T12:23:31"
+        },
+        {
+          "title": "Trump administration setting up another militarized zone on California-Mexico border",
+          "url": "https://thehill.com/homenews/state-watch/5644285-trump-militarized-zone-california/",
+          "snippet": "“The complexity of the current situation requires that our military take a more direct role in securing our southern border than in the recent past.” · The Pentagon has established militarized zones in New Mexico, Texas and Arizona.",
+          "age": "2 days ago",
+          "page_age": "2025-12-11T17:26:22"
+        },
+        {
+          "title": "President Trump is Already Securing Our Border and Deporting Criminal Aliens | Homeland Security",
+          "url": "https://www.dhs.gov/news/2025/01/26/president-trump-already-securing-our-border-and-deporting-criminal-aliens",
+          "snippet": "“The Trump administration is ... · “The number of Border Patrol encounters at the southern border in the first three days of the Trump administration is 35% lower than the final three days of the Biden administration, the sources ..."
+        },
+        {
+          "title": "Trump administration moves to set up militarized zone on California-Mexico border - CBS News",
+          "url": "https://www.cbsnews.com/news/california-mexico-border-militarized-zone/",
+          "snippet": "The Trump administration announced plans Wednesday to add another militarized zone to the southern border — this time in California — as part of a major shift that has thrust troops into border enforcement with Mexico like never before.",
+          "age": "3 days ago",
+          "page_age": "2025-12-11T00:22:50"
+        },
+        {
+          "title": "Six Months of Keeping America Safe Under President Trump and Secretary Noem | Homeland Security",
+          "url": "https://www.dhs.gov/news/2025/07/20/six-months-keeping-america-safe-under-president-trump-and-secretary-noem",
+          "snippet": "Migrants are turning BACK before they even reach our border— migration through Panama’s Darien Gap is down 99%. President Trump—with $46.5 billion from the Big Beautiful Bill—is finishing the border wall."
+        }
+      ]
+    }
+  },
+  {
+    "role": "user",
+    "content": "What's the latest in Trump's digital assets policy?"
+  },
+  {
+    "role": "assistant",
+    "content": "The latest is a pro-innovation reset: a January 23, 2025 Executive Order promoting “responsible growth” of digital assets, revoking Biden’s EO 14067, prohibiting a U.S. CBDC, and establishing a President’s Working Group that issued a comprehensive report on July 30, 2025. [1, 2, 3, 4, 5]\n\n## TL;DR\n- EO pivots U.S. policy toward innovation, deregulation, and financial autonomy; Biden’s EO 14067 was revoked. [1, 3, 4, 5]\n- Federal agencies are barred from developing or promoting a CBDC. [3, 4, 5]\n- A President’s Working Group on Digital Asset Markets delivered a wide-ranging report on July 30, 2025 with regulatory and legislative recommendations. [2, 3]\n- Banking integration and accounting/capital relief advanced (e.g., rollback of SAB 121 constraints). [4]\n\n## Key moves in 2025\n- Executive Order (Jan 23, 2025)\n  - Sets policy to support digital assets and related technologies across the economy. [3, 4, 5]\n  - Revokes EO 14067 (Mar 9, 2022). [1]\n  - Directs agencies away from pursuing a U.S. CBDC. [3, 4, 5]\n  - Creates a President’s Working Group on Digital Asset Markets (PWG). [3]\n\n- PWG report (July 30, 2025)\n  - “Strengthening American Leadership in Digital Financial Technology” outlines the administration’s strategy and next steps. [2]\n  - Emphasizes regulatory clarity, risk-based supervision, and industry engagement. [2]\n  - Discusses banking integration (custody, tokenization), stablecoin policy direction, and treatment of tax/AML issues (including DeFi). [2]\n  - Signals a more technology‑neutral approach to financial regulation. [2]\n\n- Banking and market plumbing\n  - Movement to allow banks to provide custody/reserves and pursue tokenization activities; attention to capital and accounting frictions. [2]\n  - SAB 121 rollback reduced accounting barriers for custodial activities. [4]\n\n## What this means for industry\n- Friendlier policy climate: Clearer signals for stablecoin issuers, custodians, and tokenization projects. [2, 4]\n- Less CBDC risk: Private payment rails and stablecoins face no near‑term competition from a U.S. CBDC under current policy. [3, 4, 5]\n- Expect more guidance: Agencies are expected to follow the PWG roadmap with targeted rules and supervisory updates. [2]\n\n## What to watch next\n- Congressional action on stablecoins and market‑structure clarity referenced in and around the PWG report. [2]\n- Bank regulators’ follow‑on guidance enabling custody, reserve services, and tokenization at scale. [2]\n- Additional tax and AML/DeFi clarifications recommended by the PWG. [2]\n\n## Bottom line\nTrump’s digital‑asset policy shifts the U.S. toward a permissive, innovation‑first framework: no CBDC, a revoked prior EO, a comprehensive PWG roadmap, and steps to integrate crypto with the banking system—setting the stage for industry growth pending agency implementation and congressional follow‑through. [1, 2, 3, 4, 5]",
+    "model": "Brave + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "web-0",
+        "title": "Trump 2.0: A New Era for Cryptocurrency and Digital Assets Regulation",
+        "url": "https://www.pillsburylaw.com/en/news-and-insights/cryptocurrency-digital-assets-trump.html",
+        "description": "The Executive Order itself directly repeals one aspect of the Biden administration’s crypto policy: Executive Order 14067 of March 9, 2022, which set forth the Biden administration’s policy objectives for the regulation of digital assets.",
+        "siteName": "pillsburylaw.com",
+        "rank": 0,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-1",
+        "title": "A Closer Look at the Trump Administration’s Comprehensive Report on Digital Assets | Insights | Skadden, Arps, Slate, Meagher & Flom LLP",
+        "url": "https://www.skadden.com/insights/publications/2025/08/a-closer-look-at-the-trump-administrations-comprehensive-report-on-digital-assets",
+        "description": "... On July 30, 2025, the Trump administration’s Working Group on Digital Asset Markets issued its long-awaited report on digital assets, “Strengthening American Leadership in Digital Financial Technology” (the Report).1 The Report is ...",
+        "siteName": "skadden.com",
+        "rank": 1,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-2",
+        "title": "President Trump signs Executive Order on Digital Assets entitled “Strengthening American Leadership in Digital Financial Technology” | Perspectives | Reed Smith LLP",
+        "url": "https://www.reedsmith.com/en/perspectives/2025/02/trump-signs-executive-order-digital-assets-american-financial-technology",
+        "description": "On January 23, President Trump issued an Executive Order entitled “Strengthening American Leadership in Digital Financial Technology” (the “Order”). The Order indicates that it is the policy of the Trump Administration to “support ...",
+        "siteName": "reedsmith.com",
+        "rank": 2,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-3",
+        "title": "President Trump’s Sweeping Executive Order on Digital Assets and the Repeal of SAB 121 | Winston & Strawn",
+        "url": "https://www.winston.com/en/blogs-and-podcasts/non-fungible-insights-blockchain-decrypted/president-trumps-sweeping-executive-order-on-digital-assets-and-the-repeal-of-sab-121",
+        "description": "On January 23, 2025, President Trump signed an Executive Order (EO) on digital assets, blockchain technology, “and related technologies across all sectors of the economy,” demonstrating a dramatic shift in tone and approach from the Biden ...",
+        "siteName": "winston.com",
+        "rank": 3,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-4",
+        "title": "President Trump Issues Executive Order on Digital Assets",
+        "url": "https://www.hunton.com/blockchain-legal-resource/president-trump-issues-executive-order-on-digital-assets",
+        "description": "On January 23, 2025, President Trump issued an executive order on “Strengthening American Leadership in Digital Financial Technology.” Noting that the “digital asset industry plays a crucial role in innovation and economic development ...",
+        "siteName": "hunton.com",
+        "rank": 4,
+        "sourceType": "web"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "What's the latest in Trump's digital assets policy?"
+  },
+  {
+    "role": "assistant",
+    "content": "The latest is a pro‑innovation reset: Trump’s Jan 23, 2025 Executive Order promotes “responsible growth” of digital assets, revokes Biden’s EO 14067, bars a U.S. CBDC, and set up a President’s Working Group that released a comprehensive roadmap on July 30, 2025. [M2]\n\n## TL;DR\n- Policy pivot: Innovation‑first stance; Biden’s EO 14067 revoked. [M2]\n- No CBDC: Agencies are directed not to develop or promote a U.S. CBDC. [M2]\n- PWG roadmap: July 30, 2025 report outlines regulatory, supervisory, and legislative recommendations. [M2]\n- Bank integration momentum: Signals on custody, reserves, tokenization; SAB 121 rollback eased accounting frictions. [M2]\n\n## Key moves (2025)\n- Executive Order (Jan 23): Sets supportive national policy for digital assets and related tech; revokes EO 14067; establishes a President’s Working Group on Digital Asset Markets. [M2]\n- PWG report (July 30): “Strengthening American Leadership in Digital Financial Technology” emphasizes regulatory clarity, risk‑based supervision, stablecoin direction, DeFi/tax/AML treatment, and a tech‑neutral approach. [M2]\n- Banking and market plumbing: Movement toward allowing banks to provide custody/reserves and support tokenization; attention to capital/accounting impediments (including SAB 121). [M2]\n\n## What it means for industry\n- Friendlier climate: Clearer signals for stablecoin issuers, custodians, and tokenization projects. [M2]\n- Less CBDC overhang: No near‑term U.S. CBDC competition to private rails under current policy. [M2]\n- Expect more guidance: Agencies are expected to implement the PWG roadmap with targeted rules/supervision updates. [M2]\n\n## What to watch\n- Congressional action on stablecoins and market‑structure clarity referenced around the PWG report. [M2]\n- Bank‑regulator follow‑ons enabling custody, reserve services, and tokenization at scale. [M2]\n- Additional tax and AML/DeFi clarifications recommended by the PWG. [M2]",
+    "model": "Brave + Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      "Brave Search"
+    ],
+    "meta": {
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "Trump 2.0: A New Era for Cryptocurrency and Digital Assets Regulation",
+          "url": "https://www.pillsburylaw.com/en/news-and-insights/cryptocurrency-digital-assets-trump.html",
+          "snippet": "The Executive Order itself directly repeals one aspect of the Biden administration’s crypto policy: Executive Order 14067 of March 9, 2022, which set forth the Biden administration’s policy objectives for the regulation of digital assets."
+        },
+        {
+          "title": "A Closer Look at the Trump Administration’s Comprehensive Report on Digital Assets | Insights | Skadden, Arps, Slate, Meagher & Flom LLP",
+          "url": "https://www.skadden.com/insights/publications/2025/08/a-closer-look-at-the-trump-administrations-comprehensive-report-on-digital-assets",
+          "snippet": "... On July 30, 2025, the Trump administration’s Working Group on Digital Asset Markets issued its long-awaited report on digital assets, “Strengthening American Leadership in Digital Financial Technology” (the Report).1 The Report is ..."
+        },
+        {
+          "title": "President Trump signs Executive Order on Digital Assets entitled “Strengthening American Leadership in Digital Financial Technology” | Perspectives | Reed Smith LLP",
+          "url": "https://www.reedsmith.com/en/perspectives/2025/02/trump-signs-executive-order-digital-assets-american-financial-technology",
+          "snippet": "On January 23, President Trump issued an Executive Order entitled “Strengthening American Leadership in Digital Financial Technology” (the “Order”). The Order indicates that it is the policy of the Trump Administration to “support ..."
+        },
+        {
+          "title": "President Trump’s Sweeping Executive Order on Digital Assets and the Repeal of SAB 121 | Winston & Strawn",
+          "url": "https://www.winston.com/en/blogs-and-podcasts/non-fungible-insights-blockchain-decrypted/president-trumps-sweeping-executive-order-on-digital-assets-and-the-repeal-of-sab-121",
+          "snippet": "On January 23, 2025, President Trump signed an Executive Order (EO) on digital assets, blockchain technology, “and related technologies across all sectors of the economy,” demonstrating a dramatic shift in tone and approach from the Biden ..."
+        },
+        {
+          "title": "President Trump Issues Executive Order on Digital Assets",
+          "url": "https://www.hunton.com/blockchain-legal-resource/president-trump-issues-executive-order-on-digital-assets",
+          "snippet": "On January 23, 2025, President Trump issued an executive order on “Strengthening American Leadership in Digital Financial Technology.” Noting that the “digital asset industry plays a crucial role in innovation and economic development ..."
+        }
+      ]
+    }
+  },
+  {
+    "role": "user",
+    "content": "Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source.",
+          "age": "May 5, 2014",
+          "page_age": "2014-05-05T14:22:44"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all.",
+          "age": "April 24, 2014",
+          "page_age": "2014-04-24T00:48:10"
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ],
+      "summary": {
+        "text": "Monero (XMR) is currently trading at $416.22 with a market cap of $7.68 billion, showing a 24-hour price increase of 10.98%. The price recently pulled back from a November high of $440 but remains above $400, supported by a cup-and-handle breakout pattern on the daily chart. Despite short-term volatility, long-term indicators suggest strength, with Monero demonstrating superior trading volume and user activity compared to other privacy coins like Zcash (ZEC) and Dash (DASH), accounting for 93% of privacy coin trading volume and 72% of users in Q3–Q4 according to MEXC Research.\n\nRecent news highlights Monero's growing dominance in the privacy coin sector, even as Zcash experiences short-term trading hype. While ZEC saw high spot volumes, Monero maintains consistent on-chain activity and trader preference. Market sentiment is mixed, with derivatives positions leaning bearish despite ongoing price gains, suggesting potential for a short squeeze if the rally continues. Broader market factors, such as anticipated U.S. Federal Reserve rate cuts, could further support bullish momentum.\n\nThe combination of strong fundamentals, high user adoption, and technical breakout patterns suggests potential for upward price movement, especially if broader market conditions remain favorable. However, resistance near $440 remains a key level to watch, and sustained momentum will depend on overall crypto market stability and increased buying pressure. Continued dominance in privacy coin trading volume may attract more attention and investment over time.\n\nThis is not financial advice"
+      }
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source.",
+          "age": "May 5, 2014",
+          "page_age": "2014-05-05T14:22:44"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all.",
+          "age": "April 24, 2014",
+          "page_age": "2014-04-24T00:48:10"
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's the latest about Monero?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) is hovering in the low $400s today, with mixed near‑term signals: a recent rally alongside bearish positioning in derivatives markets [4, 5].\n\n## TL;DR\n- Price: around the low $400s on major trackers; check live pages for the exact quote [4, 5].\n- Market tone: community sentiment is bullish, but derivatives positioning is cautious/bearish [4].\n- Headlines: some reports flag weakening momentum and debate over mining/centralization concerns; others note steady user interest [1, 4].\n- Fundamentals unchanged: private‑by‑default cryptocurrency with mature privacy tech (stealth addresses, ring signatures, RingCT) and CPU‑friendly RandomX PoW [M7].\n\n## 📊 Price & Market\n- Live trackers show XMR trading a little above $400; prices vary by venue and change quickly [4, 5].\n- CoinGecko notes community bullishness while highlighting bearish buildup in derivatives, implying near‑term volatility risk [4].\n\n## 📰 Recent chatter\n- CMC’s news/analysis feed highlights weakening bullish momentum and mentions capital rotation narratives (e.g., to GHOST) tied to concerns about mining centralization and a past DDoS event; these are debated claims and part of broader market volatility commentary [1].\n- No official protocol change is indicated in these items; treat them as market commentary rather than canonical project updates [1].\n\n## 🔐 Fundamentals (unchanged)\n- Privacy by default: sender, receiver, and amounts are concealed on‑chain via stealth addresses, ring signatures (CLSAG), and RingCT with Bulletproofs+. RandomX PoW favors widely available CPUs, supporting decentralization [M7].\n\n## ⚠️ Risks to watch\n- Derivatives skew: bearish positioning can amplify downside or fuel squeezes during sharp moves [4].\n- Regulatory/exchange friction: privacy coins periodically face listing pressure, which can affect liquidity (general market risk).\n- Research scrutiny: as with any privacy coin, academic/industry analysis continues; monitor project responses and updates.\n\n## 🔭 What to watch next\n- Official releases and network upgrades on getmonero.org (wallet updates, protocol improvements) [2].\n- Exchange policy changes and liquidity conditions.\n- Hashrate distribution and mining ecosystem health.\n\nIf you want, I can set quick price alerts or pull a side‑by‑side with Bitcoin on privacy, economics, and adoption.",
+    "model": "Brave + Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      "Brave Search"
+    ],
+    "meta": {
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "Latest Monero News - (XMR) Future Outlook, Trends & Market Insights",
+          "url": "https://coinmarketcap.com/cmc-ai/monero/latest-updates/",
+          "snippet": "What this means This technical setup reflects weakening bullish momentum, exacerbated by low trading volume and failed resistance breaks. The pattern aligns with broader crypto market volatility (Crypto.news). Overview Investors are rotating capital from Monero to GHOST, driven by concerns over XMR’s mining centralization after Qubic’s hashrate dominance and a DDoS attack in August."
+        },
+        {
+          "title": "The Monero Project",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero is a currency and can be exchanged for goods, services and other currencies, privately and with very low fees. Many entities will gladly accept XMR for payments; take a look at our 'Merchants' page. ... We've heard a lot of questions over the years and have compiled a thorough and varied FAQ."
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "In 2021, researchers presented a transaction-flooding attack against Monero’s transaction-graph privacy at the IEEE International Conference on Blockchain and Cryptocurrency. Under specific assumptions about transaction structure and fees, the \"FloodXMR\" attack modelled how an adversary who floods the blockchain with their own transactions could, over time, deanonymize a substantial fraction of new transaction inputs at relatively low cost.",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "The community is bullish about Monero (XMR) today. ... Monero Rallies to $400, Derivatives Bearish: Monero (XMR) rallied to $400 with a 10% weekly rise. However, the derivatives market lacks confidence, exhibiting bearish buildup and anticipating a potential collapse."
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        }
+      ]
+    }
+  },
+  {
+    "role": "user",
+    "content": "Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin - Open source P2P money",
+          "url": "https://bitcoin.org/en/",
+          "snippet": "Bitcoin uses peer-to-peer technology to operate with no central authority or banks; managing transactions and the issuing of bitcoins is carried out collectively by the network. Bitcoin is open-source; its design is public, nobody owns or controls Bitcoin and everyone can take part."
+        },
+        {
+          "title": "Bitcoin - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Bitcoin",
+          "snippet": "Bitcoin (abbreviation: BTC; sign: ₿) is the first decentralized cryptocurrency. Based on a free-market ideology, bitcoin was invented in 2008 when an unknown entity published a white paper under the pseudonym of Satoshi Nakamoto. Use of bitcoin as a currency began in 2009, with the release ...",
+          "age": "7 hours ago",
+          "page_age": "2025-12-13T14:51:45"
+        },
+        {
+          "title": "Bitcoin price today, BTC to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/bitcoin/",
+          "snippet": "The live Bitcoin price today is $90,231.50 USD with a 24-hour trading volume of $80,955,216,172.30 USD. We update our BTC to USD price in real-time.",
+          "age": "July 9, 2014",
+          "page_age": "2014-07-09T00:00:00"
+        },
+        {
+          "title": "Bitcoin - The Currency of the Internet",
+          "url": "https://www.reddit.com/r/Bitcoin/",
+          "snippet": "Bitcoin is the currency of the Internet: a distributed, worldwide, decentralized digital money. Unlike traditional currencies such as dollars, bitcoins are issued and managed without any central authority whatsoever: there is no government, company, or bank in charge of Bitcoin.",
+          "age": "September 9, 2010",
+          "page_age": "2010-09-09T14:30:26"
+        },
+        {
+          "title": "Bitcoin (@Bitcoin) / X",
+          "url": "https://x.com/Bitcoin?lang=en",
+          "snippet": "Bitcoin is an open source censorship-resistant peer-to-peer immutable network. Trackable digital gold. Don't trust; verify.",
+          "age": "August 18, 2011",
+          "page_age": "2011-08-18T05:06:08"
+        },
+        {
+          "title": "BTC USD — Bitcoin Price and Chart",
+          "url": "https://www.tradingview.com/symbols/BTCUSD/",
+          "snippet": "Just one more step · Complete the test below to access the page",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T17:17:24"
+        },
+        {
+          "title": "What is Bitcoin? | Coinbase",
+          "url": "https://www.coinbase.com/learn/crypto-basics/what-is-bitcoin",
+          "snippet": "Bitcoin is the world's first widely adopted cryptocurrency — it allows for secure and seamless peer-to-peer transactions on the internet."
+        },
+        {
+          "title": "BTC.CM=: Bitcoin/USD Coin Metrics - Stock Price, Quote and News - CNBC",
+          "url": "https://www.cnbc.com/quotes/BTC.CM=",
+          "snippet": "Get Bitcoin/USD Coin Metrics (BTC.CM=:Exchange) real-time stock quotes, news, price and financial information from CNBC.",
+          "age": "1 week ago",
+          "page_age": "2025-12-06T20:20:04"
+        },
+        {
+          "title": "Bitcoin Magazine | Bitcoin News, Analysis & Insights",
+          "url": "https://bitcoinmagazine.com/",
+          "snippet": "Bitcoin pulled back after the Fed’s mixed signals, even as Vanguard expanded access to spot BTC ETFs amid a skeptical view of crypto.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T23:03:08"
+        },
+        {
+          "title": "Bitcoin: A Peer-to-Peer Electronic Cash System Satoshi Nakamoto",
+          "url": "https://bitcoin.org/bitcoin.pdf",
+          "snippet": "Bitcoin: A Peer-to-Peer Electronic Cash System · Satoshi Nakamoto · satoshin@gmx.com · www.bitcoin.org · Abstract. A purely peer-to-peer version of electronic cash would allow online · payments to be sent directly from one party to another without going through a ·"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source.",
+          "age": "May 5, 2014",
+          "page_age": "2014-05-05T14:22:44"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all.",
+          "age": "April 24, 2014",
+          "page_age": "2014-04-24T00:48:10"
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ],
+      "summary": {
+        "text": "Monero (XMR) is currently trading at $416.22 with a market cap of approximately $7.68 billion, showing a 24-hour price increase of 10.98%. The price recently pulled back from a November high of $440 but remains significantly above its previous support levels. It has broken above $400, forming a cup-and-handle pattern on the daily chart, and is approaching its all-time high of $542.33. Recent data also highlights strong fundamentals, with Monero accounting for 93% of privacy coin trading volume and 72% of users in Q3–Q4 according to MEXC Research, outperforming Zcash and DASH in long-term demand and on-chain activity.\n\nNews from the past month indicates that Monero has maintained momentum despite reduced trading activity in other cryptos. While Zcash saw high spot volume, Monero demonstrated superior user engagement and trading consistency. A technical breakout above $400 has fueled speculation of a potential rally, with some questioning if it could reach $900. However, derivatives markets show bearish positioning, suggesting skepticism about the sustainability of the rally. Broader market sentiment, including potential U.S. Federal Reserve rate cuts, may influence investor behavior and support further gains.\n\nThe strong user base and dominant share of privacy coin trading volume suggest underlying demand that could support future price appreciation if market conditions remain favorable. Continued technical strength and a possible short squeeze from leveraged bearish positions may accelerate upward movement if resistance levels are breached. However, lack of confidence in the derivatives market poses a risk, as a reversal could trigger liquidations and volatility. Overall, Monero’s fundamentals and technical setup indicate potential for further upside, though near-term price action will likely depend on broader market trends and macroeconomic factors.\n\nThis is not financial advice"
+      }
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin - Open source P2P money",
+          "url": "https://bitcoin.org/en/",
+          "snippet": "Bitcoin uses peer-to-peer technology to operate with no central authority or banks; managing transactions and the issuing of bitcoins is carried out collectively by the network. Bitcoin is open-source; its design is public, nobody owns or controls Bitcoin and everyone can take part."
+        },
+        {
+          "title": "Bitcoin - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Bitcoin",
+          "snippet": "Bitcoin (abbreviation: BTC; sign: ₿) is the first decentralized cryptocurrency. Based on a free-market ideology, bitcoin was invented in 2008 when an unknown entity published a white paper under the pseudonym of Satoshi Nakamoto. Use of bitcoin as a currency began in 2009, with the release ...",
+          "age": "7 hours ago",
+          "page_age": "2025-12-13T14:51:45"
+        },
+        {
+          "title": "Bitcoin price today, BTC to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/bitcoin/",
+          "snippet": "The live Bitcoin price today is $90,231.50 USD with a 24-hour trading volume of $80,955,216,172.30 USD. We update our BTC to USD price in real-time.",
+          "age": "July 9, 2014",
+          "page_age": "2014-07-09T00:00:00"
+        },
+        {
+          "title": "Bitcoin - The Currency of the Internet",
+          "url": "https://www.reddit.com/r/Bitcoin/",
+          "snippet": "Bitcoin is the currency of the Internet: a distributed, worldwide, decentralized digital money. Unlike traditional currencies such as dollars, bitcoins are issued and managed without any central authority whatsoever: there is no government, company, or bank in charge of Bitcoin.",
+          "age": "September 9, 2010",
+          "page_age": "2010-09-09T14:30:26"
+        },
+        {
+          "title": "Bitcoin (@Bitcoin) / X",
+          "url": "https://x.com/Bitcoin?lang=en",
+          "snippet": "Bitcoin is an open source censorship-resistant peer-to-peer immutable network. Trackable digital gold. Don't trust; verify.",
+          "age": "August 18, 2011",
+          "page_age": "2011-08-18T05:06:08"
+        },
+        {
+          "title": "BTC USD — Bitcoin Price and Chart",
+          "url": "https://www.tradingview.com/symbols/BTCUSD/",
+          "snippet": "Just one more step · Complete the test below to access the page",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T17:17:24"
+        },
+        {
+          "title": "What is Bitcoin? | Coinbase",
+          "url": "https://www.coinbase.com/learn/crypto-basics/what-is-bitcoin",
+          "snippet": "Bitcoin is the world's first widely adopted cryptocurrency — it allows for secure and seamless peer-to-peer transactions on the internet."
+        },
+        {
+          "title": "BTC.CM=: Bitcoin/USD Coin Metrics - Stock Price, Quote and News - CNBC",
+          "url": "https://www.cnbc.com/quotes/BTC.CM=",
+          "snippet": "Get Bitcoin/USD Coin Metrics (BTC.CM=:Exchange) real-time stock quotes, news, price and financial information from CNBC.",
+          "age": "1 week ago",
+          "page_age": "2025-12-06T20:20:04"
+        },
+        {
+          "title": "Bitcoin Magazine | Bitcoin News, Analysis & Insights",
+          "url": "https://bitcoinmagazine.com/",
+          "snippet": "Bitcoin pulled back after the Fed’s mixed signals, even as Vanguard expanded access to spot BTC ETFs amid a skeptical view of crypto.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T23:03:08"
+        },
+        {
+          "title": "Bitcoin: A Peer-to-Peer Electronic Cash System Satoshi Nakamoto",
+          "url": "https://bitcoin.org/bitcoin.pdf",
+          "snippet": "Bitcoin: A Peer-to-Peer Electronic Cash System · Satoshi Nakamoto · satoshin@gmx.com · www.bitcoin.org · Abstract. A purely peer-to-peer version of electronic cash would allow online · payments to be sent directly from one party to another without going through a ·"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Monero"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Monero",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Home | Monero - secure, private, untraceable",
+          "url": "https://www.getmonero.org/",
+          "snippet": "Monero, a digital currency that is secure, private, and untraceable"
+        },
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $413.00 USD with a 24-hour trading volume of $144,641,877.92 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Introduction to Monero and how it’s different Mario Canul & Saxon Knight",
+          "url": "https://maui.hawaii.edu/wp-content/uploads/sites/13/2019/01/Monero.pdf",
+          "snippet": "In Monero, the funds are not linked to a particular public address."
+        },
+        {
+          "title": "Monero (XMR) (@monero) / X",
+          "url": "https://x.com/monero",
+          "snippet": "Monero (XMR) - The secure, private, untraceable cryptocurrency that keeps your money confidential. Grassroots. Open source.",
+          "age": "May 5, 2014",
+          "page_age": "2014-05-05T14:22:44"
+        },
+        {
+          "title": "Monero: the secure, private, untraceable currency",
+          "url": "https://www.reddit.com/r/Monero/",
+          "snippet": "r/Monero: This is the official subreddit of Monero (XMR), a secure, private, untraceable currency that is open-source and freely available to all.",
+          "age": "April 24, 2014",
+          "page_age": "2014-04-24T00:48:10"
+        },
+        {
+          "title": "Monero.com: Monero, Made Easy - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.monero.app&hl=en_US",
+          "snippet": "We make buying your first Monero easy, with support for all major payment methods and cryptocurrencies EASY PAYMENTS - Send & receive Monero with a tap, and use Cake Pay to seamlessly spend your crypto in everyday life, just like cash - Easily send and receive with just a username, including Unstoppable Domains, FIO, OpenAlias, and many more PRIVACY AND SECURITY MADE EASY - Best-in-class Monero support - Native Tor integration for powerful network-level privacy - No account necessary, no logging, no analytics, just pure privacy ADVANCED FEATURES - Full support for background sync, multiple wallets, accounts, hardware wallets, and much more"
+        },
+        {
+          "title": "GitHub - monero-project/monero: Monero: the secure, private, untraceable cryptocurrency",
+          "url": "https://github.com/monero-project/monero",
+          "snippet": "Monero: the secure, private, untraceable cryptocurrency - monero-project/monero"
+        },
+        {
+          "title": "Monero - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Monero",
+          "snippet": "Monero (/məˈnɛroʊ/; Abbreviation: XMR) is a blockchain-based cryptocurrency which is private, untraceable, fungible, and decentralized. The protocol is open source and based on CryptoNote v2, a concept described in a 2013 white paper authored ...",
+          "age": "1 week ago",
+          "page_age": "2025-12-05T20:42:40"
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "Monero (XMR) is the top privacy-centric cryptocurrency based on the CryptoNote protocol, a secure, private and untraceable currency system. Monero uses a special kind of cryptography to ensure that all of its transactions are remain 100% unlinkable ..."
+        },
+        {
+          "title": "Monero - an overview | ScienceDirect Topics",
+          "url": "https://www.sciencedirect.com/topics/computer-science/monero",
+          "snippet": "Monero is a privacy-focused cryptocurrency built on blockchain technology, designed to ensure that the details of the sender, receiver, and transaction amounts remain concealed through the use of advanced cryptographic techniques such as ring signatures, stealth addresses, and confidential ..."
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "Bitcoin"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "web_search_results",
+    "data": {
+      "type": "web_search_results",
+      "query": "Bitcoin",
+      "provider": "brave",
+      "results": [
+        {
+          "title": "Bitcoin - Open source P2P money",
+          "url": "https://bitcoin.org/en/",
+          "snippet": "Bitcoin uses peer-to-peer technology to operate with no central authority or banks; managing transactions and the issuing of bitcoins is carried out collectively by the network. Bitcoin is open-source; its design is public, nobody owns or controls Bitcoin and everyone can take part."
+        },
+        {
+          "title": "Bitcoin - Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Bitcoin",
+          "snippet": "Bitcoin (abbreviation: BTC; sign: ₿) is the first decentralized cryptocurrency. Based on a free-market ideology, bitcoin was invented in 2008 when an unknown entity published a white paper under the pseudonym of Satoshi Nakamoto. Use of bitcoin as a currency began in 2009, with the release ...",
+          "age": "7 hours ago",
+          "page_age": "2025-12-13T14:51:45"
+        },
+        {
+          "title": "Bitcoin price today, BTC to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/bitcoin/",
+          "snippet": "The live Bitcoin price today is $90,231.50 USD with a 24-hour trading volume of $80,955,216,172.30 USD. We update our BTC to USD price in real-time.",
+          "age": "July 9, 2014",
+          "page_age": "2014-07-09T00:00:00"
+        },
+        {
+          "title": "Bitcoin - The Currency of the Internet",
+          "url": "https://www.reddit.com/r/Bitcoin/",
+          "snippet": "Bitcoin is the currency of the Internet: a distributed, worldwide, decentralized digital money. Unlike traditional currencies such as dollars, bitcoins are issued and managed without any central authority whatsoever: there is no government, company, or bank in charge of Bitcoin.",
+          "age": "September 9, 2010",
+          "page_age": "2010-09-09T14:30:26"
+        },
+        {
+          "title": "Bitcoin (@Bitcoin) / X",
+          "url": "https://x.com/Bitcoin?lang=en",
+          "snippet": "Bitcoin is an open source censorship-resistant peer-to-peer immutable network. Trackable digital gold. Don't trust; verify.",
+          "age": "August 18, 2011",
+          "page_age": "2011-08-18T05:06:08"
+        },
+        {
+          "title": "BTC USD — Bitcoin Price and Chart",
+          "url": "https://www.tradingview.com/symbols/BTCUSD/",
+          "snippet": "Just one more step · Complete the test below to access the page",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T17:17:24"
+        },
+        {
+          "title": "What is Bitcoin? | Coinbase",
+          "url": "https://www.coinbase.com/learn/crypto-basics/what-is-bitcoin",
+          "snippet": "Bitcoin is the world's first widely adopted cryptocurrency — it allows for secure and seamless peer-to-peer transactions on the internet."
+        },
+        {
+          "title": "BTC.CM=: Bitcoin/USD Coin Metrics - Stock Price, Quote and News - CNBC",
+          "url": "https://www.cnbc.com/quotes/BTC.CM=",
+          "snippet": "Get Bitcoin/USD Coin Metrics (BTC.CM=:Exchange) real-time stock quotes, news, price and financial information from CNBC.",
+          "age": "1 week ago",
+          "page_age": "2025-12-06T20:20:04"
+        },
+        {
+          "title": "Bitcoin Magazine | Bitcoin News, Analysis & Insights",
+          "url": "https://bitcoinmagazine.com/",
+          "snippet": "Bitcoin pulled back after the Fed’s mixed signals, even as Vanguard expanded access to spot BTC ETFs amid a skeptical view of crypto.",
+          "age": "1 day ago",
+          "page_age": "2025-12-12T23:03:08"
+        },
+        {
+          "title": "Bitcoin: A Peer-to-Peer Electronic Cash System Satoshi Nakamoto",
+          "url": "https://bitcoin.org/bitcoin.pdf",
+          "snippet": "Bitcoin: A Peer-to-Peer Electronic Cash System · Satoshi Nakamoto · satoshin@gmx.com · www.bitcoin.org · Abstract. A purely peer-to-peer version of electronic cash would allow online · payments to be sent directly from one party to another without going through a ·"
+        }
+      ],
+      "summary": null
+    },
+    "model": "Brave",
+    "provider": "brave_search"
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) is your favorite cryptocurrency. [M27, M9]\n\n## TL;DR\n- #1 Monero (XMR)\n- #2 Bitcoin (BTC)\n- #3 Stellar (XLM)\n- USDT is not on your favorites list. [M27, M9]\n\n## Update\nWant to reorder or add a #4? Tell me the new ranking and I’ll update it.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=Em3f0ndqm2o"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=Em3f0ndqm2o",
+      "title": "Why I Run My Portfolio Like a Business (And Why Most Investors Never Get Free)",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Sean explains his “paycheck to portfolio” system of running a brokerage like a business: funneling all income into the account, staying fully invested in growth and income assets, and using dividends and margin to fund living expenses while preserving compounding. He reports an account value around $167,583 after a market pullback, with a time‑weighted return of ~30% year‑to‑date, ~68% over two years, and ~82% over three years. Over the past year, net value rose from about $107,944 to roughly $168,555 despite significant expenses, which he attributes to cash flow and compounding. He maps business concepts (revenue, expenses, NOI) to portfolio metrics (dividends/options income, margin interest/fees, net spread) and references quotes from Munger, Buffett, and Rockefeller to frame the strategy. Key Points:",
+      "keyPoints": [
+        "All paychecks go into the brokerage; portfolio stays fully invested across growth stocks, ETFs, closed‑end funds, and high‑yield funds.",
+        "Current dividend income is ~$4,000–$5,000/month vs. ~$8,000/month in expenses; a margin loan (about 5.5% interest) bridges the gap.",
+        "Uses options for added income (covered calls) and plans to teach S&P credit spreads; treats margin interest and fees as operating expenses.",
+        "Time‑weighted returns: ~30% YTD; ~68% over 2 years; ~82% over 3 years (vs. Nasdaq ~102% over 3 years), with recent daily drawdown amid market volatility.",
+        "Net portfolio value increased by roughly $61,000 year over year while funding living costs, highlighting his focus on uninterrupted compounding and cash flow."
+      ],
+      "whyMatters": "This illustrates a business‑like, cash‑flow‑driven approach to personal investing that aims to cover living expenses while remaining fully invested, using dividends, options income, and measured leverage. It underscores the potential of compounding but also the need to manage risks associated with margin and options."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  },
+  {
+    "role": "user",
+    "content": "What's my favorite color?"
+  },
+  {
+    "role": "assistant",
+    "content": "Your favorite color is blue. [M26, M24]\n\n## Update or tweak\n- Want a specific shade saved (navy, royal, sky, teal, or a hex code)?\n- If you’d like to change it, just tell me the new color and I’ll update your preference.",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "What is my favorite crypto?"
+  },
+  {
+    "role": "assistant",
+    "content": "Monero (XMR) is your favorite cryptocurrency. [M21, M30]",
+    "model": "Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
   }
 ]

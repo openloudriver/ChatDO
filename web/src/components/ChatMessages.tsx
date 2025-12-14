@@ -12,6 +12,20 @@ import type { RagFile } from '../types/rag';
 import type { Source } from '../types/sources';
 import { useTheme } from '../contexts/ThemeContext';
 
+/**
+ * Format timestamp for display: "13 Dec 2025 · 18:43"
+ * Uses local timezone, no seconds, human-readable format.
+ */
+function formatResponseTimestamp(date: Date): string {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day} ${month} ${year} · ${hours}:${minutes}`;
+}
+
 // Extract bullet options from message content
 
 const extractBulletOptionsFromMessage = (content: string): string[] => {
@@ -1832,25 +1846,35 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         )
                       )}
                       
-                      {/* Model tag for all assistant messages */}
+                      {/* Timestamp and Model tag for all assistant messages */}
                       {message.role === 'assistant' && 
                        message.type !== 'document_card' && (
-                        <div className="flex justify-end items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
-                          {message.type === 'web_search_results' ? (
-                            <div>Model: Brave</div>
-                          ) : (() => {
-                            const ragUsed = hasRagSources(message);
-                            const baseModel = message.model ? formatModelName(message.model) : null;
-                            
-                            if (ragUsed && baseModel) {
-                              return <div>Model: RAG + {baseModel}</div>;
-                            } else if (ragUsed) {
-                              return <div>Model: RAG</div>;
-                            } else if (baseModel) {
-                              return <div>Model: {baseModel}</div>;
-                            }
-                            return null;
-                          })()}
+                        <div className="flex justify-between items-center mt-2 text-xs text-[var(--text-secondary)] leading-tight">
+                          {/* Timestamp on the left */}
+                          <div 
+                            className="text-[var(--text-secondary)]"
+                            title={message.timestamp.toISOString()}
+                          >
+                            {formatResponseTimestamp(message.timestamp)}
+                          </div>
+                          {/* Model label on the right */}
+                          <div>
+                            {message.type === 'web_search_results' ? (
+                              <div>Model: Brave</div>
+                            ) : (() => {
+                              const ragUsed = hasRagSources(message);
+                              const baseModel = message.model ? formatModelName(message.model) : null;
+                              
+                              if (ragUsed && baseModel) {
+                                return <div>Model: RAG + {baseModel}</div>;
+                              } else if (ragUsed) {
+                                return <div>Model: RAG</div>;
+                              } else if (baseModel) {
+                                return <div>Model: {baseModel}</div>;
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -1,0 +1,106 @@
+[
+  {
+    "role": "user",
+    "content": "My favorite color is blue"
+  },
+  {
+    "role": "assistant",
+    "content": "I'll default to that for our conversation from now on [MM1, M2, M3]. If you want a specific shade (e.g., navy, royal, sky), feel free to let me know and I'll use it going forward . Is there anything else you'd like to chat about?",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-general-0",
+        "title": "My favorite color is blue",
+        "description": "My favorite color is blue",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "baaca739-f088-427c-8580-b055eebc44cf",
+          "message_id": "baaca739-f088-427c-8580-b055eebc44cf-user-2",
+          "file_path": null,
+          "source_id": "chat-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color is blue"
+        }
+      },
+      {
+        "id": "memory-chat-scratch-2",
+        "title": "Your favorite color is blue.",
+        "description": "Your favorite color is blue.\n\n## Notes\n- I’ve saved this preference. If you want a specific shade (e.g., navy, royal, sky), tell me and I’ll use that ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "388403db-fc7c-445b-aaac-a712ca529625",
+          "message_id": "388403db-fc7c-445b-aaac-a712ca529625-assistant-7",
+          "file_path": null,
+          "source_id": "chat-scratch",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Your favorite color is blue.\n\n## Notes\n- I’ve saved this preference. If you want a specific shade (e.g., navy, royal, sky), tell me and I’ll use that going forward."
+        }
+      },
+      {
+        "id": "memory-chat-general-8",
+        "title": "I don’t know your favorite color yet.",
+        "description": "I don’t know your favorite color yet.\n\n## Quick follow-up\n- Tell me your favorite color and I’ll remember it for next time.\n- If you’re undecided, pic...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "25e88c35-99e4-477b-89a8-f9fa10c87105",
+          "message_id": "25e88c35-99e4-477b-89a8-f9fa10c87105-assistant-15",
+          "file_path": null,
+          "source_id": "chat-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite color yet.\n\n## Quick follow-up\n- Tell me your favorite color and I’ll remember it for next time.\n- If you’re undecided, pick from a few: blue, green, black, purple, red, orange."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  },
+  {
+    "role": "user",
+    "content": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, 3) XLM"
+  },
+  {
+    "role": "assistant",
+    "content": "It looks like we have a match [M1]! Your favorite cryptos, in order, are indeed Monero (#1), Bitcoin (#2), and Stellar (#3). I'll make sure to remember this for next time. If you want to reorder or add more, just let me know the new ranking and I'll update it.",
+    "model": "Memory",
+    "provider": "ollama-llama",
+    "sources": [
+      {
+        "id": "memory-chat-general-3",
+        "title": "My favorite cryptocurrencies in order are: 1) Monero, 2) Bit...",
+        "description": "My favorite cryptocurrencies in order are: 1) Monero, 2) Bitcoin, 3) XLM. That's it",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "aa93edc5-a0c5-4118-8c55-dd9f6593a931",
+          "message_id": "aa93edc5-a0c5-4118-8c55-dd9f6593a931-user-14",
+          "file_path": null,
+          "source_id": "chat-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies in order are: 1) Monero, 2) Bitcoin, 3) XLM. That's it"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    }
+  }
+]

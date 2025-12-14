@@ -190,5 +190,17 @@
       "siteName": "finance.yahoo.com",
       "published": "2025-12-04"
     }
+  },
+  {
+    "id": "8f98db5a-3570-4cb6-ab78-6ad69f70a13d",
+    "kind": "url",
+    "title": "Why I Run My Portfolio Like a Business (And Why Most Investors Never Get Free)",
+    "description": "Sean explains his “paycheck to portfolio” system of running a brokerage like a business: funneling all income into the account, staying fully invested in growth and income assets, and using dividends ",
+    "url": "https://www.youtube.com/watch?v=Em3f0ndqm2o",
+    "createdAt": "2025-12-13T21:55:41.767964+00:00",
+    "meta": {
+      "siteName": "Video",
+      "published": null
+    }
   }
 ]
