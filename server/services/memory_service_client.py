@@ -31,7 +31,7 @@ class MemoryServiceClient:
         Search for relevant chunks in a project's indexed files and chat messages.
         
         Args:
-            project_id: The project ID (e.g., "drr", "privacypay")
+            project_id: The project ID (e.g., "drr", "privacypay") - REQUIRED, cannot be None/empty
             query: Search query string
             limit: Maximum number of results to return
             source_ids: Optional list of source IDs to search. If None, uses [project_id] as fallback.
@@ -41,7 +41,15 @@ class MemoryServiceClient:
         Returns:
             List of search results with score, file_path, text, etc.
             Returns empty list if service is unavailable or error occurs.
+            
+        Raises:
+            ValueError: If project_id is None or empty (project isolation requirement)
         """
+        # HARD INVARIANT: project_id is required for project isolation
+        if not project_id or project_id.strip() == "":
+            logger.error("[ISOLATION] Memory search rejected: project_id is missing or empty")
+            raise ValueError("project_id is required and cannot be None or empty for project isolation")
+        
         if not self.is_available():
             logger.debug("Memory Service is not available, skipping memory search")
             return []

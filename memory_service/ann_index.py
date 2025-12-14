@@ -216,7 +216,7 @@ class AnnIndexManager:
         if removed_count > 0:
             logger.info(f"[ANN] Removed {removed_count} embeddings from index (marked inactive)")
     
-    def search(self, query_vector: np.ndarray, top_k: int, filter_source_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    def search(self, query_vector: np.ndarray, top_k: int, filter_source_ids: Optional[List[str]] = None, filter_project_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Search for nearest neighbors.
         
@@ -224,6 +224,7 @@ class AnnIndexManager:
             query_vector: Query embedding vector, shape [D] or [1, D]
             top_k: Number of results to return
             filter_source_ids: Optional list of source_ids to filter results
+            filter_project_id: REQUIRED for project isolation - filters results to only this project_id
             
         Returns:
             List of result dicts, each containing:
@@ -281,6 +282,11 @@ class AnnIndexManager:
                 metadata = self.metadata.get(faiss_id)
                 if not metadata:
                     continue
+                
+                # CRITICAL: Filter by project_id FIRST for strict isolation
+                metadata_project_id = metadata.get("project_id")
+                if filter_project_id and metadata_project_id != filter_project_id:
+                    continue  # Skip embeddings from other projects
                 
                 # Apply source filter if provided
                 # BUT: Always include chat embeddings (source_id starts with "chat-") for cross-chat memory

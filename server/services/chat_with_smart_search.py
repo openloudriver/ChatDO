@@ -567,11 +567,39 @@ async def chat_with_smart_search(
                     conversation_history=conversation_history
                 )
                 
-                # Check if escalation is needed
+                # Post-process citations: keep only best-1 (or adaptive expansion to 3)
+                cleaned_response, kept_citation_indices = librarian.post_process_memory_citations(
+                    response=llama_response,
+                    hits=hits,
+                    max_inline_citations=1  # Default: best-1
+                )
+                
+                # Filter sources to only include kept citations
+                # Sources were built from all hits, but we only want the ones that are cited
+                if kept_citation_indices:
+                    # Filter sources list to only include those at kept_citation_indices
+                    # Note: sources list contains Memory sources first (before any web sources)
+                    memory_sources = [s for s in sources if s.get("sourceType") == "memory"]
+                    other_sources = [s for s in sources if s.get("sourceType") != "memory"]
+                    
+                    # Keep only sources at the kept indices
+                    filtered_memory_sources = []
+                    for idx in kept_citation_indices:
+                        if idx < len(memory_sources):
+                            # Re-rank the kept sources (they should be M1, M2, M3 in order)
+                            source = memory_sources[idx].copy()
+                            source["rank"] = len(filtered_memory_sources)  # Re-rank starting from 0
+                            filtered_memory_sources.append(source)
+                    
+                    # Rebuild sources list with filtered memory sources
+                    sources = filtered_memory_sources + other_sources
+                    logger.info(f"[CITATIONS] Filtered sources: kept {len(filtered_memory_sources)}/{len(memory_sources)} Memory sources")
+                
+                # Check if escalation is needed (use cleaned response for escalation check)
                 should_escalate, escalation_reason = librarian.should_escalate_to_gpt5(
                     query=user_message,
                     hits=hits,
-                    response=llama_response
+                    response=cleaned_response
                 )
                 
                 if should_escalate:
@@ -587,8 +615,8 @@ async def chat_with_smart_search(
                     model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
                     logger.info(f"[MODEL] model label = {model_display} (escalated)")
                 else:
-                    # Use Llama's response directly
-                    content = llama_response
+                    # Use Llama's cleaned response directly
+                    content = cleaned_response
                     model_id = "llama3.2:3b"
                     provider_id = "ollama-llama"
                     model_display = "Memory"  # Just "Memory" when no GPT-5

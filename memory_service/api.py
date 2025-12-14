@@ -675,8 +675,17 @@ async def search(request: SearchRequest):
     If source_ids is not provided, returns empty results.
     
     Uses query expansion to improve recall for table-heavy documents.
+    
+    PROJECT ISOLATION: All results are filtered by project_id to ensure strict isolation.
     """
     try:
+        # HARD INVARIANT: project_id is required and must not be None/empty
+        if not request.project_id or request.project_id.strip() == "":
+            logger.error(f"[ISOLATION] Search rejected: project_id is missing or empty")
+            raise HTTPException(status_code=400, detail="project_id is required and cannot be empty")
+        
+        # Debug logging for every memory query
+        logger.info(f"[MEMORY-QUERY] project_id={request.project_id}, chat_id={request.chat_id}, limit={request.limit}, source_ids={request.source_ids}")
         # Query expansion: extract key terms and search for them individually
         # Note: We allow empty source_ids to enable chat-only searches
         # This helps with table-heavy PDFs where the full query might not match well
@@ -708,12 +717,13 @@ async def search(request: SearchRequest):
         
         if use_ann:
             try:
-                logger.info(f"[ANN] Using FAISS IndexFlatIP for vector search (k={request.limit * 2})")
+                logger.info(f"[ANN] Using FAISS IndexFlatIP for vector search (k={request.limit * 2}, project_id={request.project_id})")
                 # Search for more results to account for filtering
                 ann_results = ann_index_manager.search(
                     primary_query_embedding,
                     top_k=request.limit * 2,  # Get more candidates
-                    filter_source_ids=filter_source_ids
+                    filter_source_ids=filter_source_ids,
+                    filter_project_id=request.project_id  # CRITICAL: Filter by project_id for isolation
                 )
             except Exception as e:
                 logger.warning(f"[ANN] ANN search failed, falling back to brute-force: {e}")
@@ -751,6 +761,10 @@ async def search(request: SearchRequest):
             # Compute vector scores using brute-force
             ann_results = []
             for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
+                # CRITICAL: Filter by project_id BEFORE computing similarity (early exit for wrong project)
+                if project_id != request.project_id:
+                    continue  # Skip embeddings from other projects
+                
                 # Vector similarity (cosine similarity) - try all query variations and take best
                 best_vector_score = 0.0
                 for query_embedding in query_embeddings:
@@ -781,9 +795,14 @@ async def search(request: SearchRequest):
                     "message_id": message_id,
                 })
         
-        # Build results from ANN results
+        # Build results from ANN results, FILTERING BY PROJECT_ID
         results = []
-        for result in ann_results[:request.limit]:
+        for result in ann_results:
+            # CRITICAL: Filter by project_id to ensure strict isolation
+            if result.get("project_id") != request.project_id:
+                logger.warning(f"[ISOLATION] Filtered out result with wrong project_id: {result.get('project_id')} (expected {request.project_id})")
+                continue
+            
             source_type = "chat" if result.get("chat_id") is not None else "file"
             results.append(SearchResult(
                 score=float(result["score"]),
@@ -799,7 +818,12 @@ async def search(request: SearchRequest):
                 chat_id=result.get("chat_id"),
                 message_id=result.get("message_id")
             ))
+            
+            # Stop once we have enough results
+            if len(results) >= request.limit:
+                break
         
+        logger.info(f"[MEMORY-QUERY] Returning {len(results)} results for project_id={request.project_id}")
         return SearchResponse(results=results)
         
     except Exception as e:

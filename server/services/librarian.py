@@ -651,3 +651,215 @@ Answer the user's question clearly and concisely using the Memory context provid
         logger.error(f"[LIBRARIAN] Llama response generation failed: {e}")
         raise
 
+
+def post_process_memory_citations(
+    response: str,
+    hits: List[MemoryHit],
+    max_inline_citations: int = 1
+) -> tuple[str, List[int]]:
+    """
+    Post-process Memory citations to keep only the "best-1" (or adaptive expansion).
+    
+    Strategy:
+    - Default: Keep only best 1 citation
+    - Adaptive expansion: If response is multi-claim (lists/bullets/multiple sentences
+      with distinct facts) and no single memory hit supports all claims, allow up to 3
+    
+    Citation scoring (prefer in order):
+    1. User messages > Assistant messages
+    2. Newest > Oldest (by created_at or message_id)
+    3. Higher score > Lower score
+    
+    Args:
+        response: The generated response text with citations like [M1], [M2], [M1, M2]
+        hits: List of Memory hits (indexed 0-based, will map to M1, M2, M3...)
+        max_inline_citations: Maximum citations to keep (default 1, can expand to 3)
+        
+    Returns:
+        Tuple of (cleaned_response: str, citation_indices_to_keep: List[int])
+        citation_indices_to_keep are 0-based indices into hits list (M1=0, M2=1, etc.)
+    """
+    import re
+    
+    # Extract all citation patterns: [M1], [M2], [M1, M2], [M1, M2, M3], etc.
+    # Pattern matches: [M1], [M2], [M1, M2], [M1, M2, M3], etc.
+    citation_pattern = re.compile(r'\[M(\d+(?:\s*,\s*M?\d+)*)\]')
+    
+    # Find all citations in the response
+    found_citations = set()
+    for match in citation_pattern.finditer(response):
+        citation_str = match.group(1)
+        # Parse individual citation numbers
+        # Handle both "1, 2" and "1, M2" formats
+        parts = citation_str.split(',')
+        for part in parts:
+            part = part.strip()
+            # Remove 'M' prefix if present, then convert to int
+            if part.startswith('M'):
+                part = part[1:]
+            try:
+                num = int(part)
+                found_citations.add(num)
+            except ValueError:
+                # Skip invalid citation numbers
+                continue
+    
+    if not found_citations:
+        # No citations found, return response as-is
+        return response, []
+    
+    # Convert citation numbers (1-based) to hit indices (0-based)
+    # M1 = hits[0], M2 = hits[1], etc.
+    cited_indices = [num - 1 for num in found_citations if 1 <= num <= len(hits)]
+    
+    if not cited_indices:
+        # Citations reference non-existent hits, remove all citations
+        cleaned_response = citation_pattern.sub('', response)
+        return cleaned_response, []
+    
+    # Score citations for ranking
+    def score_citation(hit_idx: int) -> tuple[float, int]:
+        """Return (score, hit_idx) for sorting. Higher score = better."""
+        if hit_idx >= len(hits):
+            return (-999, hit_idx)  # Invalid index
+        
+        hit = hits[hit_idx]
+        score = hit.score
+        
+        # Boost user messages over assistant
+        if hit.role == "user":
+            score += 1000
+        elif hit.role == "assistant":
+            score += 500
+        
+        # Boost newer messages (if created_at available)
+        if hit.created_at:
+            try:
+                from datetime import datetime
+                created = datetime.fromisoformat(hit.created_at.replace('Z', '+00:00'))
+                now = datetime.now(created.tzinfo) if created.tzinfo else datetime.now()
+                age_days = (now - created).days
+                # Newer = higher boost (max 100 points for messages < 1 day old)
+                recency_boost = max(0, 100 - age_days * 2)
+                score += recency_boost
+            except:
+                pass
+        
+        return (score, hit_idx)
+    
+    # Score and sort citations
+    scored_citations = sorted(
+        [(score_citation(idx), idx) for idx in cited_indices],
+        key=lambda x: x[0],
+        reverse=True
+    )
+    
+    # Determine if response is multi-claim
+    is_multi_claim = _detect_multi_claim(response)
+    
+    # Determine max citations to keep
+    if is_multi_claim:
+        # Check if any single hit supports all claims
+        # For now, if we have multiple distinct citations, assume no single hit supports all
+        if len(cited_indices) > 1:
+            max_citations = min(3, max_inline_citations * 3)
+        else:
+            max_citations = max_inline_citations
+    else:
+        max_citations = max_inline_citations
+    
+    # Keep top citations
+    citations_to_keep = [idx for (_, idx) in scored_citations[:max_citations]]
+    citations_to_keep.sort()  # Sort by index for consistent ordering
+    
+    # Build mapping: old citation number -> new citation number (or None if removed)
+    old_to_new = {}
+    for new_idx, old_idx in enumerate(citations_to_keep, start=1):
+        old_to_new[old_idx] = new_idx
+    
+    # Remove citations that aren't in citations_to_keep
+    def replace_citation(match):
+        citation_str = match.group(1)
+        # Parse citation numbers (handle both "1, 2" and "1, M2" formats)
+        parts = citation_str.split(',')
+        numbers = []
+        for part in parts:
+            part = part.strip()
+            if part.startswith('M'):
+                part = part[1:]
+            try:
+                num = int(part)
+                numbers.append(num)
+            except ValueError:
+                continue
+        
+        # Convert to hit indices (0-based)
+        old_indices = [num - 1 for num in numbers if 1 <= num <= len(hits)]
+        
+        # Filter to only keep citations we want
+        kept_indices = [idx for idx in old_indices if idx in citations_to_keep]
+        
+        if not kept_indices:
+            # Remove this citation entirely
+            return ''
+        
+        # Map to new citation numbers
+        new_numbers = [old_to_new[idx] for idx in kept_indices]
+        new_numbers.sort()
+        
+        if len(new_numbers) == 1:
+            return f'[M{new_numbers[0]}]'
+        else:
+            # Format as [M1, M2] (not [MM1, M2])
+            return f'[M{", ".join(str(n) for n in new_numbers)}]'
+    
+    # Replace citations in response
+    cleaned_response = citation_pattern.sub(replace_citation, response)
+    
+    # Clean up any double spaces or trailing commas left by removed citations
+    cleaned_response = re.sub(r'\s+', ' ', cleaned_response)
+    cleaned_response = re.sub(r'\s*,\s*,', ',', cleaned_response)  # Remove double commas
+    cleaned_response = cleaned_response.strip()
+    
+    logger.info(f"[CITATIONS] Post-processed: kept {len(citations_to_keep)}/{len(cited_indices)} citations (multi-claim={is_multi_claim})")
+    
+    return cleaned_response, citations_to_keep
+
+
+def _detect_multi_claim(response: str) -> bool:
+    """
+    Detect if response is multi-claim (lists/bullets/multiple sentences with distinct facts).
+    
+    Heuristics:
+    - Contains bullet points (-, *, •)
+    - Contains numbered lists (1., 2., etc.)
+    - Multiple sentences with different topics/facts
+    - Contains "and" or "also" connecting distinct facts
+    """
+    import re
+    
+    # Check for bullet points
+    bullet_pattern = re.compile(r'^[\s]*[-*•]\s+', re.MULTILINE)
+    if bullet_pattern.search(response):
+        return True
+    
+    # Check for numbered lists
+    numbered_pattern = re.compile(r'^\s*\d+[.)]\s+', re.MULTILINE)
+    if numbered_pattern.search(response):
+        return True
+    
+    # Check for multiple sentences with different structures
+    sentences = re.split(r'[.!?]\s+', response)
+    if len(sentences) >= 3:
+        # Check if sentences have different structures (indicating different topics)
+        # Simple heuristic: if we have 3+ sentences, likely multi-claim
+        return True
+    
+    # Check for "and" or "also" connecting distinct facts
+    # Look for patterns like "X and Y" or "X. Also, Y"
+    and_pattern = re.compile(r'\b(and|also|additionally|furthermore|moreover)\b', re.IGNORECASE)
+    if and_pattern.search(response) and len(sentences) >= 2:
+        return True
+    
+    return False
+

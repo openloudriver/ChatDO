@@ -411,13 +411,17 @@ def generate_slug(name: str) -> str:
 
 def get_target_name_from_project(project: Optional[dict]) -> str:
     """
-    Get the target name for storing threads based on the project name.
-    Each project gets its own folder under memory/{project_name}/threads/
-    General project maps to 'general'.
+    Get the target name for storing threads.
+    Uses default_target from project config if available, otherwise falls back to slugified project name.
     """
     if not project:
         return "general"
     
+    # Prefer default_target from project config (this is the source of truth)
+    if project.get("default_target"):
+        return project.get("default_target")
+    
+    # Fallback: use project name (for backward compatibility)
     project_name = project.get("name", "").strip()
     if not project_name:
         return "general"
@@ -2237,10 +2241,16 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         logger.warning(f"Chat {chat_id} belongs to deleted project {chat.get('project_id')}, returning empty messages")
         return {"messages": []}
     
-    target_name = get_target_name_from_project(project)
-    thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
+    # Use default_target from project config, not the slugified project name
+    # This ensures we load from the correct directory where messages were actually saved
+    if project and project.get("default_target"):
+        target_name = project.get("default_target")
+    else:
+        target_name = get_target_name_from_project(project)
     
-    print(f"[DIAG] get_chat_messages: chat_id={chat_id}, thread_id={thread_id}, target_name={target_name}")
+    thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
+
+    print(f"[DIAG] get_chat_messages: chat_id={chat_id}, thread_id={thread_id}, target_name={target_name}, project_default_target={project.get('default_target') if project else None}")
     
     if not thread_id:
         print(f"[DIAG] WARNING: No thread_id for chat {chat_id}, returning empty messages")
@@ -2306,10 +2316,10 @@ async def get_chat_sources(chat_id: str):
     
     target_name = get_target_name_from_project(project)
     thread_id = chat.get("thread_id")
-    
+
     if not thread_id:
         return {"sources": []}
-    
+
     # Load sources from memory store
     sources = load_thread_sources(target_name, thread_id)
     
