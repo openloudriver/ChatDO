@@ -23,33 +23,47 @@ export const AiSpendIndicator: React.FC = () => {
   const amountRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let mounted = true;
+    
     async function fetchSpend() {
       try {
         const res = await fetch("http://localhost:8081/v1/ai/spend/monthly");
         if (!res.ok) {
-          // Silently fail - don't log to console
+          // If response is not ok, keep existing data (don't reset to 0)
+          // This prevents showing $0.00 when the service is temporarily unavailable
           return;
         }
         const json = await res.json();
-        if (json.ok) {
+        if (json.ok && mounted) {
           setData(json);
         }
-        // Silently ignore errors
       } catch (e) {
-        // Silently fail - don't log to console
-        // Set empty data on error so menu can still show
-        setData({
-          ok: true,
-          month: new Date().toISOString().slice(0, 7),
-          totalUsd: 0,
-          providers: []
-        });
+        // On connection error, keep existing data if available
+        // Only set default data if we don't have any data yet (first load)
+        if (mounted) {
+          setData((prevData) => {
+            // If we already have data, keep it (don't reset to $0.00)
+            if (prevData) {
+              return prevData;
+            }
+            // Only set default data on first load if no data exists
+            return {
+              ok: true,
+              month: new Date().toISOString().slice(0, 7),
+              totalUsd: 0,
+              providers: []
+            };
+          });
+        }
       }
     }
 
     fetchSpend();
     const id = setInterval(fetchSpend, 30000); // refresh every 30s
-    return () => clearInterval(id);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
   }, []);
 
   function handleMouseEnter() {
