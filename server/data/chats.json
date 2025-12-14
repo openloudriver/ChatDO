@@ -78,25 +78,5 @@
     "updated_at": "2025-12-05T20:58:54.849147+00:00",
     "trashed": false,
     "trashed_at": null
-  },
-  {
-    "id": "0d47e558-2a64-429a-bde3-68cc612ce219",
-    "project_id": "35d84290-1603-4c37-b773-2423d3c51643",
-    "title": "My favorite color is blue",
-    "thread_id": "0d47e558-2a64-429a-bde3-68cc612ce219",
-    "created_at": "2025-12-14T14:12:58.203032+00:00",
-    "updated_at": "2025-12-14T16:49:26.135266+00:00",
-    "trashed": false,
-    "trashed_at": null
-  },
-  {
-    "id": "fa873815-3acb-4822-acee-97ac5809ccc1",
-    "project_id": "35d84290-1603-4c37-b773-2423d3c51643",
-    "title": "What day is it?",
-    "thread_id": "fa873815-3acb-4822-acee-97ac5809ccc1",
-    "created_at": "2025-12-14T16:49:45.832325+00:00",
-    "updated_at": "2025-12-14T17:14:58.973597+00:00",
-    "trashed": false,
-    "trashed_at": null
   }
 ]

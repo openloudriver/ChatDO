@@ -997,14 +997,30 @@ def store_fact(
     
     try:
         # Check if fact already exists
-        cursor.execute("""
-            SELECT id, created_at FROM facts
-            WHERE project_id = ? AND chat_id = ? AND topic_key = ? AND kind = ? AND rank = ?
-        """, (project_id, chat_id, topic_key, kind, rank))
+        # IMPORTANT: Avoid SQL f-string interpolation. Build query using fixed strings only.
+        base_sql = (
+            "SELECT id, created_at FROM facts "
+            "WHERE project_id = ? AND topic_key = ? AND kind = ?"
+        )
+        params: list = [project_id, topic_key, kind]
+
+        if chat_id is None and rank is None:
+            sql = base_sql + " AND chat_id IS NULL AND rank IS NULL"
+        elif chat_id is None and rank is not None:
+            sql = base_sql + " AND chat_id IS NULL AND rank = ?"
+            params.append(rank)
+        elif chat_id is not None and rank is None:
+            sql = base_sql + " AND chat_id = ? AND rank IS NULL"
+            params.append(chat_id)
+        else:
+            sql = base_sql + " AND chat_id = ? AND rank = ?"
+            params.extend([chat_id, rank])
+
+        cursor.execute(sql, tuple(params))
         existing = cursor.fetchone()
-        
+
         new_created_at = datetime.now()
-        
+
         if existing:
             # Fact exists - update only if new created_at is newer
             existing_created_at = datetime.fromisoformat(existing["created_at"]) if isinstance(existing["created_at"], str) else existing["created_at"]
@@ -1236,4 +1252,3 @@ def get_most_recent_topic_key_in_chat(
         return None
     
     return row["topic_key"]
-

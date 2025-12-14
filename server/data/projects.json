@@ -207,7 +207,7 @@
     "default_target": "general",
     "sort_index": 22,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null
+    "trashed": true,
+    "trashed_at": "2025-12-14T19:00:07.509991+00:00"
   }
 ]
