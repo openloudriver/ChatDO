@@ -246,11 +246,17 @@ export const useChatStore = create<ChatStore>((set) => ({
         name: name.trim()
       });
       const newProject = response.data;
-      
+
       set((state) => ({
         projects: [...state.projects, newProject],
         currentProject: newProject
       }));
+
+      // Automatically create a new chat in the new project and switch to it
+      const { createNewChatInProject, setCurrentConversation, setViewMode } = useChatStore.getState();
+      const newConversation = await createNewChatInProject(newProject.id);
+      await setCurrentConversation(newConversation);
+      setViewMode('chat');
     } catch (error) {
       console.error('Failed to create project:', error);
       throw error;
