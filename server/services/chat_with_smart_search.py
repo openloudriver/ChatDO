@@ -1001,12 +1001,13 @@ async def chat_with_smart_search(
                 logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
             
             # Add assistant message with timestamp and model_label
-            # Add Brave Search to sources if web search was used
-            web_sources = sources.copy() if sources else []
-            web_sources.append("Brave Search")
-            
-            # Combine memory sources with web sources
-            all_sources = (sources.copy() if sources else []) + web_sources
+            # Combine memory sources with web sources (web_sources are already Source objects)
+            # sources contains Memory Source objects, web_sources contains Web Source objects
+            all_sources = []
+            if sources:
+                all_sources.extend(sources)  # Memory sources
+            if web_sources:
+                all_sources.extend(web_sources)  # Web sources (already Source objects)
             
             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
             model_label = build_model_label(used_web=bool(web_sources), used_memory=has_memory, escalated=True)
@@ -1053,8 +1054,13 @@ async def chat_with_smart_search(
         except Exception as e:
             logger.warning(f"Failed to save conversation history: {e}")
     
-    # Combine memory sources with web sources
-    all_sources = (sources.copy() if sources else []) + web_sources
+    # Combine memory sources with web sources (web_sources are already Source objects)
+    # sources contains Memory Source objects, web_sources contains Web Source objects
+    all_sources = []
+    if sources:
+        all_sources.extend(sources)  # Memory sources
+    if web_sources:
+        all_sources.extend(web_sources)  # Web sources (already Source objects)
     
     # Get created_at and model_label from saved message or generate
     assistant_msg_created_at = datetime.now(timezone.utc).isoformat()

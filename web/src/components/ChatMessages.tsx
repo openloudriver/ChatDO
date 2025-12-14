@@ -1957,26 +1957,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           <div className="absolute top-1 w-8 h-8 rounded-full bg-[var(--assistant-avatar-bg)] flex items-center justify-center transition-colors" style={{ left: 'calc(-2.5rem + 6px)' }}>
             <span className="text-sm font-bold" style={{ color: 'var(--assistant-avatar-text)' }}>C</span>
           </div>
-          {streamingContent.trim().length > 10 ? (
-            <div className="flex flex-col w-full">
-              <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px] transition-colors">
-                <OptionsRenderer content={streamingContent} bulletMode={bulletMode} />
-                <span className="animate-pulse">▊</span>
-              </div>
-            </div>
-          ) : (
-            <div className="inline-flex flex-col">
-              <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] ml-[6px] transition-colors">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '300ms' }}></div>
-                  </div>
+          {/* Always show thinking indicator (three dots) during streaming - don't show partial content */}
+          {/* This prevents cards from appearing/disappearing during streaming */}
+          <div className="inline-flex flex-col">
+            <div className="rounded-lg px-4 py-3 box-border bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] ml-[6px] transition-colors">
+              <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-[var(--text-secondary)] animate-pulse" style={{ animationDelay: '300ms' }}></div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
           {/* Invisible element at the bottom to scroll to */}

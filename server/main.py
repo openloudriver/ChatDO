@@ -789,16 +789,39 @@ async def chat(request: ChatRequest):
                     # Update chat's updated_at timestamp
                     if request.conversation_id:
                         update_chat_timestamp(request.conversation_id)
+                    
+                    # Convert Source objects to simple strings for ChatResponse
+                    # ChatResponse expects sources: Optional[List[str]]
+                    sources_list = None
+                    result_sources = result.get("sources")
+                    if result_sources:
+                        if isinstance(result_sources, list) and len(result_sources) > 0:
+                            # Check if first item is a Source object (dict) or string
+                            if isinstance(result_sources[0], dict):
+                                # Convert Source objects to simple strings
+                                sources_list = []
+                                for source in result_sources:
+                                    if isinstance(source, dict):
+                                        # Extract source name from Source object
+                                        source_name = source.get("siteName") or source.get("title") or "Unknown"
+                                        sources_list.append(source_name)
+                                    else:
+                                        sources_list.append(str(source))
+                            else:
+                                # Already strings
+                                sources_list = [str(s) for s in result_sources]
+                    
                     return ChatResponse(
                         reply=human_text,  # Use human_text (content without tasks)
                         message_type="text",
                         message_data={
                             "content": human_text,
-                            "meta": result.get("meta", {})
+                            "meta": result.get("meta", {}),
+                            "sources": result_sources if result_sources and isinstance(result_sources, list) and len(result_sources) > 0 and isinstance(result_sources[0], dict) else None  # Include full Source objects in message_data for frontend
                         },
                         model_used=result.get("model", "GPT-5"),
                         provider=result.get("provider", "openai-gpt5"),
-                        sources=result.get("sources")
+                        sources=sources_list  # Simple strings for ChatResponse validation
                     )
             else:
                 # Get project to determine thread_target_name

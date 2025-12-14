@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chat';
+import type { Conversation } from '../store/chat';
 import axios from 'axios';
 import RagContextTray from './RagContextTray';
 import type { RagFile } from '../types/rag';
@@ -76,7 +77,7 @@ const convertLegacySources = (sources?: string[] | Source[]): Source[] | undefin
       title: source,
       rank: index,
       sourceType: 'web' as const,
-      citationPrefix: null as const, // Web uses no prefix: [1], [2], [3]
+      citationPrefix: null, // Web uses no prefix: [1], [2], [3]
     })),
     // Memory sources second (rank 0, 1, 2... within Memory group)
     ...memorySources.map((source, index) => {
@@ -174,7 +175,6 @@ const ChatComposer: React.FC = () => {
     isRagTrayOpen,
     setRagTrayOpen,
     webMode,
-    setWebMode,
   } = useChatStore();
   
   const { theme } = useTheme();
@@ -362,7 +362,7 @@ const ChatComposer: React.FC = () => {
             ws.close();
             // Update the conversation's updatedAt in allConversations immediately
             const { allConversations: allConvsArticle } = useChatStore.getState();
-            const updatedAllConvsArticle = allConvsArticle.map(c => 
+            const updatedAllConvsArticle = allConvsArticle.map((c: Conversation) => 
               c.id === currentConversation?.id 
                 ? { ...c, updatedAt: new Date().toISOString() }
                 : c
@@ -395,7 +395,7 @@ const ChatComposer: React.FC = () => {
             ws.close();
             // Update the conversation's updatedAt in allConversations immediately
             const { allConversations: allConvsRag } = useChatStore.getState();
-            const updatedAllConvsRag = allConvsRag.map(c => 
+            const updatedAllConvsRag = allConvsRag.map((c: Conversation) => 
               c.id === currentConversation?.id 
                 ? { ...c, updatedAt: new Date().toISOString() }
                 : c
@@ -425,26 +425,31 @@ const ChatComposer: React.FC = () => {
             ws.close();
             
             // Add final message with model/provider info
-            addMessage({ 
-              role: 'assistant', 
-              content: streamedContent,
-              model: data.model,
-              provider: data.provider,
-              sources: sources,
-              meta: data.meta || undefined
+            // Use requestAnimationFrame to ensure the message is added before clearing streaming
+            // This prevents the card from appearing/disappearing
+            requestAnimationFrame(() => {
+              addMessage({ 
+                role: 'assistant', 
+                content: streamedContent,
+                model: data.model,
+                provider: data.provider,
+                sources: sources,
+                meta: data.meta || undefined
+              });
+              
+              // Clear streaming state after message is added and rendered
+              // Use double requestAnimationFrame to ensure React has rendered the message
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  clearStreaming();
+                  setLoading(false);
+                });
+              });
             });
-            
-            // Clear streaming state immediately after adding message
-            // Use setTimeout to ensure React has processed the addMessage state update
-            // This prevents the flash where streaming UI disappears before message appears
-            setTimeout(() => {
-              clearStreaming();
-              setLoading(false);
-            }, 50);
             // Update the conversation's updatedAt in allConversations immediately
             // Then reload all chats in the background to sync with backend
             const { allConversations, setConversations: _setConversations } = useChatStore.getState();
-            const updatedAllConversations = allConversations.map(c => 
+            const updatedAllConversations = allConversations.map((c: Conversation) => 
               c.id === currentConversation?.id 
                 ? { ...c, updatedAt: new Date().toISOString() }
                 : c
@@ -481,12 +486,12 @@ const ChatComposer: React.FC = () => {
         clearStreaming();
         ws.close();
         // Fallback to REST API (silently, don't log)
-        fallbackToRest(messageToSend, shouldForceSearch);
+        fallbackToRest(messageToSend);
       };
       
     } catch (error) {
       // Silently fallback to REST - this is expected behavior
-      fallbackToRest(messageToSend, shouldForceSearch);
+      fallbackToRest(messageToSend);
     }
   };
 
@@ -561,11 +566,30 @@ const ChatComposer: React.FC = () => {
           }
         }
         
+        // Prefer sources from message_data (full Source objects) over legacy string format
+        let finalSources = sources;
+        if (response.data.message_data?.sources && Array.isArray(response.data.message_data.sources)) {
+          // Check if these are Source objects (have id, title, etc.)
+          if (response.data.message_data.sources.length > 0 && typeof response.data.message_data.sources[0] === 'object' && 'id' in response.data.message_data.sources[0]) {
+            finalSources = response.data.message_data.sources as Source[];
+            // Debug: Log sources to verify they have titles
+            console.log('[SOURCES] Using sources from message_data:', finalSources.map(s => ({ id: s.id, title: s.title, url: s.url })));
+          }
+        }
+        
+        // Fallback: If we still don't have proper Source objects and meta has webResultsPreview, use those
+        if ((!finalSources || finalSources.length === 0 || !finalSources[0]?.title) && response.data.message_data?.meta?.webResultsPreview) {
+          console.log('[SOURCES] Falling back to webResultsPreview');
+          finalSources = response.data.message_data.meta.webResultsPreview.map((result: { title: string; url: string; snippet: string }, index: number) =>
+            webResultToSource(result, index)
+          );
+        }
+        
         addMessage({ 
           role: 'assistant', 
           content: response.data.reply,
           model: response.data.model_used,
-          sources: sources,
+          sources: finalSources,
           provider: response.data.provider,
           meta: response.data.message_data?.meta || undefined
         });
@@ -923,7 +947,7 @@ const ChatComposer: React.FC = () => {
             addMessage({ role: 'assistant', content: response.data.reply });
             // Update the conversation's updatedAt in allConversations immediately
             const { allConversations: allConvsRest } = useChatStore.getState();
-            const updatedAllConvsRest = allConvsRest.map(c => 
+            const updatedAllConvsRest = allConvsRest.map((c: Conversation) => 
               c.id === currentConversation?.id 
                 ? { ...c, updatedAt: new Date().toISOString() }
                 : c
@@ -1084,17 +1108,31 @@ const ChatComposer: React.FC = () => {
               }
             }
             
-            // Add final message with model/provider info
-            addMessage({ 
-              role: 'assistant', 
-              content: streamedContent,
-              model: data.model,
-              provider: data.provider,
-              sources: sources,
-              meta: data.meta || undefined
-            });
-            clearStreaming();
+            // Close WebSocket first
             ws.close();
+            
+            // Add final message with model/provider info
+            // Use requestAnimationFrame to ensure the message is added before clearing streaming
+            // This prevents the card from appearing/disappearing
+            requestAnimationFrame(() => {
+              addMessage({ 
+                role: 'assistant', 
+                content: streamedContent,
+                model: data.model,
+                provider: data.provider,
+                sources: sources,
+                meta: data.meta || undefined
+              });
+              
+              // Clear streaming state after message is added and rendered
+              // Use double requestAnimationFrame to ensure React has rendered the message
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  clearStreaming();
+                  setLoading(false);
+                });
+              });
+            });
           } else if (data.type === 'error') {
             if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
               console.error('WebSocket error:', data.content);
@@ -1110,18 +1148,18 @@ const ChatComposer: React.FC = () => {
         } catch (e) {
           clearStreaming();
           ws.close();
-          fallbackToRest(query, true);
+          fallbackToRest(query);
         }
       };
       
       ws.onerror = () => {
         clearStreaming();
         ws.close();
-        fallbackToRest(query, true);
+        fallbackToRest(query);
       };
       
     } catch (error) {
-      fallbackToRest(query, true);
+      fallbackToRest(query);
     }
   };
 
