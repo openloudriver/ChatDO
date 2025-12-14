@@ -293,8 +293,22 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
             # Save to memory store if thread_id is provided
             if thread_id:
                 history = memory_store.load_thread_history(storage_target_name, thread_id)
-                history.append({"role": "user", "content": task})
-                history.append({"role": "assistant", "content": error_msg})
+                user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": task,
+                    "created_at": user_msg_created_at
+                })
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": error_msg,
+                    "model": "Brave",
+                    "model_label": "Model: Brave",
+                    "created_at": assistant_msg_created_at
+                })
                 memory_store.save_thread_history(storage_target_name, thread_id, history)
             return error_msg, "Brave", "brave_search"
         except Exception as e:
@@ -303,8 +317,22 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
             # Save to memory store if thread_id is provided
             if thread_id:
                 history = memory_store.load_thread_history(storage_target_name, thread_id)
-                history.append({"role": "user", "content": task})
-                history.append({"role": "assistant", "content": error_msg})
+                user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": task,
+                    "created_at": user_msg_created_at
+                })
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": error_msg,
+                    "model": "Brave",
+                    "model_label": "Model: Brave",
+                    "created_at": assistant_msg_created_at
+                })
                 memory_store.save_thread_history(storage_target_name, thread_id, history)
             return error_msg, "Brave", "brave_search"
     
