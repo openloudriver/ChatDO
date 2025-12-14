@@ -75,22 +75,21 @@ rag_files/*.json
 
 # --- Memory Service runtime data ---
 
-# Per-source index folders (both repo and dynamic sources)
-memory_service/store/*-repo/
-memory_service/store/*-dir/
-
-# SQLite databases + journals (in store root and subdirectories)
-memory_service/store/*.sqlite
-memory_service/store/*.sqlite-journal
-memory_service/store/*.sqlite-wal
-memory_service/store/**/*.sqlite
-memory_service/store/**/*.sqlite-journal
-memory_service/store/**/*.sqlite-wal
+# SQLite databases + journals (in memory_dashboard and projects)
+# These are generated dynamically at runtime by init_db() and init_tracking_db()
+memory_service/memory_dashboard/**/*.sqlite
+memory_service/memory_dashboard/**/*.sqlite-journal
+memory_service/memory_dashboard/**/*.sqlite-wal
+memory_service/memory_dashboard/**/*.sqlite-shm
+memory_service/projects/**/*.sqlite
+memory_service/projects/**/*.sqlite-journal
+memory_service/projects/**/*.sqlite-wal
+memory_service/projects/**/*.sqlite-shm
 
 # Python cache
-memory_service/store/__pycache__/
 memory_service/__pycache__/
+memory_service/**/__pycache__/
 
 # Logs
 memory_service/*.log
-memory_service/store/*.log
+memory_service/**/*.log
