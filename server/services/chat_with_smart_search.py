@@ -432,6 +432,38 @@ async def chat_with_smart_search(
         else:
             conversation_history = []
     
+    # CRITICAL: Index user message BEFORE searching memory to avoid race condition
+    # This ensures that if the user asks a follow-up question immediately, the Memory Service
+    # can find the message they just sent
+    if thread_id and project_id:
+        try:
+            from server.services.memory_service_client import get_memory_client
+            from uuid import uuid4
+            
+            history = memory_store.load_thread_history(target_name, thread_id)
+            message_index = len(history)
+            user_msg_created_at = datetime.now(timezone.utc).isoformat()
+            
+            # Index user message immediately (before memory search)
+            memory_client = get_memory_client()
+            user_message_id = f"{thread_id}-user-{message_index}"
+            logger.info(f"[MEMORY] Indexing user message BEFORE memory search: {user_message_id} for project {project_id}")
+            success = memory_client.index_chat_message(
+                project_id=project_id,
+                chat_id=thread_id,
+                message_id=user_message_id,
+                role="user",
+                content=user_message,
+                timestamp=user_msg_created_at,
+                message_index=message_index
+            )
+            if success:
+                logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (before search)")
+            else:
+                logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+        except Exception as e:
+            logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
+    
     # 0. Get memory context if project_id is available
     memory_context = ""
     sources = []
@@ -670,11 +702,13 @@ async def chat_with_smart_search(
                 })
                 
                 # Index user message into Memory Service for cross-chat search
+                # NOTE: This is redundant since we index early (before memory search), but kept for safety
+                # The early indexing ensures the message is available for immediate follow-up questions
                 if project_id:
                     try:
                         memory_client = get_memory_client()
                         user_message_id = f"{thread_id}-user-{message_index}"
-                        logger.info(f"[MEMORY] Attempting to index user message {user_message_id} for project {project_id}")
+                        logger.debug(f"[MEMORY] Re-indexing user message {user_message_id} for project {project_id} (already indexed early, this is redundant)")
                         success = memory_client.index_chat_message(
                             project_id=project_id,
                             chat_id=thread_id,
@@ -685,11 +719,11 @@ async def chat_with_smart_search(
                             message_index=message_index
                         )
                         if success:
-                            logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id}")
+                            logger.debug(f"[MEMORY] ✅ Re-indexed user message {user_message_id} for project {project_id}")
                         else:
-                            logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+                            logger.warning(f"[MEMORY] ❌ Failed to re-index user message {user_message_id} for project {project_id} (Memory Service returned False)")
                     except Exception as e:
-                        logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+                        logger.warning(f"[MEMORY] ❌ Exception re-indexing user message: {e}", exc_info=True)
                 else:
                     logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
                 
@@ -977,11 +1011,13 @@ async def chat_with_smart_search(
             })
             
             # Index user message into Memory Service for cross-chat search
+            # NOTE: This is redundant since we index early (before memory search), but kept for safety
+            # The early indexing ensures the message is available for immediate follow-up questions
             if project_id:
                 try:
                     memory_client = get_memory_client()
                     user_message_id = f"{thread_id}-user-{message_index}"
-                    logger.info(f"[MEMORY] Attempting to index user message {user_message_id} for project {project_id}")
+                    logger.debug(f"[MEMORY] Re-indexing user message {user_message_id} for project {project_id} (already indexed early, this is redundant)")
                     success = memory_client.index_chat_message(
                         project_id=project_id,
                         chat_id=thread_id,
@@ -992,11 +1028,11 @@ async def chat_with_smart_search(
                         message_index=message_index
                     )
                     if success:
-                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id}")
+                        logger.debug(f"[MEMORY] ✅ Re-indexed user message {user_message_id} for project {project_id}")
                     else:
-                        logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+                        logger.warning(f"[MEMORY] ❌ Failed to re-index user message {user_message_id} for project {project_id} (Memory Service returned False)")
                 except Exception as e:
-                    logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+                    logger.warning(f"[MEMORY] ❌ Exception re-indexing user message: {e}", exc_info=True)
             else:
                 logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
             
