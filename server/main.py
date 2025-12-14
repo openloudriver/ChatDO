@@ -142,6 +142,50 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def build_message_with_timestamp(
+    role: str,
+    content: str,
+    message_id: Optional[str] = None,
+    model_label: Optional[str] = None,
+    created_at: Optional[str] = None,
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Build a message object with required timestamp and model_label fields.
+    
+    Args:
+        role: Message role (user, assistant, system)
+        content: Message content
+        message_id: Optional message ID (generated if not provided)
+        model_label: Model label (e.g., "Model: Memory", "Model: Memory + GPT-5")
+        created_at: Optional timestamp (generated if not provided, must be UTC ISO-8601)
+        **kwargs: Additional message fields (type, data, provider, sources, etc.)
+    
+    Returns:
+        Message dict with id, role, content, created_at, model_label, and any additional fields
+    """
+    if message_id is None:
+        message_id = str(uuid4())
+    
+    if created_at is None:
+        created_at = now_iso()
+    
+    message = {
+        "id": message_id,
+        "role": role,
+        "content": content,
+        "created_at": created_at,
+    }
+    
+    if model_label:
+        message["model_label"] = model_label
+    
+    # Add any additional fields
+    message.update(kwargs)
+    
+    return message
+
+
 def update_chat_timestamp(conversation_id: str) -> None:
     """Update the chat's updated_at timestamp when a message is sent"""
     if not conversation_id:
@@ -2260,8 +2304,11 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
     history = load_thread_history(target_name, thread_id)
     print(f"[DIAG] get_chat_messages: Loaded {len(history)} messages from memory store")
     
-    # Convert to frontend format
+    # Convert to frontend format with timestamps
     messages = []
+    chat_created_at = chat.get("created_at", now_iso())  # Fallback for legacy messages
+    last_timestamp = chat_created_at  # Track for monotonic enforcement
+    
     print(f"[DIAG] Loading messages for chat {chat_id}: history has {len(history)} messages")
     for idx, msg in enumerate(history):
         # Skip system messages for display
@@ -2275,6 +2322,36 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
             "content": msg.get("content", "")
         }
         
+        # Handle created_at: use from message, or fallback to chat created_at, or ensure monotonic
+        msg_created_at = msg.get("created_at")
+        if not msg_created_at:
+            # Legacy message: use chat created_at as fallback
+            msg_created_at = chat_created_at
+        else:
+            # Ensure monotonic: never regress within a chat
+            try:
+                msg_ts = datetime.fromisoformat(msg_created_at.replace('Z', '+00:00'))
+                last_ts = datetime.fromisoformat(last_timestamp.replace('Z', '+00:00'))
+                if msg_ts < last_ts:
+                    # Timestamp regressed, use last_timestamp + 1 second
+                    msg_created_at = (last_ts + timedelta(seconds=1)).isoformat()
+            except (ValueError, AttributeError):
+                # Invalid timestamp format, use fallback
+                msg_created_at = chat_created_at
+        
+        message_obj["created_at"] = msg_created_at
+        last_timestamp = msg_created_at  # Update for next message
+        
+        # Handle model_label: derive from model field or use existing model_label
+        model_value = msg.get("model") or msg.get("model_label")
+        if model_value:
+            # Format model_label consistently (e.g., "GPT-5" -> "Model: GPT-5")
+            if model_value.startswith("Model: "):
+                message_obj["model_label"] = model_value
+            else:
+                message_obj["model_label"] = f"Model: {model_value}"
+        # If no model, model_label is omitted (None)
+        
         # If message has structured type/data, preserve it
         if msg.get("type"):
             message_obj["type"] = msg.get("type")
@@ -2287,7 +2364,7 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         if msg.get("sources"):
             message_obj["sources"] = msg.get("sources")
         
-        print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, content_preview={msg.get('content', '')[:50]}...")
+        print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, created_at={message_obj.get('created_at', 'missing')}, model_label={message_obj.get('model_label', 'none')}")
         messages.append(message_obj)
     
     print(f"[DIAG] Returning {len(messages)} messages to frontend")

@@ -7,6 +7,8 @@ from typing import Optional, List, Dict, Any
 import sys
 import re
 from pathlib import Path
+from datetime import datetime, timezone
+from uuid import uuid4
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -155,7 +157,6 @@ async def stream_chat_response(
             from server.article_summary import extract_article
             import requests
             import os
-            from datetime import datetime, timezone
             from chatdo.memory.store import load_thread_history, save_thread_history, add_thread_source
             from server.main import load_projects
             from chatdo.agents.ai_router import ARTICLE_SUMMARY_SYSTEM_PROMPT
@@ -351,11 +352,15 @@ Keep it concise, neutral, and factual."""
             if conversation_id:
                 update_chat_timestamp(conversation_id)
             
+            # First chunk includes created_at and model_label for streaming-safe timestamping
             await websocket.send_json({
                 "type": "article_card",
                 "data": message_data,
                 "model": "Trafilatura + GPT-5",
+                "model_label": "Model: Trafilatura + GPT-5",
                 "provider": "trafilatura-gpt5",
+                "created_at": assistant_msg_created_at,
+                "message_id": assistant_message["id"],
                 "done": True
             })
             return
@@ -446,26 +451,39 @@ Keep it concise, neutral, and factual."""
                     if conversation_id:
                         from chatdo.memory.store import load_thread_history, save_thread_history
                         history = load_thread_history(target_name, conversation_id)
-                        # Add user message
-                        history.append({"role": "user", "content": message})
-                        # Add assistant message with structured data
+                        # Add user message with timestamp
+                        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        history.append({
+                            "id": str(uuid4()),
+                            "role": "user",
+                            "content": message,
+                            "created_at": user_msg_created_at
+                        })
+                        # Add assistant message with structured data, timestamp, and model_label
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         assistant_message = {
+                            "id": str(uuid4()),
                             "role": "assistant",
                             "content": "",  # Empty content for structured messages
                             "type": "web_search_results",
                             "data": structured_result,
                             "model": "Brave",
-                            "provider": "brave_search"
+                            "model_label": "Model: Brave",
+                            "provider": "brave_search",
+                            "created_at": assistant_msg_created_at
                         }
                         history.append(assistant_message)
                         save_thread_history(target_name, conversation_id, history)
                     
-                    # Send structured web search results
+                    # Send structured web search results (first chunk includes created_at and model_label)
                     await websocket.send_json({
                         "type": "web_search_results",
                         "data": structured_result,
                         "model": "Brave",
+                        "model_label": "Model: Brave",
                         "provider": "brave_search",
+                        "created_at": assistant_msg_created_at,
+                        "message_id": assistant_message["id"],
                         "done": True
                     })
                     # Update chat's updated_at timestamp
@@ -531,26 +549,43 @@ Keep it concise, neutral, and factual."""
             # Extract response content
             raw_result = result.get("content", "")
             model_display = result.get("model", "GPT-5")
+            model_label = result.get("model_label") or f"Model: {model_display}"
             provider = result.get("provider", "openai-gpt5")
             meta = result.get("meta", {})
             sources = result.get("sources")
             
+            # Generate timestamp and message_id for this response (streaming-safe: immutable)
+            response_created_at = datetime.now(timezone.utc).isoformat()
+            message_id = str(uuid4())
+            
             # Stream the response as chunks (simulate streaming)
+            # First chunk includes created_at and model_label for streaming-safe timestamping
             chunk_size = 50  # Characters per chunk
+            first_chunk = True
             for i in range(0, len(raw_result), chunk_size):
                 chunk = raw_result[i:i + chunk_size]
-                await websocket.send_json({
+                chunk_data = {
                     "type": "chunk",
                     "content": chunk
-                })
+                }
+                if first_chunk:
+                    # First chunk includes timestamp and model_label
+                    chunk_data["created_at"] = response_created_at
+                    chunk_data["model_label"] = model_label
+                    chunk_data["message_id"] = message_id
+                    first_chunk = False
+                await websocket.send_json(chunk_data)
             
             # Send done message with meta
             await websocket.send_json({
                 "type": "done",
                 "model": model_display,
+                "model_label": model_label,
                 "provider": provider,
                 "sources": sources,
-                "meta": meta
+                "meta": meta,
+                "created_at": response_created_at,
+                "message_id": message_id
             })
             return
         
@@ -640,15 +675,21 @@ Keep it concise, neutral, and factual."""
                         history = load_thread_history(target_name, thread_id)
                         # Find the last assistant message (saved by run_agent) and update it with structured type
                         updated = False
+                        rag_response_created_at = datetime.now(timezone.utc).isoformat()
                         for i in range(len(history) - 1, -1, -1):
                             if history[i].get("role") == "assistant":
-                                # Update existing message with structured type
+                                # Update existing message with structured type, timestamp, and model_label
+                                if not history[i].get("id"):
+                                    history[i]["id"] = str(uuid4())
+                                if not history[i].get("created_at"):
+                                    history[i]["created_at"] = rag_response_created_at
                                 history[i]["type"] = "rag_response"
                                 history[i]["data"] = {
                                     "content": human_text,
                                     "sources": source_files
                                 }
                                 history[i]["model"] = model_display
+                                history[i]["model_label"] = f"Model: {model_display}"
                                 history[i]["provider"] = provider
                                 # Add RAG sources
                                 history[i]["sources"] = ["RAG-Upload"] if source_files else None
@@ -667,6 +708,20 @@ Keep it concise, neutral, and factual."""
             if conversation_id:
                 update_chat_timestamp(conversation_id)
             
+            # Get message_id and created_at from updated history
+            rag_message_id = None
+            rag_created_at = rag_response_created_at
+            if conversation_id:
+                try:
+                    history = load_thread_history(target_name, thread_id)
+                    for msg in reversed(history):
+                        if msg.get("role") == "assistant" and msg.get("type") == "rag_response":
+                            rag_message_id = msg.get("id")
+                            rag_created_at = msg.get("created_at", rag_response_created_at)
+                            break
+                except:
+                    pass
+            
             await websocket.send_json({
                 "type": "rag_response",
                 "data": {
@@ -674,21 +729,46 @@ Keep it concise, neutral, and factual."""
                     "sources": source_files
                 },
                 "model": model_display,
+                "model_label": f"Model: {model_display}",
                 "provider": provider,
+                "created_at": rag_created_at,
+                "message_id": rag_message_id or str(uuid4()),
                 "done": True
             })
             return
         
         # Stream human text in chunks (simulate streaming for now)
         # Note: run_agent already saved the assistant message, so we don't need to save it again
+        # Get timestamp and message_id from saved message (or generate if not found)
+        stream_created_at = datetime.now(timezone.utc).isoformat()
+        stream_message_id = str(uuid4())
+        if conversation_id:
+            try:
+                history = load_thread_history(target_name, thread_id)
+                for msg in reversed(history):
+                    if msg.get("role") == "assistant" and not msg.get("type"):
+                        stream_message_id = msg.get("id", stream_message_id)
+                        stream_created_at = msg.get("created_at", stream_created_at)
+                        break
+            except:
+                pass
+        
         chunk_size = 50  # characters per chunk
+        first_chunk = True
         for i in range(0, len(human_text), chunk_size):
             chunk = human_text[i:i + chunk_size]
-            await websocket.send_json({
+            chunk_data = {
                 "type": "chunk",
                 "content": chunk,
                 "done": False
-            })
+            }
+            if first_chunk:
+                # First chunk includes timestamp and model_label for streaming-safe timestamping
+                chunk_data["created_at"] = stream_created_at
+                chunk_data["model_label"] = f"Model: {model_display}"
+                chunk_data["message_id"] = stream_message_id
+                first_chunk = False
+            await websocket.send_json(chunk_data)
         
         # If there are tasks, execute them and send summary
         if tasks_json:
@@ -726,7 +806,6 @@ Keep it concise, neutral, and factual."""
         # Note: run_agent already saved messages to thread history
         if conversation_id and project_id:
             try:
-                from datetime import datetime, timezone
                 from server.services.memory_service_client import get_memory_client
                 from chatdo.memory.store import load_thread_history
                 

@@ -5,6 +5,8 @@ When web search is needed, it's done in the background and results are fed to GP
 import json
 import logging
 from typing import Dict, List, Any, Optional
+from datetime import datetime, timezone
+from uuid import uuid4
 from chatdo.tools import web_search
 from chatdo.agents.ai_router import call_ai_router
 from chatdo.prompts import CHATDO_SYSTEM_PROMPT
@@ -646,17 +648,26 @@ async def chat_with_smart_search(
             model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
             logger.info(f"[MODEL] model label = {model_display}")
         
+        # Build model_label and created_at BEFORE the thread_id check (needed for return statement)
+        model_label = f"Model: {model_display}"
+        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+        
         # Save to memory store if thread_id is provided
         if thread_id:
             try:
-                from datetime import datetime, timezone
                 from server.services.memory_service_client import get_memory_client
                 
                 history = memory_store.load_thread_history(target_name, thread_id)
                 message_index = len(history)
                 
-                # Add user message
-                history.append({"role": "user", "content": user_message})
+                # Add user message with timestamp
+                user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": user_message,
+                    "created_at": user_msg_created_at
+                })
                 
                 # Index user message into Memory Service for cross-chat search
                 if project_id:
@@ -670,7 +681,7 @@ async def chat_with_smart_search(
                             message_id=user_message_id,
                             role="user",
                             content=user_message,
-                            timestamp=datetime.now(timezone.utc).isoformat(),
+                            timestamp=user_msg_created_at,
                             message_index=message_index
                         )
                         if success:
@@ -682,14 +693,17 @@ async def chat_with_smart_search(
                 else:
                     logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
                 
-                # Add assistant message
+                # Add assistant message with timestamp and model_label
                 history.append({
+                    "id": str(uuid4()),
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
+                    "model_label": model_label,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False, "usedMemory": used_memory}
+                    "meta": {"usedWebSearch": False, "usedMemory": used_memory},
+                    "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
                 
@@ -705,7 +719,7 @@ async def chat_with_smart_search(
                             message_id=assistant_message_id,
                             role="assistant",
                             content=content,
-                            timestamp=datetime.now(timezone.utc).isoformat(),
+                            timestamp=assistant_msg_created_at,
                             message_index=message_index + 1
                         )
                         if success:
@@ -727,8 +741,10 @@ async def chat_with_smart_search(
                 "usedMemory": used_memory,
             },
             "model": model_display,
+            "model_label": model_label,
             "provider": provider_id,
-            "sources": sources if sources else None
+            "sources": sources if sources else None,
+            "created_at": assistant_msg_created_at
         }
     
     # 2b. Use Brave Pro AI (Summary + Top Results) + GPT-5
@@ -773,18 +789,31 @@ async def chat_with_smart_search(
             project_id=project_id
         )
         
+        # Build model_label for this response
+        model_label = f"Model: {model_display}"
+        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+        
         # Save to memory store if thread_id is provided
         if thread_id:
             try:
                 history = memory_store.load_thread_history(target_name, thread_id)
-                history.append({"role": "user", "content": user_message})
+                user_msg_created_at = datetime.now(timezone.utc).isoformat()
                 history.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": user_message,
+                    "created_at": user_msg_created_at
+                })
+                history.append({
+                    "id": str(uuid4()),
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
+                    "model_label": model_label,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False, "webSearchError": str(e)}
+                    "meta": {"usedWebSearch": False, "webSearchError": str(e)},
+                    "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
             except Exception as e2:
@@ -798,8 +827,10 @@ async def chat_with_smart_search(
                 "webSearchError": str(e)
             },
             "model": model_display,
+            "model_label": model_label,
             "provider": provider_id,
-            "sources": sources if sources else None
+            "sources": sources if sources else None,
+            "created_at": assistant_msg_created_at
         }
     
     if not web_results or len(web_results) == 0:
@@ -815,17 +846,28 @@ async def chat_with_smart_search(
         )
         
         # Save to memory store if thread_id is provided
+        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+        model_label = f"Model: {model_display}"
         if thread_id:
             try:
                 history = memory_store.load_thread_history(target_name, thread_id)
-                history.append({"role": "user", "content": user_message})
+                user_msg_created_at = datetime.now(timezone.utc).isoformat()
                 history.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": user_message,
+                    "created_at": user_msg_created_at
+                })
+                history.append({
+                    "id": str(uuid4()),
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
+                    "model_label": model_label,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False, "webSearchEmpty": True}
+                    "meta": {"usedWebSearch": False, "webSearchEmpty": True},
+                    "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history)
             except Exception as e:
@@ -839,8 +881,10 @@ async def chat_with_smart_search(
                 "webSearchEmpty": True
             },
             "model": model_display,
+            "model_label": model_label,
             "provider": provider_id,
-            "sources": sources if sources else None
+            "sources": sources if sources else None,
+            "created_at": assistant_msg_created_at
         }
     
     # Convert web results to Source[] format
@@ -917,14 +961,20 @@ async def chat_with_smart_search(
     # Save to memory store if thread_id is provided
     if thread_id:
         try:
-            from datetime import datetime, timezone
             from server.services.memory_service_client import get_memory_client
             
             history = memory_store.load_thread_history(target_name, thread_id)
             message_index = len(history)
             
-            # Add user message
-            history.append({"role": "user", "content": user_message})
+            # Add user message with timestamp
+            from uuid import uuid4
+            user_msg_created_at = datetime.now(timezone.utc).isoformat()
+            history.append({
+                "id": str(uuid4()),
+                "role": "user",
+                "content": user_message,
+                "created_at": user_msg_created_at
+            })
             
             # Index user message into Memory Service for cross-chat search
             if project_id:
@@ -938,7 +988,7 @@ async def chat_with_smart_search(
                         message_id=user_message_id,
                         role="user",
                         content=user_message,
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=user_msg_created_at,
                         message_index=message_index
                     )
                     if success:
@@ -950,7 +1000,7 @@ async def chat_with_smart_search(
             else:
                 logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
             
-            # Add assistant message
+            # Add assistant message with timestamp and model_label
             # Add Brave Search to sources if web search was used
             web_sources = sources.copy() if sources else []
             web_sources.append("Brave Search")
@@ -958,16 +1008,21 @@ async def chat_with_smart_search(
             # Combine memory sources with web sources
             all_sources = (sources.copy() if sources else []) + web_sources
             
+            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+            model_label = build_model_label(used_web=bool(web_sources), used_memory=has_memory, escalated=True)
             assistant_message = {
+                "id": str(uuid4()),
                 "role": "assistant",
                 "content": content,
-                "model": build_model_label(used_web=bool(web_sources), used_memory=has_memory, escalated=True),
+                "model": model_label.replace("Model: ", ""),  # Store without "Model: " prefix
+                "model_label": model_label,
                 "provider": provider_id,
                 "sources": all_sources if all_sources else None,
                 "meta": {
                     "usedWebSearch": True,
                     "webResultsPreview": web_results[:5]
-                }
+                },
+                "created_at": assistant_msg_created_at
             }
             history.append(assistant_message)
             memory_store.save_thread_history(target_name, thread_id, history)
@@ -984,7 +1039,7 @@ async def chat_with_smart_search(
                         message_id=assistant_message_id,
                         role="assistant",
                         content=content,
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=assistant_msg_created_at,
                         message_index=message_index + 1
                     )
                     if success:
@@ -1001,6 +1056,21 @@ async def chat_with_smart_search(
     # Combine memory sources with web sources
     all_sources = (sources.copy() if sources else []) + web_sources
     
+    # Get created_at and model_label from saved message or generate
+    assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+    model_label = build_model_label(used_web=bool(web_sources), used_memory=searched_memory, escalated=True)
+    if thread_id:
+        try:
+            history = memory_store.load_thread_history(target_name, thread_id)
+            for msg in reversed(history):
+                if msg.get("role") == "assistant" and msg.get("created_at"):
+                    assistant_msg_created_at = msg.get("created_at")
+                    if msg.get("model_label"):
+                        model_label = msg.get("model_label")
+                    break
+        except:
+            pass
+    
     return {
         "type": "assistant_message",
         "content": content,
@@ -1009,8 +1079,10 @@ async def chat_with_smart_search(
             "usedMemory": has_memory,
             "webResultsPreview": web_results[:5]  # Top 5 for sources display
         },
-        "model": build_model_label(used_web=bool(web_sources), used_memory=searched_memory, escalated=True),
+        "model": model_label.replace("Model: ", ""),  # Return without "Model: " prefix for backward compatibility
+        "model_label": model_label,
         "provider": provider_id,
-        "sources": all_sources if all_sources else None
+        "sources": all_sources if all_sources else None,
+        "created_at": assistant_msg_created_at
     }
 

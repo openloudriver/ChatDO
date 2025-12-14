@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
 import os
 import requests
+from datetime import datetime, timezone
+from uuid import uuid4
 from ..config import TargetConfig
 from ..prompts import CHATDO_SYSTEM_PROMPT
 from ..tools import web_search
@@ -237,16 +239,26 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 # Save to memory store if thread_id is provided
                 if thread_id:
                     history = memory_store.load_thread_history(storage_target_name, thread_id)
-                    # Add user message
-                    history.append({"role": "user", "content": task})
-                    # Add assistant message with structured data
+                    # Add user message with timestamp
+                    user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                    history.append({
+                        "id": str(uuid4()),
+                        "role": "user",
+                        "content": task,
+                        "created_at": user_msg_created_at
+                    })
+                    # Add assistant message with structured data, timestamp, and model_label
+                    assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                     assistant_message = {
+                        "id": str(uuid4()),
                         "role": "assistant",
                         "content": "",  # Empty content for structured messages
                         "type": "web_search_results",
                         "data": structured_result,
                         "model": model_display,
-                        "provider": provider
+                        "model_label": f"Model: {model_display}",
+                        "provider": provider,
+                        "created_at": assistant_msg_created_at
                     }
                     history.append(assistant_message)
                     memory_store.save_thread_history(storage_target_name, thread_id, history)
@@ -257,8 +269,22 @@ def run_agent(target: TargetConfig, task: str, thread_id: Optional[str] = None, 
                 # Save to memory store if thread_id is provided
                 if thread_id:
                     history = memory_store.load_thread_history(storage_target_name, thread_id)
-                    history.append({"role": "user", "content": task})
-                    history.append({"role": "assistant", "content": error_msg})
+                    user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                    assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                    history.append({
+                        "id": str(uuid4()),
+                        "role": "user",
+                        "content": task,
+                        "created_at": user_msg_created_at
+                    })
+                    history.append({
+                        "id": str(uuid4()),
+                        "role": "assistant",
+                        "content": error_msg,
+                        "model": "Brave",
+                        "model_label": "Model: Brave",
+                        "created_at": assistant_msg_created_at
+                    })
                     memory_store.save_thread_history(storage_target_name, thread_id, history)
                 return error_msg, "Brave", "brave_search"
         except ValueError as e:
@@ -438,7 +464,15 @@ Notes:
                 print(f"[DIAG] run_agent: WARNING - Task contains RAG context but no 'User question:' marker. NOT saving to history.")
                 print(f"[DIAG] run_agent: Task preview: {task[:200]}...")
                 # Don't save the user message, only save assistant response
-                history.append({"role": "assistant", "content": final_content})
+                assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                history.append({
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": final_content,
+                    "model": model_display,
+                    "model_label": f"Model: {model_display}",
+                    "created_at": assistant_msg_created_at
+                })
                 memory_store.save_thread_history(storage_target_name, thread_id, history)
                 print(f"[DIAG] run_agent: Saved only assistant message (skipped RAG context user message)")
                 return final_content, model_display, provider_id
@@ -447,13 +481,36 @@ Notes:
         if len(task_to_save) > 5000:
             print(f"[DIAG] run_agent: WARNING - Task is too long ({len(task_to_save)} chars), likely contains full document text. NOT saving to history.")
             # Don't save the user message, only save assistant response
-            history.append({"role": "assistant", "content": final_content})
+            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+            history.append({
+                "id": str(uuid4()),
+                "role": "assistant",
+                "content": final_content,
+                "model": model_display,
+                "model_label": f"Model: {model_display}",
+                "created_at": assistant_msg_created_at
+            })
             memory_store.save_thread_history(storage_target_name, thread_id, history)
             print(f"[DIAG] run_agent: Saved only assistant message (skipped oversized user message)")
             return final_content, model_display, provider_id
         
-        history.append({"role": "user", "content": task_to_save})
-        history.append({"role": "assistant", "content": final_content})
+        # Save user and assistant messages with timestamps
+        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+        history.append({
+            "id": str(uuid4()),
+            "role": "user",
+            "content": task_to_save,
+            "created_at": user_msg_created_at
+        })
+        history.append({
+            "id": str(uuid4()),
+            "role": "assistant",
+            "content": final_content,
+            "model": model_display,
+            "model_label": f"Model: {model_display}",
+            "created_at": assistant_msg_created_at
+        })
         print(f"[DIAG] run_agent: Saving user message (length={len(task_to_save)}), assistant message (length={len(final_content)})")
         print(f"[DIAG] run_agent: User message preview: {task_to_save[:100]}...")
         memory_store.save_thread_history(storage_target_name, thread_id, history)

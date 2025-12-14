@@ -92,11 +92,11 @@ def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[st
                     
                     # Only index user and assistant messages (not system)
                     if role in ("user", "assistant") and content and message_id:
-                        # Get timestamp
-                        timestamp = msg.get("timestamp")
+                        # Get created_at timestamp (canonical field name)
+                        timestamp = msg.get("created_at") or msg.get("timestamp")  # Support both for backward compatibility
                         if not timestamp:
-                            from datetime import datetime
-                            timestamp = datetime.now().isoformat()
+                            from datetime import datetime, timezone
+                            timestamp = datetime.now(timezone.utc).isoformat()
                         elif isinstance(timestamp, str):
                             pass  # Already ISO string
                         else:
