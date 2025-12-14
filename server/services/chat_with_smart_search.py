@@ -456,20 +456,61 @@ async def chat_with_smart_search(
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
                 logger.info(f"[MEMORY] Will NOT route to Llama: has_memory={has_memory}, hits_count=0")
-            # Get source names from the actual sources used
-            from server.services.memory_service_client import get_memory_sources_for_project
-            from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
-            source_ids = get_memory_sources_for_project(project_id)
-            # Get source display names from Memory Service
-            try:
-                client = get_memory_client()
-                all_sources = client.get_sources()
-                source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
-                for source_id in source_ids:
-                    source_name = source_map.get(source_id, source_id)
-                    sources.append(f"Memory-{source_name}")
-            except Exception as source_error:
-                logger.debug(f"Failed to get source names: {source_error}")
+            
+            # Convert Memory hits to structured Source objects for frontend
+            if hits:
+                # Get source display names for better titles
+                from server.services.memory_service_client import get_memory_sources_for_project
+                from server.services import projects_config  # noqa: F401  # imported for side-effects / future use
+                source_map = {}
+                try:
+                    client = get_memory_client()
+                    all_sources = client.get_sources()
+                    source_map = {s.get("id"): s.get("display_name", s.get("id")) for s in all_sources}
+                except Exception as source_error:
+                    logger.debug(f"Failed to get source names: {source_error}")
+                
+                # Convert each MemoryHit to a Source object
+                for idx, hit in enumerate(hits):
+                    # Generate title from content or file path
+                    title = "Memory Source"
+                    if hit.file_path:
+                        # Extract filename from path
+                        import os
+                        title = os.path.basename(hit.file_path) or hit.file_path
+                    elif hit.content:
+                        # Use first 60 chars of content as title
+                        content_preview = hit.content.strip().split('\n')[0]
+                        title = content_preview[:60] + "..." if len(content_preview) > 60 else content_preview
+                    
+                    # Get source display name if available
+                    source_display_name = source_map.get(hit.source_id, hit.source_id)
+                    if hit.file_path:
+                        title = f"{source_display_name}: {title}"
+                    
+                    # Create description from content snippet (first 150 chars)
+                    description = hit.content[:150] + "..." if len(hit.content) > 150 else hit.content
+                    
+                    # Build Source object
+                    memory_source = {
+                        "id": f"memory-{hit.source_id}-{idx}",
+                        "title": title,
+                        "description": description,
+                        "sourceType": "memory",
+                        "citationPrefix": "M",
+                        "rank": idx,  # Rank within Memory group
+                        "siteName": "Memory",
+                        "meta": {
+                            "chat_id": hit.chat_id,
+                            "message_id": hit.message_id,
+                            "file_path": hit.file_path,
+                            "source_id": hit.source_id,
+                            "source_type": hit.source_type,
+                            "role": hit.role,
+                            "content": hit.content,  # Full content for reference
+                        }
+                    }
+                    sources.append(memory_source)
         except Exception as e:
             logger.warning(f"Failed to get memory context: {e}")
     

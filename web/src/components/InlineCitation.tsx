@@ -21,7 +21,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { currentConversation, currentProject, addMessage, renameChat, setSummarizingArticle, setConversationSummarizing } = useChatStore();
+  const { currentConversation, currentProject, addMessage, renameChat, setSummarizingArticle, setConversationSummarizing, setCurrentConversation, loadChats, allConversations } = useChatStore();
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -196,6 +196,52 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   // Only show summarize button for non-RAG sources with URLs
   const showSummarizeButton = source.url && !source.meta?.ragFile && !source.fileName;
 
+  // Handle Memory source clicks (navigate to chat or show file)
+  const handleMemorySourceClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const chatId = source.meta?.chat_id;
+    const filePath = source.meta?.file_path;
+
+    if (chatId) {
+      // Try to find the conversation in loaded chats
+      let targetConversation = allConversations.find(c => c.id === chatId);
+      
+      // If not found, try loading all chats
+      if (!targetConversation) {
+        try {
+          await loadChats();
+          targetConversation = useChatStore.getState().allConversations.find(c => c.id === chatId);
+        } catch (error) {
+          console.error('Failed to load chats:', error);
+        }
+      }
+
+      if (targetConversation) {
+        await setCurrentConversation(targetConversation);
+        setOpen(false);
+        // TODO: Scroll to specific message if message_id is available
+      } else {
+        console.warn(`Chat ${chatId} not found`);
+        // Could show a toast/notification here
+      }
+    } else if (filePath) {
+      // For file sources, show the path (could be enhanced to open file viewer)
+      console.log('Memory file source:', filePath);
+      // TODO: Implement file viewer if available
+      // For now, copy path to clipboard
+      try {
+        await navigator.clipboard.writeText(filePath);
+        console.log('File path copied to clipboard:', filePath);
+      } catch (error) {
+        console.error('Failed to copy file path:', error);
+      }
+    }
+  };
+
+  // Check if this is a Memory source with clickable content
+  const isMemorySource = source.sourceType === 'memory';
+  const hasMemoryClickAction = isMemorySource && (source.meta?.chat_id || source.meta?.file_path);
+
   return (
     <>
       <span
@@ -214,8 +260,11 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         onMouseLeave={handleMouseLeave}
         onClick={e => {
           e.stopPropagation();
-          // Handle RAG files (stored in meta.onOpenFile)
-          if (source.meta?.onOpenFile && source.meta?.ragFile) {
+          // Handle Memory sources (navigate to chat or show file)
+          if (hasMemoryClickAction) {
+            handleMemorySourceClick(e);
+          } else if (source.meta?.onOpenFile && source.meta?.ragFile) {
+            // Handle RAG files (stored in meta.onOpenFile)
             source.meta.onOpenFile(source.meta.ragFile);
           } else if (source.url) {
             window.open(source.url, '_blank', 'noopener,noreferrer');
@@ -253,7 +302,9 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
           )}
           <div 
             className={`mb-1 line-clamp-2 text-xs font-semibold text-[var(--text-primary)] ${
-              source.meta?.onOpenFile && source.meta?.ragFile 
+              hasMemoryClickAction
+                ? 'cursor-pointer hover:underline'
+                : source.meta?.onOpenFile && source.meta?.ragFile 
                 ? 'cursor-pointer hover:underline' 
                 : source.url
                 ? 'cursor-pointer hover:underline'
@@ -261,8 +312,11 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
             }`}
             onClick={e => {
               e.stopPropagation();
-              // Handle RAG files (stored in meta.onOpenFile)
-              if (source.meta?.onOpenFile && source.meta?.ragFile) {
+              // Handle Memory sources (navigate to chat or show file)
+              if (hasMemoryClickAction) {
+                handleMemorySourceClick(e);
+              } else if (source.meta?.onOpenFile && source.meta?.ragFile) {
+                // Handle RAG files (stored in meta.onOpenFile)
                 source.meta.onOpenFile(source.meta.ragFile);
               } else if (source.url) {
                 window.open(source.url, '_blank', 'noopener,noreferrer');
@@ -281,7 +335,23 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
               {formatDate(source.publishedAt)}
             </div>
           )}
-          {(source.description || source.sourceType === 'memory') && (
+          {/* Show Memory-specific metadata */}
+          {isMemorySource && source.meta?.file_path && (
+            <div className="mb-1 text-[10px] text-[var(--text-secondary)] font-mono">
+              📄 {source.meta.file_path}
+            </div>
+          )}
+          {isMemorySource && source.meta?.chat_id && (
+            <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
+              💬 Chat: {source.meta.chat_id.substring(0, 8)}...
+            </div>
+          )}
+          {isMemorySource && source.meta?.role && (
+            <div className="mb-1 text-[10px] text-[var(--text-secondary)]">
+              {source.meta.role === 'user' ? '👤 User message' : '🤖 Assistant message'}
+            </div>
+          )}
+          {(source.description || (source.sourceType === 'memory' && !source.meta?.content)) && (
             <p className="mb-2 line-clamp-3 text-[11px] text-[var(--text-secondary)]">
               {source.description || 
                (source.sourceType === 'memory' ? 'This information comes from your project memory, which includes past conversations and indexed files.' : '')}
