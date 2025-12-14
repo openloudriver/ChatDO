@@ -2316,7 +2316,7 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         target_name = get_target_name_from_project(project)
     
     thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
-
+    
     print(f"[DIAG] get_chat_messages: chat_id={chat_id}, thread_id={thread_id}, target_name={target_name}, project_default_target={project.get('default_target') if project else None}")
     
     if not thread_id:
@@ -2416,10 +2416,10 @@ async def get_chat_sources(chat_id: str):
     
     target_name = get_target_name_from_project(project)
     thread_id = chat.get("thread_id")
-
+    
     if not thread_id:
         return {"sources": []}
-
+    
     # Load sources from memory store
     sources = load_thread_sources(target_name, thread_id)
     
