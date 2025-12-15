@@ -48,26 +48,19 @@ Return top max_hits MemoryHit objects
     ↓
 librarian.format_hits_as_context()
     ↓
-Formatted context string for GPT-5
+Formatted context string for GPT-5 Nano (via AI Router)
 ```
 
-## Future: Llama 3.2 3B Integration
+## GPT-5 Nano Integration
 
-The Librarian is designed to be extended with Llama 3.2 3B as an optional re-ranker. The integration point will be:
+The Librarian uses GPT-5 Nano via the AI Router to generate responses from Memory hits. The `generate_memory_response_with_gpt5_nano()` function:
 
-```python
-def rerank_with_llama(hits: List[MemoryHit], query: str) -> List[MemoryHit]:
-    """
-    Optional re-ranker using Llama 3.2 3B.
-    
-    This will be called after heuristic scoring but before final truncation.
-    Llama will provide semantic understanding to further improve ranking.
-    """
-    # TODO: Implement Llama 3.2 3B re-ranking
-    return hits
-```
+1. Formats Memory hits as context
+2. Builds a system prompt with Memory-specific instructions
+3. Calls the AI Router with `intent="librarian"` (routes to GPT-5 Nano)
+4. Returns the generated response with Memory citations
 
-The current deterministic heuristics will remain as a fallback when Llama is unavailable or disabled.
+The deterministic heuristics remain for ranking and deduplication before GPT-5 Nano generation.
 
 ## Usage
 

@@ -1,6 +1,7 @@
 export interface PricingEntry {
   providerId: string; // "openai-gpt5", "anthropic-claude-sonnet", etc.
   inputPerMillion: number; // USD
+  cachedInputPerMillion?: number; // USD (optional, for cached input tokens)
   outputPerMillion: number; // USD
 }
 
@@ -10,6 +11,13 @@ export const PRICING: PricingEntry[] = [
     // Verified pricing as of November 2025: $1.25 per million input tokens, $10.00 per million output tokens
     inputPerMillion: 1.25,
     outputPerMillion: 10.0,
+  },
+  {
+    providerId: "openai-gpt5-nano",
+    // GPT-5 Nano pricing: $0.05 per million input tokens, $0.005 per million cached input tokens, $0.40 per million output tokens
+    inputPerMillion: 0.05,
+    cachedInputPerMillion: 0.005,
+    outputPerMillion: 0.40,
   },
   {
     providerId: "anthropic-claude-sonnet",
@@ -30,12 +38,6 @@ export const PRICING: PricingEntry[] = [
     providerId: "mistral-large",
     inputPerMillion: 3.0,
     outputPerMillion: 15.0,
-  },
-  {
-    providerId: "ollama-llama",
-    // Ollama runs locally, so it's free
-    inputPerMillion: 0.0,
-    outputPerMillion: 0.0,
   },
 ];
 

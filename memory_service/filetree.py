@@ -188,6 +188,10 @@ class FileTreeManager:
                     if entry_count[0] >= max_entries:
                         break
                     
+                    # Skip .DS_Store files (macOS metadata files)
+                    if entry.name == '.DS_Store':
+                        continue
+                    
                     child = self._build_tree_node(
                         entry,
                         root,

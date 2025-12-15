@@ -742,7 +742,10 @@ async def search(request: SearchRequest):
     
     Uses query expansion to improve recall for table-heavy documents.
     
-    PROJECT ISOLATION: All results are filtered by project_id to ensure strict isolation.
+    PROJECT ISOLATION:
+    - Chat sources (source_id starts with "project-"): Strict project isolation - must match project_id
+    - File sources: If source_id is in source_ids (connected to this project via projects.json), 
+      allow cross-project access. This enables sharing file sources across projects without reindexing.
     """
     try:
         # HARD INVARIANT: project_id is required and must not be None/empty
@@ -827,9 +830,20 @@ async def search(request: SearchRequest):
             # Compute vector scores using brute-force
             ann_results = []
             for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
-                # CRITICAL: Filter by project_id BEFORE computing similarity (early exit for wrong project)
-                if project_id != request.project_id:
-                    continue  # Skip embeddings from other projects
+                # PROJECT ISOLATION LOGIC:
+                # - Chat sources (source_id starts with "project-"): Strict project isolation - must match project_id
+                # - File sources: If source_id is in request.source_ids (connected to this project), allow cross-project access
+                #   This enables sharing file sources across projects without reindexing
+                is_chat_source = source_id and source_id.startswith("project-")
+                if is_chat_source:
+                    # Chat sources: strict isolation - must match project_id
+                    if project_id != request.project_id:
+                        continue
+                else:
+                    # File sources: if source_id is in allowed list, allow it (cross-project access)
+                    # Note: source_ids were already filtered when loading embeddings above,
+                    # so if we get here with a file source, it's allowed regardless of project_id
+                    pass
                 
                 # Vector similarity (cosine similarity) - try all query variations and take best
                 best_vector_score = 0.0

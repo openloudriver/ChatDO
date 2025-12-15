@@ -78,5 +78,15 @@
     "updated_at": "2025-12-05T20:58:54.849147+00:00",
     "trashed": false,
     "trashed_at": null
+  },
+  {
+    "id": "eef8e0e1-2156-4fa7-91ff-8b4ba317e461",
+    "project_id": "f35026ea-e869-484e-b2da-0f30e18ec6dc",
+    "title": "My favorite cryptocurrencies in order are 1 XMR...",
+    "thread_id": "eef8e0e1-2156-4fa7-91ff-8b4ba317e461",
+    "created_at": "2025-12-15T00:56:50.139041+00:00",
+    "updated_at": "2025-12-15T01:33:38.584965+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

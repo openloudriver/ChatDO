@@ -364,11 +364,11 @@ def build_model_label(used_web: bool, used_memory: bool, escalated: bool = True)
     Args:
         used_web: Whether Brave web search was used
         used_memory: Whether Memory was used
-        escalated: Whether GPT-5 was used (False means Llama-only for Memory)
+        escalated: Whether GPT-5 was used (False means GPT-5 Nano-only for Memory)
     
     Returns:
         - "GPT-5" if nothing special
-        - "Memory" if only memory and not escalated (Llama-only)
+        - "Memory" if only memory and not escalated (GPT-5 Nano-only)
         - "Memory + GPT-5" if only memory and escalated
         - "Brave + GPT-5" if only web
         - "Brave + Memory + GPT-5" if both web and memory
@@ -502,8 +502,8 @@ async def chat_with_smart_search(
     # ============================================================================
     # HARD PRE-ROUTE: Facts retrieval (deterministic, no LLM)
     # ============================================================================
-    # Before calling Llama, check if this is an ordinal/list query and answer
-    # directly from facts DB. If found, return immediately (do NOT call Llama).
+    # Before calling GPT-5 Nano, check if this is an ordinal/list query and answer
+    # directly from facts DB. If found, return immediately (do NOT call GPT-5 Nano).
     
     if project_id:
         from server.services.ranked_lists import detect_ordinal_query
@@ -527,7 +527,7 @@ async def chat_with_smart_search(
                 if topic_key:
                     logger.info(f"[FACTS] Using most recent topic_key in chat: {topic_key}")
             
-            # If topic_key still None → return clarification question (no Llama)
+            # If topic_key still None → return clarification question (no GPT-5 Nano)
             if not topic_key:
                 clarification = "Which category (colors/cryptos/tv/candies)?"
                 logger.info(f"[FACTS] Topic key is None - returning clarification question")
@@ -597,7 +597,7 @@ async def chat_with_smart_search(
                         except Exception as e:
                             logger.warning(f"Failed to save ordinal answer to history: {e}")
                     
-                    # Return direct answer WITHOUT calling Llama
+                    # Return direct answer WITHOUT calling GPT-5 Nano
                     return {
                         "type": "assistant_message",
                         "content": formatted_answer,
@@ -609,7 +609,7 @@ async def chat_with_smart_search(
                     }
                 else:
                     logger.info(f"[FACTS] Ordinal query detected but no fact found: rank={rank}, topic_key={topic_key}")
-                    # Return "I don't have that stored yet" - do NOT call Llama
+                    # Return "I don't have that stored yet" - do NOT call GPT-5 Nano
                     if thread_id:
                         try:
                             history = memory_store.load_thread_history(target_name, thread_id)
@@ -652,7 +652,7 @@ async def chat_with_smart_search(
                 if topic_key:
                     logger.info(f"[FACTS] Using most recent topic_key in chat for list query: {topic_key}")
             
-            # If topic_key still None → return clarification question (no Llama)
+            # If topic_key still None → return clarification question (no GPT-5 Nano)
             if not topic_key:
                 clarification = "Which category (colors/cryptos/tv/candies)?"
                 logger.info(f"[FACTS] Topic key is None for list query - returning clarification question")
@@ -789,10 +789,10 @@ async def chat_with_smart_search(
                 memory_context = librarian.format_hits_as_context(hits)
                 has_memory = True
                 logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
-                logger.info(f"[MEMORY] Will route to Llama: has_memory={has_memory}, hits_count={len(hits)}")
+                logger.info(f"[MEMORY] Will route to GPT-5 Nano: has_memory={has_memory}, hits_count={len(hits)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
-                logger.info(f"[MEMORY] Will NOT route to Llama: has_memory={has_memory}, hits_count=0")
+                logger.info(f"[MEMORY] Will NOT route to GPT-5 Nano: has_memory={has_memory}, hits_count=0")
             
             # Convert Memory hits to structured Source objects for frontend
             if hits:
@@ -888,25 +888,26 @@ async def chat_with_smart_search(
     
     if not decision.use_search:
         # 2a. Memory-only or GPT-5 chat (no Brave)
-        # If we have Memory hits, use Llama Librarian first
+        # If we have Memory hits, use GPT-5 Nano Librarian first
         used_web = False
         used_memory = has_memory
         
         if has_memory and hits:
-            # Route through Llama Librarian for Memory responses
-            logger.info(f"[MEMORY] Routing through Llama Librarian ({len(hits)} hits)")
+            # Route through GPT-5 Nano Librarian for Memory responses
+            logger.info(f"[MEMORY] Routing through GPT-5 Nano Librarian ({len(hits)} hits)")
             logger.info(f"[MEMORY] has_memory={has_memory}, hits_count={len(hits)}, hits_empty={not hits}")
             try:
-                # Generate response using Llama
-                llama_response = librarian.generate_memory_response_with_llama(
+                # Generate response using GPT-5 Nano
+                gpt5_nano_response = await librarian.generate_memory_response_with_gpt5_nano(
                     query=user_message,
                     hits=hits,
-                    conversation_history=conversation_history
+                    conversation_history=conversation_history,
+                    project_id=project_id
                 )
                 
                 # Post-process citations: keep only best-1 (or adaptive expansion to 3)
                 cleaned_response, kept_citation_indices = librarian.post_process_memory_citations(
-                    response=llama_response,
+                    response=gpt5_nano_response,
                     hits=hits,
                     max_inline_citations=1  # Default: best-1
                 )
@@ -952,17 +953,16 @@ async def chat_with_smart_search(
                     model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
                     logger.info(f"[MODEL] model label = {model_display} (escalated)")
                 else:
-                    # Use Llama's cleaned response directly
+                    # Use GPT-5 Nano's cleaned response directly
                     content = cleaned_response
-                    model_id = "llama3.2:3b"
-                    provider_id = "ollama-llama"
+                    model_id = "gpt-5-nano"
+                    provider_id = "openai-gpt5-nano"
                     model_display = "Memory"  # Just "Memory" when no GPT-5
-                    logger.info(f"[MODEL] model label = {model_display} (Llama only)")
+                    logger.info(f"[MODEL] model label = {model_display} (GPT-5 Nano only)")
                     
             except Exception as e:
-                logger.error(f"[MEMORY] Llama Librarian failed, falling back to GPT-5: {e}", exc_info=True)
-                # Fallback to GPT-5 if Llama fails
-                # This typically means Ollama is not running or llama3.2:3b model is not available
+                logger.error(f"[MEMORY] GPT-5 Nano Librarian failed, falling back to GPT-5: {e}", exc_info=True)
+                # Fallback to GPT-5 if GPT-5 Nano fails
                 content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
                     messages=messages,
                     tools=tools,
@@ -970,10 +970,10 @@ async def chat_with_smart_search(
                     project_id=project_id
                 )
                 model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
-                logger.info(f"[MODEL] model label = {model_display} (fallback - Llama unavailable)")
+                logger.info(f"[MODEL] model label = {model_display} (fallback - GPT-5 Nano unavailable)")
         else:
             # No Memory hits - use GPT-5 directly
-            logger.info(f"[MEMORY] Skipping Llama: has_memory={has_memory}, hits_count={len(hits) if hits else 0}, hits_empty={not hits if hits else True}")
+            logger.info(f"[MEMORY] Skipping GPT-5 Nano: has_memory={has_memory}, hits_count={len(hits) if hits else 0}, hits_empty={not hits if hits else True}")
             content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
                 messages=messages,
                 tools=tools,

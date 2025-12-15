@@ -10,7 +10,8 @@ export type AiIntent =
   | "summarize_article"
   | "file_summary"
   | "tool_orchestration"
-  | "web_search";
+  | "web_search"
+  | "librarian";
 
 export type Priority = "low" | "medium" | "high";
 

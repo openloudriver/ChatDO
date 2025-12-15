@@ -3,19 +3,19 @@ import { routingRules } from "./config";
 import { findPricing } from "./pricing";
 import { recordUsage } from "./spendTracker";
 import { openAiGpt5Provider } from "./providers/openai";
+import { openAiGpt5NanoProvider } from "./providers/openai-nano";
 import { claudeSonnetProvider } from "./providers/anthropic";
 import { grokCodeProvider } from "./providers/grok";
 import { geminiProProvider } from "./providers/gemini";
 import { mistralLargeProvider } from "./providers/mistral";
-import { ollamaLlamaProvider } from "./providers/ollama";
 
 const providers: Record<string, AiProvider> = {
   [openAiGpt5Provider.id]: openAiGpt5Provider,
+  [openAiGpt5NanoProvider.id]: openAiGpt5NanoProvider,
   [claudeSonnetProvider.id]: claudeSonnetProvider,
   [grokCodeProvider.id]: grokCodeProvider,
   [geminiProProvider.id]: geminiProProvider,
   [mistralLargeProvider.id]: mistralLargeProvider,
-  [ollamaLlamaProvider.id]: ollamaLlamaProvider,
 };
 
 function selectProvider(input: AiRouterInput): { provider: AiProvider; model: string } {

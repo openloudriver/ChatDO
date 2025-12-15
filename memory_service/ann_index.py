@@ -223,9 +223,14 @@ class AnnIndexManager:
         Args:
             query_vector: Query embedding vector, shape [D] or [1, D]
             top_k: Number of results to return
-            filter_source_ids: Optional list of source_ids to filter results
-            filter_project_id: REQUIRED for project isolation - filters results to only this project_id
+            filter_source_ids: Optional list of source_ids to filter results (file sources connected to project)
+            filter_project_id: REQUIRED for project isolation
             
+        PROJECT ISOLATION:
+        - Chat sources (source_id starts with "project-"): Strict project isolation - must match filter_project_id
+        - File sources: If source_id is in filter_source_ids (connected to project via projects.json), 
+          allow cross-project access. This enables sharing file sources across projects without reindexing.
+        
         Returns:
             List of result dicts, each containing:
                 - embedding_id: int
@@ -283,18 +288,31 @@ class AnnIndexManager:
                 if not metadata:
                     continue
                 
-                # CRITICAL: Filter by project_id FIRST for strict isolation
+                source_id = metadata.get("source_id")
                 metadata_project_id = metadata.get("project_id")
-                if filter_project_id and metadata_project_id != filter_project_id:
-                    continue  # Skip embeddings from other projects
                 
                 # Apply source filter if provided
-                # BUT: Always include chat embeddings (source_id starts with "project-") for cross-chat memory
-                source_id = metadata.get("source_id")
                 if filter_source_ids and source_id not in filter_source_ids:
-                    # Skip file sources that don't match, but always include chat sources
+                    # Skip file sources that don't match
+                    # BUT: Always include chat embeddings (source_id starts with "project-") for cross-chat memory
                     if not (source_id and source_id.startswith("project-")):
                         continue
+                
+                # PROJECT ISOLATION LOGIC:
+                # - Chat sources (source_id starts with "project-"): Strict project isolation - must match project_id
+                # - File sources: If source_id is in filter_source_ids (connected to this project), allow cross-project access
+                #   This enables sharing file sources across projects without reindexing
+                if filter_project_id:
+                    is_chat_source = source_id and source_id.startswith("project-")
+                    if is_chat_source:
+                        # Chat sources: strict isolation - must match project_id
+                        if metadata_project_id != filter_project_id:
+                            continue
+                    else:
+                        # File sources: if source_id is in allowed list, allow it (cross-project access)
+                        # If source_id not in filter_source_ids, it was already filtered above
+                        # So at this point, if we have a file source, it's allowed regardless of project_id
+                        pass
                 
                 # Convert inner product to normalized cosine similarity [0, 1]
                 # Inner product of normalized vectors is in [-1, 1], normalize to [0, 1]

@@ -4,7 +4,7 @@ Librarian service for intelligent memory ranking and filtering.
 This module sits between chat_with_smart_search.py and memory_service_client,
 providing smarter ranking and deduplication of memory search results.
 
-Future: Llama 3.2 3B will be integrated here as an optional re-ranker.
+Uses GPT-5 Nano via AI Router for generating responses from Memory hits.
 """
 import logging
 from dataclasses import dataclass
@@ -121,7 +121,23 @@ def score_hit_for_query(hit: MemoryHit, query: str) -> float:
         if any(pattern in text for pattern in answer_patterns):
             base += 0.02
     
-    # Heuristic 5: Add recency boost (computed in get_relevant_memory)
+    # Heuristic 5: Boost file sources over chat sources for file/repository queries
+    # When query is about files, folders, repository structure, prioritize file sources
+    file_query_keywords = [
+        "file", "files", "folder", "folders", "directory", "directories",
+        "repo", "repository", "structure", "codebase", "project structure",
+        "what's in", "list", "show me", "contents"
+    ]
+    is_file_query = any(keyword in query_lower for keyword in file_query_keywords)
+    if is_file_query:
+        if hit.source_type == "file" or hit.file_path:
+            # Strong boost for file sources when query is about files/repos
+            base += 0.15
+        elif hit.source_type == "chat" or (hit.source_id and hit.source_id.startswith("project-")):
+            # Penalize chat sources for file queries
+            base -= 0.10
+    
+    # Heuristic 6: Add recency boost (computed in get_relevant_memory)
     base += hit.recency_boost
     
     return base
@@ -463,7 +479,7 @@ def format_hits_as_context(hits: List[MemoryHit]) -> str:
 
 def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) -> tuple[bool, str]:
     """
-    Determine if Llama's response should be escalated to GPT-5.
+    Determine if GPT-5 Nano's response should be escalated to GPT-5.
     
     Escalation triggers:
     - Complex reasoning required (compare, analyze, plan, design)
@@ -475,7 +491,7 @@ def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) ->
     Args:
         query: The user's original query
         hits: The Memory hits used to generate the response
-        response: Llama's generated response
+        response: GPT-5 Nano's generated response
         
     Returns:
         Tuple of (should_escalate: bool, reason: str)
@@ -557,13 +573,14 @@ def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) ->
     return False, ""
 
 
-def generate_memory_response_with_llama(
+async def generate_memory_response_with_gpt5_nano(
     query: str,
     hits: List[MemoryHit],
-    conversation_history: Optional[List[Dict[str, str]]] = None
+    conversation_history: Optional[List[Dict[str, str]]] = None,
+    project_id: Optional[str] = None
 ) -> str:
     """
-    Generate a response using Llama 3.2 3B based on Memory hits.
+    Generate a response using GPT-5 Nano based on Memory hits.
     
     This is the "Librarian" function that produces final responses from Memory
     without requiring GPT-5.
@@ -576,15 +593,23 @@ def generate_memory_response_with_llama(
     Returns:
         Generated response text with Memory citations
     """
-    import os
-    import requests
+    from chatdo.agents.ai_router import call_ai_router
+    from server.services.chat_with_smart_search import (
+        FILETREE_LIST_SOURCES_TOOL,
+        FILETREE_LIST_TOOL,
+        FILETREE_READ_TOOL,
+        build_filetree_guidance
+    )
     
     # Build context from Memory hits
     memory_context = format_hits_as_context(hits[:10])  # Use top 10 hits
     
-    # Build system prompt for Llama - use the same authoritative ChatDO prompt
+    # Build FileTree guidance if project_id is available
+    filetree_guidance = build_filetree_guidance(project_id) if project_id else ""
+    
+    # Build system prompt for GPT-5 Nano - use the same authoritative ChatDO prompt
     from chatdo.prompts import CHATDO_SYSTEM_PROMPT
-    system_prompt = CHATDO_SYSTEM_PROMPT + """
+    system_prompt = CHATDO_SYSTEM_PROMPT + filetree_guidance + """
 
 You are answering using information from the project's Memory. Treat Memory as authoritative user-provided knowledge.
 
@@ -592,7 +617,8 @@ CRITICAL RULES:
 1. ONLY use information that is explicitly provided in the Memory sources below.
 2. Do NOT guess, infer, or add information that is not in the Memory sources.
 3. Do NOT mention items that are not explicitly listed in the Memory sources.
-4. If information is not in Memory, say so clearly - do not make up answers.
+4. If information is not in Memory, use FileTree tools to explore the repository structure and files.
+5. If information is not in Memory and FileTree doesn't help, say so clearly - do not make up answers.
 
 When you use information from Memory sources, add inline citations like [M1], [M2], or [M1, M2] at the end of the relevant sentence.
 The Memory sources are numbered below (M1, M2, M3, etc.).
@@ -613,7 +639,7 @@ FORMATTING RULES (MUST FOLLOW):
 - Do NOT use asterisks (*) for bullets - use bullet points (•).
 - Do NOT include chat_id or verbose source information - only use inline citations [M1]."""
     
-    # Build messages for Ollama API
+    # Build messages for AI Router
     messages = []
     
     # Combine system prompt with Memory context
@@ -641,37 +667,48 @@ FORMATTING RULES (MUST FOLLOW):
         "content": query
     })
     
-    # Call Ollama API directly
-    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    ollama_api_url = f"{ollama_url}/api/chat"
-    
-    payload = {
-        "model": "llama3.2:3b",
-        "messages": messages,
-        "stream": False,
-        "options": {
-            "temperature": 0.7,
-            "top_p": 0.9,
-        }
-    }
+    # Build FileTree tools for GPT-5 Nano
+    tools = [FILETREE_LIST_SOURCES_TOOL, FILETREE_LIST_TOOL, FILETREE_READ_TOOL]
     
     try:
-        resp = requests.post(ollama_api_url, json=payload, timeout=60)
-        resp.raise_for_status()
-        data = resp.json()
+        # Call AI Router with librarian intent (routes to GPT-5 Nano)
+        # Include FileTree tools so GPT-5 Nano can explore repositories when memory search doesn't find content
+        assistant_messages, model_id, provider_id, model_display = call_ai_router(
+            messages=messages,
+            intent="librarian",
+            system_prompt_override=None,
+            tools=tools
+        )
         
-        content = data.get("message", {}).get("content", "")
+        if not assistant_messages or len(assistant_messages) == 0:
+            raise RuntimeError("Empty response from GPT-5 Nano")
+        
+        # Check if GPT-5 Nano wants to use FileTree tools
+        assistant_message = assistant_messages[0]
+        if assistant_message.get("tool_calls"):
+            # Process tool calls in a loop (similar to GPT-5 tool loop)
+            # Import here to avoid circular import
+            from server.services.chat_with_smart_search import process_tool_calls
+            logger.info(f"[LIBRARIAN] GPT-5 Nano requested {len(assistant_message.get('tool_calls', []))} tool call(s)")
+            final_messages, content = await process_tool_calls(
+                messages=messages,
+                assistant_message=assistant_message,
+                tools=tools,
+                max_iterations=5,  # Limit to 5 iterations for GPT-5 Nano
+                project_id=project_id
+            )
+        else:
+            # No tool calls, just extract content
+            content = assistant_message.get("content", "")
+        
         if not content:
-            raise RuntimeError("Empty response from Llama")
+            raise RuntimeError("Empty response from GPT-5 Nano")
         
-        logger.info(f"[LIBRARIAN] Generated Llama response ({len(content)} chars)")
+        logger.info(f"[LIBRARIAN] Generated GPT-5 Nano response ({len(content)} chars)")
         return content
         
-    except requests.exceptions.ConnectionError:
-        logger.error("[LIBRARIAN] Failed to connect to Ollama. Is Ollama running?")
-        raise RuntimeError("Ollama service is not available. Please ensure Ollama is running.")
     except Exception as e:
-        logger.error(f"[LIBRARIAN] Llama response generation failed: {e}")
+        logger.error(f"[LIBRARIAN] GPT-5 Nano response generation failed: {e}")
         raise
 
 
