@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AddMemoryModal from './AddMemoryModal';
 import ConfirmDeleteMemoryModal from './ConfirmDeleteMemoryModal';
+import { updateProjectMemorySources, fetchProjectMemorySources } from '../utils/api';
 
 interface Source {
   id: string;
@@ -27,8 +28,14 @@ interface Source {
   } | null;
 }
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 const MemoryDashboard: React.FC = () => {
   const [sources, setSources] = useState<Source[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -38,6 +45,7 @@ const MemoryDashboard: React.FC = () => {
     displayName: string;
   } | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [disconnectingProject, setDisconnectingProject] = useState<string | null>(null);
 
   const fetchSources = async () => {
     try {
@@ -67,8 +75,18 @@ const MemoryDashboard: React.FC = () => {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/projects');
+      setProjects(response.data || []);
+    } catch (err: any) {
+      console.error('Error fetching projects:', err);
+    }
+  };
+
   useEffect(() => {
     fetchSources();
+    fetchProjects();
   }, []);
 
   useEffect(() => {
@@ -142,6 +160,37 @@ const MemoryDashboard: React.FC = () => {
       displayName,
     });
     setDeleteModalOpen(true);
+  };
+
+  const handleDisconnectProject = async (sourceId: string, projectName: string) => {
+    // Find project ID from name
+    const project = projects.find(p => p.name === projectName);
+    if (!project) {
+      alert(`Project "${projectName}" not found`);
+      return;
+    }
+
+    setDisconnectingProject(`${sourceId}-${project.id}`);
+    
+    try {
+      // Get current memory sources for this project
+      const currentData = await fetchProjectMemorySources(project.id);
+      const currentSources = currentData.memory_sources || [];
+      
+      // Remove the source from the list
+      const updatedSources = currentSources.filter((id: string) => id !== sourceId);
+      
+      // Update the project
+      await updateProjectMemorySources(project.id, updatedSources);
+      
+      // Refresh sources to update the UI
+      await fetchSources();
+    } catch (err: any) {
+      console.error('Error disconnecting project:', err);
+      alert(`Failed to disconnect project: ${err.message || 'Unknown error'}`);
+    } finally {
+      setDisconnectingProject(null);
+    }
   };
 
 
@@ -330,13 +379,50 @@ const MemoryDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[var(--text-secondary)] mb-1">Connected Projects</div>
-                      <div className="text-white font-medium">
-                        {source.connected_projects && source.connected_projects.length > 0
-                          ? source.connected_projects.join(', ')
-                          : source.project_id === 'general' 
-                            ? 'None (general)' 
-                            : 'None'}
+                      <div className="text-[var(--text-secondary)] mb-2">Connected Projects</div>
+                      <div className="flex flex-wrap gap-2">
+                        {source.connected_projects && source.connected_projects.length > 0 ? (
+                          source.connected_projects.map((projectName: string) => {
+                            const disconnectKey = `${source.id}-${projects.find(p => p.name === projectName)?.id || ''}`;
+                            const isDisconnecting = disconnectingProject === disconnectKey;
+                            return (
+                              <span
+                                key={projectName}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded text-sm text-[var(--text-primary)]"
+                              >
+                                <span>{projectName}</span>
+                                <button
+                                  onClick={() => handleDisconnectProject(source.id, projectName)}
+                                  disabled={isDisconnecting}
+                                  className="ml-1 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  title={`Disconnect ${projectName} from this memory source`}
+                                >
+                                  {isDisconnecting ? (
+                                    <span className="text-xs">...</span>
+                                  ) : (
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  )}
+                                </button>
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="text-[var(--text-secondary)] text-sm">
+                            {source.project_id === 'general' ? 'None (general)' : 'None'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
