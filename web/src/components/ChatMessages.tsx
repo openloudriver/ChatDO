@@ -1367,23 +1367,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     return null;
                   }
                   
-                  // Check if this is an assistant message that will use AssistantCard (via GPTMessageRenderer)
-                  // If so, don't apply the bubble styling - let AssistantCard handle it
-                  const willUseAssistantCard = message.role === 'assistant' && 
-                    content && 
-                    message.type !== 'web_search_results' && 
-                    message.type !== 'article_card' && 
-                    message.type !== 'document_card' && 
-                    message.type !== 'rag_response';
-                  
                   return (
                     <div
-                      className={`${willUseAssistantCard ? '' : 'rounded-lg px-4 py-3'} box-border transition-colors ${
+                      className={`rounded-lg px-4 py-3 box-border transition-colors ${
                         message.role === 'user'
-                          ? 'bg-[var(--user-bubble-bg)] max-w-[70%] ml-auto mr-[-6px] break-words rounded-lg px-4 py-3'
-                          : willUseAssistantCard 
-                            ? 'w-full ml-[6px]' 
-                            : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px] rounded-lg px-4 py-3'
+                          ? 'bg-[var(--user-bubble-bg)] max-w-[70%] ml-auto mr-[-6px] break-words'
+                          : 'bg-[var(--assistant-bubble-bg)] text-[var(--text-primary)] w-full ml-[6px]'
                       }`}
                       style={message.role === 'user' ? { color: 'var(--user-bubble-text)', wordBreak: 'break-word', overflowWrap: 'anywhere' } : undefined}
                     >
