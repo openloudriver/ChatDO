@@ -32,19 +32,53 @@ DYNAMIC_SOURCES_PATH = MEMORY_DASHBOARD_PATH / "dynamic_sources.json"
 # Legacy alias for backward compatibility (will be removed)
 BASE_STORE_PATH = MEMORY_DASHBOARD_PATH
 
+def get_project_directory_name(project_id: str) -> str:
+    """
+    Get the directory name for a project in memory_service/projects/.
+    
+    Uses slugified project name from projects.json, or project_id as fallback.
+    This ensures each project has its own directory, separate from default_target.
+    
+    Args:
+        project_id: The project ID to look up
+        
+    Returns:
+        Directory name to use in projects/ folder (slugified name or project_id)
+    """
+    try:
+        projects_path = BASE_DIR / "server" / "data" / "projects.json"
+        if projects_path.exists():
+            with open(projects_path, 'r') as f:
+                projects = json.load(f)
+                for project in projects:
+                    if project.get("id") == project_id:
+                        # Use slugified project name for directory
+                        project_name = project.get("name", "")
+                        if project_name:
+                            return slugify(project_name)
+                        # Fallback to project_id if no name
+                        return project_id
+    except Exception:
+        pass
+    
+    # Fallback to project_id
+    return project_id
+
+
 def get_db_path_for_source(source_id: str, project_id: Optional[str] = None) -> Path:
     """
     Get the database path for a specific source.
     
     For project chat message indexes (source_id starts with "project-"):
-    - Stores in projects/<project_name>/index/index.sqlite
+    - Stores in projects/<project_directory_name>/index/index.sqlite
+      where project_directory_name is slugified project name from projects.json
     
     For file source indexes (all other source_ids):
     - Stores in memory_dashboard/<source_id>/index.sqlite
     
     Args:
         source_id: Source ID (e.g., "project-{project_id}" for chat indexes, or "coin-dir" for file sources)
-        project_id: Optional project_id (used to look up project name for project indexes)
+        project_id: Optional project_id (used to look up project directory name for project indexes)
     """
     if source_id.startswith("project-"):
         # This is a project chat message index
@@ -54,36 +88,11 @@ def get_db_path_for_source(source_id: str, project_id: Optional[str] = None) -> 
         # Use passed project_id if available, otherwise use extracted one
         lookup_project_id = project_id if project_id else actual_project_id
         
-        # Get project name - prioritize existing folder name in projects/, then lookup
-        project_name = None
+        # Get project directory name (slugified project name, not default_target)
+        project_dir_name = get_project_directory_name(lookup_project_id)
         
-        # First, check if project_id itself is a folder name in projects/
-        if (PROJECTS_PATH / actual_project_id).exists():
-            project_name = actual_project_id
-        else:
-            # Try to get project name from projects.json
-            try:
-                projects_path = BASE_DIR / "server" / "data" / "projects.json"
-                if projects_path.exists():
-                    with open(projects_path, 'r') as f:
-                        projects = json.load(f)
-                        for project in projects:
-                            if project.get("id") == lookup_project_id:
-                                # Use default_target as the folder name
-                                project_name = project.get("default_target", actual_project_id)
-                                # Verify this folder exists, if not use project_id
-                                if not (PROJECTS_PATH / project_name).exists():
-                                    project_name = actual_project_id
-                                break
-            except Exception:
-                pass
-            
-            # Fallback to project_id if lookup failed
-            if not project_name:
-                project_name = actual_project_id
-        
-        # Store in projects/<project_name>/index/index.sqlite
-        index_dir = PROJECTS_PATH / project_name / "index"
+        # Store in projects/<project_dir_name>/index/index.sqlite
+        index_dir = PROJECTS_PATH / project_dir_name / "index"
         index_dir.mkdir(parents=True, exist_ok=True)
         return index_dir / "index.sqlite"
     else:

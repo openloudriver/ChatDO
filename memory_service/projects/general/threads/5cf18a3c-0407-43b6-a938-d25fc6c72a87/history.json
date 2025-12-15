@@ -1,0 +1,28 @@
+[
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=pEo6eN9ZVnM"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=pEo6eN9ZVnM",
+      "title": "Top Physicist: “Reality Is Not Physical”",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The video presents a speculative interpretation, attributed to inventor Federico Faggin, that reality and life are rooted in quantum fields beyond spacetime, with consciousness as a foundational aspect rather than a byproduct of the brain. It argues that particles are states of fields, cells reflect the whole in a holographic-like way, and the brain acts as a filter/translator of a deeper conscious field. Quantum information is framed as private and experiential (unlike copyable classical information), and wavefunction collapse is linked to observation and free will. Key Points:",
+      "keyPoints": [
+        "Claims quantum processes (including quantum computing) don’t occur strictly within spacetime and arise from deeper fields where meaning resides.",
+        "Portrays humans and cells as field-based, interconnected systems (entanglement) rather than isolated mechanical parts; the body is a self-organizing, intelligent network.",
+        "Emphasizes quantum information rules: no-cloning theorem, measurement collapses a qubit, and only a classical bit can be extracted—likened to subjective experience that can’t be copied.",
+        "Asserts consciousness participates in or drives wavefunction collapse, suggesting the observer’s awareness helps “select” outcomes and embodies free will.",
+        "Critiques classical science and AI for reducing mind to computation and missing meaning, arguing for a paradigm that places consciousness at the foundation."
+      ],
+      "whyMatters": "If valid, this perspective would shift approaches in neuroscience, biology, and AI from mechanistic models to ones centered on quantum information and observer participation. It underscores proposed limits of measurement-based science for explaining subjective experience and the role of consciousness in physical reality."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  }
+]

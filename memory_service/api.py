@@ -512,28 +512,13 @@ async def delete_source(source_id: str):
     # Handle project sources vs file sources differently
     if source_id.startswith("project-"):
         # Project sources are in projects/<project_name>/index/
-        from memory_service.config import PROJECTS_PATH, BASE_DIR
+        from memory_service.config import PROJECTS_PATH, get_project_directory_name
         project_id = source_id.replace("project-", "")
         
-        # Try to get project name from projects.json
-        project_name = project_id
-        try:
-            projects_path = BASE_DIR / "server" / "data" / "projects.json"
-            if projects_path.exists():
-                import json
-                with open(projects_path, 'r') as f:
-                    projects = json.load(f)
-                    for project in projects:
-                        if project.get("id") == project_id:
-                            project_name = project.get("default_target", project_id)
-                            # Verify folder exists, if not use project_id
-                            if not (PROJECTS_PATH / project_name).exists():
-                                project_name = project_id
-                            break
-        except Exception:
-            pass
+        # Get project directory name (slugified project name, not default_target)
+        project_dir_name = get_project_directory_name(project_id)
         
-        index_dir = PROJECTS_PATH / project_name / "index"
+        index_dir = PROJECTS_PATH / project_dir_name / "index"
         if index_dir.exists():
             try:
                 # Delete the index.sqlite file and related files

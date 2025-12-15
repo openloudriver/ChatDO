@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+import re
 
 from pathlib import Path
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 BASE_DIR_NAME = "memory_service/projects"
 
@@ -14,33 +15,107 @@ def memory_root() -> Path:
     # memory_service/projects/ at the repo root
     return Path(__file__).resolve().parent.parent.parent / BASE_DIR_NAME
 
-def thread_dir(target_name: str, thread_id: str) -> Path:
-    return memory_root() / target_name / "threads" / thread_id
+def slugify(text: str) -> str:
+    """Convert text to a URL-friendly slug."""
+    text = text.lower()
+    text = re.sub(r'[^\w\s-]', '', text)
+    text = re.sub(r'[-\s]+', '-', text)
+    return text.strip('-')
 
-def thread_history_path(target_name: str, thread_id: str) -> Path:
-    return thread_dir(target_name, thread_id) / "history.json"
+def get_project_directory_name(project_id: Optional[str] = None, target_name: Optional[str] = None) -> str:
+    """
+    Get the directory name for a project in memory_service/projects/.
+    
+    Uses slugified project name from projects.json, or falls back to target_name or "general".
+    This ensures each project has its own directory, separate from default_target.
+    
+    Args:
+        project_id: Optional project ID to look up
+        target_name: Optional target_name (for backward compatibility)
+        
+    Returns:
+        Directory name to use in projects/ folder
+    """
+    if project_id:
+        try:
+            projects_path = Path(__file__).resolve().parent.parent.parent / "server" / "data" / "projects.json"
+            if projects_path.exists():
+                with open(projects_path, 'r') as f:
+                    projects = json.load(f)
+                    for project in projects:
+                        if project.get("id") == project_id:
+                            # Use slugified project name for directory
+                            project_name = project.get("name", "")
+                            if project_name:
+                                return slugify(project_name)
+                            # Fallback to project_id if no name
+                            return project_id
+        except Exception:
+            pass
+    
+    # Fallback to target_name or "general"
+    return target_name if target_name else "general"
 
-def ensure_thread_dirs(target_name: str, thread_id: str) -> None:
-    thread_dir(target_name, thread_id).mkdir(parents=True, exist_ok=True)
+def thread_dir(target_name: str, thread_id: str, project_id: Optional[str] = None) -> Path:
+    """
+    Get the thread directory path.
+    
+    Uses project directory name (slugified project name) instead of target_name
+    to ensure each project has its own folder.
+    """
+    project_dir_name = get_project_directory_name(project_id=project_id, target_name=target_name)
+    return memory_root() / project_dir_name / "threads" / thread_id
 
-def load_thread_history(target_name: str, thread_id: str) -> List[Dict[str, Any]]:
+def thread_history_path(target_name: str, thread_id: str, project_id: Optional[str] = None) -> Path:
+    return thread_dir(target_name, thread_id, project_id=project_id) / "history.json"
+
+def ensure_thread_dirs(target_name: str, thread_id: str, project_id: Optional[str] = None) -> None:
+    thread_dir(target_name, thread_id, project_id=project_id).mkdir(parents=True, exist_ok=True)
+
+def load_thread_history(target_name: str, thread_id: str, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Load prior messages for this target + thread.
     Format: [{"role": "user"|"assistant"|"system", "content": "..."}]
-    """
-    path = thread_history_path(target_name, thread_id)
-    if not path.exists():
-        return []
     
-    try:
-        return json.loads(path.read_text())
-    except Exception:
-        # Corrupt file? Start fresh rather than dying.
-        return []
+    Tries new location (project directory name) first, then falls back to old location (default_target)
+    for backward compatibility with existing threads.
+    """
+    # Try new location first (using project directory name)
+    path = thread_history_path(target_name, thread_id, project_id=project_id)
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            # Corrupt file? Try fallback location
+            pass
+    
+    # Fallback: try old location (using default_target/target_name) for backward compatibility
+    if project_id:
+        try:
+            projects_path = Path(__file__).resolve().parent.parent.parent / "server" / "data" / "projects.json"
+            if projects_path.exists():
+                with open(projects_path, 'r') as f:
+                    projects = json.load(f)
+                    for project in projects:
+                        if project.get("id") == project_id:
+                            old_target = project.get("default_target")
+                            if old_target and old_target != target_name:
+                                # Try loading from old location
+                                old_path = memory_root() / old_target / "threads" / thread_id / "history.json"
+                                if old_path.exists():
+                                    try:
+                                        return json.loads(old_path.read_text())
+                                    except Exception:
+                                        pass
+                            break
+        except Exception:
+            pass
+    
+    return []
 
-def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[str, Any]]) -> None:
-    ensure_thread_dirs(target_name, thread_id)
-    path = thread_history_path(target_name, thread_id)
+def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[str, Any]], project_id: Optional[str] = None) -> None:
+    ensure_thread_dirs(target_name, thread_id, project_id=project_id)
+    path = thread_history_path(target_name, thread_id, project_id=project_id)
     path.write_text(json.dumps(messages, indent=2, ensure_ascii=False))
     
     # Index new messages into Memory Service (async, non-blocking)
@@ -125,20 +200,20 @@ def save_thread_history(target_name: str, thread_id: str, messages: List[Dict[st
         import logging
         logging.getLogger(__name__).debug(f"Failed to index messages: {e}")
 
-def delete_thread_history(target_name: str, thread_id: str) -> None:
+def delete_thread_history(target_name: str, thread_id: str, project_id: Optional[str] = None) -> None:
     """
     Permanently delete thread history from disk.
     Removes the entire thread directory.
     """
-    thread_path = thread_dir(target_name, thread_id)
+    thread_path = thread_dir(target_name, thread_id, project_id=project_id)
     if thread_path.exists():
         import shutil
         shutil.rmtree(thread_path)
 
-def thread_sources_path(target_name: str, thread_id: str) -> Path:
-    return thread_dir(target_name, thread_id) / "sources.json"
+def thread_sources_path(target_name: str, thread_id: str, project_id: Optional[str] = None) -> Path:
+    return thread_dir(target_name, thread_id, project_id=project_id) / "sources.json"
 
-def load_thread_sources(target_name: str, thread_id: str) -> List[Dict[str, Any]]:
+def load_thread_sources(target_name: str, thread_id: str, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Load sources for this target + thread.
     Format: [{"id": "...", "kind": "url|file|text|note", "title": "...", ...}]
@@ -152,14 +227,14 @@ def load_thread_sources(target_name: str, thread_id: str) -> List[Dict[str, Any]
     except Exception:
         return []
 
-def save_thread_sources(target_name: str, thread_id: str, sources: List[Dict[str, Any]]) -> None:
-    ensure_thread_dirs(target_name, thread_id)
-    path = thread_sources_path(target_name, thread_id)
+def save_thread_sources(target_name: str, thread_id: str, sources: List[Dict[str, Any]], project_id: Optional[str] = None) -> None:
+    ensure_thread_dirs(target_name, thread_id, project_id=project_id)
+    path = thread_sources_path(target_name, thread_id, project_id=project_id)
     path.write_text(json.dumps(sources, indent=2, ensure_ascii=False))
 
-def add_thread_source(target_name: str, thread_id: str, source: Dict[str, Any]) -> None:
+def add_thread_source(target_name: str, thread_id: str, source: Dict[str, Any], project_id: Optional[str] = None) -> None:
     """Add a source to the thread's sources list."""
-    sources = load_thread_sources(target_name, thread_id)
+    sources = load_thread_sources(target_name, thread_id, project_id=project_id)
     # Check if source already exists (by URL or fileName)
     existing = None
     if source.get("url"):
@@ -169,5 +244,5 @@ def add_thread_source(target_name: str, thread_id: str, source: Dict[str, Any]) 
     
     if not existing:
         sources.append(source)
-        save_thread_sources(target_name, thread_id, sources)
+        save_thread_sources(target_name, thread_id, sources, project_id=project_id)
 

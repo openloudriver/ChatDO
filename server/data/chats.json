@@ -80,12 +80,22 @@
     "trashed_at": null
   },
   {
-    "id": "eef8e0e1-2156-4fa7-91ff-8b4ba317e461",
-    "project_id": "f35026ea-e869-484e-b2da-0f30e18ec6dc",
-    "title": "My favorite cryptocurrencies in order are 1 XMR...",
-    "thread_id": "eef8e0e1-2156-4fa7-91ff-8b4ba317e461",
-    "created_at": "2025-12-15T00:56:50.139041+00:00",
-    "updated_at": "2025-12-15T01:33:38.584965+00:00",
+    "id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+    "project_id": "f915184f-e05d-4020-9dec-47de600d241f",
+    "title": "My favorite crypto is Monero",
+    "thread_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+    "created_at": "2025-12-15T03:34:16.863614+00:00",
+    "updated_at": "2025-12-15T03:34:33.901777+00:00",
+    "trashed": false,
+    "trashed_at": null
+  },
+  {
+    "id": "5cf18a3c-0407-43b6-a938-d25fc6c72a87",
+    "project_id": "general",
+    "title": "youtube.com",
+    "thread_id": "5cf18a3c-0407-43b6-a938-d25fc6c72a87",
+    "created_at": "2025-12-15T03:36:27.359290+00:00",
+    "updated_at": "2025-12-15T03:36:38.366726+00:00",
     "trashed": false,
     "trashed_at": null
   }

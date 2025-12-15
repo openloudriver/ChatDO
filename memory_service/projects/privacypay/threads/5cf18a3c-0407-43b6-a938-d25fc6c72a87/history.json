@@ -1,0 +1,67 @@
+[
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=pEo6eN9ZVnM"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=pEo6eN9ZVnM",
+      "title": "Top Physicist: “Reality Is Not Physical”",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The video presents a speculative interpretation, attributed to inventor Federico Faggin, that reality and life are rooted in quantum fields beyond spacetime, with consciousness as a foundational aspect rather than a byproduct of the brain. It argues that particles are states of fields, cells reflect the whole in a holographic-like way, and the brain acts as a filter/translator of a deeper conscious field. Quantum information is framed as private and experiential (unlike copyable classical information), and wavefunction collapse is linked to observation and free will. Key Points:",
+      "keyPoints": [
+        "Claims quantum processes (including quantum computing) don’t occur strictly within spacetime and arise from deeper fields where meaning resides.",
+        "Portrays humans and cells as field-based, interconnected systems (entanglement) rather than isolated mechanical parts; the body is a self-organizing, intelligent network.",
+        "Emphasizes quantum information rules: no-cloning theorem, measurement collapses a qubit, and only a classical bit can be extracted—likened to subjective experience that can’t be copied.",
+        "Asserts consciousness participates in or drives wavefunction collapse, suggesting the observer’s awareness helps “select” outcomes and embodies free will.",
+        "Critiques classical science and AI for reducing mind to computation and missing meaning, arguing for a paradigm that places consciousness at the foundation."
+      ],
+      "whyMatters": "If valid, this perspective would shift approaches in neuroscience, biology, and AI from mechanistic models to ones centered on quantum information and observer participation. It underscores proposed limits of measurement-based science for explaining subjective experience and the role of consciousness in physical reality."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  },
+  {
+    "id": "c42b4c66-098f-4073-aef1-fbfed0621512",
+    "role": "user",
+    "content": "Do a deep dive on this and tell me how we apply it",
+    "created_at": "2025-12-15T03:37:58.389903+00:00"
+  },
+  {
+    "id": "9e0cd48e-8b1e-4206-9779-20d4bf74a6be",
+    "role": "assistant",
+    "content": "I can do a deep dive and show how to apply it, but I need the exact topic or concept you want analyzed. Below is a ready-to-fill framework you can use to drive a precise deep-dive once you specify the subject. [M1] ## 🔎 Topic to dive - Topic: [Please specify the exact concept, document, or system you want analyzed.] [M1] ## 🔄 Scope & definitions - Boundaries: [What’s included vs. excluded?] - Key terms: [Definitions relevant to the topic] - Assumptions: [Any starting assumptions we should adopt] [M1] ## 🎯 Success criteria - Primary objective: [What does “success” look like?] - Metrics: [Quantitative and/or qualitative measures] - Constraints: [Time, budget, regulatory, compatibility, etc.] [M1] ## 🗺️ Applied framework (high-level map) 1. Define alignment - How the topic ties to goals, stakeholders, and constraints 2. Identify artifacts - Artifacts, models, docs, or code affected or produced 3. Dependency mapping - Systems, data, actors, and interfaces involved 4. Implementation blueprint - Phases, milestones, owners, and deliverables 5. Risk & governance - Key risks, mitigations, and decision gates 6. Validation plan - How we’ll prove the concept works in practice [M1] ## 🧪 Validation & experiments - Pilot approach: [Describe pilot scope, environment, and exit criteria] - Data & signals: [What data will be collected and how it will be analyzed] - Acceptance criteria: [Pass/fail criteria for the pilot or rollout] [M1] ## ⚠️ Risks & mitigations - Risk 1: [Description] – Mitigation: [Plan] - Risk 2: [Description] – Mitigation: [Plan] - Risk 3: [Description] – Mitigation: [Plan] [M1] ## 🧭 Implementation plan (step-by-step) 1. Step 1: [Describe the first concrete action] 2. Step 2: [Next action and owner] 3. Step 3: [Next action and owner] 4. Step 4: [Next action and owner] 5. Step 5: [Next action and owner] - Deliverables per step: [What’s produced and when] [M1] ## 📚 Documentation & artifacts - Documents to produce: [e.g., design spec, playbooks, runbooks] - Artifacts to store: [Repositories, wikis, dashboards] - Review cadence: [Meetings, reviews, sign-off points] [M1] ## ✅ Governance & ownership - Primary owner(s): [Name(s) and role] - Stakeholders: [List of stakeholders and their interests] - Change controls: [How changes are requested, approved, and tracked] [M1] ## ⏭️ Next steps - What you want me to do next: [e.g., fill in topic, draft a plan, run a first-pass risk review] - If you’re ready, provide the topic and any initial constraints, and I’ll populate this framework with a concrete deep-dive. [M1] If you provide the topic right away, I’ll fill in this framework with a detailed, topic-specific deep-dive and a concrete application plan.",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "openai-gpt5-nano",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "Do a deep dive on this and tell me how we apply it",
+        "description": "Do a deep dive on this and tell me how we apply it",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5cf18a3c-0407-43b6-a938-d25fc6c72a87",
+          "message_id": "5cf18a3c-0407-43b6-a938-d25fc6c72a87-user-0",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Do a deep dive on this and tell me how we apply it"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-15T03:37:58.389279+00:00"
+  }
+]

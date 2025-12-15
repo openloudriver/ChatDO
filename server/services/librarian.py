@@ -459,11 +459,36 @@ def format_hits_as_context(hits: List[MemoryHit]) -> str:
     # Convert MemoryHit back to dict format for format_context
     results = []
     for hit in hits:
+        # Filter out .DS_Store mentions from file listings in Memory context
+        # This handles old indexed content that may still reference .DS_Store files
+        content = hit.content
+        if content:
+            import re
+            # Aggressively remove ALL .DS_Store mentions in any context
+            # Remove .DS_Store from anywhere in the text (standalone, in lists, etc.)
+            content = re.sub(r'\.DS_Store', '', content, flags=re.IGNORECASE)
+            # Remove lines that only contain .DS_Store
+            content = re.sub(r'^\s*\.DS_Store\s*$', '', content, flags=re.MULTILINE)
+            # Remove .DS_Store from bullet lists (various formats)
+            content = re.sub(r'[-*•]\s*\.DS_Store\s*\n?', '', content, flags=re.IGNORECASE)
+            # Remove .DS_Store from numbered lists
+            content = re.sub(r'\d+\.\s*\.DS_Store\s*\n?', '', content, flags=re.IGNORECASE)
+            # Remove .DS_Store from comma-separated lists
+            content = re.sub(r',\s*\.DS_Store\s*,', ',', content, flags=re.IGNORECASE)
+            content = re.sub(r',\s*\.DS_Store\s*$', '', content, flags=re.IGNORECASE | re.MULTILINE)
+            content = re.sub(r'^\s*\.DS_Store\s*,', '', content, flags=re.IGNORECASE | re.MULTILINE)
+            # Remove .DS_Store from markdown code blocks or inline code
+            content = re.sub(r'`\.DS_Store`', '', content, flags=re.IGNORECASE)
+            # Clean up extra commas/spaces/newlines
+            content = re.sub(r',\s*,', ',', content)
+            content = re.sub(r'\n\s*\n\s*\n+', '\n\n', content)  # Max 2 consecutive newlines
+            content = re.sub(r'^\s+|\s+$', '', content, flags=re.MULTILINE)  # Trim lines
+        
         result_dict = {
             "source_id": hit.source_id,
             "message_id": hit.message_id,
             "chat_id": hit.chat_id,
-            "text": hit.content,
+            "text": content,
             "score": hit.score,
             "source_type": hit.source_type,
             "file_path": hit.file_path,
@@ -619,24 +644,33 @@ CRITICAL RULES:
 3. Do NOT mention items that are not explicitly listed in the Memory sources.
 4. If information is not in Memory, use FileTree tools to explore the repository structure and files.
 5. If information is not in Memory and FileTree doesn't help, say so clearly - do not make up answers.
+6. NEVER mention .DS_Store files in your responses. These are macOS metadata files and should be completely ignored and excluded from all file listings, directory structures, and responses.
 
 When you use information from Memory sources, add inline citations like [M1], [M2], or [M1, M2] at the end of the relevant sentence.
 The Memory sources are numbered below (M1, M2, M3, etc.).
 
 FORMATTING RULES (MUST FOLLOW):
-- For ranked lists, ALWAYS use this exact format:
-  ## [Topic] Ranked
+- Start with a direct answer in the very first sentence. Don't preface with "Sure," "Of course," or similar fillers.
+- After the first sentence, organize the rest of your answer with clear sections.
+- For sections, use this exact format: [M1] ## [Section Name]
+  - Put the citation (e.g., [M1]) BEFORE the heading, not after
+  - Use emojis in section names when helpful (e.g., '[M1] ## ✅ Summary', '[M1] ## 📁 Structure')
+  - Keep section names short and descriptive
+  - IMPORTANT: Citations must be in brackets: [M1], not M1 or M1 M1
+- Use bullet lists (-) for file listings, options, and key points.
+- Use numbered lists for step-by-step instructions or ordered items.
+- Keep content concise and well-structured. Avoid long paragraphs.
+- Example format:
+  [M1] ## 📁 Directory Structure
   
-  Your [topic] are ranked as follows:
+  - file1.ext
+  - file2.ext
+  - subdirectory/
   
-  • 1st: [Item Name]
-  • 2nd: [Item Name]
-  • 3rd: [Item Name]
+  [M1] ## ✅ Summary
   
-  [M1]
+  Brief summary text here.
 
-- Use consistent markdown: bold headings (##), bullet points (•), ordinal numbers (1st, 2nd, 3rd).
-- Do NOT use asterisks (*) for bullets - use bullet points (•).
 - Do NOT include chat_id or verbose source information - only use inline citations [M1]."""
     
     # Build messages for AI Router
@@ -704,7 +738,65 @@ FORMATTING RULES (MUST FOLLOW):
         if not content:
             raise RuntimeError("Empty response from GPT-5 Nano")
         
-        logger.info(f"[LIBRARIAN] Generated GPT-5 Nano response ({len(content)} chars)")
+        # Post-process: Remove any .DS_Store mentions that might have slipped through
+        import re
+        # Remove .DS_Store from the final response (defensive cleanup)
+        content = re.sub(r'\.DS_Store', '', content, flags=re.IGNORECASE)
+        # Remove lines that only contain .DS_Store
+        content = re.sub(r'^\s*\.DS_Store\s*$', '', content, flags=re.MULTILINE | re.IGNORECASE)
+        # Remove .DS_Store from bullet lists
+        content = re.sub(r'[-*•]\s*\.DS_Store\s*\n?', '', content, flags=re.IGNORECASE)
+        # Remove .DS_Store from comma-separated lists
+        content = re.sub(r',\s*\.DS_Store\s*,', ',', content, flags=re.IGNORECASE)
+        content = re.sub(r',\s*\.DS_Store\s*$', '', content, flags=re.IGNORECASE | re.MULTILINE)
+        content = re.sub(r'^\s*\.DS_Store\s*,', '', content, flags=re.IGNORECASE | re.MULTILINE)
+        # Clean up extra commas/spaces
+        content = re.sub(r',\s*,', ',', content)
+        content = re.sub(r'\n\s*\n\s*\n+', '\n\n', content)
+        
+        # Ensure content is valid Markdown (not raw tool output or JSON)
+        # If content looks like raw tool output or JSON, wrap it in a code block or format it
+        content = content.strip()
+        
+        # Validate: Content should be Markdown, not raw evidence/tool output
+        # If it starts with JSON-like structures or tool traces, this is an error
+        if content.startswith('{') or content.startswith('[') or 'tool_call_id' in content.lower():
+            logger.warning(f"[LIBRARIAN] Response looks like raw tool output, wrapping in Markdown")
+            content = f"```\n{content}\n```\n\n*Note: Raw output detected. This should be formatted Markdown.*"
+        
+        # CRITICAL: Ensure proper newlines for Markdown parsing
+        # GPT-5 Nano sometimes outputs everything on one line, which breaks Markdown parsing
+        # Fix: Add newlines before headings and ensure proper spacing
+        
+        # First, fix duplicate citations (e.g., "[M1] [M1] ##" -> "[M1] ##")
+        content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s+\1\s*', r'\1 ', content)
+        
+        # Add newline before headings (## or ###) that come after text (not at start of line)
+        # Pattern: text[space][M1] ## -> text\n\n[M1] ##
+        content = re.sub(r'([^\n])\s+(\[M\d+(?:\s*,\s*M?\d+)*\]\s*##)', r'\1\n\n\2', content)
+        # Also handle headings without citations: text ## -> text\n\n##
+        content = re.sub(r'([^\n])\s+(##)', r'\1\n\n\2', content)
+        
+        # Ensure proper spacing between citation and heading
+        content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s*(##)', r'\1 \2', content)
+        
+        # Add newline after headings before bullet lists
+        # Pattern: ## Heading - item -> ## Heading\n\n- item
+        content = re.sub(r'(##\s+[^\n]+)\s+(-)', r'\1\n\n\2', content)
+        content = re.sub(r'(###\s+[^\n]+)\s+(-)', r'\1\n\n\2', content)
+        
+        # Ensure bullet lists have newline before them if they're on the same line as previous content
+        content = re.sub(r'([^\n])\s+(-)', r'\1\n\n\2', content)
+        
+        # Clean up multiple consecutive newlines (max 2)
+        content = re.sub(r'\n{3,}', '\n\n', content)
+        
+        # Ensure content ends with single newline
+        content = content.rstrip() + '\n'
+        
+        # Log first 200 chars for debugging
+        preview = content[:200].replace('\n', '\\n')
+        logger.info(f"[LIBRARIAN] Generated GPT-5 Nano response ({len(content)} chars), preview: {preview}")
         return content
         
     except Exception as e:

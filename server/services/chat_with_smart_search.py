@@ -415,7 +415,7 @@ async def chat_with_smart_search(
     if conversation_history is None:
         if thread_id:
             try:
-                history = memory_store.load_thread_history(target_name, thread_id)
+                history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 # Convert history to message format (filter out structured messages)
                 conversation_history = []
                 for msg in history:
@@ -533,7 +533,7 @@ async def chat_with_smart_search(
                 logger.info(f"[FACTS] Topic key is None - returning clarification question")
                 if thread_id:
                     try:
-                        history = memory_store.load_thread_history(target_name, thread_id)
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
                         history.append({
@@ -545,7 +545,7 @@ async def chat_with_smart_search(
                             "provider": "memory",
                             "created_at": assistant_msg_created_at
                         })
-                        memory_store.save_thread_history(target_name, thread_id, history)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                     except Exception as e:
                         logger.warning(f"Failed to save clarification to history: {e}")
                 
@@ -581,7 +581,7 @@ async def chat_with_smart_search(
                     # Save to history
                     if thread_id:
                         try:
-                            history = memory_store.load_thread_history(target_name, thread_id)
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             model_label = "Model: Memory"
                             history.append({
@@ -593,7 +593,7 @@ async def chat_with_smart_search(
                                 "provider": "memory",
                                 "created_at": assistant_msg_created_at
                             })
-                            memory_store.save_thread_history(target_name, thread_id, history)
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
                             logger.warning(f"Failed to save ordinal answer to history: {e}")
                     
@@ -612,7 +612,7 @@ async def chat_with_smart_search(
                     # Return "I don't have that stored yet" - do NOT call GPT-5 Nano
                     if thread_id:
                         try:
-                            history = memory_store.load_thread_history(target_name, thread_id)
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             model_label = "Model: Memory"
                             response_text = "I don't have that stored yet."
@@ -625,7 +625,7 @@ async def chat_with_smart_search(
                                 "provider": "memory",
                                 "created_at": assistant_msg_created_at
                             })
-                            memory_store.save_thread_history(target_name, thread_id, history)
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
                             logger.warning(f"Failed to save 'not found' answer to history: {e}")
                     
@@ -658,7 +658,7 @@ async def chat_with_smart_search(
                 logger.info(f"[FACTS] Topic key is None for list query - returning clarification question")
                 if thread_id:
                     try:
-                        history = memory_store.load_thread_history(target_name, thread_id)
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
                         history.append({
@@ -670,7 +670,7 @@ async def chat_with_smart_search(
                             "provider": "memory",
                             "created_at": assistant_msg_created_at
                         })
-                        memory_store.save_thread_history(target_name, thread_id, history)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                     except Exception as e:
                         logger.warning(f"Failed to save clarification to history: {e}")
                 
@@ -709,7 +709,7 @@ async def chat_with_smart_search(
                 # Save to history
                 if thread_id:
                     try:
-                        history = memory_store.load_thread_history(target_name, thread_id)
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
                         history.append({
@@ -721,7 +721,7 @@ async def chat_with_smart_search(
                             "provider": "memory",
                             "created_at": assistant_msg_created_at
                         })
-                        memory_store.save_thread_history(target_name, thread_id, history)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                     except Exception as e:
                         logger.warning(f"Failed to save list answer to history: {e}")
                 
@@ -740,7 +740,7 @@ async def chat_with_smart_search(
                 # Return "I don't have that stored yet" - do NOT call Llama
                 if thread_id:
                     try:
-                        history = memory_store.load_thread_history(target_name, thread_id)
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
                         response_text = "I don't have that stored yet."
@@ -753,7 +753,7 @@ async def chat_with_smart_search(
                             "provider": "memory",
                             "created_at": assistant_msg_created_at
                         })
-                        memory_store.save_thread_history(target_name, thread_id, history)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                     except Exception as e:
                         logger.warning(f"Failed to save 'not found' answer to history: {e}")
                 
@@ -992,7 +992,7 @@ async def chat_with_smart_search(
             try:
                 from server.services.memory_service_client import get_memory_client
                 
-                history = memory_store.load_thread_history(target_name, thread_id)
+                history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 message_index = len(history)
                 
                 # Add user message with timestamp
@@ -1044,7 +1044,7 @@ async def chat_with_smart_search(
                     "meta": {"usedWebSearch": False, "usedMemory": used_memory},
                     "created_at": assistant_msg_created_at
                 })
-                memory_store.save_thread_history(target_name, thread_id, history)
+                memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                 
                 # Index assistant message into Memory Service for cross-chat search
                 if project_id:
@@ -1135,7 +1135,7 @@ async def chat_with_smart_search(
         # Save to memory store if thread_id is provided
         if thread_id:
             try:
-                history = memory_store.load_thread_history(target_name, thread_id)
+                history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
                 history.append({
                     "id": str(uuid4()),
@@ -1154,7 +1154,7 @@ async def chat_with_smart_search(
                     "meta": {"usedWebSearch": False, "webSearchError": str(e)},
                     "created_at": assistant_msg_created_at
                 })
-                memory_store.save_thread_history(target_name, thread_id, history)
+                memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             except Exception as e2:
                 logger.warning(f"Failed to save conversation history: {e2}")
         
@@ -1189,7 +1189,7 @@ async def chat_with_smart_search(
         model_label = f"Model: {model_display}"
         if thread_id:
             try:
-                history = memory_store.load_thread_history(target_name, thread_id)
+                history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
                 history.append({
                     "id": str(uuid4()),
@@ -1208,7 +1208,7 @@ async def chat_with_smart_search(
                     "meta": {"usedWebSearch": False, "webSearchEmpty": True},
                     "created_at": assistant_msg_created_at
                 })
-                memory_store.save_thread_history(target_name, thread_id, history)
+                memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             except Exception as e:
                 logger.warning(f"Failed to save conversation history: {e}")
         
@@ -1369,7 +1369,7 @@ async def chat_with_smart_search(
                 "created_at": assistant_msg_created_at
             }
             history.append(assistant_message)
-            memory_store.save_thread_history(target_name, thread_id, history)
+            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             
             # Index assistant message into Memory Service for cross-chat search
             if project_id:

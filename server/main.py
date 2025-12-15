@@ -846,7 +846,8 @@ async def chat(request: ChatRequest):
             try:
                 target_name_save = target_cfg.name
                 thread_id = request.conversation_id
-                history = load_thread_history(target_name_save, thread_id)
+                project_id = project.get("id") if project else None
+                history = load_thread_history(target_name_save, thread_id, project_id=project_id)
                 
                 # Check if last user message still has RAG context
                 if len(history) >= 2:
@@ -857,7 +858,7 @@ async def chat(request: ChatRequest):
                         if "You have access to the following reference documents" in user_content or "----\nSource:" in user_content:
                             print(f"[DIAG] REST: WARNING - User message still contains RAG context! Fixing now...")
                             history[user_idx]["content"] = request.message
-                            save_thread_history(target_name_save, thread_id, history)
+                            save_thread_history(target_name_save, thread_id, history, project_id=project_id)
                             print(f"[DIAG] REST: ✅ FIXED user message (removed RAG context)")
             except Exception as e:
                 print(f"[DIAG] REST: Error verifying/fixing user message: {e}")
@@ -926,8 +927,9 @@ async def chat(request: ChatRequest):
                     if project:
                         target_name = get_target_name_from_project(project)
                         thread_id = request.conversation_id
+                        project_id = project.get("id")
                         
-                        history = load_thread_history(target_name, thread_id)
+                        history = load_thread_history(target_name, thread_id, project_id=project_id)
                         # Find the last assistant message (saved by run_agent) and update it with structured type
                         updated = False
                         for i in range(len(history) - 1, -1, -1):
@@ -944,7 +946,7 @@ async def chat(request: ChatRequest):
                                 print(f"[RAG] Updated message at index {i} with type=rag_response, data keys: {list(history[i].get('data', {}).keys())}")
                                 break
                         if updated:
-                            save_thread_history(target_name, thread_id, history)
+                            save_thread_history(target_name, thread_id, history, project_id=project_id)
                             print(f"[RAG] Saved updated history with {len(history)} messages")
                         else:
                             print(f"[RAG] Warning: Could not find assistant message to update in history of {len(history)} messages")
@@ -975,9 +977,10 @@ async def chat(request: ChatRequest):
                 if project:
                     target_name = get_target_name_from_project(project)
                     thread_id = request.conversation_id
+                    project_id = project.get("id")
                     
                     # Load the history that run_agent just saved
-                    history = load_thread_history(target_name, thread_id)
+                    history = load_thread_history(target_name, thread_id, project_id=project_id)
                     
                     # Find the last user and assistant messages (just added by run_agent)
                     user_msg_idx = None
@@ -1349,9 +1352,10 @@ Keep it concise, neutral, and factual."""
                 if project:
                     target_name = get_target_name_from_project(project)
                     thread_id = request.conversation_id
+                    project_id = project.get("id")
                     
                     # Load existing history
-                    history = load_thread_history(target_name, thread_id)
+                    history = load_thread_history(target_name, thread_id, project_id=project_id)
                     
                     # Add user message (if URL was provided by user)
                     user_message = f"Summarize: {request.url}"
@@ -1379,7 +1383,7 @@ Keep it concise, neutral, and factual."""
                     history.append(assistant_message)
                     
                     # Save back to memory store
-                    save_thread_history(target_name, thread_id, history)
+                    save_thread_history(target_name, thread_id, history, project_id=project_id)
                     
                     # Also save as a source
                     import uuid as uuid_lib
@@ -1395,7 +1399,8 @@ Keep it concise, neutral, and factual."""
                             "published": article_published,  # Use extracted date for web pages, None for videos
                         }
                     }
-                    add_thread_source(target_name, thread_id, source)
+                    project_id = project.get("id") if project else None
+                    add_thread_source(target_name, thread_id, source, project_id=project_id)
             except Exception as e:
                 # Don't fail the request if saving to memory store fails
                 print(f"Warning: Failed to save article summary to memory store: {e}")
@@ -2308,12 +2313,9 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         logger.warning(f"Chat {chat_id} belongs to deleted project {chat.get('project_id')}, returning empty messages")
         return {"messages": []}
     
-    # Use default_target from project config, not the slugified project name
-    # This ensures we load from the correct directory where messages were actually saved
-    if project and project.get("default_target"):
-        target_name = project.get("default_target")
-    else:
-        target_name = get_target_name_from_project(project)
+    # Use project directory name (slugified project name) for loading threads
+    # This matches where new threads are saved
+    target_name = get_target_name_from_project(project)
     
     thread_id = chat.get("thread_id") or chat_id  # Use chat_id as thread_id if thread_id not set
     
@@ -2324,7 +2326,8 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         return {"messages": []}
     
     # Load messages from memory store
-    history = load_thread_history(target_name, thread_id)
+    project_id = project.get("id") if project else None
+    history = load_thread_history(target_name, thread_id, project_id=project_id)
     print(f"[DIAG] get_chat_messages: Loaded {len(history)} messages from memory store")
     
     # Convert to frontend format with timestamps
@@ -2525,20 +2528,24 @@ async def move_chat_to_project(chat_id: str, request: MoveChatRequest):
                 from pathlib import Path
                 import shutil
                 
-                old_thread_dir = thread_dir(old_target_name, thread_id)
-                new_thread_dir = thread_dir(new_target_name, thread_id)
+                # Get old and new project IDs for directory name lookup
+                old_project_id = old_project.get("id") if old_project else None
+                new_project_id = target_project.get("id") if target_project else None
+                
+                old_thread_dir = thread_dir(old_target_name, thread_id, project_id=old_project_id)
+                new_thread_dir = thread_dir(new_target_name, thread_id, project_id=new_project_id)
                 
                 # If old thread directory exists, migrate it
                 if old_thread_dir.exists():
                     # Load existing history and sources
-                    history = load_thread_history(old_target_name, thread_id)
-                    sources = load_thread_sources(old_target_name, thread_id)
+                    history = load_thread_history(old_target_name, thread_id, project_id=old_project_id)
+                    sources = load_thread_sources(old_target_name, thread_id, project_id=old_project_id)
                     
                     # Save to new location
                     if history:
-                        save_thread_history(new_target_name, thread_id, history)
+                        save_thread_history(new_target_name, thread_id, history, project_id=new_project_id)
                     if sources:
-                        save_thread_sources(new_target_name, thread_id, sources)
+                        save_thread_sources(new_target_name, thread_id, sources, project_id=new_project_id)
                     
                     # Remove old directory
                     shutil.rmtree(old_thread_dir)

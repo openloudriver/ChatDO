@@ -216,6 +216,15 @@
     "memory_sources": [
       "coin-dir"
     ],
+    "trashed": true,
+    "trashed_at": "2025-12-15T03:34:07.026920+00:00"
+  },
+  {
+    "id": "f915184f-e05d-4020-9dec-47de600d241f",
+    "name": "Test",
+    "default_target": "general",
+    "sort_index": 24,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   }
