@@ -28,6 +28,7 @@ export interface Message {
   timestamp: Date;
   type?: 'text' | 'web_search_results' | 'article_card' | 'document_card' | 'compare_articles_card' | 'timeline_card' | 'rag_response';  // Message types
   model?: string;  // Model used (e.g., "GPT-5", "Brave Search", "Trafilatura + GPT-5")
+  model_label?: string;  // Full model label from backend (e.g., "Model: Memory + GPT-5", "Model: Brave + GPT-5")
   provider?: string;  // Provider used (e.g., "openai-gpt5", "brave_search", "trafilatura-gpt5")
   sources?: Source[];  // Source objects for citations (ChatGPT-style)
   data?: {
@@ -1053,6 +1054,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           type: msg.type || undefined, // Preserve structured message types (article_card, web_search_results, rag_response)
           data: msg.data || undefined, // Preserve structured message data
           model: msg.model || undefined, // Preserve model attribution
+          model_label: msg.model_label || undefined, // Preserve model_label from backend (most accurate)
           provider: msg.provider || undefined, // Preserve provider attribution
           sources: sources, // Use converted sources
           timestamp: new Date() // Backend doesn't provide timestamps, use current time

@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import SectionHeading from "./shared/SectionHeading";
 import { AssistantCard } from "./shared/AssistantCard";
 import { InlineSourceCitations } from "./InlineSourceCitations";
+import { fixNumberedLists } from "./ChatMessages";
 import type { RagFile } from "../types/rag";
 import type { Source } from "../types/sources";
 
@@ -217,9 +218,10 @@ export const RagResponseCard: React.FC<RagResponseCardProps> = ({
     return children;
   };
   
-  // Sanitize content: remove empty bullets, normalize formatting
+  // Sanitize content: remove empty bullets, normalize formatting, and fix numbered lists
   const cleanedContent = useMemo(() => {
-    return sanitizeRagContent(content.trim());
+    const sanitized = sanitizeRagContent(content.trim());
+    return fixNumberedLists(sanitized);
   }, [content]);
 
   return (

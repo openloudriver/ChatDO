@@ -1,4 +1,5 @@
 // High-level "task" ChatDO is asking for.
+// NOTE: librarian intent removed - Memory Service is now a tool only, GPT-5 always generates responses
 export type AiIntent =
   | "general_chat"
   | "long_planning"
@@ -10,8 +11,7 @@ export type AiIntent =
   | "summarize_article"
   | "file_summary"
   | "tool_orchestration"
-  | "web_search"
-  | "librarian";
+  | "web_search";
 
 export type Priority = "low" | "medium" | "high";
 

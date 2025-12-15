@@ -225,6 +225,15 @@
     "default_target": "general",
     "sort_index": 24,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-15T23:13:33.312589+00:00"
+  },
+  {
+    "id": "93bf1224-0db8-4792-95b0-c477fedf2b11",
+    "name": "Test1",
+    "default_target": "general",
+    "sort_index": 25,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   }

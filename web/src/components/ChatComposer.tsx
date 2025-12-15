@@ -355,6 +355,7 @@ const ChatComposer: React.FC = () => {
               type: 'article_card',
               data: data.data,
               model: data.model || 'Trafilatura + GPT-5',
+              model_label: data.model_label, // Use model_label from backend (most accurate)
               provider: data.provider || 'trafilatura-gpt5'
             });
             clearStreaming();
@@ -387,6 +388,7 @@ const ChatComposer: React.FC = () => {
               type: 'rag_response',
               data: data.data,
               model: data.model,
+              model_label: data.model_label, // Use model_label from backend (most accurate)
               provider: data.provider,
               sources: sources.length > 0 ? sources : undefined
             });
@@ -432,6 +434,7 @@ const ChatComposer: React.FC = () => {
                 role: 'assistant', 
                 content: streamedContent,
                 model: data.model,
+                model_label: data.model_label, // Use model_label from backend (most accurate)
                 provider: data.provider,
                 sources: sources,
                 meta: data.meta || undefined
@@ -524,6 +527,7 @@ const ChatComposer: React.FC = () => {
           type: 'web_search_results',
           data: response.data.message_data,
           model: response.data.model_used,
+          model_label: response.data.model_label, // Use model_label from backend (most accurate)
           provider: response.data.provider,
           sources: sources.length > 0 ? sources : undefined
         });
@@ -534,6 +538,7 @@ const ChatComposer: React.FC = () => {
           type: 'article_card',
           data: response.data.message_data,
           model: response.data.model || 'Trafilatura + GPT-5',
+          model_label: response.data.model_label, // Use model_label from backend (most accurate)
           provider: response.data.provider || 'trafilatura-gpt5'
         });
       } else if (response.data.message_type === 'rag_response' && response.data.message_data) {
@@ -549,6 +554,7 @@ const ChatComposer: React.FC = () => {
           type: 'rag_response',
           data: response.data.message_data,
           model: response.data.model_used,
+          model_label: response.data.model_label, // Use model_label from backend (most accurate)
           provider: response.data.provider,
           sources: sources.length > 0 ? sources : undefined
         });
@@ -589,6 +595,7 @@ const ChatComposer: React.FC = () => {
           role: 'assistant', 
           content: response.data.reply,
           model: response.data.model_used,
+          model_label: response.data.model_label, // Use model_label from backend (most accurate)
           sources: finalSources,
           provider: response.data.provider,
           meta: response.data.message_data?.meta || undefined
@@ -802,7 +809,8 @@ const ChatComposer: React.FC = () => {
           content: '',
           type: 'article_card',
           data: response.data.message_data,
-          model: response.data.model_label || response.data.model || 'Trafilatura + GPT-5',
+          model: response.data.model || 'Trafilatura + GPT-5',
+          model_label: response.data.model_label, // Use model_label from backend (most accurate)
           provider: response.data.provider || 'trafilatura-gpt5',
         });
       } else {
@@ -1087,6 +1095,7 @@ const ChatComposer: React.FC = () => {
               type: 'web_search_results',
               data: data.data,
               model: data.model,
+              model_label: data.model_label, // Use model_label from backend (most accurate)
               provider: data.provider,
               sources: sources.length > 0 ? sources : undefined
             });
@@ -1119,6 +1128,7 @@ const ChatComposer: React.FC = () => {
                 role: 'assistant', 
                 content: streamedContent,
                 model: data.model,
+                model_label: data.model_label, // Use model_label from backend (most accurate)
                 provider: data.provider,
                 sources: sources,
                 meta: data.meta || undefined

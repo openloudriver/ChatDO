@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { fixNumberedLists } from "./ChatMessages";
 
 type MessageRendererProps = {
   content: string;
@@ -16,6 +17,9 @@ type MessageRendererProps = {
  * the special summary cards for URLs.
  */
 export function MessageRenderer({ content }: MessageRendererProps) {
+  // Fix numbered lists before rendering
+  const processedContent = fixNumberedLists(content);
+  
   return (
     <div className="prose max-w-none">
       <ReactMarkdown
@@ -76,7 +80,7 @@ export function MessageRenderer({ content }: MessageRendererProps) {
           em: ({ children }) => <em className="italic">{children}</em>,
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

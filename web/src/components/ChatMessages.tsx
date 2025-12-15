@@ -147,9 +147,75 @@ const extractBulletOptionsFromMessage = (content: string): string[] => {
     .filter(b => b.length > 0);
 };
 
+// Shared utility: Preprocess content to fix numbered lists that all start with "1."
+// This ensures proper sequential numbering even when the model outputs "1." for each item
+// Export it so other components can use it too
+export function fixNumberedLists(content: string): string {
+  const lines = content.split('\n');
+  const fixed: string[] = [];
+  let listCounter = 0; // Will be set to 1 on first list item
+  let consecutiveBlankLines = 0;
+  const maxBlankLinesInList = 1; // Allow one blank line within a list
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Check if this is a numbered list item (starts with number followed by period/dot or parenthesis)
+    const listItemMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+    
+    if (listItemMatch) {
+      const itemNumber = parseInt(listItemMatch[1], 10);
+      const itemContent = listItemMatch[2];
+      
+      // If this is the first item in a sequence (number is 1) or we're continuing a list
+      if (itemNumber === 1 && listCounter === 0) {
+        // Starting a new list
+        listCounter = 1;
+      } else if (itemNumber === 1 && listCounter > 0 && consecutiveBlankLines <= maxBlankLinesInList) {
+        // Continuing the same list (item marked as 1 but we're already counting)
+        listCounter++;
+      } else if (itemNumber > 1 && listCounter > 0) {
+        // Explicit numbering that's higher than our counter - use it
+        listCounter = itemNumber;
+      } else if (itemNumber > 1 && listCounter === 0) {
+        // Starting a new list with explicit numbering > 1
+        listCounter = itemNumber;
+      } else {
+        // Shouldn't happen, but increment counter
+        listCounter++;
+      }
+      
+      // Preserve original indentation
+      const indent = line.match(/^(\s*)/)?.[1] || '';
+      fixed.push(`${indent}${listCounter}. ${itemContent}`);
+      consecutiveBlankLines = 0;
+    } else if (trimmed === '') {
+      // Blank line
+      consecutiveBlankLines++;
+      fixed.push(line);
+      
+      // If too many blank lines, reset the list counter (new list will start)
+      if (consecutiveBlankLines > maxBlankLinesInList) {
+        listCounter = 0;
+      }
+    } else {
+      // Non-list line - reset list state
+      listCounter = 0;
+      consecutiveBlankLines = 0;
+      fixed.push(line);
+    }
+  }
+
+  return fixed.join('\n');
+}
+
 // Component to render GPT messages with proper markdown formatting
 const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({ content, sources }) => {
   const hasSources = sources && sources.length > 0;
+  
+  // Fix numbered lists before rendering
+  const processedContent = React.useMemo(() => fixNumberedLists(content), [content]);
 
   // Pre-process the entire content to build a shared usedSources array
   // This ensures all citation chips show the correct total (e.g., "1/2", "2/2")
@@ -370,7 +436,7 @@ const GPTMessageRenderer: React.FC<{ content: string; sources?: Source[] }> = ({
             em: ({ children }) => <em className="italic text-[var(--text-primary)]">{children}</em>,
           }}
         >
-          {content}
+          {processedContent}
         </ReactMarkdown>
       </div>
     </AssistantCard>
@@ -1859,7 +1925,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           </div>
                           {/* Model label on the right */}
                           <div>
-                            {message.type === 'web_search_results' ? (
+                            {message.model_label ? (
+                              // Use model_label from backend if available (most accurate)
+                              <div>{message.model_label}</div>
+                            ) : message.type === 'web_search_results' ? (
                               <div>Model: Brave</div>
                             ) : (() => {
                               const ragUsed = hasRagSources(message);

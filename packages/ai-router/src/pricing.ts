@@ -13,13 +13,6 @@ export const PRICING: PricingEntry[] = [
     outputPerMillion: 10.0,
   },
   {
-    providerId: "openai-gpt5-mini",
-    // GPT-5 Mini pricing: $0.25 per million input tokens, $0.025 per million cached input tokens, $2.00 per million output tokens
-    inputPerMillion: 0.25,
-    cachedInputPerMillion: 0.025,
-    outputPerMillion: 2.0,
-  },
-  {
     providerId: "anthropic-claude-sonnet",
     inputPerMillion: 3.0,
     outputPerMillion: 15.0,

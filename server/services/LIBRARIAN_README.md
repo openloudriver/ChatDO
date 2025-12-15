@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Librarian service sits between `chat_with_smart_search.py` and `memory_service_client`, providing intelligent ranking and filtering of memory search results. It ensures that answers are prioritized over questions, deduplicates results, and returns clean, ordered memory hits for injection into GPT-5 context.
+The Librarian service provides intelligent ranking and filtering of memory search results. It ensures that answers are prioritized over questions, deduplicates results, and returns clean, ordered memory hits for injection into GPT-5 context.
+
+**NOTE: Memory Service is now a tool only. GPT-5 always generates responses. Librarian no longer generates responses - it only provides ranking and deduplication utilities.**
 
 ## What It Does
 
@@ -48,19 +50,19 @@ Return top max_hits MemoryHit objects
     ↓
 librarian.format_hits_as_context()
     ↓
-Formatted context string for GPT-5 Mini (via AI Router)
+Formatted context string for GPT-5 (via AI Router)
 ```
 
-## GPT-5 Mini Integration
+## GPT-5 Integration
 
-The Librarian uses GPT-5 Mini via the AI Router to generate responses from Memory hits. The `generate_memory_response_with_gpt5_mini()` function:
+Memory Service is now a tool only. GPT-5 always generates responses using Memory context.
 
-1. Formats Memory hits as context
-2. Builds a system prompt with Memory-specific instructions
-3. Calls the AI Router with `intent="librarian"` (routes to GPT-5 Mini)
-4. Returns the generated response with Memory citations
+1. Librarian retrieves and ranks Memory hits
+2. Memory hits are formatted as context
+3. Context is passed to GPT-5 (never GPT-5 Mini)
+4. GPT-5 generates the response with Memory citations
 
-The deterministic heuristics remain for ranking and deduplication before GPT-5 Mini generation.
+The deterministic heuristics remain for ranking and deduplication before passing context to GPT-5.
 
 ## Usage
 

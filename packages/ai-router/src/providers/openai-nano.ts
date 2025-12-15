@@ -17,7 +17,7 @@ export const openAiGpt5NanoProvider: AiProvider = {
   costTier: "cheap",
   maxContextTokens: 200_000,
   specialties: [
-    "librarian",
+    // No specialties - librarian intent removed
   ],
 
   supportsPrivacyLevel(level) {
@@ -53,7 +53,7 @@ export const openAiGpt5NanoProvider: AiProvider = {
     // Sanity check: only gpt-5-nano is allowed
     if (modelId !== "gpt-5-nano") {
       throw new Error(
-        `Invalid model: ${modelId}. Librarian only supports gpt-5-nano.`
+        `Invalid model: ${modelId}. This provider only supports gpt-5-nano.`
       );
     }
 

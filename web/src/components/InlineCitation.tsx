@@ -278,13 +278,13 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
       {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-[10000] max-w-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-lg"
+          className="fixed z-[10000] w-80 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-lg"
           style={{
             top: chipRef.current
               ? chipRef.current.getBoundingClientRect().top - 5
               : 0,
             left: chipRef.current
-              ? chipRef.current.getBoundingClientRect().left
+              ? chipRef.current.getBoundingClientRect().left - 280 // Shift left by 280px (width of pop-out) to show full box
               : 0,
             transform: 'translateY(-100%)', // Position above the citation
           }}

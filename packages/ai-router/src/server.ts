@@ -41,9 +41,9 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     const current = await getCurrentMonthSpend();
     
     // Map provider IDs to nicer labels (model names only, no company names)
+    // NOTE: openai-gpt5-mini removed - Librarian no longer uses GPT-5 Mini
     const labelMap: Record<string, string> = {
       "openai-gpt5": "GPT-5",
-      "openai-gpt5-mini": "GPT-5 Mini",
       "anthropic-claude-sonnet": "Claude Sonnet",
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",
@@ -63,8 +63,8 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     });
     
     // Add any other providers that have been used
-    // Filter out deprecated providers (e.g., openai-whisper-1, openai-gpt5-nano)
-    const deprecatedProviders = new Set(["openai-whisper-1", "openai-gpt5-nano"]);
+    // Filter out deprecated providers (e.g., openai-whisper-1, openai-gpt5-nano, openai-gpt5-mini)
+    const deprecatedProviders = new Set(["openai-whisper-1", "openai-gpt5-nano", "openai-gpt5-mini"]);
     for (const [id, usd] of Object.entries(current.providers)) {
       if (id !== "openai-gpt5" && !deprecatedProviders.has(id)) {
         providers.push({

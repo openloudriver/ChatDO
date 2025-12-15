@@ -361,15 +361,18 @@ def build_model_label(used_web: bool, used_memory: bool, escalated: bool = True)
     """
     Build model label based on what was used.
     
+    NOTE: Memory is now a tool only. GPT-5 always generates responses.
+    "Model: Memory" is preserved as a source label to indicate Memory-backed responses.
+    
     Args:
         used_web: Whether Brave web search was used
         used_memory: Whether Memory was used
-        escalated: Whether GPT-5 was used (False means GPT-5 Mini-only for Memory)
+        escalated: Always True (GPT-5 is always used, kept for compatibility)
     
     Returns:
         - "GPT-5" if nothing special
-        - "Memory" if only memory and not escalated (GPT-5 Mini-only)
-        - "Memory + GPT-5" if only memory and escalated
+        - "Memory" if only memory (source label - GPT-5 still generates response)
+        - "Memory + GPT-5" if only memory (alternative label format)
         - "Brave + GPT-5" if only web
         - "Brave + Memory + GPT-5" if both web and memory
     """
@@ -378,7 +381,8 @@ def build_model_label(used_web: bool, used_memory: bool, escalated: bool = True)
     elif used_web:
         return "Brave + GPT-5"
     elif used_memory:
-        return "Memory + GPT-5" if escalated else "Memory"
+        # Return "Memory + GPT-5" to show GPT-5 generated the response using Memory
+        return "Memory + GPT-5"
     else:
         return "GPT-5"
 
@@ -500,12 +504,17 @@ async def chat_with_smart_search(
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
     
     # ============================================================================
-    # HARD PRE-ROUTE: Facts retrieval (deterministic, no LLM)
+    # REMOVED: Facts retrieval bypass
     # ============================================================================
-    # Before calling GPT-5 Mini, check if this is an ordinal/list query and answer
-    # directly from facts DB. If found, return immediately (do NOT call GPT-5 Mini).
+    # All queries now go through GPT-5. Memory Service is a tool only - it provides
+    # structured evidence, but GPT-5 always generates the user-facing response.
+    # Facts are still retrieved and passed as context to GPT-5, but GPT-5 formats the response.
     
-    if project_id:
+    # NOTE: Facts retrieval bypass removed - all responses must go through GPT-5
+    # The facts DB is still used, but facts are passed as Memory context to GPT-5
+    # instead of being returned directly.
+    
+    if False and project_id:  # Disabled - all queries go through GPT-5
         from server.services.ranked_lists import detect_ordinal_query
         from server.services.facts import extract_topic_from_query, normalize_topic_key
         memory_client = get_memory_client()
@@ -785,14 +794,14 @@ async def chat_with_smart_search(
             )
             searched_memory = True  # We attempted to search, regardless of results
             if hits:
-                # Format hits into context string
+                # Format hits into context string for GPT-5
                 memory_context = librarian.format_hits_as_context(hits)
                 has_memory = True
                 logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
-                logger.info(f"[MEMORY] Will route to GPT-5 Mini: has_memory={has_memory}, hits_count={len(hits)}")
+                logger.info(f"[MEMORY] Will pass Memory context to GPT-5: has_memory={has_memory}, hits_count={len(hits)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
-                logger.info(f"[MEMORY] Will NOT route to GPT-5 Mini: has_memory={has_memory}, hits_count=0")
+                logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
             
             # Convert Memory hits to structured Source objects for frontend
             if hits:
@@ -888,100 +897,22 @@ async def chat_with_smart_search(
     
     if not decision.use_search:
         # 2a. Memory-only or GPT-5 chat (no Brave)
-        # If we have Memory hits, use GPT-5 Mini Librarian first
+        # Always use GPT-5 - Memory is a tool, not a speaking model
         used_web = False
         used_memory = has_memory
         
-        if has_memory and hits:
-            # Route through GPT-5 Mini Librarian for Memory responses
-            logger.info(f"[MEMORY] Routing through GPT-5 Mini Librarian ({len(hits)} hits)")
-            logger.info(f"[MEMORY] has_memory={has_memory}, hits_count={len(hits)}, hits_empty={not hits}")
-            try:
-                # Generate response using GPT-5 Mini
-                gpt5_mini_response = await librarian.generate_memory_response_with_gpt5_mini(
-                    query=user_message,
-                    hits=hits,
-                    conversation_history=conversation_history,
-                    project_id=project_id
-                )
-                
-                # Post-process citations: keep only best-1 (or adaptive expansion to 3)
-                cleaned_response, kept_citation_indices = librarian.post_process_memory_citations(
-                    response=gpt5_mini_response,
-                    hits=hits,
-                    max_inline_citations=1  # Default: best-1
-                )
-                
-                # Filter sources to only include kept citations
-                # Sources were built from all hits, but we only want the ones that are cited
-                if kept_citation_indices:
-                    # Filter sources list to only include those at kept_citation_indices
-                    # Note: sources list contains Memory sources first (before any web sources)
-                    memory_sources = [s for s in sources if s.get("sourceType") == "memory"]
-                    other_sources = [s for s in sources if s.get("sourceType") != "memory"]
-                    
-                    # Keep only sources at the kept indices
-                    filtered_memory_sources = []
-                    for idx in kept_citation_indices:
-                        if idx < len(memory_sources):
-                            # Re-rank the kept sources (they should be M1, M2, M3 in order)
-                            source = memory_sources[idx].copy()
-                            source["rank"] = len(filtered_memory_sources)  # Re-rank starting from 0
-                            filtered_memory_sources.append(source)
-                    
-                    # Rebuild sources list with filtered memory sources
-                    sources = filtered_memory_sources + other_sources
-                    logger.info(f"[CITATIONS] Filtered sources: kept {len(filtered_memory_sources)}/{len(memory_sources)} Memory sources")
-                
-                # Check if escalation is needed (use cleaned response for escalation check)
-                should_escalate, escalation_reason = librarian.should_escalate_to_gpt5(
-                    query=user_message,
-                    hits=hits,
-                    response=cleaned_response
-                )
-                
-                if should_escalate:
-                    logger.info(f"[MEMORY] Escalating to GPT-5: {escalation_reason}")
-                    # Escalate to GPT-5 with Memory context
-                    content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-                        messages=messages,
-                        tools=tools,
-                        intent="general_chat",
-                        project_id=project_id
-                    )
-                    # Model label: Memory + GPT-5 (escalated)
-                    model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
-                    logger.info(f"[MODEL] model label = {model_display} (escalated)")
-                else:
-                    # Use GPT-5 Mini's cleaned response directly
-                    content = cleaned_response
-                    model_id = "gpt-5-mini"
-                    provider_id = "openai-gpt5-mini"
-                    model_display = "Memory"  # Just "Memory" when no GPT-5
-                    logger.info(f"[MODEL] model label = {model_display} (GPT-5 Mini only)")
-                    
-            except Exception as e:
-                logger.error(f"[MEMORY] GPT-5 Mini Librarian failed, falling back to GPT-5: {e}", exc_info=True)
-                # Fallback to GPT-5 if GPT-5 Mini fails
-                content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-                    messages=messages,
-                    tools=tools,
-                    intent="general_chat",
-                    project_id=project_id
-                )
-                model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
-                logger.info(f"[MODEL] model label = {model_display} (fallback - GPT-5 Mini unavailable)")
-        else:
-            # No Memory hits - use GPT-5 directly
-            logger.info(f"[MEMORY] Skipping GPT-5 Mini: has_memory={has_memory}, hits_count={len(hits) if hits else 0}, hits_empty={not hits if hits else True}")
-            content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-                messages=messages,
-                tools=tools,
-                intent="general_chat",
-                project_id=project_id
-            )
-            model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
-            logger.info(f"[MODEL] model label = {model_display}")
+        # Always route to GPT-5 (never GPT-5 Mini)
+        logger.info(f"[MEMORY] Routing to GPT-5 with Memory context ({len(hits) if hits else 0} hits)")
+        content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+            messages=messages,
+            tools=tools,
+            intent="general_chat",
+            project_id=project_id
+        )
+        # Model label: "Memory" if memory was used, "GPT-5" otherwise
+        # "Model: Memory" is preserved as a source label to indicate Memory-backed responses
+        model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
+        logger.info(f"[MODEL] model label = {model_display}")
         
         # Build model_label and created_at BEFORE the thread_id check (needed for return statement)
         model_label = f"Model: {model_display}"

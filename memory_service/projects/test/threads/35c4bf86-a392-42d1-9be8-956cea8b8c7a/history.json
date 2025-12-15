@@ -39,23 +39,23 @@
     "created_at": "2025-12-15T03:34:49.406018+00:00"
   },
   {
-    "id": "617ead22-0d7c-476a-88cf-4baa6cda0d12",
+    "id": "f9c26af6-7f7e-4ab6-a3db-bbe6ddf431e0",
     "role": "user",
-    "content": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM.",
-    "created_at": "2025-12-15T04:23:51.752269+00:00"
+    "content": "What is the current price of Monero?",
+    "created_at": "2025-12-15T22:58:07.166207+00:00"
   },
   {
-    "id": "a7e7c00c-0209-49cb-9dd6-592cf0b763ce",
+    "id": "422ec455-9991-4d08-9d48-40e72b013872",
     "role": "assistant",
-    "content": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2]",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "openai-gpt5-mini",
+    "content": "Monero (XMR) is trading around $409–$413 USD right now (CoinDesk: $409.57; CoinMarketCap: $410.03; Coinbase: $413.38) [4], [1], [2].\n\n## 📊 Sources\n- CoinDesk: $409.57 [4]\n- CoinMarketCap: $410.03 [1]\n- Coinbase: $413.38 [2]\n- Crypto.com: $405.91 [5]\n- CoinGecko (in BTC terms): 0.004702 BTC [3]\n\n## 🔔 Optional\nWant me to set price alerts (e.g., $400, $420, $360) and a Monero news feed for you? [M3]",
+    "model": "Brave + Memory + GPT-5",
+    "model_label": "Brave + Memory + GPT-5",
+    "provider": "openai-gpt5",
     "sources": [
       {
         "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
-        "title": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, an...",
-        "description": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM.",
+        "title": "What is the current price of Monero?",
+        "description": "What is the current price of Monero?",
         "sourceType": "memory",
         "citationPrefix": "M",
         "rank": 0,
@@ -67,194 +67,121 @@
           "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
           "source_type": "chat",
           "role": "user",
-          "content": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM."
+          "content": "What is the current price of Monero?"
         }
       },
       {
         "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-1",
-        "title": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - ...",
-        "description": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - You stated Monero is your favorite cryptocurrency. [M1] ## 🧭 Next steps - I can help with ...",
+        "title": "It was a formatting/auto-numbering bug in my list—each item ...",
+        "description": "It was a formatting/auto-numbering bug in my list—each item rendered as “1)” instead of incrementing properly. [M1]\n\n## ✅ Correct ranking\n- 1) XMR\n- 2...",
         "sourceType": "memory",
         "citationPrefix": "M",
         "rank": 1,
         "siteName": "Memory",
         "meta": {
           "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
-          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-1",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-7",
           "file_path": null,
           "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
           "source_type": "chat",
           "role": "assistant",
-          "content": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - You stated Monero is your favorite cryptocurrency. [M1] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M1]"
-        }
-      }
-    ],
-    "meta": {
-      "usedWebSearch": false,
-      "usedMemory": true
-    },
-    "created_at": "2025-12-15T04:23:51.751252+00:00"
-  },
-  {
-    "id": "33d0214b-f80a-4bf0-80d7-d838b7d8d7b8",
-    "role": "user",
-    "content": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM.",
-    "created_at": "2025-12-15T04:26:04.176161+00:00"
-  },
-  {
-    "id": "06172b92-0277-4bdb-aa35-b506bc5c4247",
-    "role": "assistant",
-    "content": "Confirmed: your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your stated preference order is XMR (Monero), BTC (Bitcoin), then XLM (Stellar). [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2] - Tell me which of those you want help with (or give a different task) and I’ll proceed.",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "openai-gpt5-mini",
-    "sources": [
-      {
-        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
-        "title": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BT...",
-        "description": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM.",
-        "sourceType": "memory",
-        "citationPrefix": "M",
-        "rank": 0,
-        "siteName": "Memory",
-        "meta": {
-          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
-          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
-          "file_path": null,
-          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
-          "source_type": "chat",
-          "role": "user",
-          "content": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM."
+          "content": "It was a formatting/auto-numbering bug in my list—each item rendered as “1)” instead of incrementing properly. [M1]\n\n## ✅ Correct ranking\n- 1) XMR\n- 2) BTC\n- 3) XLM [M4]\n\n## 🔔 Optional\n- I can update the summary and set XMR alerts at $400, $420, and $360, plus a Monero news feed—just tell me your platform and custody preference. [M2, M3]"
         }
       },
       {
-        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-1",
-        "title": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, ...",
-        "description": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC...",
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-2",
+        "title": "Got it—your ranked favorites are XMR, then BTC, then XLM. [M...",
+        "description": "Got it—your ranked favorites are XMR, then BTC, then XLM. [M1]\n\n## 🔍 Summary\n- 1) XMR\n- 2) BTC\n- 3) XLM [M1]\n\n## 📈 Optional: quick XMR watch\n- Key lev...",
         "sourceType": "memory",
         "citationPrefix": "M",
-        "rank": 1,
+        "rank": 2,
         "siteName": "Memory",
         "meta": {
           "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
-          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-3",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-5",
           "file_path": null,
           "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
           "source_type": "chat",
           "role": "assistant",
-          "content": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2]"
+          "content": "Got it—your ranked favorites are XMR, then BTC, then XLM. [M1]\n\n## 🔍 Summary\n- 1) XMR\n- 2) BTC\n- 3) XLM [M1]\n\n## 📈 Optional: quick XMR watch\n- Key levels: support ~$400 (then ~$395 and ~$360), resistance $418–$420; a clean break above $420 can target ~$450. Suggested alerts: $400, $420, $360. [M2]\n- Want me to set price alerts and a Monero news feed? Tell me your platform (mobile/desktop) and custody preference (self-custody vs exchange). [M2]\n\n## 💡 How I can help\n- Pick wallets (desktop/mobile, hardware, and privacy best practices)\n- Exchange/DEX access routes and liquidity considerations\n- Market structure updates and risk management for XMR/BTC/XLM"
         }
-      }
-    ],
-    "meta": {
-      "usedWebSearch": false,
-      "usedMemory": true
-    },
-    "created_at": "2025-12-15T04:26:04.174903+00:00"
-  },
-  {
-    "id": "86d6330a-8fb0-464f-8978-f2f285cedce0",
-    "role": "user",
-    "content": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
-    "created_at": "2025-12-15T04:40:51.745875+00:00"
-  },
-  {
-    "id": "6d464dff-8925-456d-b777-98098a60faac",
-    "role": "assistant",
-    "content": "Got it — your favorite colors are Blue, Green, and Black. [M1] ## ✅ Summary - Blue - Green - Black - You listed them in that order: 1) Blue, 2) Green, 3) Black. [M1] ## 🧭 Next steps - I can create a color palette or CSS variables using these colors. - I can generate mockups or suggest complementary/contrast colors. - Tell me which of the above you want and I’ll proceed.",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "openai-gpt5-mini",
-    "sources": [
+      },
       {
-        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
-        "title": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
-        "description": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
-        "sourceType": "memory",
-        "citationPrefix": "M",
+        "id": "web-0",
+        "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+        "url": "https://coinmarketcap.com/currencies/monero/",
+        "description": "The live Monero price today is $410.03 USD with a 24-hour trading volume of $148,519,361.71 USD. We update our XMR to USD price in real-time.",
+        "siteName": "coinmarketcap.com",
         "rank": 0,
-        "siteName": "Memory",
-        "meta": {
-          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
-          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
-          "file_path": null,
-          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
-          "source_type": "chat",
-          "role": "user",
-          "content": "My favorite colors are 1) Blue, 2) Green, and 3) Black."
-        }
-      }
-    ],
-    "meta": {
-      "usedWebSearch": false,
-      "usedMemory": true
-    },
-    "created_at": "2025-12-15T04:40:51.745290+00:00"
-  },
-  {
-    "id": "e999d31e-465f-432d-87c8-fc78e4816c34",
-    "role": "user",
-    "content": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate",
-    "created_at": "2025-12-15T04:45:03.973516+00:00"
-  },
-  {
-    "id": "159b82a4-7082-40ca-a4c0-6ea96bae6603",
-    "role": "assistant",
-    "content": "Your favorite candies are Reese's, Mr. Goodbar, and Hershey's chocolate.\n\n[M1] ## ✅ Summary\n\n- You listed your favorite candies in this order: 1) Reese's, 2) Mr. Goodbar, 3) Hershey's chocolate.\n\n[M1] ## 🧭 Next steps\n\n1. I can make a shopping list or organize them by where to buy locally or online.\n2. I can suggest recipes or desserts that use these candies.\n3. I can recommend beverage pairings (coffee, beer, wine) or serving ideas.\n4. Tell me another task (e.g., create a mockup, build a gift box plan) and I’ll proceed.\n\n— ChatDO",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "openai-gpt5-mini",
-    "sources": [
+        "sourceType": "web"
+      },
       {
-        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
-        "title": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) H...",
-        "description": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate",
-        "sourceType": "memory",
-        "citationPrefix": "M",
-        "rank": 0,
-        "siteName": "Memory",
-        "meta": {
-          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
-          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
-          "file_path": null,
-          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
-          "source_type": "chat",
-          "role": "user",
-          "content": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate"
-        }
+        "id": "web-1",
+        "title": "Monero Price, XMR Price, Live Charts, and Marketcap: monero price, xrm crypto, xmr price",
+        "url": "https://www.coinbase.com/price/monero",
+        "description": "Monero (XMR) is a cryptocurrency . Users are able to generate XMR through the process of mining. Monero has a current supply of 18,446,744.07370955. The last known price of Monero is 413.38365427 USD and is up 1.80 over the last 24 hours.",
+        "siteName": "coinbase.com",
+        "rank": 1,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-2",
+        "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+        "url": "https://www.coingecko.com/en/coins/monero",
+        "description": "The price of Monero (XMR) is BTC0.004702 today with a 24-hour trading volume of $144,767,459.57. This represents a 0.10% price increase in the last 24 hours and a 9.50% price increase in the past 7 days.",
+        "siteName": "coingecko.com",
+        "rank": 2,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-3",
+        "title": "Monero (XMR) Price | XMR to USD Price and Live Chart",
+        "url": "https://www.coindesk.com/price/monero",
+        "description": "The price of Monero (XMR) is $409.57 today as of Dec 15, 2025, 4:59 am EST, with a 24-hour trading volume of $127.24M.",
+        "siteName": "coindesk.com",
+        "rank": 3,
+        "sourceType": "web"
+      },
+      {
+        "id": "web-4",
+        "title": "Monero (XMR) Price Today: XMR/USD Live Price, News, Charts | Crypto.com",
+        "url": "https://crypto.com/en/price/monero",
+        "description": "Monero Price SummariesMonero's price today is $405.91, with a 24-hour trading volume of $139.33M. XMR is -1.97% in the last 24 hours. It is currently -3.58% from its 7-day all-time high of $420.96, and 12.67% from its 7-day all-time low of $360.26.XMR has a circulating supply of 18.45M XMR.",
+        "siteName": "crypto.com",
+        "rank": 4,
+        "sourceType": "web"
       }
     ],
     "meta": {
-      "usedWebSearch": false,
-      "usedMemory": true
+      "usedWebSearch": true,
+      "webResultsPreview": [
+        {
+          "title": "Monero price today, XMR to USD live price, marketcap and chart | CoinMarketCap",
+          "url": "https://coinmarketcap.com/currencies/monero/",
+          "snippet": "The live Monero price today is $410.03 USD with a 24-hour trading volume of $148,519,361.71 USD. We update our XMR to USD price in real-time."
+        },
+        {
+          "title": "Monero Price, XMR Price, Live Charts, and Marketcap: monero price, xrm crypto, xmr price",
+          "url": "https://www.coinbase.com/price/monero",
+          "snippet": "Monero (XMR) is a cryptocurrency . Users are able to generate XMR through the process of mining. Monero has a current supply of 18,446,744.07370955. The last known price of Monero is 413.38365427 USD and is up 1.80 over the last 24 hours."
+        },
+        {
+          "title": "Monero Price: XMR Live Price Chart, Market Cap & News Today | CoinGecko",
+          "url": "https://www.coingecko.com/en/coins/monero",
+          "snippet": "The price of Monero (XMR) is BTC0.004702 today with a 24-hour trading volume of $144,767,459.57. This represents a 0.10% price increase in the last 24 hours and a 9.50% price increase in the past 7 days."
+        },
+        {
+          "title": "Monero (XMR) Price | XMR to USD Price and Live Chart",
+          "url": "https://www.coindesk.com/price/monero",
+          "snippet": "The price of Monero (XMR) is $409.57 today as of Dec 15, 2025, 4:59 am EST, with a 24-hour trading volume of $127.24M."
+        },
+        {
+          "title": "Monero (XMR) Price Today: XMR/USD Live Price, News, Charts | Crypto.com",
+          "url": "https://crypto.com/en/price/monero",
+          "snippet": "Monero Price SummariesMonero's price today is $405.91, with a 24-hour trading volume of $139.33M. XMR is -1.97% in the last 24 hours. It is currently -3.58% from its 7-day all-time high of $420.96, and 12.67% from its 7-day all-time low of $360.26.XMR has a circulating supply of 18.45M XMR."
+        }
+      ]
     },
-    "created_at": "2025-12-15T04:45:03.972135+00:00"
-  },
-  {
-    "id": "31811617-e06a-45ba-bbec-b03d52957b26",
-    "role": "assistant",
-    "content": "Your cryptos ranked second is **favorite crypto?**. [M1]",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "memory",
-    "created_at": "2025-12-15T04:54:18.781828+00:00"
-  },
-  {
-    "id": "d14cb1c0-8149-4c7d-a253-78434a3dbaef",
-    "role": "assistant",
-    "content": "1) XMR\n2) favorite crypto?\n3) XLM.",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "memory",
-    "created_at": "2025-12-15T04:54:38.737160+00:00"
-  },
-  {
-    "id": "b02a4e6f-7331-4a4d-bf4d-0ae1f003d3e2",
-    "role": "assistant",
-    "content": "Your cryptos ranked second is **favorite crypto?**. [M1]",
-    "model": "Memory",
-    "model_label": "Model: Memory",
-    "provider": "memory",
-    "created_at": "2025-12-15T05:04:56.759079+00:00"
+    "created_at": "2025-12-15T22:58:07.530413+00:00"
   }
 ]
