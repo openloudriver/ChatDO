@@ -48,19 +48,19 @@ Return top max_hits MemoryHit objects
     ↓
 librarian.format_hits_as_context()
     ↓
-Formatted context string for GPT-5 Nano (via AI Router)
+Formatted context string for GPT-5 Mini (via AI Router)
 ```
 
-## GPT-5 Nano Integration
+## GPT-5 Mini Integration
 
-The Librarian uses GPT-5 Nano via the AI Router to generate responses from Memory hits. The `generate_memory_response_with_gpt5_nano()` function:
+The Librarian uses GPT-5 Mini via the AI Router to generate responses from Memory hits. The `generate_memory_response_with_gpt5_mini()` function:
 
 1. Formats Memory hits as context
 2. Builds a system prompt with Memory-specific instructions
-3. Calls the AI Router with `intent="librarian"` (routes to GPT-5 Nano)
+3. Calls the AI Router with `intent="librarian"` (routes to GPT-5 Mini)
 4. Returns the generated response with Memory citations
 
-The deterministic heuristics remain for ranking and deduplication before GPT-5 Nano generation.
+The deterministic heuristics remain for ranking and deduplication before GPT-5 Mini generation.
 
 ## Usage
 

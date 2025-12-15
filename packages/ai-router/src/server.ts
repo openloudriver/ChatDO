@@ -43,7 +43,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     // Map provider IDs to nicer labels (model names only, no company names)
     const labelMap: Record<string, string> = {
       "openai-gpt5": "GPT-5",
-      "openai-gpt5-nano": "GPT-5 Nano",
+      "openai-gpt5-mini": "GPT-5 Mini",
       "anthropic-claude-sonnet": "Claude Sonnet",
       "grok-code": "Grok Code",
       "gemini-pro": "Gemini Pro",

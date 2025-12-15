@@ -4,7 +4,7 @@ Librarian service for intelligent memory ranking and filtering.
 This module sits between chat_with_smart_search.py and memory_service_client,
 providing smarter ranking and deduplication of memory search results.
 
-Uses GPT-5 Nano via AI Router for generating responses from Memory hits.
+Uses GPT-5 Mini via AI Router for generating responses from Memory hits.
 """
 import logging
 from dataclasses import dataclass
@@ -504,7 +504,7 @@ def format_hits_as_context(hits: List[MemoryHit]) -> str:
 
 def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) -> tuple[bool, str]:
     """
-    Determine if GPT-5 Nano's response should be escalated to GPT-5.
+    Determine if GPT-5 Mini's response should be escalated to GPT-5.
     
     Escalation triggers:
     - Complex reasoning required (compare, analyze, plan, design)
@@ -516,7 +516,7 @@ def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) ->
     Args:
         query: The user's original query
         hits: The Memory hits used to generate the response
-        response: GPT-5 Nano's generated response
+        response: GPT-5 Mini's generated response
         
     Returns:
         Tuple of (should_escalate: bool, reason: str)
@@ -598,14 +598,14 @@ def should_escalate_to_gpt5(query: str, hits: List[MemoryHit], response: str) ->
     return False, ""
 
 
-async def generate_memory_response_with_gpt5_nano(
+async def generate_memory_response_with_gpt5_mini(
     query: str,
     hits: List[MemoryHit],
     conversation_history: Optional[List[Dict[str, str]]] = None,
     project_id: Optional[str] = None
 ) -> str:
     """
-    Generate a response using GPT-5 Nano based on Memory hits.
+    Generate a response using GPT-5 Mini based on Memory hits.
     
     This is the "Librarian" function that produces final responses from Memory
     without requiring GPT-5.
@@ -632,7 +632,7 @@ async def generate_memory_response_with_gpt5_nano(
     # Build FileTree guidance if project_id is available
     filetree_guidance = build_filetree_guidance(project_id) if project_id else ""
     
-    # Build system prompt for GPT-5 Nano - use the same authoritative ChatDO prompt
+    # Build system prompt for GPT-5 Mini - use the same authoritative ChatDO prompt
     from chatdo.prompts import CHATDO_SYSTEM_PROMPT
     system_prompt = CHATDO_SYSTEM_PROMPT + filetree_guidance + """
 
@@ -701,12 +701,12 @@ FORMATTING RULES (MUST FOLLOW):
         "content": query
     })
     
-    # Build FileTree tools for GPT-5 Nano
+    # Build FileTree tools for GPT-5 Mini
     tools = [FILETREE_LIST_SOURCES_TOOL, FILETREE_LIST_TOOL, FILETREE_READ_TOOL]
     
     try:
-        # Call AI Router with librarian intent (routes to GPT-5 Nano)
-        # Include FileTree tools so GPT-5 Nano can explore repositories when memory search doesn't find content
+        # Call AI Router with librarian intent (routes to GPT-5 Mini)
+        # Include FileTree tools so GPT-5 Mini can explore repositories when memory search doesn't find content
         assistant_messages, model_id, provider_id, model_display = call_ai_router(
             messages=messages,
             intent="librarian",
@@ -715,20 +715,20 @@ FORMATTING RULES (MUST FOLLOW):
         )
         
         if not assistant_messages or len(assistant_messages) == 0:
-            raise RuntimeError("Empty response from GPT-5 Nano")
+            raise RuntimeError("Empty response from GPT-5 Mini")
         
-        # Check if GPT-5 Nano wants to use FileTree tools
+        # Check if GPT-5 Mini wants to use FileTree tools
         assistant_message = assistant_messages[0]
         if assistant_message.get("tool_calls"):
             # Process tool calls in a loop (similar to GPT-5 tool loop)
             # Import here to avoid circular import
             from server.services.chat_with_smart_search import process_tool_calls
-            logger.info(f"[LIBRARIAN] GPT-5 Nano requested {len(assistant_message.get('tool_calls', []))} tool call(s)")
+            logger.info(f"[LIBRARIAN] GPT-5 Mini requested {len(assistant_message.get('tool_calls', []))} tool call(s)")
             final_messages, content = await process_tool_calls(
                 messages=messages,
                 assistant_message=assistant_message,
                 tools=tools,
-                max_iterations=5,  # Limit to 5 iterations for GPT-5 Nano
+                max_iterations=5,  # Limit to 5 iterations for GPT-5 Mini
                 project_id=project_id
             )
         else:
@@ -736,7 +736,7 @@ FORMATTING RULES (MUST FOLLOW):
             content = assistant_message.get("content", "")
         
         if not content:
-            raise RuntimeError("Empty response from GPT-5 Nano")
+            raise RuntimeError("Empty response from GPT-5 Mini")
         
         # Post-process: Remove any .DS_Store mentions that might have slipped through
         import re
@@ -765,7 +765,7 @@ FORMATTING RULES (MUST FOLLOW):
             content = f"```\n{content}\n```\n\n*Note: Raw output detected. This should be formatted Markdown.*"
         
         # CRITICAL: Ensure proper newlines for Markdown parsing
-        # GPT-5 Nano sometimes outputs everything on one line, which breaks Markdown parsing
+        # GPT-5 Mini sometimes outputs everything on one line, which breaks Markdown parsing
         # Fix: Add newlines before headings and ensure proper spacing
         
         # First, fix duplicate citations (e.g., "[M1] [M1] ##" -> "[M1] ##")
@@ -796,11 +796,11 @@ FORMATTING RULES (MUST FOLLOW):
         
         # Log first 200 chars for debugging
         preview = content[:200].replace('\n', '\\n')
-        logger.info(f"[LIBRARIAN] Generated GPT-5 Nano response ({len(content)} chars), preview: {preview}")
+        logger.info(f"[LIBRARIAN] Generated GPT-5 Mini response ({len(content)} chars), preview: {preview}")
         return content
         
     except Exception as e:
-        logger.error(f"[LIBRARIAN] GPT-5 Nano response generation failed: {e}")
+        logger.error(f"[LIBRARIAN] GPT-5 Mini response generation failed: {e}")
         raise
 
 

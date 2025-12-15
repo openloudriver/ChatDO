@@ -37,5 +37,119 @@
       "usedMemory": true
     },
     "created_at": "2025-12-15T03:34:49.406018+00:00"
+  },
+  {
+    "id": "617ead22-0d7c-476a-88cf-4baa6cda0d12",
+    "role": "user",
+    "content": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM.",
+    "created_at": "2025-12-15T04:23:51.752269+00:00"
+  },
+  {
+    "id": "a7e7c00c-0209-49cb-9dd6-592cf0b763ce",
+    "role": "assistant",
+    "content": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2]",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "openai-gpt5-mini",
+    "sources": [
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
+        "title": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, an...",
+        "description": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM."
+        }
+      },
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-1",
+        "title": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - ...",
+        "description": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - You stated Monero is your favorite cryptocurrency. [M1] ## 🧭 Next steps - I can help with ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-1",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Monero is your favorite cryptocurrency. [M1] ## ✅ Summary - You stated Monero is your favorite cryptocurrency. [M1] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-15T04:23:51.751252+00:00"
+  },
+  {
+    "id": "33d0214b-f80a-4bf0-80d7-d838b7d8d7b8",
+    "role": "user",
+    "content": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM.",
+    "created_at": "2025-12-15T04:26:04.176161+00:00"
+  },
+  {
+    "id": "06172b92-0277-4bdb-aa35-b506bc5c4247",
+    "role": "assistant",
+    "content": "Confirmed: your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your stated preference order is XMR (Monero), BTC (Bitcoin), then XLM (Stellar). [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2] - Tell me which of those you want help with (or give a different task) and I’ll proceed.",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "openai-gpt5-mini",
+    "sources": [
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
+        "title": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BT...",
+        "description": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Again, my favorite cryptocurrencies in order are 1 XMR, 2 BTC, and 3 XLM."
+        }
+      },
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-1",
+        "title": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, ...",
+        "description": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-assistant-3",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] ## ✅ Summary - Your favorite cryptocurrencies in order are 1) XMR, 2) BTC, and 3) XLM. [M1] [M2] ## 🧭 Next steps - I can help with Monero topics such as privacy features (ring signatures, stealth addresses), wallets, exchanges, or market data. [M2]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-15T04:26:04.174903+00:00"
   }
 ]
