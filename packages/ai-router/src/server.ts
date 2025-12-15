@@ -63,8 +63,8 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
     });
     
     // Add any other providers that have been used
-    // Filter out deprecated providers (e.g., openai-whisper-1)
-    const deprecatedProviders = new Set(["openai-whisper-1"]);
+    // Filter out deprecated providers (e.g., openai-whisper-1, openai-gpt5-nano)
+    const deprecatedProviders = new Set(["openai-whisper-1", "openai-gpt5-nano"]);
     for (const [id, usd] of Object.entries(current.providers)) {
       if (id !== "openai-gpt5" && !deprecatedProviders.has(id)) {
         providers.push({
@@ -75,10 +75,13 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       }
     }
     
+    // Recalculate total excluding deprecated providers
+    const totalUsd = providers.reduce((sum, p) => sum + p.usd, 0);
+    
     res.json({
       ok: true,
       month: current.monthId,
-      totalUsd: current.totalUsd,
+      totalUsd,
       providers,
     });
   } catch (err: any) {

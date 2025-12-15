@@ -230,7 +230,7 @@ class AnnIndexManager:
         - Chat sources (source_id starts with "project-"): Strict project isolation - must match filter_project_id
         - File sources: If source_id is in filter_source_ids (connected to project via projects.json), 
           allow cross-project access. This enables sharing file sources across projects without reindexing.
-        
+            
         Returns:
             List of result dicts, each containing:
                 - embedding_id: int

@@ -151,5 +151,83 @@
       "usedMemory": true
     },
     "created_at": "2025-12-15T04:26:04.174903+00:00"
+  },
+  {
+    "id": "86d6330a-8fb0-464f-8978-f2f285cedce0",
+    "role": "user",
+    "content": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
+    "created_at": "2025-12-15T04:40:51.745875+00:00"
+  },
+  {
+    "id": "6d464dff-8925-456d-b777-98098a60faac",
+    "role": "assistant",
+    "content": "Got it — your favorite colors are Blue, Green, and Black. [M1] ## ✅ Summary - Blue - Green - Black - You listed them in that order: 1) Blue, 2) Green, 3) Black. [M1] ## 🧭 Next steps - I can create a color palette or CSS variables using these colors. - I can generate mockups or suggest complementary/contrast colors. - Tell me which of the above you want and I’ll proceed.",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "openai-gpt5-mini",
+    "sources": [
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
+        "title": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
+        "description": "My favorite colors are 1) Blue, 2) Green, and 3) Black.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are 1) Blue, 2) Green, and 3) Black."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-15T04:40:51.745290+00:00"
+  },
+  {
+    "id": "e999d31e-465f-432d-87c8-fc78e4816c34",
+    "role": "user",
+    "content": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate",
+    "created_at": "2025-12-15T04:45:03.973516+00:00"
+  },
+  {
+    "id": "159b82a4-7082-40ca-a4c0-6ea96bae6603",
+    "role": "assistant",
+    "content": "Your favorite candies are Reese's, Mr. Goodbar, and Hershey's chocolate.\n\n[M1] ## ✅ Summary\n\n- You listed your favorite candies in this order: 1) Reese's, 2) Mr. Goodbar, 3) Hershey's chocolate.\n\n[M1] ## 🧭 Next steps\n\n1. I can make a shopping list or organize them by where to buy locally or online.\n2. I can suggest recipes or desserts that use these candies.\n3. I can recommend beverage pairings (coffee, beer, wine) or serving ideas.\n4. Tell me another task (e.g., create a mockup, build a gift box plan) and I’ll proceed.\n\n— ChatDO",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "openai-gpt5-mini",
+    "sources": [
+      {
+        "id": "memory-project-f915184f-e05d-4020-9dec-47de600d241f-0",
+        "title": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) H...",
+        "description": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a",
+          "message_id": "35c4bf86-a392-42d1-9be8-956cea8b8c7a-user-2",
+          "file_path": null,
+          "source_id": "project-f915184f-e05d-4020-9dec-47de600d241f",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candies are 1) Reese's, 2) Mr. Goodbar, and 3) Hershey's chocolate"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-15T04:45:03.972135+00:00"
   }
 ]

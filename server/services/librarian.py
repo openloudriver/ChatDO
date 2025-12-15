@@ -771,6 +771,54 @@ FORMATTING RULES (MUST FOLLOW):
         # First, fix duplicate citations (e.g., "[M1] [M1] ##" -> "[M1] ##")
         content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s+\1\s*', r'\1 ', content)
         
+        # Remove trailing citations at the end of lines/sections (e.g., "text M2" -> "text")
+        # Pattern: text followed by space and citation at end of line or before new section
+        content = re.sub(r'([^\n\[\-])\s+\[M\d+(?:\s*,\s*M?\d+)*\]\s*$', r'\1', content, flags=re.MULTILINE)
+        # Also remove citations that appear alone on a line
+        content = re.sub(r'^\s*\[M\d+(?:\s*,\s*M?\d+)*\]\s*$', '', content, flags=re.MULTILINE)
+        
+        # Convert comma-separated lists in "Next steps" or similar sections to bullet points
+        # Pattern: "such as item1, item2, and item3" -> "- item1\n- item2\n- item3"
+        def convert_list_to_bullets(text):
+            def replace_list(match):
+                prefix = match.group(1)  # "such as", "including", etc.
+                items_text = match.group(2)  # The list items
+                # Split by commas and "and"
+                items = re.split(r',\s*(?:and\s+)?', items_text)
+                items = [item.strip() for item in items if item.strip()]
+                if len(items) > 1:
+                    # Convert to bullet points
+                    bullets = '\n'.join([f'- {item}' for item in items])
+                    return f'{prefix}:\n\n{bullets}'
+                return match.group(0)  # Return original if conversion didn't work
+            
+            # Look for "such as", "including", "like" patterns
+            text = re.sub(r'(such as|including|like)\s+([^\.]+?)(?:\.|$)', replace_list, text, flags=re.IGNORECASE)
+            return text
+        
+        # Apply list conversion to content after headings (sections)
+        lines = content.split('\n')
+        result = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            result.append(line)
+            # If this is a heading, process the following lines as a section
+            if line.strip().startswith('##'):
+                # Collect lines until next heading or end
+                section_lines = []
+                i += 1
+                while i < len(lines) and not lines[i].strip().startswith('##'):
+                    section_lines.append(lines[i])
+                    i += 1
+                if section_lines:
+                    section_text = '\n'.join(section_lines)
+                    processed = convert_list_to_bullets(section_text)
+                    result.append(processed)
+                continue
+            i += 1
+        content = '\n'.join(result)
+        
         # Add newline before headings (## or ###) that come after text (not at start of line)
         # Pattern: text[space][M1] ## -> text\n\n[M1] ##
         content = re.sub(r'([^\n])\s+(\[M\d+(?:\s*,\s*M?\d+)*\]\s*##)', r'\1\n\n\2', content)
@@ -779,6 +827,11 @@ FORMATTING RULES (MUST FOLLOW):
         
         # Ensure proper spacing between citation and heading
         content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s*(##)', r'\1 \2', content)
+        
+        # Add newline after headings before content (ensure at least one blank line)
+        # Pattern: ## Heading text -> ## Heading\n\ntext
+        content = re.sub(r'(##\s+[^\n]+)\n([^\n\-])', r'\1\n\n\2', content)
+        content = re.sub(r'(###\s+[^\n]+)\n([^\n\-])', r'\1\n\n\2', content)
         
         # Add newline after headings before bullet lists
         # Pattern: ## Heading - item -> ## Heading\n\n- item
@@ -967,9 +1020,12 @@ def post_process_memory_citations(
     
     # Replace citations in response
     cleaned_response = citation_pattern.sub(replace_citation, response)
-    
+
     # Clean up any double spaces or trailing commas left by removed citations
-    cleaned_response = re.sub(r'\s+', ' ', cleaned_response)
+    # IMPORTANT: Preserve newlines - only collapse spaces/tabs, not newlines
+    # Replace multiple spaces/tabs with single space, but keep newlines
+    cleaned_response = re.sub(r'[ \t]+', ' ', cleaned_response)  # Only collapse spaces/tabs
+    cleaned_response = re.sub(r'[ \t]*\n[ \t]*', '\n', cleaned_response)  # Normalize newlines (remove spaces around them)
     cleaned_response = re.sub(r'\s*,\s*,', ',', cleaned_response)  # Remove double commas
     cleaned_response = cleaned_response.strip()
     
