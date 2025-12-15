@@ -4,9 +4,7 @@
     "name": "General",
     "default_target": "privacypay",
     "sort_index": 0,
-    "memory_sources": [
-      "coin-dir"
-    ],
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   },
@@ -114,9 +112,7 @@
     "name": "MemoryTest",
     "default_target": "general",
     "sort_index": 12,
-    "memory_sources": [
-      "coin-dir"
-    ],
+    "memory_sources": [],
     "trashed": true,
     "trashed_at": "2025-12-14T14:12:49.895278+00:00"
   },
