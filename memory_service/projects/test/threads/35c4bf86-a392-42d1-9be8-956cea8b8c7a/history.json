@@ -229,5 +229,32 @@
       "usedMemory": true
     },
     "created_at": "2025-12-15T04:45:03.972135+00:00"
+  },
+  {
+    "id": "31811617-e06a-45ba-bbec-b03d52957b26",
+    "role": "assistant",
+    "content": "Your cryptos ranked second is **favorite crypto?**. [M1]",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "memory",
+    "created_at": "2025-12-15T04:54:18.781828+00:00"
+  },
+  {
+    "id": "d14cb1c0-8149-4c7d-a253-78434a3dbaef",
+    "role": "assistant",
+    "content": "1) XMR\n2) favorite crypto?\n3) XLM.",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "memory",
+    "created_at": "2025-12-15T04:54:38.737160+00:00"
+  },
+  {
+    "id": "b02a4e6f-7331-4a4d-bf4d-0ae1f003d3e2",
+    "role": "assistant",
+    "content": "Your cryptos ranked second is **favorite crypto?**. [M1]",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "memory",
+    "created_at": "2025-12-15T05:04:56.759079+00:00"
   }
 ]

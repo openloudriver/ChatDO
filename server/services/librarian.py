@@ -825,8 +825,10 @@ FORMATTING RULES (MUST FOLLOW):
         # Also handle headings without citations: text ## -> text\n\n##
         content = re.sub(r'([^\n])\s+(##)', r'\1\n\n\2', content)
         
-        # Ensure proper spacing between citation and heading
-        content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s*(##)', r'\1 \2', content)
+        # Move citations from before headings to after headings for proper Markdown parsing
+        # Pattern: [M1] ## Heading -> ## Heading [M1]
+        # This ensures ReactMarkdown can parse the heading correctly and places citation at end of line
+        content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s*(##\s+[^\n]+)', r'\2 \1', content)
         
         # Add newline after headings before content (ensure at least one blank line)
         # Pattern: ## Heading text -> ## Heading\n\ntext
@@ -840,6 +842,14 @@ FORMATTING RULES (MUST FOLLOW):
         
         # Ensure bullet lists have newline before them if they're on the same line as previous content
         content = re.sub(r'([^\n])\s+(-)', r'\1\n\n\2', content)
+        
+        # Move citations that appear before punctuation to after punctuation (at end of sentence)
+        # Pattern: text. [M1] -> text [M1].
+        # Also handle: text [M1]. -> text. [M1] (if citation is before punctuation, move it after)
+        # This ensures citations are at the absolute end of sentences/rows
+        content = re.sub(r'([.!?])\s+(\[M\d+(?:\s*,\s*M?\d+)*\])', r' \2\1', content)
+        # Also handle cases where citation might be before punctuation: text [M1]. -> text. [M1]
+        content = re.sub(r'(\[M\d+(?:\s*,\s*M?\d+)*\])\s*([.!?])', r'\2 \1', content)
         
         # Clean up multiple consecutive newlines (max 2)
         content = re.sub(r'\n{3,}', '\n\n', content)
