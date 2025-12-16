@@ -578,7 +578,8 @@ async def chat_with_smart_search(
                 
                 if fact:
                     answer = fact.get("value")
-                    logger.info(f"[FACTS] ✅ Answering ordinal query from facts DB: rank={rank}, topic_key={topic_key}, answer={answer}")
+                    fact_chat_id = fact.get("chat_id")
+                    logger.info(f"[FACTS] ✅ Answering ordinal query from facts DB: rank={rank}, topic_key={topic_key}, answer={answer}, chat_id={fact_chat_id}")
                     
                     # Format response
                     ordinal_words = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 
@@ -586,6 +587,26 @@ async def chat_with_smart_search(
                     ordinal_word = ordinal_words.get(rank, f"#{rank}")
                     topic_display = topic_key.replace("_", " ").replace("favorite ", "")
                     formatted_answer = f"Your {topic_display} ranked {ordinal_word} is **{answer}**. [M1]"
+                    
+                    # Build sources array for UI to display source tag
+                    sources = []
+                    if fact_chat_id:
+                        sources.append({
+                            "id": "memory-fact-1",
+                            "title": "Stored Fact",
+                            "siteName": "Memory",
+                            "description": f"From chat {fact_chat_id[:8]}...",
+                            "rank": 0,
+                            "sourceType": "memory",
+                            "citationPrefix": "M",
+                            "meta": {
+                                "chat_id": fact_chat_id,
+                                "message_id": fact.get("source_message_id"),
+                                "topic_key": topic_key,
+                                "rank": rank,
+                                "value": answer
+                            }
+                        })
                     
                     # Save to history
                     if thread_id:
@@ -611,6 +632,7 @@ async def chat_with_smart_search(
                         "type": "assistant_message",
                         "content": formatted_answer,
                         "meta": {"usedFacts": True},
+                        "sources": sources,
                         "model": "Memory",
                         "model_label": "Model: Memory",
                         "provider": "memory",
@@ -713,7 +735,28 @@ async def chat_with_smart_search(
                 list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value')}" for f in ranked_facts])
                 list_text = list_items
                 
-                logger.info(f"[FACTS] ✅ Returning full ranked list from facts DB: topic_key={topic_key}, items={len(ranked_facts)}")
+                # Build sources array for UI to display source tags (one source per unique chat)
+                chat_sources = {}
+                for idx, fact in enumerate(ranked_facts):
+                    fact_chat_id = fact.get("chat_id")
+                    if fact_chat_id and fact_chat_id not in chat_sources:
+                        chat_sources[fact_chat_id] = {
+                            "id": f"memory-fact-{len(chat_sources) + 1}",
+                            "title": f"Stored Facts (Chat {fact_chat_id[:8]}...)",
+                            "siteName": "Memory",
+                            "description": f"Ranked list from chat {fact_chat_id[:8]}...",
+                            "rank": len(chat_sources),
+                            "sourceType": "memory",
+                            "citationPrefix": "M",
+                            "meta": {
+                                "chat_id": fact_chat_id,
+                                "topic_key": topic_key,
+                                "fact_count": len([f for f in ranked_facts if f.get("chat_id") == fact_chat_id])
+                            }
+                        }
+                
+                sources = list(chat_sources.values())
+                logger.info(f"[FACTS] ✅ Returning full ranked list from facts DB: topic_key={topic_key}, items={len(ranked_facts)}, sources={len(sources)}")
                 
                 # Save to history
                 if thread_id:
@@ -739,6 +782,7 @@ async def chat_with_smart_search(
                     "type": "assistant_message",
                     "content": list_text,
                     "meta": {"usedFacts": True},
+                    "sources": sources,
                     "model": "Memory",
                     "model_label": "Model: Memory",
                     "provider": "memory",
