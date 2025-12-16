@@ -11,3 +11,8 @@ dependencies = [
 [project.scripts]
 chatdo = "chatdo.__main__:main"
 
+[tool.pytest.ini_options]
+markers = [
+    "cross_chat: marks tests as cross-chat memory tests",
+]
+

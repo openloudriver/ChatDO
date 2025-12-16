@@ -568,12 +568,12 @@ async def chat_with_smart_search(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
             else:
-                # Query facts DB for this rank
+                # Query facts DB for this rank (cross-chat: chat_id=None to search all chats in project)
                 fact = memory_client.get_fact_by_rank(
                     project_id=project_id,
                     topic_key=topic_key,
                     rank=rank,
-                    chat_id=thread_id
+                    chat_id=None  # Cross-chat: search all chats in project, not just current chat
                 )
                 
                 if fact:
@@ -695,11 +695,11 @@ async def chat_with_smart_search(
             
             logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
             
-            # Get all facts for this topic (chat-scoped)
+            # Get all facts for this topic (cross-chat: chat_id=None to search all chats in project)
             facts = memory_client.get_facts(
                 project_id=project_id,
                 topic_key=topic_key,
-                chat_id=thread_id
+                chat_id=None  # Cross-chat: search all chats in project, not just current chat
             )
             
             # Filter to only ranked facts (kind="ranked")
@@ -802,6 +802,46 @@ async def chat_with_smart_search(
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
                 logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
+            
+            # Also retrieve structured facts for detected topics (cross-chat)
+            try:
+                from server.services.facts import extract_topic_from_query
+                topic_key = extract_topic_from_query(user_message)
+                if topic_key:
+                    facts = memory_client.get_facts(
+                        project_id=project_id,
+                        topic_key=topic_key,
+                        chat_id=None  # Cross-chat: search all chats in project
+                    )
+                    if facts:
+                        # Format facts as context for GPT-5
+                        ranked_facts = [f for f in facts if f.get("kind") == "ranked"]
+                        single_facts = [f for f in facts if f.get("kind") == "single"]
+                        
+                        facts_context_parts = []
+                        if ranked_facts:
+                            ranked_facts.sort(key=lambda f: f.get("rank", 0))
+                            facts_context_parts.append(f"\n[STORED FACTS - {topic_key.replace('_', ' ').title()}]")
+                            facts_context_parts.append("Ranked list (from all chats in this project):")
+                            for f in ranked_facts:
+                                facts_context_parts.append(f"  {f.get('rank', 0)}) {f.get('value')}")
+                        
+                        if single_facts:
+                            if not facts_context_parts:
+                                facts_context_parts.append(f"\n[STORED FACTS - {topic_key.replace('_', ' ').title()}]")
+                            facts_context_parts.append("Preferences:")
+                            for f in single_facts:
+                                facts_context_parts.append(f"  - {f.get('value')}")
+                        
+                        if facts_context_parts:
+                            facts_context = "\n".join(facts_context_parts)
+                            if memory_context:
+                                memory_context = f"{memory_context}\n{facts_context}"
+                            else:
+                                memory_context = facts_context
+                            logger.info(f"[FACTS] Added {len(facts)} facts to GPT-5 context for topic_key={topic_key}")
+            except Exception as e:
+                logger.warning(f"Failed to retrieve facts for GPT-5 context: {e}", exc_info=True)
             
             # Convert Memory hits to structured Source objects for frontend
             if hits:
