@@ -1,0 +1,152 @@
+[
+  {
+    "id": "57b22b42-2655-4971-8bad-d6c5e6880398",
+    "role": "user",
+    "content": "Which country is my favorite?",
+    "created_at": "2025-12-16T14:08:03.814326+00:00"
+  },
+  {
+    "id": "77a01c20-cbfb-4f9a-9989-dec0f1f1fa55",
+    "role": "assistant",
+    "content": "I don’t know your favorite country yet.\n\n## Want me to remember it?\n- Tell me your favorite country, and I’ll save it for future questions.\n- Example: “My favorite country is Japan.”\n\n## Quick question\n- What’s your favorite country?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-0",
+        "title": "Which country is my favorite?",
+        "description": "Which country is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b0868e12-7121-4f33-aa2e-35c09972aa4c",
+          "message_id": "b0868e12-7121-4f33-aa2e-35c09972aa4c-user-0",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which country is my favorite?"
+        }
+      },
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-1",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "bebff8e4-bece-4d83-ab05-1ea91b4b2cfb",
+          "message_id": "bebff8e4-bece-4d83-ab05-1ea91b4b2cfb-user-0",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T14:08:03.813138+00:00"
+  },
+  {
+    "id": "1a85345d-4089-4f14-8cf6-bd2ee51ac85e",
+    "role": "user",
+    "content": "List my favorite countries",
+    "created_at": "2025-12-16T14:12:33.438113+00:00"
+  },
+  {
+    "id": "266ecb1b-df68-43e0-8592-e66ccdf56f2d",
+    "role": "assistant",
+    "content": "I don’t know your favorite countries yet. [M2]\n\n## Want me to remember them?\n- Tell me your favorite countries, and I’ll save them for future questions.\n- Examples:\n  - “My favorite countries are Japan and Italy.”\n  - “My favorite country is Japan.”\n  - “Add Canada to my favorite countries.”\n\n## Quick question\n- Which countries should I save as your favorites?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-0",
+        "title": "List my favorite countries",
+        "description": "List my favorite countries",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b0868e12-7121-4f33-aa2e-35c09972aa4c",
+          "message_id": "b0868e12-7121-4f33-aa2e-35c09972aa4c-user-0",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite countries"
+        }
+      },
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-1",
+        "title": "I don’t know your favorite country yet.",
+        "description": "I don’t know your favorite country yet.\n\n## Want me to remember it?\n- Tell me your favorite country, and I’ll save it for future questions.\n- Example:...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b0868e12-7121-4f33-aa2e-35c09972aa4c",
+          "message_id": "77a01c20-cbfb-4f9a-9989-dec0f1f1fa55",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite country yet.\n\n## Want me to remember it?\n- Tell me your favorite country, and I’ll save it for future questions.\n- Example: “My favorite country is Japan.”\n\n## Quick question\n- What’s your favorite country?"
+        }
+      },
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a",
+          "message_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a-user-2",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-3",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "bebff8e4-bece-4d83-ab05-1ea91b4b2cfb",
+          "message_id": "bebff8e4-bece-4d83-ab05-1ea91b4b2cfb-user-2",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T14:12:33.436290+00:00"
+  }
+]

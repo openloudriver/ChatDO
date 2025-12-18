@@ -1,0 +1,134 @@
+[
+  {
+    "id": "e5256b29-21c7-49c8-99c9-79325ca0746c",
+    "role": "user",
+    "content": "What is my top music genre?",
+    "created_at": "2025-12-17T01:24:19.339827+00:00"
+  },
+  {
+    "id": "2065d800-e79b-4620-951e-82a4a0fbd7a4",
+    "role": "assistant",
+    "content": "I don’t have your top music genre saved yet.\n\n## 🔍 What should I save?\n- Tell me your favorite genre (e.g., pop, hip‑hop, rock, EDM, classical, jazz, country, R&B, metal, indie, K‑pop, Latin, Afrobeats).\n- If you want, add a couple of favorite artists so I can personalize recommendations.\n\n## 💾 Next time\nOnce you tell me, I’ll remember it and answer instantly going forward.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "What is my top music genre?",
+        "description": "What is my top music genre?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "97d0634f-630f-4186-8e9e-83d8dba35c0a",
+          "message_id": "97d0634f-630f-4186-8e9e-83d8dba35c0a-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my top music genre?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "What's my number one sport?",
+        "description": "What's my number one sport?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6",
+          "message_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one sport?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:24:19.338348+00:00"
+  },
+  {
+    "id": "bf4e8880-d13f-4551-b474-8a352e48782c",
+    "role": "user",
+    "content": "Show me my music genres",
+    "created_at": "2025-12-17T01:28:02.122845+00:00"
+  },
+  {
+    "id": "80d3b289-8e0e-4dda-a0fd-9f074a703621",
+    "role": "assistant",
+    "content": "You don’t have any music genres saved yet. [M2]\n\n## 🔍 What should I save?\n- Tell me your favorite genre(s) (e.g., pop, hip‑hop, rock, EDM, classical, jazz, country, R&B, metal, indie, K‑pop, Latin, Afrobeats). [M2]\n- Optionally add a couple of favorite artists so I can personalize recommendations. [M2]\n\n## 💾 Next time\nOnce you tell me, I’ll remember it and show your genres instantly going forward. [M2]\n\nWant me to save one now?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "Show me my music genres",
+        "description": "Show me my music genres",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "97d0634f-630f-4186-8e9e-83d8dba35c0a",
+          "message_id": "97d0634f-630f-4186-8e9e-83d8dba35c0a-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my music genres"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "I don’t have your top music genre saved yet.",
+        "description": "I don’t have your top music genre saved yet.\n\n## 🔍 What should I save?\n- Tell me your favorite genre (e.g., pop, hip‑hop, rock, EDM, classical, jazz, ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "97d0634f-630f-4186-8e9e-83d8dba35c0a",
+          "message_id": "2065d800-e79b-4620-951e-82a4a0fbd7a4",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your top music genre saved yet.\n\n## 🔍 What should I save?\n- Tell me your favorite genre (e.g., pop, hip‑hop, rock, EDM, classical, jazz, country, R&B, metal, indie, K‑pop, Latin, Afrobeats).\n- If you want, add a couple of favorite artists so I can personalize recommendations.\n\n## 💾 Next time\nOnce you tell me, I’ll remember it and answer instantly going forward."
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-2",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d",
+          "message_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d-user-2",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:28:02.121889+00:00"
+  }
+]

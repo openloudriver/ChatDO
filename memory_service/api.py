@@ -124,6 +124,7 @@ class SearchResult(BaseModel):
     source_type: str = "file"  # "file" or "chat"
     chat_id: Optional[str] = None
     message_id: Optional[str] = None
+    message_uuid: Optional[str] = None  # UUID for citations/deep-links
 
 
 class IndexChatMessageRequest(BaseModel):
@@ -524,7 +525,7 @@ async def delete_source(source_id: str):
                 # Delete the index.sqlite file and related files
                 for file in index_dir.glob("index.sqlite*"):
                     file.unlink()
-                logger.info(f"Deleted project index directory for source: {source_id} (project: {project_name})")
+                logger.info(f"Deleted project index directory for source: {source_id} (project: {project_dir_name})")
             except Exception as e:
                 logger.warning(f"Could not delete project index directory for {source_id}: {e}")
     else:
@@ -814,7 +815,7 @@ async def search(request: SearchRequest):
             
             # Compute vector scores using brute-force
             ann_results = []
-            for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id in all_embeddings:
+            for chunk_id, embedding, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id, message_uuid in all_embeddings:
                 # PROJECT ISOLATION LOGIC:
                 # - Chat sources (source_id starts with "project-"): Strict project isolation - must match project_id
                 # - File sources: If source_id is in request.source_ids (connected to this project), allow cross-project access
@@ -858,6 +859,7 @@ async def search(request: SearchRequest):
                     "end_char": end_char,
                     "chat_id": chat_id,
                     "message_id": message_id,
+                    "message_uuid": message_uuid,
                 })
         
         # Build results from ANN results, FILTERING BY PROJECT_ID
@@ -881,7 +883,8 @@ async def search(request: SearchRequest):
                 end_char=result["end_char"],
                 source_type=source_type,
                 chat_id=result.get("chat_id"),
-                message_id=result.get("message_id")
+                message_id=result.get("message_id"),
+                message_uuid=result.get("message_uuid")
             ))
             
             # Stop once we have enough results
@@ -928,6 +931,70 @@ async def index_chat_message_endpoint(request: IndexChatMessageRequest):
             
     except Exception as e:
         logger.error(f"Error indexing chat message: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SearchFactsRequest(BaseModel):
+    project_id: str
+    query: str
+    limit: int = 10
+
+
+class FactResponse(BaseModel):
+    fact_id: str
+    project_id: str
+    fact_key: str
+    value_text: str
+    value_type: str
+    confidence: float
+    source_message_uuid: str
+    created_at: str
+    effective_at: str
+    supersedes_fact_id: Optional[str] = None
+    is_current: bool
+
+
+class SearchFactsResponse(BaseModel):
+    facts: List[FactResponse]
+
+
+@app.post("/search-facts", response_model=SearchFactsResponse)
+async def search_facts(request: SearchFactsRequest):
+    """
+    Search current facts for a project.
+    
+    Returns facts matching the query in fact_key or value_text.
+    Only returns current facts (is_current=1).
+    """
+    try:
+        source_id = f"project-{request.project_id}"
+        facts = db.search_current_facts(
+            project_id=request.project_id,
+            query=request.query,
+            limit=request.limit,
+            source_id=source_id
+        )
+        
+        fact_responses = [
+            FactResponse(
+                fact_id=fact["fact_id"],
+                project_id=fact["project_id"],
+                fact_key=fact["fact_key"],
+                value_text=fact["value_text"],
+                value_type=fact["value_type"],
+                confidence=fact["confidence"],
+                source_message_uuid=fact["source_message_uuid"],
+                created_at=fact["created_at"].isoformat() if isinstance(fact["created_at"], datetime) else str(fact["created_at"]),
+                effective_at=fact["effective_at"].isoformat() if isinstance(fact["effective_at"], datetime) else str(fact["effective_at"]),
+                supersedes_fact_id=fact.get("supersedes_fact_id"),
+                is_current=fact["is_current"]
+            )
+            for fact in facts
+        ]
+        
+        return SearchFactsResponse(facts=fact_responses)
+    except Exception as e:
+        logger.error(f"Error searching facts: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "38590f9b-b4ae-4f3d-a6fa-78c6081e94fe",
+    "role": "user",
+    "content": "What do I like?",
+    "created_at": "2025-12-16T02:41:32.333100+00:00"
+  },
+  {
+    "id": "0aada81e-fce4-4daf-b893-051855c9134c",
+    "role": "assistant",
+    "content": "I don’t know your preferences yet—nothing about your likes has been saved so far.\n\n## 🔍 What I can remember\n- I can remember your tastes and use them to personalize answers and recommendations going forward. [M1]\n\n## ✅ Share a few quick likes\nReply with any of these you want to set:\n- Tech: favorite languages, frameworks, editor/IDE\n- Media: music genres/artists, movies/series, books/authors\n- Food: favorite cuisines, dietary preferences\n- Hobbies: sports, games, creative pursuits\n- Work style: deep-work hours, meeting preferences, note-taking tools\n- Learning: preferred format (text/video), pace, examples vs. theory\n\n## 📝 Quick template (copy and fill)\n- Tech: …\n- Media: …\n- Food: …\n- Hobbies: …\n- Work style: …\n- Learning: …\n\nOnce you share, I’ll remember and tailor my help to your tastes. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-b5e13c88-91a2-42cb-b4e6-5be876920b4c-0",
+        "title": "What do I like?",
+        "description": "What do I like?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "e382d98a-a7b8-4da3-8b4a-1e8ccd3c38b8",
+          "message_id": "e382d98a-a7b8-4da3-8b4a-1e8ccd3c38b8-user-0",
+          "file_path": null,
+          "source_id": "project-b5e13c88-91a2-42cb-b4e6-5be876920b4c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What do I like?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:41:32.331962+00:00"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "fa373674-5ece-4ef1-8f64-4cb0cdd60dea",
+    "role": "user",
+    "content": "What's my favorite hobby?",
+    "created_at": "2025-12-17T02:05:21.136759+00:00"
+  },
+  {
+    "id": "5e3442b9-45da-4a82-b4de-afbc90d55a4a",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:21.136369+00:00"
+  },
+  {
+    "id": "3a24e46c-2962-474a-a9a9-6a07060cbd41",
+    "role": "user",
+    "content": "List my hobbies",
+    "created_at": "2025-12-17T02:05:24.251876+00:00"
+  },
+  {
+    "id": "cfaf76ce-3d6f-4725-aae2-3aed7e2c6c1f",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:24.251576+00:00"
+  }
+]

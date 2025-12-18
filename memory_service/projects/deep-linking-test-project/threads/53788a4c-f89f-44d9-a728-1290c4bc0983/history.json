@@ -1,0 +1,296 @@
+[
+  {
+    "id": "b9524f68-8a42-49ae-839c-9c62395fe9f1",
+    "role": "user",
+    "content": "What's my favorite food?",
+    "created_at": "2025-12-16T03:21:03.565745+00:00"
+  },
+  {
+    "id": "b7a9327d-f36c-4f67-b885-28342a653005",
+    "role": "assistant",
+    "content": "I don’t know your favorite food yet.\n\n## What I have\n- I’m tracking a slot for your favorite food, but there’s no value saved. [M1]\n\n## Tell me and I’ll remember\n- What’s your favorite food?\n- Optionally share a top 3 (dish or cuisine), and I’ll save it for future questions.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-0",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "53788a4c-f89f-44d9-a728-1290c4bc0983",
+          "message_id": "53788a4c-f89f-44d9-a728-1290c4bc0983-user-0",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-1",
+        "title": "I don’t know your favorite programming language yet.",
+        "description": "I don’t know your favorite programming language yet.\n\n## 💬 Tell me and I’ll remember\n- What’s your favorite programming language?\n- If you want, share...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "bbc65b22-31f8-4227-b8b2-eadc95fb8f1a",
+          "message_id": "b8b663ed-c0af-45ba-aa34-7ea4cf3fd157",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite programming language yet.\n\n## 💬 Tell me and I’ll remember\n- What’s your favorite programming language?\n- If you want, share a ranked top 3, and I’ll save it for future questions."
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-2",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "bbc65b22-31f8-4227-b8b2-eadc95fb8f1a",
+          "message_id": "bbc65b22-31f8-4227-b8b2-eadc95fb8f1a-user-0",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-3",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "38a21d74-c2b5-4d50-8204-d970f0975bd8",
+          "message_id": "38a21d74-c2b5-4d50-8204-d970f0975bd8-user-0",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-4",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f7b59f59-782e-466f-a748-7ecb26b3bbf7",
+          "message_id": "f7b59f59-782e-466f-a748-7ecb26b3bbf7-user-0",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:21:03.564590+00:00"
+  },
+  {
+    "id": "580b812e-9ff0-47ea-b798-c3977cee21a7",
+    "role": "user",
+    "content": "Show my favorite foods",
+    "created_at": "2025-12-16T03:24:44.355540+00:00"
+  },
+  {
+    "id": "4fd19e28-3b8f-4ae5-bba5-069346b7fd61",
+    "role": "assistant",
+    "content": "I don’t have any favorite foods saved for you yet. [M4]\n\n## What I have\n- The “favorite food” slot exists but is currently empty. [M4]\n\n## Tell me and I’ll remember\n- Share your favorite food (or a top 3), and I’ll save it for future questions.\n- If you have a clear #1, say so and I’ll rank them.\n\nExample format:\n- Favorite foods (ranked): 1) Sushi, 2) Tacos, 3) Pad Thai",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-0",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "53788a4c-f89f-44d9-a728-1290c4bc0983",
+          "message_id": "53788a4c-f89f-44d9-a728-1290c4bc0983-user-0",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-1",
+        "title": "I don’t know your favorite hobby yet.",
+        "description": "I don’t know your favorite hobby yet.\n\n## 💬 Tell me and I’ll remember\n- Tell me your favorite hobby (optionally a top 3), and I’ll save it for future ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2420d191-dc3f-430d-a5dc-b209ee3decb7",
+          "message_id": "8179b1d7-e306-4d1c-b8e7-ebb9a63358b3",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite hobby yet.\n\n## 💬 Tell me and I’ll remember\n- Tell me your favorite hobby (optionally a top 3), and I’ll save it for future questions.\n- If there’s a “number one” pick, note it and I’ll treat it as ranked."
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "38a21d74-c2b5-4d50-8204-d970f0975bd8",
+          "message_id": "38a21d74-c2b5-4d50-8204-d970f0975bd8-user-2",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-3",
+        "title": "I don’t know your favorite food yet.",
+        "description": "I don’t know your favorite food yet.\n\n## What I have\n- I’m tracking a slot for your favorite food, but there’s no value saved. [M1]\n\n## Tell me and I’...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "53788a4c-f89f-44d9-a728-1290c4bc0983",
+          "message_id": "b7a9327d-f36c-4f67-b885-28342a653005",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite food yet.\n\n## What I have\n- I’m tracking a slot for your favorite food, but there’s no value saved. [M1]\n\n## Tell me and I’ll remember\n- What’s your favorite food?\n- Optionally share a top 3 (dish or cuisine), and I’ll save it for future questions."
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-4",
+        "title": "Blue. [M1]",
+        "description": "Blue. [M1]\n\n## 🔍 Source\n- Your saved favorites ranking lists: 1) Blue, 2) Green, 3) Red, 4) Purple. [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "38a21d74-c2b5-4d50-8204-d970f0975bd8",
+          "message_id": "601589f0-6d64-4074-bff3-bd82ed0e1e6d",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M1]\n\n## 🔍 Source\n- Your saved favorites ranking lists: 1) Blue, 2) Green, 3) Red, 4) Purple. [M1]"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-5",
+        "title": "List my favorite movies",
+        "description": "List my favorite movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f7b59f59-782e-466f-a748-7ecb26b3bbf7",
+          "message_id": "f7b59f59-782e-466f-a748-7ecb26b3bbf7-user-2",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite movies"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-6",
+        "title": "I don’t know your favorite country yet. [M1]",
+        "description": "I don’t know your favorite country yet. [M1]\n\n## Want me to remember it?\n- Tell me your favorite country (optionally a top 3), and I’ll save it for fu...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "13d621fd-e68b-4da6-a178-572d416b597b",
+          "message_id": "05133e75-9cd3-4670-a40c-cd552077717e",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite country yet. [M1]\n\n## Want me to remember it?\n- Tell me your favorite country (optionally a top 3), and I’ll save it for future questions."
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-7",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "bbc65b22-31f8-4227-b8b2-eadc95fb8f1a",
+          "message_id": "bbc65b22-31f8-4227-b8b2-eadc95fb8f1a-user-2",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-04ac9cea-6a3a-44d4-b1df-dde0949b42db-8",
+        "title": "What are my favorite books?",
+        "description": "What are my favorite books?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "9ce89768-b5f6-4720-90be-e77b79330274",
+          "message_id": "9ce89768-b5f6-4720-90be-e77b79330274-user-2",
+          "file_path": null,
+          "source_id": "project-04ac9cea-6a3a-44d4-b1df-dde0949b42db",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite books?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:24:44.355008+00:00"
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "c334b1eb-4e0b-4281-80df-d3f5eb86472d",
+    "role": "user",
+    "content": "What do I like?",
+    "created_at": "2025-12-16T02:41:02.034832+00:00"
+  },
+  {
+    "id": "2293b77d-08f9-4e8a-a991-b6e729df101e",
+    "role": "assistant",
+    "content": "You like ChatDO to be a persistent, technically honest, developer‑grade assistant with a stable identity and transparent model usage. [M1]\n\n## 🔍 Core preferences\n- Consistent identity: always speak as “ChatDO”; one voice across engines. [M1]\n- Model transparency: treat models as engines; usage shown in UI; don’t restate/override model labels or name-drop models unnecessarily. [M1]\n- Technical honesty: clearly explain architecture, memory, embeddings/ANN, Brave Search, routing, escalation, and limitations; don’t hide how things work. [M1]\n\n## 🧠 Memory & data handling\n- Treat memory as authoritative; prefer the most recent, highest‑confidence info; don’t fabricate or over‑cite. [M1]\n- Ranked lists are structured facts; answer ordinal queries directly without reordering. [M1]\n\n## ✍️ Answering style\n- Always use Markdown; start with a direct answer in the first sentence. [M1]\n- Use short headers, bullets, and concise paragraphs; include code fences for code and simple tables for comparisons. [M1]\n- Cite memory sources inline like [M1]; cite web facts with [1], [2], etc., and synthesize in your own words. [M1]\n\n## 📁 File handling\n- When a file is uploaded with its content, process it directly; reference only the filename. [M1]\n\n## ✅ Apply/implement changes\n- When asked to “apply” or “implement,” first confirm the action, then emit a <TASKS> block with JSON-only instructions for edits, creates, or commands. No commentary inside the block. [M1]\n\n## 🧭 Guiding principle\n- ChatDO is one voice, many engines; identity is stable; execution is transparent; truth isn’t hidden. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-8e0baae5-0e43-4405-aee5-debe75b1c25d-0",
+        "title": "What do I like?",
+        "description": "What do I like?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2dc30cc9-aa0a-47e3-a7f7-02c03b33884f",
+          "message_id": "2dc30cc9-aa0a-47e3-a7f7-02c03b33884f-user-0",
+          "file_path": null,
+          "source_id": "project-8e0baae5-0e43-4405-aee5-debe75b1c25d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What do I like?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:41:02.034232+00:00"
+  }
+]

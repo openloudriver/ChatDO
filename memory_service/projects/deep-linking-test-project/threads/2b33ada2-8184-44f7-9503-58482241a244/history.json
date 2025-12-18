@@ -1,0 +1,98 @@
+[
+  {
+    "id": "2b929a4c-f709-4de3-b332-9b44585c36b9",
+    "role": "user",
+    "content": "What is my number one favorite color?",
+    "created_at": "2025-12-17T01:06:25.959407+00:00"
+  },
+  {
+    "id": "34fdc670-eac5-4a96-81bb-b2fea492dfa4",
+    "role": "assistant",
+    "content": "Blue. [M1]\n\n## 🔍 Summary\n- Your top-ranked favorite color in memory is Blue. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-0",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2b33ada2-8184-44f7-9503-58482241a244",
+          "message_id": "2b33ada2-8184-44f7-9503-58482241a244-user-0",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:06:25.958117+00:00"
+  },
+  {
+    "id": "cbc24cf3-238f-4615-a4b0-27c8eaac49e0",
+    "role": "user",
+    "content": "List my favorite colors",
+    "created_at": "2025-12-17T01:10:27.894531+00:00"
+  },
+  {
+    "id": "17bf1e47-a839-44f1-a27d-f14e3f1190be",
+    "role": "assistant",
+    "content": "Your favorite colors, ranked: Blue, Green, Red, and Purple. [M2]\n\n## 📊 Ranked List\n- 1) Blue\n- 2) Green\n- 3) Red\n- 4) Purple [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-0",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2b33ada2-8184-44f7-9503-58482241a244",
+          "message_id": "2b33ada2-8184-44f7-9503-58482241a244-user-0",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-1",
+        "title": "Blue. [M1]",
+        "description": "Blue. [M1]\n\n## 🔍 Summary\n- Your top-ranked favorite color in memory is Blue. [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2b33ada2-8184-44f7-9503-58482241a244",
+          "message_id": "34fdc670-eac5-4a96-81bb-b2fea492dfa4",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M1]\n\n## 🔍 Summary\n- Your top-ranked favorite color in memory is Blue. [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:10:27.893773+00:00"
+  }
+]

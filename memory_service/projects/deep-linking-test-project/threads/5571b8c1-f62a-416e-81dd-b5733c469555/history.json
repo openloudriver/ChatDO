@@ -1,0 +1,98 @@
+[
+  {
+    "id": "5f035c52-cbba-49e0-b9a3-63f24d622ba5",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-17T00:37:20.888486+00:00"
+  },
+  {
+    "id": "6b4030eb-ba79-4abc-b6b8-d34631325b9e",
+    "role": "assistant",
+    "content": "I don’t know yet—your favorite programming language isn’t in my memory [M1].\n\n## Tell me and I’ll remember 🧠\n- What’s your favorite language?\n- Optional: why do you prefer it (projects, ergonomics, ecosystem, performance)?\n\nOnce you tell me, I’ll save it so I can personalize future answers [M1].",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5571b8c1-f62a-416e-81dd-b5733c469555",
+          "message_id": "5571b8c1-f62a-416e-81dd-b5733c469555-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:37:20.887287+00:00"
+  },
+  {
+    "id": "391ef078-155a-465d-b3e7-368b0db80075",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-17T00:42:51.514546+00:00"
+  },
+  {
+    "id": "e90febee-1ef9-4217-9c76-615362deb80e",
+    "role": "assistant",
+    "content": "I don’t have any programming languages saved for you yet [M2].\n\n## Add yours 🧠\nShare any of the following and I’ll remember them for future answers:\n- Favorite language (and why, if you like)\n- Other languages you use\n- Proficiency levels (beginner/intermediate/advanced)\n- Typical use-cases (work, hobby, specific projects)\n- Tools/frameworks you prefer (e.g., React, Django, Spring)\n\n## Example reply\n- Favorite: TypeScript (for frontend + Node projects)\n- Also use: Python, Go\n- Proficiency: TS (advanced), Python (advanced), Go (intermediate)\n- Use-cases: APIs, data scripts, CLI tools\n- Frameworks: Next.js, FastAPI, Cobra",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5571b8c1-f62a-416e-81dd-b5733c469555",
+          "message_id": "5571b8c1-f62a-416e-81dd-b5733c469555-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-1",
+        "title": "I don’t know yet—your favorite programming language isn’t in...",
+        "description": "I don’t know yet—your favorite programming language isn’t in my memory [M1].\n\n## Tell me and I’ll remember 🧠\n- What’s your favorite language?\n- Option...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5571b8c1-f62a-416e-81dd-b5733c469555",
+          "message_id": "6b4030eb-ba79-4abc-b6b8-d34631325b9e",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know yet—your favorite programming language isn’t in my memory [M1].\n\n## Tell me and I’ll remember 🧠\n- What’s your favorite language?\n- Optional: why do you prefer it (projects, ergonomics, ecosystem, performance)?\n\nOnce you tell me, I’ll save it so I can personalize future answers [M1]."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:42:51.513906+00:00"
+  }
+]

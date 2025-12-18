@@ -1,0 +1,42 @@
+[
+  {
+    "id": "c64c9ebe-ec45-4f5a-b498-a2d6ea6b51c0",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-17T01:59:40.486770+00:00"
+  },
+  {
+    "id": "4590f881-8baa-4cd5-a8ea-34982064715c",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T01:59:40.486353+00:00"
+  },
+  {
+    "id": "186f5278-60d9-47ec-8a31-d6f19c90f6e3",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-17T01:59:43.627008+00:00"
+  },
+  {
+    "id": "461a9e35-ac95-411c-8795-bd8e25f0d908",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T01:59:43.626701+00:00"
+  }
+]

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "3bde5fd4-111d-4b4c-bbcc-0877fe59efce",
+    "role": "user",
+    "content": "What's my number one sport?",
+    "created_at": "2025-12-17T01:23:55.648550+00:00"
+  },
+  {
+    "id": "8a6e6de9-367c-425e-8367-0311ad132da8",
+    "role": "assistant",
+    "content": "I don’t know your number one sport yet.\n\n## 🔍 Status\n- I tried to load your saved preference but couldn’t access the memory source right now (M1).\n\n## ✅ What I need\n- Tell me your #1 sport, and I’ll remember it going forward.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "What's my number one sport?",
+        "description": "What's my number one sport?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6",
+          "message_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one sport?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0ef5971e-00ce-4a00-9d5f-778f989ce649",
+          "message_id": "0ef5971e-00ce-4a00-9d5f-778f989ce649-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-2",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2fbfba44-3a6a-47be-9e19-8851430a2437",
+          "message_id": "2fbfba44-3a6a-47be-9e19-8851430a2437-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:23:55.647359+00:00"
+  },
+  {
+    "id": "4d7c6a85-c443-4cf1-ad9f-94a12037f2cd",
+    "role": "user",
+    "content": "What are my favorite sports?",
+    "created_at": "2025-12-17T01:27:40.693982+00:00"
+  },
+  {
+    "id": "e118ad6a-7d82-484c-83e3-373678128c91",
+    "role": "assistant",
+    "content": "I don’t know your favorite sports yet because I can’t access your saved preference right now [M1].\n\n## 🔍 Status\n- Your “favorite sports” are stored in memory, but I couldn’t read that source at the moment [M1].\n\n## ✅ What I need\n- Tell me your favorite sports (a list is fine), and I’ll save them so I can answer instantly next time.\n\n## 💬 Example\n- “Basketball and tennis.”\n- “Soccer, then baseball.”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "What are my favorite sports?",
+        "description": "What are my favorite sports?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6",
+          "message_id": "661ddd04-c49c-4e0f-986e-d1f274168dc6-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite sports?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "What's my favorite hobby?",
+        "description": "What's my favorite hobby?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "4298ba39-2c7c-4161-8c51-d4350f2950f2",
+          "message_id": "4298ba39-2c7c-4161-8c51-d4350f2950f2-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite hobby?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-2",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8",
+          "message_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:27:40.691799+00:00"
+  }
+]

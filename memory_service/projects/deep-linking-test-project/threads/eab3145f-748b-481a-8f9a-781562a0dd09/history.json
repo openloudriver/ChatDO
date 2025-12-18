@@ -1,0 +1,98 @@
+[
+  {
+    "id": "e40b694e-b9d3-40a3-a27e-b983a4661302",
+    "role": "user",
+    "content": "What's my top cryptocurrency?",
+    "created_at": "2025-12-17T00:54:38.551141+00:00"
+  },
+  {
+    "id": "77a0c65f-1811-4044-b949-e2e149d0529e",
+    "role": "assistant",
+    "content": "Bitcoin. [M1]\n\n## 📊 Your favorites ranking\n- 1) Bitcoin [M1]\n- 2) Ethereum [M1]\n- 3) Monero [M1]\n- 4) Litecoin [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "eab3145f-748b-481a-8f9a-781562a0dd09",
+          "message_id": "eab3145f-748b-481a-8f9a-781562a0dd09-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:54:38.550165+00:00"
+  },
+  {
+    "id": "487cbf87-d05b-4bbd-904f-b6986a656704",
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies?",
+    "created_at": "2025-12-17T00:57:57.162258+00:00"
+  },
+  {
+    "id": "de8e9ba4-56aa-4188-a54f-473e5d0ca140",
+    "role": "assistant",
+    "content": "Your favorites are Bitcoin, Ethereum, Monero, and Litecoin, in that order. [M1]\n\n## 📊 Your favorites ranking\n- 1) Bitcoin [M1]\n- 2) Ethereum [M1]\n- 3) Monero [M1]\n- 4) Litecoin [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "What are my favorite cryptocurrencies?",
+        "description": "What are my favorite cryptocurrencies?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "eab3145f-748b-481a-8f9a-781562a0dd09",
+          "message_id": "eab3145f-748b-481a-8f9a-781562a0dd09-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite cryptocurrencies?"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-1",
+        "title": "Bitcoin. [M1]",
+        "description": "Bitcoin. [M1]\n\n## 📊 Your favorites ranking\n- 1) Bitcoin [M1]\n- 2) Ethereum [M1]\n- 3) Monero [M1]\n- 4) Litecoin [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "eab3145f-748b-481a-8f9a-781562a0dd09",
+          "message_id": "77a0c65f-1811-4044-b949-e2e149d0529e",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Bitcoin. [M1]\n\n## 📊 Your favorites ranking\n- 1) Bitcoin [M1]\n- 2) Ethereum [M1]\n- 3) Monero [M1]\n- 4) Litecoin [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:57:57.160882+00:00"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "8e3e735e-3899-43c7-9e0f-a7cfe7762c37",
+    "role": "assistant",
+    "content": "Test response",
+    "model": "Memory",
+    "model_label": "Model: Memory",
+    "provider": "memory",
+    "created_at": "2025-12-16T01:57:56.453346+00:00"
+  }
+]

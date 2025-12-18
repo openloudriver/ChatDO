@@ -1,0 +1,170 @@
+[
+  {
+    "id": "db008b51-a42c-4929-bf9d-c58338405a29",
+    "role": "user",
+    "content": "Which country is my favorite?",
+    "created_at": "2025-12-16T13:25:54.982874+00:00"
+  },
+  {
+    "id": "64fd628d-cb3c-4b63-a3d4-c1f98b3656dd",
+    "role": "assistant",
+    "content": "I don’t know your favorite country yet.\n\n## 🔍 What I need\n- Tell me your favorite country, and I’ll remember it for next time.\n\n## 💾 Memory\n- I don’t have a saved value for this in your project memory. Share it now and I’ll store it so you won’t have to repeat it.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-0",
+        "title": "Which country is my favorite?",
+        "description": "Which country is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fe0b230c-83ac-4789-b46e-b626425cfd79",
+          "message_id": "fe0b230c-83ac-4789-b46e-b626425cfd79-user-0",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which country is my favorite?"
+        }
+      },
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-1",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "ee6da5aa-1546-456e-9d9a-99ec3a17cbef",
+          "message_id": "ee6da5aa-1546-456e-9d9a-99ec3a17cbef-user-0",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:25:54.981350+00:00"
+  },
+  {
+    "id": "63656bb4-3a2a-411d-86f4-aea2d69513f0",
+    "role": "user",
+    "content": "List my favorite countries",
+    "created_at": "2025-12-16T13:30:29.490245+00:00"
+  },
+  {
+    "id": "64f46611-4fd5-4c6d-bde3-d7a05b2f8e54",
+    "role": "assistant",
+    "content": "I don’t have any favorite countries saved yet. [M2]\n\n## 💾 Memory status\n- No favorite countries are stored in your project memory. [M2]\n\n## Tell me and I’ll save it\n- Share your favorite countries (single or a list, optionally ranked), e.g.:\n  - “Japan, Italy, and Canada”\n  - “1) Japan 2) Italy 3) Canada”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-0",
+        "title": "List my favorite countries",
+        "description": "List my favorite countries",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fe0b230c-83ac-4789-b46e-b626425cfd79",
+          "message_id": "fe0b230c-83ac-4789-b46e-b626425cfd79-user-0",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite countries"
+        }
+      },
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-1",
+        "title": "I don’t know your favorite country yet.",
+        "description": "I don’t know your favorite country yet.\n\n## 🔍 What I need\n- Tell me your favorite country, and I’ll remember it for next time.\n\n## 💾 Memory\n- I don’t ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fe0b230c-83ac-4789-b46e-b626425cfd79",
+          "message_id": "64fd628d-cb3c-4b63-a3d4-c1f98b3656dd",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite country yet.\n\n## 🔍 What I need\n- Tell me your favorite country, and I’ll remember it for next time.\n\n## 💾 Memory\n- I don’t have a saved value for this in your project memory. Share it now and I’ll store it so you won’t have to repeat it."
+        }
+      },
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8f7ab40c-0466-4e60-aeab-22836db1332b",
+          "message_id": "8f7ab40c-0466-4e60-aeab-22836db1332b-user-2",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-3",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "ee6da5aa-1546-456e-9d9a-99ec3a17cbef",
+          "message_id": "ee6da5aa-1546-456e-9d9a-99ec3a17cbef-user-2",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      },
+      {
+        "id": "memory-project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a-4",
+        "title": "List my favorite movies",
+        "description": "List my favorite movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "a9218804-2913-464f-b868-93ede0ab74ee",
+          "message_id": "a9218804-2913-464f-b868-93ede0ab74ee-user-2",
+          "file_path": null,
+          "source_id": "project-92fa62f7-685b-4bdf-b1d5-b4db5cf4374a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite movies"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:30:29.489555+00:00"
+  }
+]

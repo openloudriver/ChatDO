@@ -1,0 +1,41 @@
+[
+  {
+    "id": "e1dffc06-ae0c-422b-b4fd-62dec730194b",
+    "role": "user",
+    "content": "What's my top cryptocurrency?",
+    "created_at": "2025-12-16T13:34:58.889781+00:00"
+  },
+  {
+    "id": "b2813a36-cc5a-45a0-aee1-f35ca22ab13f",
+    "role": "assistant",
+    "content": "Your top cryptocurrency is Bitcoin. [M1]\n\n## 📊 Your ranked favorites\n1) Bitcoin  \n2) Ethereum  \n3) Monero  \n4) Litecoin [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8-0",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6519dae4-d38a-4e35-a36a-a2d47cddb073",
+          "message_id": "6519dae4-d38a-4e35-a36a-a2d47cddb073-user-0",
+          "file_path": null,
+          "source_id": "project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:34:58.887990+00:00"
+  }
+]

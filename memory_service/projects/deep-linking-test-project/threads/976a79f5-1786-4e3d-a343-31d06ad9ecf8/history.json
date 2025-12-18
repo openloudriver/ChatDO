@@ -1,0 +1,116 @@
+[
+  {
+    "id": "54fb219e-a9c5-4336-b1ea-dba9d0436840",
+    "role": "user",
+    "content": "What's my favorite food?",
+    "created_at": "2025-12-17T01:23:05.043942+00:00"
+  },
+  {
+    "id": "1d614a26-0547-4d8a-bdb3-2430bdef5301",
+    "role": "assistant",
+    "content": "I don’t know your favorite food yet.\n\n## Help me remember 🍽️\nTell me your favorite food (and any close runners-up), and I’ll remember it for next time.\n\n## Quick prompts\n- What’s your single favorite dish?\n- Any go-to cuisines (e.g., Italian, Japanese, Mexican)?\n- Any dietary preferences or allergies I should keep in mind?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8",
+          "message_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:23:05.042941+00:00"
+  },
+  {
+    "id": "222f1ee9-6370-4fc6-a8d4-18f6327765d4",
+    "role": "user",
+    "content": "Show my favorite foods",
+    "created_at": "2025-12-17T01:26:41.531695+00:00"
+  },
+  {
+    "id": "dc86c529-d154-41f4-af3f-f8fed53760ec",
+    "role": "assistant",
+    "content": "I don’t have your favorite foods saved yet. [M2]\n\n## Help me remember 🍽️\n- Share your single favorite dish.\n- List any go-to cuisines (e.g., Italian, Japanese, Mexican).\n- Mention any dietary preferences or allergies.\nOnce you tell me, I’ll remember it for next time. [M2]\n\n## Quick reply template\n- Favorite dish: …\n- Top cuisines: …\n- Preferences/allergies: …",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8",
+          "message_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "I don’t know your favorite food yet.",
+        "description": "I don’t know your favorite food yet.\n\n## Help me remember 🍽️\nTell me your favorite food (and any close runners-up), and I’ll remember it for next time...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "976a79f5-1786-4e3d-a343-31d06ad9ecf8",
+          "message_id": "1d614a26-0547-4d8a-bdb3-2430bdef5301",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite food yet.\n\n## Help me remember 🍽️\nTell me your favorite food (and any close runners-up), and I’ll remember it for next time.\n\n## Quick prompts\n- What’s your single favorite dish?\n- Any go-to cuisines (e.g., Italian, Japanese, Mexican)?\n- Any dietary preferences or allergies I should keep in mind?"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2fbfba44-3a6a-47be-9e19-8851430a2437",
+          "message_id": "2fbfba44-3a6a-47be-9e19-8851430a2437-user-2",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:26:41.530510+00:00"
+  }
+]

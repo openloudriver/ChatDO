@@ -1,0 +1,239 @@
+[
+  {
+    "id": "e09fadf2-f58b-4299-914b-1616edb99f39",
+    "role": "user",
+    "content": "My favorite cryptocurrencies are still SOL, ETH, and USDT",
+    "created_at": "2025-12-16T02:06:34.509335+00:00"
+  },
+  {
+    "id": "9f6a75c1-fb88-4741-8a16-5a55cc4cfeae",
+    "role": "assistant",
+    "content": "Saved: your favorite cryptocurrencies are SOL, ETH, and USDT. [M1]\n\n## 🔍 Status\n- Profile updated/confirmed; I’ll default to these for quick checks and examples. [M1]\n\n## ⚙️ Optional setups\n- Price alerts or quick price checks for SOL/ETH/USDT\n- Weekly news digest focused on these coins\n- Simple watchlist or portfolio tracking\n- DCA/reminder schedules\nWant me to set any of these up? [M6]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-0",
+        "title": "My favorite cryptocurrencies are still SOL, ETH, and USDT",
+        "description": "My favorite cryptocurrencies are still SOL, ETH, and USDT",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "88ad3316-d76c-4319-a065-d201481f38cc",
+          "message_id": "88ad3316-d76c-4319-a065-d201481f38cc-user-0",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are still SOL, ETH, and USDT"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-1",
+        "title": "My favorite cryptocurrencies are SOL, ETH, and USDT",
+        "description": "My favorite cryptocurrencies are SOL, ETH, and USDT",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e",
+          "message_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e-user-0",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are SOL, ETH, and USDT"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-2",
+        "title": "SOL, ETH, and USDT. [M3]",
+        "description": "SOL, ETH, and USDT. [M3]\n\n## 🔍 Summary\n- Those are the three you’ve told me are your favorites. [M3]\n\n## ⚙️ Options\n- I can set up price alerts or a s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fe006b13-097b-4359-acc7-0634dc96b212",
+          "message_id": "138210d6-f458-4b1c-ac21-55a5d6ab9e55",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "SOL, ETH, and USDT. [M3]\n\n## 🔍 Summary\n- Those are the three you’ve told me are your favorites. [M3]\n\n## ⚙️ Options\n- I can set up price alerts or a simple watchlist for these coins if you want. [M8]"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-3",
+        "title": "ETH. [M2]",
+        "description": "ETH. [M2]\n\n## Source\n- Your favorites are listed as SOL, ETH, and USDT, so the second is ETH. [M2]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "486dec62-57a6-47e0-b10e-e1e0f266c411",
+          "message_id": "486dec62-57a6-47e0-b10e-e1e0f266c411-assistant-1",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "ETH. [M2]\n\n## Source\n- Your favorites are listed as SOL, ETH, and USDT, so the second is ETH. [M2]"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-4",
+        "title": "USDT. [M4]",
+        "description": "USDT. [M4]\n\n## 🔍 Summary\n- Your favorites are listed as SOL (1st), ETH (2nd), and USDT (3rd). [M4]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3bd5ecf1-36fc-43b7-a0e8-b524ecd5f3d8",
+          "message_id": "3b6d58cc-ed82-4f8a-b8b0-0ac4eca8e5d3",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "USDT. [M4]\n\n## 🔍 Summary\n- Your favorites are listed as SOL (1st), ETH (2nd), and USDT (3rd). [M4]"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-5",
+        "title": "Noted—your favorite cryptocurrencies are SOL, ETH, and USDT....",
+        "description": "Noted—your favorite cryptocurrencies are SOL, ETH, and USDT. [M1]\n\n## Personalization options\n- Price checks and alerts for SOL/ETH/USDT\n- Daily/weekl...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e",
+          "message_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e-assistant-1",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite cryptocurrencies are SOL, ETH, and USDT. [M1]\n\n## Personalization options\n- Price checks and alerts for SOL/ETH/USDT\n- Daily/weekly news digests focused on these coins\n- Simple watchlist or portfolio tracking\n- DCA/reminder schedules\n\nWant me to set up any of the above for these three?"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-6",
+        "title": "List my favorite cryptos",
+        "description": "List my favorite cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "486dec62-57a6-47e0-b10e-e1e0f266c411",
+          "message_id": "486dec62-57a6-47e0-b10e-e1e0f266c411-user-4",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite cryptos"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-7",
+        "title": "SOL, ETH, and USDT. [M2]",
+        "description": "SOL, ETH, and USDT. [M2]\n\n## Optional setups\n- Price alerts and quick checks for SOL/ETH/USDT [M4]\n- Weekly news digest focused on these coins [M4]\n- ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "486dec62-57a6-47e0-b10e-e1e0f266c411",
+          "message_id": "486dec62-57a6-47e0-b10e-e1e0f266c411-assistant-5",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "SOL, ETH, and USDT. [M2]\n\n## Optional setups\n- Price alerts and quick checks for SOL/ETH/USDT [M4]\n- Weekly news digest focused on these coins [M4]\n- Simple watchlist or portfolio tracking [M4]\n- DCA/reminder schedules [M4]\n\nWant me to set any of these up?"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-8",
+        "title": "what are my favorite cryptocurrencies?",
+        "description": "what are my favorite cryptocurrencies?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fe006b13-097b-4359-acc7-0634dc96b212",
+          "message_id": "fe006b13-097b-4359-acc7-0634dc96b212-user-0",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "what are my favorite cryptocurrencies?"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-9",
+        "title": "What's my third favorite cryptocurrency?",
+        "description": "What's my third favorite cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3bd5ecf1-36fc-43b7-a0e8-b524ecd5f3d8",
+          "message_id": "3bd5ecf1-36fc-43b7-a0e8-b524ecd5f3d8-user-0",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my third favorite cryptocurrency?"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-10",
+        "title": "Noted—your favorite colors are red, white, and blue. [M1]",
+        "description": "Noted—your favorite colors are red, white, and blue. [M1]\n\n## 🔍 Status\n- Already saved in your profile; I’ll default to these for themes and visuals u...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e",
+          "message_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e-assistant-3",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite colors are red, white, and blue. [M1]\n\n## 🔍 Status\n- Already saved in your profile; I’ll default to these for themes and visuals unless you say otherwise. [M1]\n\n## 🎨 Optional setups\n- Apply these colors to app/theme suggestions\n- Use them for charts and diagrams\n- Provide CSS variables or Tailwind config tokens\n- Generate a simple brand palette (primary/secondary/accents)\n\nWant me to set any of these up?"
+        }
+      },
+      {
+        "id": "memory-project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf-11",
+        "title": "My favorite colors are red white and blue",
+        "description": "My favorite colors are red white and blue",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e",
+          "message_id": "797dcf68-b2ed-4dbe-8235-17ab1433f65e-user-2",
+          "file_path": null,
+          "source_id": "project-1880fe96-2e20-4ec2-b836-8583d2c2c6cf",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are red white and blue"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:06:34.508475+00:00"
+  }
+]

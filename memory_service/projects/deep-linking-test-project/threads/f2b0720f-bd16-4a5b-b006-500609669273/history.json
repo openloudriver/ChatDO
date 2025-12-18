@@ -1,0 +1,302 @@
+[
+  {
+    "id": "d9bc790f-e2ee-43e8-b787-95820ab3e019",
+    "role": "user",
+    "content": "What do I like?",
+    "created_at": "2025-12-16T02:59:37.365972+00:00"
+  },
+  {
+    "id": "e88a23fa-12a3-49b2-a9c1-4a777d25effc",
+    "role": "assistant",
+    "content": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences [M1].\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like:\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template:\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools?\n2) Code style must-haves?\n3) How do you like explanations (brief vs. deep)?\n4) Any topics you’re especially into?\n5) Anything you dislike or want me to avoid?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-0",
+        "title": "What do I like?",
+        "description": "What do I like?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-0",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What do I like?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:59:37.365131+00:00"
+  },
+  {
+    "id": "b8b4d45b-a3de-4cd6-99c9-c534eef895cb",
+    "role": "user",
+    "content": "Tell me about my preferences",
+    "created_at": "2025-12-16T03:00:14.387655+00:00"
+  },
+  {
+    "id": "ceb46046-12c0-421f-b7c0-474bd3e1a07b",
+    "role": "assistant",
+    "content": "I don’t have your personal likes/preferences saved yet. [M2]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences. [M2]\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like: [M2]\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template: [M2]\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools? [M2]  \n2) Code style must-haves? [M2]  \n3) How do you like explanations (brief vs. deep)? [M2]  \n4) Any topics you’re especially into? [M2]  \n5) Anything you dislike or want me to avoid? [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-0",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-0",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-1",
+        "title": "I don’t have your personal likes/preferences saved yet.",
+        "description": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not you...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "e88a23fa-12a3-49b2-a9c1-4a777d25effc",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences [M1].\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like:\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template:\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools?\n2) Code style must-haves?\n3) How do you like explanations (brief vs. deep)?\n4) Any topics you’re especially into?\n5) Anything you dislike or want me to avoid?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:00:14.386820+00:00"
+  },
+  {
+    "id": "77d8887f-2e5d-4fd0-a11d-8271448a71b9",
+    "role": "user",
+    "content": "What are my favorites?",
+    "created_at": "2025-12-16T03:00:36.027312+00:00"
+  },
+  {
+    "id": "18b27fb9-c3dd-4f11-ad21-59166b68ff61",
+    "role": "assistant",
+    "content": "I don’t have your favorites saved yet. [M3, M4]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your personal preferences. [M4]\n\n## Save your favorites ✅\nShare anything you want me to remember for future chats (I'll store it). You can paste a quick list like: [M2]\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template: [M2]\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Quick prompts 🧭\nAnswer any of these and I’ll remember them: [M2]\n1) Favorite stack/tools?  \n2) Code style must-haves?  \n3) Brief vs. deep explanations?  \n4) Topics you’re especially into?  \n5) Anything to avoid?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-0",
+        "title": "What are my favorites?",
+        "description": "What are my favorites?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-0",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorites?"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-1",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-2",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-2",
+        "title": "I don’t have your personal likes/preferences saved yet. [M2]",
+        "description": "I don’t have your personal likes/preferences saved yet. [M2]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, no...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "ceb46046-12c0-421f-b7c0-474bd3e1a07b",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your personal likes/preferences saved yet. [M2]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences. [M2]\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like: [M2]\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template: [M2]\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools? [M2]  \n2) Code style must-haves? [M2]  \n3) How do you like explanations (brief vs. deep)? [M2]  \n4) Any topics you’re especially into? [M2]  \n5) Anything you dislike or want me to avoid? [M2]"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-3",
+        "title": "I don’t have your personal likes/preferences saved yet.",
+        "description": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not you...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "e88a23fa-12a3-49b2-a9c1-4a777d25effc",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences [M1].\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like:\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template:\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools?\n2) Code style must-haves?\n3) How do you like explanations (brief vs. deep)?\n4) Any topics you’re especially into?\n5) Anything you dislike or want me to avoid?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:00:36.026291+00:00"
+  },
+  {
+    "id": "1292585b-9299-492a-9992-10bc5c1107a8",
+    "role": "user",
+    "content": "Show me what I've told you",
+    "created_at": "2025-12-16T03:01:05.289844+00:00"
+  },
+  {
+    "id": "c02f9c99-74f1-4ce3-8b4b-8b4569b2e31e",
+    "role": "assistant",
+    "content": "You haven’t told me any personal preferences or favorites yet, so I don’t have user-specific memory to show. [M2, M4, M5]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences. [M2, M4]\n\n## Save something now ✅\nShare anything you want me to remember (tech stack, code style, workflow tools, learning/communication style, personal interests), and I’ll store it for future chats. [M2]\n\nExample template: [M2]\n- Tech: languages/frameworks/IDE/OS\n- Code style: tabs/spaces, formatting, testing\n- Workflow: Git, Docker, CI/CD, ticketing\n- Learning: concise vs. detailed; code-first vs. concept-first\n- Communication: brevity vs. depth; tone; summaries vs. steps\n- Personal: hobbies, media, food, fitness, travel\n\n## Quick prompts 🧭\nAnswer any of these and I’ll remember them: [M2]\n1) Favorite stack/tools?\n2) Code style must-haves?\n3) Brief vs. deep explanations?\n4) Topics you’re into?\n5) Anything to avoid?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-0",
+        "title": "Show me what I've told you",
+        "description": "Show me what I've told you",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-0",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me what I've told you"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-1",
+        "title": "I don’t have your favorites saved yet. [M3, M4]",
+        "description": "I don’t have your favorites saved yet. [M3, M4]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your person...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "18b27fb9-c3dd-4f11-ad21-59166b68ff61",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your favorites saved yet. [M3, M4]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your personal preferences. [M4]\n\n## Save your favorites ✅\nShare anything you want me to remember for future chats (I'll store it). You can paste a quick list like: [M2]\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template: [M2]\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Quick prompts 🧭\nAnswer any of these and I’ll remember them: [M2]\n1) Favorite stack/tools?  \n2) Code style must-haves?  \n3) Brief vs. deep explanations?  \n4) Topics you’re especially into?  \n5) Anything to avoid?"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-2",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "f2b0720f-bd16-4a5b-b006-500609669273-user-2",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-3",
+        "title": "I don’t have your personal likes/preferences saved yet. [M2]",
+        "description": "I don’t have your personal likes/preferences saved yet. [M2]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, no...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "ceb46046-12c0-421f-b7c0-474bd3e1a07b",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your personal likes/preferences saved yet. [M2]\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences. [M2]\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like: [M2]\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template: [M2]\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools? [M2]  \n2) Code style must-haves? [M2]  \n3) How do you like explanations (brief vs. deep)? [M2]  \n4) Any topics you’re especially into? [M2]  \n5) Anything you dislike or want me to avoid? [M2]"
+        }
+      },
+      {
+        "id": "memory-project-eb422bba-29dc-4d83-9822-29a0c2f0fce7-4",
+        "title": "I don’t have your personal likes/preferences saved yet.",
+        "description": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not you...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f2b0720f-bd16-4a5b-b006-500609669273",
+          "message_id": "e88a23fa-12a3-49b2-a9c1-4a777d25effc",
+          "file_path": null,
+          "source_id": "project-eb422bba-29dc-4d83-9822-29a0c2f0fce7",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your personal likes/preferences saved yet.\n\n## What I do have 📒\n- My current memory is about ChatDO’s identity and how I operate, not your preferences [M1].\n\n## Tell me what to remember ✅\nShare anything that matters to you and I’ll save it for future chats. You can paste a quick list like:\n- Tech: languages, frameworks, editor/IDE, OS\n- Code style: tabs/spaces, formatting, testing preferences\n- Workflow: tools (Git, Docker), CI/CD style, ticketing\n- Learning: concise vs. detailed, code-first vs. concept-first\n- Communication: brevity vs. depth, tone, summary vs. step-by-step\n- Personal: hobbies, media, food, fitness, travel\n\nExample template:\n- Tech: TypeScript, React, Node.js, VS Code, macOS\n- Code style: Prettier defaults, TDD when practical\n- Workflow: GitHub Actions, Docker Compose\n- Learning: concise summaries + links\n- Communication: bullet points, minimal fluff\n- Personal: coffee, hiking, sci-fi\n\n## Or answer a few quick questions 🧭\n1) Favorite stack/tools?\n2) Code style must-haves?\n3) How do you like explanations (brief vs. deep)?\n4) Any topics you’re especially into?\n5) Anything you dislike or want me to avoid?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:01:05.288428+00:00"
+  }
+]

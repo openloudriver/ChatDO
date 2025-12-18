@@ -1,0 +1,134 @@
+[
+  {
+    "id": "cc209a18-f841-4b54-becc-1533b008cf4d",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-16T13:01:11.308955+00:00"
+  },
+  {
+    "id": "35b46bfc-57e4-4989-b902-97ea84bce63b",
+    "role": "assistant",
+    "content": "I don’t know your favorite programming language yet.\n\n## Quick question\n- What’s your favorite language? I’ll remember it for future chats.\n\n## Optional details to share\n- Primary language (e.g., Python, Rust, TypeScript, Go)\n- Why you prefer it (speed, ecosystem, ergonomics)\n- Typical use (backend, data, systems, mobile, web)",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6bd0efcc-af9f-4db0-92f2-1feebda318f6",
+          "message_id": "6bd0efcc-af9f-4db0-92f2-1feebda318f6-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:01:11.308127+00:00"
+  },
+  {
+    "id": "4bd0bf45-f73b-459c-9cd7-b1be1b9f7db5",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-16T13:05:30.749929+00:00"
+  },
+  {
+    "id": "d385d9dc-5d70-495f-aabf-9e0e1fbd60a1",
+    "role": "assistant",
+    "content": "I don’t have any programming languages saved for you yet. [M2]\n\n## 🔍 Status\n- No favorite programming language is on file. If you tell me, I’ll remember it for future chats. [M2]\n\n## 💾 Add one now\n- What’s your favorite language?\n- Optional details to store: [M2]\n  - Primary language (e.g., Python, Rust, TypeScript, Go)\n  - Why you prefer it (speed, ecosystem, ergonomics)\n  - Typical use (backend, data, systems, mobile, web)",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6bd0efcc-af9f-4db0-92f2-1feebda318f6",
+          "message_id": "6bd0efcc-af9f-4db0-92f2-1feebda318f6-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-1",
+        "title": "I don’t know your favorite programming language yet.",
+        "description": "I don’t know your favorite programming language yet.\n\n## Quick question\n- What’s your favorite language? I’ll remember it for future chats.\n\n## Option...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6bd0efcc-af9f-4db0-92f2-1feebda318f6",
+          "message_id": "35b46bfc-57e4-4989-b902-97ea84bce63b",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite programming language yet.\n\n## Quick question\n- What’s your favorite language? I’ll remember it for future chats.\n\n## Optional details to share\n- Primary language (e.g., Python, Rust, TypeScript, Go)\n- Why you prefer it (speed, ecosystem, ergonomics)\n- Typical use (backend, data, systems, mobile, web)"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-2",
+        "title": "I don’t know yet. ",
+        "description": "I don’t know yet. \n\n## 🔍 What I need\n- Tell me your favorite country, and I’ll store it so I can answer instantly next time.\n\n## 💾 Memory\n- I’ll save ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "27251730-5b06-4417-bf15-3b07b81171f7",
+          "message_id": "181bfabc-a950-4615-b323-4a14fdd67a3d",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know yet. \n\n## 🔍 What I need\n- Tell me your favorite country, and I’ll store it so I can answer instantly next time.\n\n## 💾 Memory\n- I’ll save it under your project memory and cite it as [M1] when I use it."
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-3",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "02f015fb-b708-45b6-9992-8bd1ac111e90",
+          "message_id": "02f015fb-b708-45b6-9992-8bd1ac111e90-user-2",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:05:30.748763+00:00"
+  }
+]

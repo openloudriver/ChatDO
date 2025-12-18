@@ -1,0 +1,152 @@
+[
+  {
+    "id": "a7af0a61-e168-4c5b-ac86-39634567861e",
+    "role": "user",
+    "content": "What's my number one movie?",
+    "created_at": "2025-12-16T13:01:45.659928+00:00"
+  },
+  {
+    "id": "e9ccc6ff-9cf3-4034-a31d-f1ac84fe4953",
+    "role": "assistant",
+    "content": "I don’t know your number one movie yet.\n\n## 🔍 Status\n- There’s no saved entry in your memory for a #1 movie right now.\n\n## 💬 Tell me\n- What’s your number one movie? I’ll remember it so I can answer instantly next time.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-0",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "93bd3865-22f8-4f04-9b2c-3d58046810a2",
+          "message_id": "93bd3865-22f8-4f04-9b2c-3d58046810a2-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-1",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "02f015fb-b708-45b6-9992-8bd1ac111e90",
+          "message_id": "02f015fb-b708-45b6-9992-8bd1ac111e90-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-2",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "4be0f5f7-5d44-4fab-8dea-99c100f7615e",
+          "message_id": "4be0f5f7-5d44-4fab-8dea-99c100f7615e-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:01:45.658696+00:00"
+  },
+  {
+    "id": "4dae5bdd-a0cb-4162-bfb8-7901be389fa0",
+    "role": "user",
+    "content": "List my favorite movies",
+    "created_at": "2025-12-16T13:06:03.254975+00:00"
+  },
+  {
+    "id": "232610f3-bf97-40c1-925f-2b36b30b94c4",
+    "role": "assistant",
+    "content": "I don’t have a saved list of your favorite movies yet, and I also don’t know your number one movie [M3].\n\n## 🔍 Status\n- No favorites list is saved.\n- Your #1 movie isn’t in memory yet [M3].\n\n## 💬 Tell me\n- Share 3–10 favorite movies and mark your #1.\n- Optionally add notes (genre, comfort rewatch, director).\n\n## 📝 Example format\n1) The Matrix — #1  \n2) Interstellar  \n3) Parasite  \n4) The Dark Knight\n\nI’ll remember what you share so I can list it instantly next time.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-0",
+        "title": "List my favorite movies",
+        "description": "List my favorite movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "93bd3865-22f8-4f04-9b2c-3d58046810a2",
+          "message_id": "93bd3865-22f8-4f04-9b2c-3d58046810a2-user-0",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite movies"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-1",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "02f015fb-b708-45b6-9992-8bd1ac111e90",
+          "message_id": "02f015fb-b708-45b6-9992-8bd1ac111e90-user-2",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-4a5e0243-6398-4102-8e98-843c71d574f6-2",
+        "title": "I don’t know your number one movie yet.",
+        "description": "I don’t know your number one movie yet.\n\n## 🔍 Status\n- There’s no saved entry in your memory for a #1 movie right now.\n\n## 💬 Tell me\n- What’s your num...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "93bd3865-22f8-4f04-9b2c-3d58046810a2",
+          "message_id": "e9ccc6ff-9cf3-4034-a31d-f1ac84fe4953",
+          "file_path": null,
+          "source_id": "project-4a5e0243-6398-4102-8e98-843c71d574f6",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your number one movie yet.\n\n## 🔍 Status\n- There’s no saved entry in your memory for a #1 movie right now.\n\n## 💬 Tell me\n- What’s your number one movie? I’ll remember it so I can answer instantly next time."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:06:03.253710+00:00"
+  }
+]

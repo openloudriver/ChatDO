@@ -1,0 +1,77 @@
+[
+  {
+    "id": "82e46be2-11d9-4044-bb76-f0ba1dfef0d0",
+    "role": "user",
+    "content": "What's my number one movie?",
+    "created_at": "2025-12-16T13:36:05.545143+00:00"
+  },
+  {
+    "id": "54555b99-919c-409d-8e29-126670a13612",
+    "role": "assistant",
+    "content": "I don’t know your number one movie yet.\n\n## How to proceed\n- Tell me your number one movie and I’ll remember it for future questions.\n- If you have a ranked list, share it and I’ll store the top pick.\n- If you think we saved this before, I can try fetching your memory again—just say “retry.”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8-0",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "ff530e25-22b1-48aa-9fe0-1cc408752260",
+          "message_id": "ff530e25-22b1-48aa-9fe0-1cc408752260-user-0",
+          "file_path": null,
+          "source_id": "project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8-1",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b12d7c56-2b8b-45bc-8c44-cad487bad565",
+          "message_id": "b12d7c56-2b8b-45bc-8c44-cad487bad565-user-0",
+          "file_path": null,
+          "source_id": "project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      },
+      {
+        "id": "memory-project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8-2",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6519dae4-d38a-4e35-a36a-a2d47cddb073",
+          "message_id": "6519dae4-d38a-4e35-a36a-a2d47cddb073-user-0",
+          "file_path": null,
+          "source_id": "project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:36:05.544377+00:00"
+  }
+]

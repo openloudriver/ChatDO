@@ -40,6 +40,7 @@ class ChatMessage:
     project_id: str
     chat_id: str
     message_id: str
+    message_uuid: str
     role: str
     content: str
     timestamp: datetime
@@ -82,6 +83,7 @@ class SearchResult:
     source_type: str = "file"  # "file" or "chat"
     chat_id: Optional[str] = None  # For chat messages
     message_id: Optional[str] = None  # For chat messages
+    message_uuid: Optional[str] = None  # UUID for citations/deep-links
 
 
 @dataclass

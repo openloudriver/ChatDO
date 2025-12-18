@@ -1,0 +1,98 @@
+[
+  {
+    "id": "066a78a7-cd34-46fa-beab-fa7dded93eba",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-17T01:21:50.086859+00:00"
+  },
+  {
+    "id": "d5b9c98a-5824-43b6-89f6-6ff0a312df62",
+    "role": "assistant",
+    "content": "I don’t know your favorite programming language yet.\n\n## Quick follow-up\n- Tell me your favorite language (e.g., Python, JavaScript/TypeScript, Rust, Go, Java, C/C++, Ruby, etc.).\n- If you want, I’ll remember it for future conversations.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d",
+          "message_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:21:50.085926+00:00"
+  },
+  {
+    "id": "d7afa994-8a2a-4370-8a3f-920a280f5fd2",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-17T01:25:45.090109+00:00"
+  },
+  {
+    "id": "3c024538-14b1-4298-8f64-0304ded668c7",
+    "role": "assistant",
+    "content": "I don’t have any programming languages saved for you yet. [M2]\n\n## 🔍 What I have on record\n- None saved so far. [M2]\n\n## ✅ Quick follow-up\n- Tell me your favorite languages (e.g., Python, JavaScript/TypeScript, Rust, Go, Java, C/C++).\n- If you want, I’ll remember them for future chats (you can include proficiency levels or what you’re currently learning).",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d",
+          "message_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d-user-0",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-2a27aef4-9a6b-42c9-97b3-22b3966b242d-1",
+        "title": "I don’t know your favorite programming language yet.",
+        "description": "I don’t know your favorite programming language yet.\n\n## Quick follow-up\n- Tell me your favorite language (e.g., Python, JavaScript/TypeScript, Rust, ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "f403bcf0-e6ca-4ebe-8f53-64b97a7b7c9d",
+          "message_id": "d5b9c98a-5824-43b6-89f6-6ff0a312df62",
+          "file_path": null,
+          "source_id": "project-2a27aef4-9a6b-42c9-97b3-22b3966b242d",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite programming language yet.\n\n## Quick follow-up\n- Tell me your favorite language (e.g., Python, JavaScript/TypeScript, Rust, Go, Java, C/C++, Ruby, etc.).\n- If you want, I’ll remember it for future conversations."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:25:45.088769+00:00"
+  }
+]

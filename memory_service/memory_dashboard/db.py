@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 import hashlib
 import logging
+import uuid
 
 from memory_service.config import MEMORY_DASHBOARD_PATH, PROJECTS_PATH, get_db_path_for_source, TRACKING_DB_PATH
 from memory_service.models import Source, File, Chunk, ChatMessage, Embedding, SearchResult, SourceStatus, IndexJob, Fact
@@ -71,14 +72,37 @@ def init_db(source_id: str, project_id: Optional[str] = None):
             project_id TEXT NOT NULL,
             chat_id TEXT NOT NULL,
             message_id TEXT NOT NULL,
+            message_uuid TEXT NOT NULL,
             role TEXT NOT NULL,
             content TEXT NOT NULL,
             timestamp TIMESTAMP NOT NULL,
             message_index INTEGER NOT NULL,
             FOREIGN KEY (source_id) REFERENCES sources(id),
-            UNIQUE(chat_id, message_id)
+            UNIQUE(chat_id, message_id),
+            UNIQUE(message_uuid)
         )
     """)
+    
+    # Migration: Add message_uuid column if it doesn't exist (for existing databases)
+    cursor.execute("PRAGMA table_info(chat_messages)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'message_uuid' not in columns:
+        logger.info(f"Migrating chat_messages table: adding message_uuid column for source {source_id}")
+        try:
+            cursor.execute("ALTER TABLE chat_messages ADD COLUMN message_uuid TEXT")
+            # Generate UUIDs for existing messages
+            cursor.execute("SELECT id, chat_id, message_id FROM chat_messages WHERE message_uuid IS NULL OR message_uuid = ''")
+            existing_messages = cursor.fetchall()
+            for row in existing_messages:
+                new_uuid = str(uuid.uuid4())
+                cursor.execute("UPDATE chat_messages SET message_uuid = ? WHERE id = ?", (new_uuid, row["id"]))
+            # Add unique constraint after populating
+            try:
+                cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_chat_messages_uuid ON chat_messages(message_uuid)")
+            except sqlite3.OperationalError:
+                pass  # Index might already exist
+        except sqlite3.OperationalError as e:
+            logger.warning(f"Migration note (may be harmless): {e}")
     
     # Chunks table (extended to support both files and chat messages)
     cursor.execute("""
@@ -136,8 +160,33 @@ def init_db(source_id: str, project_id: Optional[str] = None):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_chat_message ON chunks(chat_message_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_project ON chat_messages(project_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_chat ON chat_messages(chat_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_uuid ON chat_messages(message_uuid)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_chunk ON embeddings(chunk_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sources_project ON sources(project_id)")
+    
+    # Project Facts table (for typed facts with provenance and temporal "latest wins")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS project_facts (
+            fact_id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            fact_key TEXT NOT NULL,
+            value_text TEXT NOT NULL,
+            value_type TEXT NOT NULL CHECK(value_type IN ('string', 'number', 'bool', 'date', 'json')),
+            confidence REAL NOT NULL DEFAULT 1.0,
+            source_message_uuid TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            effective_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            supersedes_fact_id TEXT,
+            is_current INTEGER NOT NULL DEFAULT 1 CHECK(is_current IN (0, 1)),
+            FOREIGN KEY (supersedes_fact_id) REFERENCES project_facts(fact_id),
+            FOREIGN KEY (source_message_uuid) REFERENCES chat_messages(message_uuid)
+        )
+    """)
+    
+    # Indexes for project_facts
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_project_facts_project_key ON project_facts(project_id, fact_key, is_current)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_project_facts_source_uuid ON project_facts(source_message_uuid)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_project_facts_current ON project_facts(project_id, is_current)")
     
     conn.commit()
     conn.close()
@@ -350,12 +399,12 @@ def insert_embeddings(chunk_ids: List[int], embeddings: np.ndarray, model_name: 
     conn.close()
 
 
-def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str]]]:
+def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str], Optional[str]]]:
     """
     Get all embeddings for a specific source (files and chat messages).
-    Returns list of (chunk_id, embedding_vector, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id).
-    For file chunks: file_id and file_path are set, chat_id and message_id are None.
-    For chat chunks: file_id and file_path are None, chat_id and message_id are set.
+    Returns list of (chunk_id, embedding_vector, file_id, file_path, chunk_text, source_id, project_id, filetype, chunk_index, start_char, end_char, chat_id, message_id, message_uuid).
+    For file chunks: file_id and file_path are set, chat_id, message_id, and message_uuid are None.
+    For chat chunks: file_id and file_path are None, chat_id, message_id, and message_uuid are set.
     
     Note: For project sources (source_id starts with "project-"), extracts project_id for correct routing.
     """
@@ -369,7 +418,7 @@ def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple
     
     # Get file-based embeddings
     cursor.execute("""
-        SELECT e.chunk_id, e.embedding, c.file_id, f.path, c.text, s.source_id, s.project_id, f.filetype, c.chunk_index, c.start_char, c.end_char, NULL as chat_id, NULL as message_id
+        SELECT e.chunk_id, e.embedding, c.file_id, f.path, c.text, s.source_id, s.project_id, f.filetype, c.chunk_index, c.start_char, c.end_char, NULL as chat_id, NULL as message_id, NULL as message_uuid
         FROM embeddings e
         JOIN chunks c ON e.chunk_id = c.id
         JOIN files f ON c.file_id = f.id
@@ -379,9 +428,9 @@ def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple
     
     file_rows = cursor.fetchall()
     
-    # Get chat-based embeddings
+    # Get chat-based embeddings (include message_uuid)
     cursor.execute("""
-        SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+        SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id, cm.message_uuid
         FROM embeddings e
         JOIN chunks c ON e.chunk_id = c.id
         JOIN chat_messages cm ON c.chat_message_id = cm.id
@@ -410,16 +459,17 @@ def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple
             row["start_char"],
             row["end_char"],
             row["chat_id"],
-            row["message_id"]
+            row["message_id"],
+            row["message_uuid"] if "message_uuid" in row.keys() else None  # May be None for old records
         ))
     
     return results
 
 
-def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_chat_id: Optional[str] = None) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str]]]:
+def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_chat_id: Optional[str] = None) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str], Optional[str]]]:
     """
     Get all chat message embeddings for a project, optionally excluding a specific chat.
-    Returns same format as get_all_embeddings_for_source.
+    Returns same format as get_all_embeddings_for_source (includes message_uuid).
     """
     source_id = f"project-{project_id}"
     
@@ -430,7 +480,7 @@ def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_ch
         
         if exclude_chat_id:
             cursor.execute("""
-                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id, cm.message_uuid
                 FROM embeddings e
                 JOIN chunks c ON e.chunk_id = c.id
                 JOIN chat_messages cm ON c.chat_message_id = cm.id
@@ -439,7 +489,7 @@ def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_ch
             """, (project_id, model_name, exclude_chat_id))
         else:
             cursor.execute("""
-                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id
+                SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id, cm.message_uuid
                 FROM embeddings e
                 JOIN chunks c ON e.chunk_id = c.id
                 JOIN chat_messages cm ON c.chat_message_id = cm.id
@@ -468,7 +518,8 @@ def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_ch
                 row["start_char"],
                 row["end_char"],
                 row["chat_id"],
-                row["message_id"]
+                row["message_id"],
+                row["message_uuid"] if "message_uuid" in row.keys() else None  # May be None for old records
             ))
         
         return results
@@ -897,11 +948,16 @@ def upsert_chat_message(
     role: str,
     content: str,
     timestamp: datetime,
-    message_index: int
+    message_index: int,
+    message_uuid: Optional[str] = None
 ) -> int:
     """
     Insert or update a chat message.
     Returns the database ID of the chat message.
+    
+    Args:
+        message_uuid: Optional UUIDv4. If not provided, generates a new one for new messages.
+                     For existing messages, preserves the existing UUID.
     """
     # Get source_db_id
     source_db_id = upsert_source(source_id, project_id, "", None, None)
@@ -913,25 +969,31 @@ def upsert_chat_message(
     
     # Check if message already exists
     cursor.execute("""
-        SELECT id FROM chat_messages 
+        SELECT id, message_uuid FROM chat_messages 
         WHERE chat_id = ? AND message_id = ?
     """, (chat_id, message_id))
     existing = cursor.fetchone()
     
     if existing:
-        # Update existing message
+        # Update existing message (preserve existing UUID)
+        existing_uuid = existing["message_uuid"]
+        if not existing_uuid:
+            # If UUID is missing (migration case), generate one
+            existing_uuid = str(uuid.uuid4())
         cursor.execute("""
             UPDATE chat_messages
-            SET role = ?, content = ?, timestamp = ?, message_index = ?
+            SET role = ?, content = ?, timestamp = ?, message_index = ?, message_uuid = ?
             WHERE id = ?
-        """, (role, content, timestamp, message_index, existing["id"]))
+        """, (role, content, timestamp, message_index, existing_uuid, existing["id"]))
         chat_message_id = existing["id"]
     else:
-        # Insert new message
+        # Insert new message with UUID
+        if not message_uuid:
+            message_uuid = str(uuid.uuid4())
         cursor.execute("""
-            INSERT INTO chat_messages (source_id, project_id, chat_id, message_id, role, content, timestamp, message_index)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (source_db_id, project_id, chat_id, message_id, role, content, timestamp, message_index))
+            INSERT INTO chat_messages (source_id, project_id, chat_id, message_id, message_uuid, role, content, timestamp, message_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (source_db_id, project_id, chat_id, message_id, message_uuid, role, content, timestamp, message_index))
         chat_message_id = cursor.lastrowid
     
     conn.commit()
@@ -950,12 +1012,25 @@ def get_chat_message_by_id(chat_message_id: int, source_id: str) -> Optional[Cha
     if not row:
         return None
     
+    # Handle missing message_uuid for migration compatibility
+    message_uuid = row["message_uuid"] if "message_uuid" in row.keys() else None
+    if not message_uuid:
+        # Generate UUID for old records
+        message_uuid = str(uuid.uuid4())
+        # Update the record
+        conn = get_db_connection(source_id)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE chat_messages SET message_uuid = ? WHERE id = ?", (message_uuid, chat_message_id))
+        conn.commit()
+        conn.close()
+    
     return ChatMessage(
         id=row["id"],
         source_id=row["source_id"],
         project_id=row["project_id"],
         chat_id=row["chat_id"],
         message_id=row["message_id"],
+        message_uuid=message_uuid,
         role=row["role"],
         content=row["content"],
         timestamp=datetime.fromisoformat(row["timestamp"]) if isinstance(row["timestamp"], str) else row["timestamp"],
@@ -1252,3 +1327,192 @@ def get_most_recent_topic_key_in_chat(
         return None
     
     return row["topic_key"]
+
+
+# ============================================================================
+# Project Facts Database (Typed facts with provenance and temporal "latest wins")
+# ============================================================================
+
+def store_project_fact(
+    project_id: str,
+    fact_key: str,
+    value_text: str,
+    value_type: str,
+    source_message_uuid: str,
+    confidence: float = 1.0,
+    effective_at: Optional[datetime] = None,
+    source_id: Optional[str] = None,
+    created_at: Optional[datetime] = None  # For testing: deterministic timestamps
+) -> str:
+    """
+    Store a project fact with "latest wins" semantics.
+    
+    When a new fact with the same fact_key is stored, all previous facts
+    with that key are marked as is_current=0, and the new fact references
+    the most recent one via supersedes_fact_id.
+    
+    Args:
+        project_id: Project ID
+        fact_key: Fact key (e.g., "user.favorite_color")
+        value_text: Fact value as text
+        value_type: Type: 'string', 'number', 'bool', 'date', or 'json'
+        source_message_uuid: UUID of the message that introduced/updated this fact
+        confidence: Confidence score (0.0 to 1.0, default 1.0)
+        effective_at: When this fact becomes effective (defaults to created_at)
+        source_id: Source ID for database connection (uses project-based source)
+        
+    Returns:
+        The fact_id (UUID) of the stored fact
+    """
+    if source_id is None:
+        source_id = f"project-{project_id}"
+    
+    # Initialize DB for this source if needed
+    init_db(source_id, project_id=project_id)
+    conn = get_db_connection(source_id, project_id=project_id)
+    cursor = conn.cursor()
+    
+    fact_id = str(uuid.uuid4())
+    if created_at is None:
+        created_at = datetime.now()  # Production: use current time
+    if effective_at is None:
+        effective_at = created_at
+    
+    # Find the most recent current fact with this key
+    cursor.execute("""
+        SELECT fact_id FROM project_facts
+        WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        ORDER BY effective_at DESC, created_at DESC
+        LIMIT 1
+    """, (project_id, fact_key))
+    previous_fact = cursor.fetchone()
+    supersedes_fact_id = previous_fact[0] if previous_fact else None
+    
+    # Mark all previous facts with this key as not current
+    if previous_fact:
+        cursor.execute("""
+            UPDATE project_facts
+            SET is_current = 0
+            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        """, (project_id, fact_key))
+    
+    # Insert the new fact
+    cursor.execute("""
+        INSERT INTO project_facts (
+            fact_id, project_id, fact_key, value_text, value_type,
+            confidence, source_message_uuid, created_at, effective_at,
+            supersedes_fact_id, is_current
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    """, (
+        fact_id, project_id, fact_key, value_text, value_type,
+        confidence, source_message_uuid, created_at, effective_at,
+        supersedes_fact_id
+    ))
+    
+    conn.commit()
+    conn.close()
+    return fact_id
+
+
+def get_current_fact(project_id: str, fact_key: str, source_id: Optional[str] = None) -> Optional[dict]:
+    """
+    Get the current fact for a given fact_key.
+    
+    Args:
+        project_id: Project ID
+        fact_key: Fact key to look up
+        source_id: Optional source ID (uses project-based source if not provided)
+        
+    Returns:
+        Dict with fact data or None if not found
+    """
+    if source_id is None:
+        source_id = f"project-{project_id}"
+    
+    init_db(source_id, project_id=project_id)
+    conn = get_db_connection(source_id, project_id=project_id)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT fact_id, project_id, fact_key, value_text, value_type,
+               confidence, source_message_uuid, created_at, effective_at,
+               supersedes_fact_id, is_current
+        FROM project_facts
+        WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        ORDER BY effective_at DESC, created_at DESC
+        LIMIT 1
+    """, (project_id, fact_key))
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        return None
+    
+    return {
+        "fact_id": row["fact_id"],
+        "project_id": row["project_id"],
+        "fact_key": row["fact_key"],
+        "value_text": row["value_text"],
+        "value_type": row["value_type"],
+        "confidence": row["confidence"],
+        "source_message_uuid": row["source_message_uuid"],
+        "created_at": datetime.fromisoformat(row["created_at"]) if isinstance(row["created_at"], str) else row["created_at"],
+        "effective_at": datetime.fromisoformat(row["effective_at"]) if isinstance(row["effective_at"], str) else row["effective_at"],
+        "supersedes_fact_id": row["supersedes_fact_id"],
+        "is_current": bool(row["is_current"])
+    }
+
+
+def search_current_facts(project_id: str, query: str, limit: int = 10, source_id: Optional[str] = None) -> List[dict]:
+    """
+    Search current facts by fact_key or value_text.
+    
+    Args:
+        project_id: Project ID
+        query: Search query (searches fact_key and value_text)
+        limit: Maximum number of results
+        source_id: Optional source ID (uses project-based source if not provided)
+        
+    Returns:
+        List of fact dicts matching the query
+    """
+    if source_id is None:
+        source_id = f"project-{project_id}"
+    
+    init_db(source_id, project_id=project_id)
+    conn = get_db_connection(source_id, project_id=project_id)
+    cursor = conn.cursor()
+    
+    search_pattern = f"%{query}%"
+    cursor.execute("""
+        SELECT fact_id, project_id, fact_key, value_text, value_type,
+               confidence, source_message_uuid, created_at, effective_at,
+               supersedes_fact_id, is_current
+        FROM project_facts
+        WHERE project_id = ? AND is_current = 1
+          AND (fact_key LIKE ? OR value_text LIKE ?)
+        ORDER BY effective_at DESC, created_at DESC
+        LIMIT ?
+    """, (project_id, search_pattern, search_pattern, limit))
+    
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [
+        {
+            "fact_id": row["fact_id"],
+            "project_id": row["project_id"],
+            "fact_key": row["fact_key"],
+            "value_text": row["value_text"],
+            "value_type": row["value_type"],
+            "confidence": row["confidence"],
+            "source_message_uuid": row["source_message_uuid"],
+            "created_at": datetime.fromisoformat(row["created_at"]) if isinstance(row["created_at"], str) else row["created_at"],
+            "effective_at": datetime.fromisoformat(row["effective_at"]) if isinstance(row["effective_at"], str) else row["effective_at"],
+            "supersedes_fact_id": row["supersedes_fact_id"],
+            "is_current": bool(row["is_current"])
+        }
+        for row in rows
+    ]

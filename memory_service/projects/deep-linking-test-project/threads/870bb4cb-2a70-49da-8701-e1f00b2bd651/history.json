@@ -1,0 +1,170 @@
+[
+  {
+    "id": "bfb2da2e-077d-4b57-92b7-d23851f9ba68",
+    "role": "user",
+    "content": "What is my top book?",
+    "created_at": "2025-12-17T00:38:40.645557+00:00"
+  },
+  {
+    "id": "328d39ad-d2e9-4f6f-a3da-10608e1ac005",
+    "role": "assistant",
+    "content": "I don’t know your top book yet.\n\n## 🔍 What I checked\n- I looked for an existing memory entry for your “top book” but didn’t find one saved.\n\n## 💬 Tell me and I’ll remember\n- Reply with your top book (title and author), and I’ll save it so I can answer instantly next time.\n- If you have a ranked list, share it in order and I’ll treat it as authoritative.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-0",
+        "title": "What is my top book?",
+        "description": "What is my top book?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "870bb4cb-2a70-49da-8701-e1f00b2bd651",
+          "message_id": "870bb4cb-2a70-49da-8701-e1f00b2bd651-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my top book?"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-1",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "439d4f80-6946-49c7-9914-b612173b0eb1",
+          "message_id": "439d4f80-6946-49c7-9914-b612173b0eb1-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-2",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "e3b7a79e-3d98-4604-8745-dbf7824fbc6a",
+          "message_id": "e3b7a79e-3d98-4604-8745-dbf7824fbc6a-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:38:40.644370+00:00"
+  },
+  {
+    "id": "43671a38-ae33-490b-bc9a-cd186ee782fa",
+    "role": "user",
+    "content": "What are my favorite books?",
+    "created_at": "2025-12-17T00:43:49.183920+00:00"
+  },
+  {
+    "id": "2fbe64a9-9956-4c2a-84ac-4f095ad92462",
+    "role": "assistant",
+    "content": "I don’t have your favorite books saved yet.\n\n## 🔍 What I checked\n- I looked for a saved memory entry for your favorite books but couldn’t retrieve any data.\n\n## 💬 Tell me and I’ll remember\nReply with:\n- A list of your favorite books (title + author).\n- If the list is ranked, share the order and I’ll treat it as authoritative.\n- Optionally add genres or why you love them.\n\nI’ll store it so I can answer instantly next time.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-0",
+        "title": "What are my favorite books?",
+        "description": "What are my favorite books?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "870bb4cb-2a70-49da-8701-e1f00b2bd651",
+          "message_id": "870bb4cb-2a70-49da-8701-e1f00b2bd651-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite books?"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-1",
+        "title": "List my favorite movies",
+        "description": "List my favorite movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "439d4f80-6946-49c7-9914-b612173b0eb1",
+          "message_id": "439d4f80-6946-49c7-9914-b612173b0eb1-user-2",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite movies"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-2",
+        "title": "What's my favorite hobby?",
+        "description": "What's my favorite hobby?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "160c4c01-5650-4f97-be4e-adc596f62bd0",
+          "message_id": "160c4c01-5650-4f97-be4e-adc596f62bd0-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite hobby?"
+        }
+      },
+      {
+        "id": "memory-project-17332b92-322b-467f-a06c-31f57dc92212-3",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "ca664bc6-898e-4068-9d45-43d644e131f9",
+          "message_id": "ca664bc6-898e-4068-9d45-43d644e131f9-user-0",
+          "file_path": null,
+          "source_id": "project-17332b92-322b-467f-a06c-31f57dc92212",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:43:49.182579+00:00"
+  }
+]

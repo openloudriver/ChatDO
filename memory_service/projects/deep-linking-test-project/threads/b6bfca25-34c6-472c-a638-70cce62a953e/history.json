@@ -1,0 +1,131 @@
+[
+  {
+    "id": "dab35932-7671-4d83-9105-59f754c1eda7",
+    "role": "user",
+    "content": "What is my top book?",
+    "created_at": "2025-12-16T03:49:52.436246+00:00"
+  },
+  {
+    "id": "49f75694-5309-4511-a08e-56edc62b537d",
+    "role": "assistant",
+    "content": "Blue. [M2, M3]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M2, M3]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-0",
+        "title": "What is my top book?",
+        "description": "What is my top book?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b6bfca25-34c6-472c-a638-70cce62a953e",
+          "message_id": "b6bfca25-34c6-472c-a638-70cce62a953e-user-0",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my top book?"
+        }
+      },
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-1",
+        "title": "Blue. [M2]",
+        "description": "Blue. [M2]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M2]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "93ac4918-fca4-42d6-ad07-3ea889522f25",
+          "message_id": "626ea04f-81cc-4290-bf7a-05c591be8121",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M2]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M2]"
+        }
+      },
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-2",
+        "title": "Blue. [M1]",
+        "description": "Blue. [M1]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "20465f75-cd70-4b4a-9868-ff0a23e10865",
+          "message_id": "bc39e914-15b6-4a10-8dd6-5fb2730e0afd",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M1]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M1]"
+        }
+      },
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-3",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "93ac4918-fca4-42d6-ad07-3ea889522f25",
+          "message_id": "93ac4918-fca4-42d6-ad07-3ea889522f25-user-0",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-4",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b311de8c-68b3-42fd-a737-7fad31da71b5",
+          "message_id": "b311de8c-68b3-42fd-a737-7fad31da71b5-user-0",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      },
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-5",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "20465f75-cd70-4b4a-9868-ff0a23e10865",
+          "message_id": "20465f75-cd70-4b4a-9868-ff0a23e10865-user-0",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:49:52.434656+00:00"
+  }
+]

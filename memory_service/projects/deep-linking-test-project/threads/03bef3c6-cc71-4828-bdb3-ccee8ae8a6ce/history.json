@@ -1,0 +1,59 @@
+[
+  {
+    "id": "d75abded-efa3-4fdf-b050-c99e2f16c0a3",
+    "role": "user",
+    "content": "What's my top cryptocurrency?",
+    "created_at": "2025-12-16T03:15:10.709439+00:00"
+  },
+  {
+    "id": "d8cf1c5d-4c3e-42b9-b80e-d97d5171f2a1",
+    "role": "assistant",
+    "content": "Bitcoin. [M2]\n\n## 📊 Data\n- Ranked favorites (from your stored list):\n  1) Bitcoin\n  2) Ethereum\n  3) Monero\n  4) Litecoin [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-17078cad-6edb-49ee-b97a-66898e3b609b-0",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "03bef3c6-cc71-4828-bdb3-ccee8ae8a6ce",
+          "message_id": "03bef3c6-cc71-4828-bdb3-ccee8ae8a6ce-user-0",
+          "file_path": null,
+          "source_id": "project-17078cad-6edb-49ee-b97a-66898e3b609b",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      },
+      {
+        "id": "memory-project-17078cad-6edb-49ee-b97a-66898e3b609b-1",
+        "title": "Blue. [M1]",
+        "description": "Blue. [M1]\n\n## 🔍 Summary\n- Your ranked favorites list shows Blue as #1. [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "09d0741d-e12c-48a0-98d7-f7d8468d051e",
+          "message_id": "6d6e1672-8dde-4e0e-9bf7-170a1763b723",
+          "file_path": null,
+          "source_id": "project-17078cad-6edb-49ee-b97a-66898e3b609b",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M1]\n\n## 🔍 Summary\n- Your ranked favorites list shows Blue as #1. [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:15:10.707761+00:00"
+  }
+]

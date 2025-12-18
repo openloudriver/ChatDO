@@ -1,0 +1,42 @@
+[
+  {
+    "id": "36d0d0ae-9164-4fbd-8e8f-fe6f5d106098",
+    "role": "user",
+    "content": "What's my number one movie?",
+    "created_at": "2025-12-17T02:09:15.648326+00:00"
+  },
+  {
+    "id": "be3dae6c-69bc-4af2-bb3d-bd4f3297a746",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:09:15.647970+00:00"
+  },
+  {
+    "id": "d3eae9c4-55b6-4418-98c8-3161fae31be1",
+    "role": "user",
+    "content": "List my favorite movies",
+    "created_at": "2025-12-17T02:09:18.018339+00:00"
+  },
+  {
+    "id": "ea429345-0277-435a-ab24-1147be01aef6",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:09:18.018066+00:00"
+  }
+]

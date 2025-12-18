@@ -1,0 +1,98 @@
+[
+  {
+    "id": "2edaf273-d782-4917-b677-af697e4380d8",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-17T01:07:09.703955+00:00"
+  },
+  {
+    "id": "2fbb61f9-1e24-4fa9-b0b4-3463ec53db43",
+    "role": "assistant",
+    "content": "I don’t know yet.  \n\n## Help me learn this\n- Tell me your favorite programming language, and I’ll remember it for future answers and examples.\n- If you have a secondary favorite or a preferred stack/framework, include that too.\n\n## What I’ll do next\n- I’ll store your preference so I can tailor code snippets, tools, and recommendations accordingly.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "276f563d-562d-42f6-9dd4-ca0a75c6d39b",
+          "message_id": "276f563d-562d-42f6-9dd4-ca0a75c6d39b-user-0",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:07:09.702019+00:00"
+  },
+  {
+    "id": "f6914191-0057-4ba0-a926-6329100049c1",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-17T01:11:12.212080+00:00"
+  },
+  {
+    "id": "927598f6-1f12-479b-a479-6a2851c98f40",
+    "role": "assistant",
+    "content": "You haven’t told me any favorite programming languages yet. [M2]\n\n## Help me learn this\n- Tell me your primary favorite language.\n- Optionally add a secondary favorite and your preferred stack/frameworks.\n- Example: “Python is my favorite; secondary TypeScript. Stack: FastAPI + Postgres; frontend: React.”\n\n## What I’ll do next\n- I’ll store your preference and tailor code snippets, tools, and recommendations accordingly. [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "276f563d-562d-42f6-9dd4-ca0a75c6d39b",
+          "message_id": "276f563d-562d-42f6-9dd4-ca0a75c6d39b-user-0",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-e702d155-2416-47e8-95b1-b2a640e659d4-1",
+        "title": "I don’t know yet.  ",
+        "description": "I don’t know yet.  \n\n## Help me learn this\n- Tell me your favorite programming language, and I’ll remember it for future answers and examples.\n- If yo...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "276f563d-562d-42f6-9dd4-ca0a75c6d39b",
+          "message_id": "2fbb61f9-1e24-4fa9-b0b4-3463ec53db43",
+          "file_path": null,
+          "source_id": "project-e702d155-2416-47e8-95b1-b2a640e659d4",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know yet.  \n\n## Help me learn this\n- Tell me your favorite programming language, and I’ll remember it for future answers and examples.\n- If you have a secondary favorite or a preferred stack/framework, include that too.\n\n## What I’ll do next\n- I’ll store your preference so I can tailor code snippets, tools, and recommendations accordingly."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:11:12.211108+00:00"
+  }
+]

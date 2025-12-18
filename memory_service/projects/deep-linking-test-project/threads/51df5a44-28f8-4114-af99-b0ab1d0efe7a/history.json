@@ -1,0 +1,98 @@
+[
+  {
+    "id": "f144afef-5f81-4cc3-b203-6b6af31ac4dd",
+    "role": "user",
+    "content": "What is my number one favorite color?",
+    "created_at": "2025-12-16T14:05:23.686296+00:00"
+  },
+  {
+    "id": "9b294f38-742e-4f13-b1ea-87537a16d188",
+    "role": "assistant",
+    "content": "Blue. [M1]\n\n## 📊 Ranked favorites\n- 1) Blue\n- 2) Green\n- 3) Red\n- 4) Purple\n[M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-0",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a",
+          "message_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a-user-0",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T14:05:23.684015+00:00"
+  },
+  {
+    "id": "4e588297-5883-4e37-85a1-2152e0d8e4e1",
+    "role": "user",
+    "content": "List my favorite colors",
+    "created_at": "2025-12-16T14:09:49.938465+00:00"
+  },
+  {
+    "id": "6a01c71c-87db-452b-bd61-3791bb038c61",
+    "role": "assistant",
+    "content": "Your favorite colors, in order, are Blue, Green, Red, and Purple. [M1, M2]\n\n## 📊 Ranked list\n- 1) Blue\n- 2) Green\n- 3) Red\n- 4) Purple\n[M1, M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-0",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a",
+          "message_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a-user-0",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e-1",
+        "title": "Blue. [M1]",
+        "description": "Blue. [M1]\n\n## 📊 Ranked favorites\n- 1) Blue\n- 2) Green\n- 3) Red\n- 4) Purple\n[M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "51df5a44-28f8-4114-af99-b0ab1d0efe7a",
+          "message_id": "9b294f38-742e-4f13-b1ea-87537a16d188",
+          "file_path": null,
+          "source_id": "project-c02e1296-7ca5-4274-bb07-ba8d28ef5b2e",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Blue. [M1]\n\n## 📊 Ranked favorites\n- 1) Blue\n- 2) Green\n- 3) Red\n- 4) Purple\n[M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T14:09:49.937323+00:00"
+  }
+]

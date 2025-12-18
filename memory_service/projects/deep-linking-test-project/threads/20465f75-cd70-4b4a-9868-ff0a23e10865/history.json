@@ -1,0 +1,41 @@
+[
+  {
+    "id": "62654f89-6f76-439b-b40b-dab0bbd4b977",
+    "role": "user",
+    "content": "What is my number one favorite color?",
+    "created_at": "2025-12-16T03:48:10.180294+00:00"
+  },
+  {
+    "id": "bc39e914-15b6-4a10-8dd6-5fb2730e0afd",
+    "role": "assistant",
+    "content": "Blue. [M1]\n\n## 🔍 Source\n- Your stored favorites ranking lists Blue as #1. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-7d1dffb4-7835-44dc-85f7-55d69a889c5a-0",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "20465f75-cd70-4b4a-9868-ff0a23e10865",
+          "message_id": "20465f75-cd70-4b4a-9868-ff0a23e10865-user-0",
+          "file_path": null,
+          "source_id": "project-7d1dffb4-7835-44dc-85f7-55d69a889c5a",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:48:10.179101+00:00"
+  }
+]

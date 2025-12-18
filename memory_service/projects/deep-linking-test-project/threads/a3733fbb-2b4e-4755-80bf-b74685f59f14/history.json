@@ -1,0 +1,41 @@
+[
+  {
+    "id": "2564026f-497e-4fcb-9a3a-4a26e0d6f4ed",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-16T13:35:35.380988+00:00"
+  },
+  {
+    "id": "f46f82d0-5aad-4feb-9281-8a1a88e4cd50",
+    "role": "assistant",
+    "content": "I don’t know your favorite programming language yet.\n\n## How to set it 🔧\n- Tell me: “My favorite programming language is X.”\n- I’ll remember it and use it in future answers.\n\n## Quick follow-up\n- Do you have a top pick right now (e.g., Python, Rust, JavaScript, Go)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "a3733fbb-2b4e-4755-80bf-b74685f59f14",
+          "message_id": "a3733fbb-2b4e-4755-80bf-b74685f59f14-user-0",
+          "file_path": null,
+          "source_id": "project-67f9cd08-88c6-4d5e-a897-f71489fb3bb8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:35:35.379756+00:00"
+  }
+]

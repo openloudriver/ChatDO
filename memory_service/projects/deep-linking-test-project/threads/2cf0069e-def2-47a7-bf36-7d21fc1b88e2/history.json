@@ -1,0 +1,242 @@
+[
+  {
+    "id": "c9154590-5b1e-4b7a-9a71-8d73e4ec190b",
+    "role": "user",
+    "content": "What is my top book?",
+    "created_at": "2025-12-16T03:56:11.582796+00:00"
+  },
+  {
+    "id": "58d165c9-67c3-4523-b681-068337afc617",
+    "role": "assistant",
+    "content": "I don’t have your top book on record yet. [M1]\n\n## 👉 What I need\n- Tell me your #1 book (and optionally your top 3–5), and I’ll save it so I can answer instantly next time.\n- Would you like me to remember it for you?\n\n## Example\n- “My number one book is Dune.”\n- “Top 3: Dune, The Pragmatic Programmer, Sapiens.”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-0",
+        "title": "What is my top book?",
+        "description": "What is my top book?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2cf0069e-def2-47a7-bf36-7d21fc1b88e2",
+          "message_id": "2cf0069e-def2-47a7-bf36-7d21fc1b88e2-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my top book?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-1",
+        "title": "I don’t have your number one movie on record yet.",
+        "description": "I don’t have your number one movie on record yet.\n\n## 👉 What I need\n- Tell me your #1 movie (and optionally your top 3–5), and I’ll save it so I can a...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "39c24720-c20e-4563-b166-38c31fec04fb",
+          "message_id": "06f01a55-26d6-4d62-97e1-0c7d4f817d5c",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have your number one movie on record yet.\n\n## 👉 What I need\n- Tell me your #1 movie (and optionally your top 3–5), and I’ll save it so I can answer instantly next time.\n\n## Example\n- “My number one movie is The Matrix.”\n- “Top 3: The Matrix, Inception, Interstellar.”\n\nWould you like me to remember it for you?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-2",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "39c24720-c20e-4563-b166-38c31fec04fb",
+          "message_id": "39c24720-c20e-4563-b166-38c31fec04fb-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-3",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "4df883bb-6c30-4366-b41c-a3d348897f55",
+          "message_id": "4df883bb-6c30-4366-b41c-a3d348897f55-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-4",
+        "title": "What is my number one favorite color?",
+        "description": "What is my number one favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7",
+          "message_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my number one favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:56:11.581751+00:00"
+  },
+  {
+    "id": "1d2791f9-75c5-43c4-ad01-b7e1e2ba424f",
+    "role": "user",
+    "content": "What are my favorite books?",
+    "created_at": "2025-12-16T04:00:27.102009+00:00"
+  },
+  {
+    "id": "102d6a3d-e191-4086-b2a2-f34ca0d7473d",
+    "role": "assistant",
+    "content": "I don’t have your favorite books saved yet. [M1]\n\n## What I need\n- Share your favorite books (top 3–5 or a full list).\n- Tell me if you want me to remember them for next time.\n\n## Examples\n- “Favorites: Dune; The Pragmatic Programmer; Sapiens.”\n- “Top 5: The Hobbit, 1984, Hyperion, Gödel, Escher, Bach, Atomic Habits.”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-0",
+        "title": "What are my favorite books?",
+        "description": "What are my favorite books?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2cf0069e-def2-47a7-bf36-7d21fc1b88e2",
+          "message_id": "2cf0069e-def2-47a7-bf36-7d21fc1b88e2-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite books?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-1",
+        "title": "List my favorite movies",
+        "description": "List my favorite movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "39c24720-c20e-4563-b166-38c31fec04fb",
+          "message_id": "39c24720-c20e-4563-b166-38c31fec04fb-user-2",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite movies"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7",
+          "message_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7-user-2",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-3",
+        "title": "What's my favorite hobby?",
+        "description": "What's my favorite hobby?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "60dbbe18-67ff-48e7-972f-258211935e9d",
+          "message_id": "60dbbe18-67ff-48e7-972f-258211935e9d-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite hobby?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-4",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "006a3c64-23fc-44d4-817e-549ce5f30444",
+          "message_id": "006a3c64-23fc-44d4-817e-549ce5f30444-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-5",
+        "title": "Which country is my favorite?",
+        "description": "Which country is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b54006b2-c0eb-44b8-ab4b-436eacc47ae7",
+          "message_id": "b54006b2-c0eb-44b8-ab4b-436eacc47ae7-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which country is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T04:00:27.100976+00:00"
+  }
+]

@@ -1,0 +1,116 @@
+[
+  {
+    "id": "3a1617bf-7bc7-4357-a4eb-c72e243b913f",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-16T03:55:30.981736+00:00"
+  },
+  {
+    "id": "ceee6011-41b0-4fe5-b209-689accbf3626",
+    "role": "assistant",
+    "content": "I don’t know your favorite programming language yet.\n\n## Want me to remember it? 🧠\n- Tell me your favorite language (e.g., Python, Rust, Go, JavaScript, TypeScript, C++, Java).\n- If you’d like, I’ll save it as a preference for future conversations.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fb1b89be-46e1-4f3b-80d9-88d6d7a2f04f",
+          "message_id": "fb1b89be-46e1-4f3b-80d9-88d6d7a2f04f-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:55:30.980458+00:00"
+  },
+  {
+    "id": "289ee1c9-f4c8-428a-afd0-8fed8e3819bb",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-16T03:59:46.734567+00:00"
+  },
+  {
+    "id": "94ebd03a-5c6f-4ecf-8411-2ad5ce64727c",
+    "role": "assistant",
+    "content": "I don’t have any programming languages saved for you yet [M2].\n\n## 📊 Current record\n- Programming languages: none on file [M2]\n\n## ➕ Add yours now\nTell me:\n- Your favorite language (e.g., Python, Rust, Go, TS/JS, C++, Java)\n- Any others you use regularly\n- Optional: proficiency levels or what you use them for\n\nIf you want me to remember them, just say: “Remember that my favorite language is Python, and I also use Go and TypeScript.”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fb1b89be-46e1-4f3b-80d9-88d6d7a2f04f",
+          "message_id": "fb1b89be-46e1-4f3b-80d9-88d6d7a2f04f-user-0",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-1",
+        "title": "I don’t know your favorite programming language yet.",
+        "description": "I don’t know your favorite programming language yet.\n\n## Want me to remember it? 🧠\n- Tell me your favorite language (e.g., Python, Rust, Go, JavaScrip...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "fb1b89be-46e1-4f3b-80d9-88d6d7a2f04f",
+          "message_id": "ceee6011-41b0-4fe5-b209-689accbf3626",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite programming language yet.\n\n## Want me to remember it? 🧠\n- Tell me your favorite language (e.g., Python, Rust, Go, JavaScript, TypeScript, C++, Java).\n- If you’d like, I’ll save it as a preference for future conversations."
+        }
+      },
+      {
+        "id": "memory-project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7",
+          "message_id": "28a2b2c3-dc69-46dc-a2b5-48a06779bdc7-user-2",
+          "file_path": null,
+          "source_id": "project-c70638e5-636c-4b20-a1f8-557d1a1f1a1c",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:59:46.733117+00:00"
+  }
+]

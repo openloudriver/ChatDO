@@ -1,0 +1,82 @@
+[
+  {
+    "id": "8e04b552-4358-48b0-a27e-872f95f77520",
+    "role": "user",
+    "content": "What do I like?",
+    "created_at": "2025-12-17T02:07:42.626863+00:00"
+  },
+  {
+    "id": "31b0545d-f994-46a7-a38c-c6499b60dc27",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:07:42.626521+00:00"
+  },
+  {
+    "id": "41dd12f0-3da8-422b-9a96-141e541246b3",
+    "role": "user",
+    "content": "Tell me about my preferences",
+    "created_at": "2025-12-17T02:07:42.839965+00:00"
+  },
+  {
+    "id": "2f60845b-1138-419a-90b8-e5c9f0c5036a",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:07:42.839665+00:00"
+  },
+  {
+    "id": "1711b2f5-f228-4a75-996c-82bd53fea87e",
+    "role": "user",
+    "content": "What are my favorites?",
+    "created_at": "2025-12-17T02:07:43.051988+00:00"
+  },
+  {
+    "id": "fea9e288-c937-4b8e-ad58-f84b745b6fa9",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:07:43.051701+00:00"
+  },
+  {
+    "id": "c0a72bef-0b7c-4411-84fd-1f8a4e03d55e",
+    "role": "user",
+    "content": "Show me what I've told you",
+    "created_at": "2025-12-17T02:07:43.272715+00:00"
+  },
+  {
+    "id": "f35e523d-f439-4658-9180-2794e864c7c1",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:07:43.272446+00:00"
+  }
+]

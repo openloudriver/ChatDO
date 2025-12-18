@@ -1,0 +1,42 @@
+[
+  {
+    "id": "0a24f7e4-b47f-4934-96de-01b0fd64c692",
+    "role": "user",
+    "content": "Which country is my favorite?",
+    "created_at": "2025-12-17T01:59:41.765203+00:00"
+  },
+  {
+    "id": "bedbb5ae-89c1-4faa-a076-cdebfd86822c",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T01:59:41.764811+00:00"
+  },
+  {
+    "id": "140d3181-de1b-408c-8a69-71cd0fbda060",
+    "role": "user",
+    "content": "List my favorite countries",
+    "created_at": "2025-12-17T01:59:44.725635+00:00"
+  },
+  {
+    "id": "9590992b-04b0-4dca-852b-b79908025e40",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T01:59:44.725337+00:00"
+  }
+]

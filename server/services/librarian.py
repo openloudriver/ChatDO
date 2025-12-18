@@ -283,7 +283,7 @@ def get_relevant_memory(
     High-level helper used by chat_with_smart_search.
     
     Calls the existing Memory Service search, applies Librarian ranking/deduplication,
-    and returns clean, ordered MemoryHit instances.
+    retrieves current facts, and returns clean, ordered MemoryHit instances.
     
     Args:
         project_id: The project ID to search
@@ -296,7 +296,53 @@ def get_relevant_memory(
     """
     from . import memory_service_client
     
-    # 1) Call existing memory search
+    # 1) Retrieve current facts first (fast path)
+    fact_hits = []
+    try:
+        import requests
+        client = memory_service_client.get_memory_client()
+        if client.is_available():
+            # Search for facts matching the query
+            try:
+                response = requests.post(
+                    f"{client.base_url}/search-facts",
+                    json={
+                        "project_id": project_id,
+                        "query": query,
+                        "limit": 10
+                    },
+                    timeout=5
+                )
+                if response.status_code == 200:
+                    facts_data = response.json()
+                    for fact in facts_data.get("facts", []):
+                        # Create a MemoryHit-like entry for the fact
+                        fact_hit = MemoryHit(
+                            source_id=f"project-{project_id}",
+                            message_id="",  # Will use source_message_uuid for citation
+                            chat_id=None,
+                            role="fact",
+                            content=f"{fact.get('fact_key', '')}: {fact.get('value_text', '')}",
+                            score=0.95,  # High score for facts
+                            source_type="fact",
+                            file_path=None,
+                            created_at=fact.get("created_at"),
+                            metadata={
+                                "fact_id": fact.get("fact_id"),
+                                "fact_key": fact.get("fact_key"),
+                                "value_text": fact.get("value_text"),
+                                "value_type": fact.get("value_type"),
+                                "source_message_uuid": fact.get("source_message_uuid"),
+                                "is_fact": True
+                            }
+                        )
+                        fact_hits.append(fact_hit)
+            except Exception as e:
+                logger.debug(f"Fact search failed (may not be implemented yet): {e}")
+    except Exception as e:
+        logger.debug(f"Fact retrieval failed: {e}")
+    
+    # 2) Call existing memory search
     # Request more results than we need so we can re-rank and filter
     client = memory_service_client.get_memory_client()
     source_ids = memory_service_client.get_memory_sources_for_project(project_id)
@@ -310,7 +356,7 @@ def get_relevant_memory(
         chat_id=None  # Include all chats for cross-chat memory
     )
     
-    if not raw_results:
+    if not raw_results and not fact_hits:
         logger.info(
             "[LIBRARIAN] %s: query=%r -> 0 hits (no results from Memory Service)",
             project_id,
@@ -328,6 +374,11 @@ def get_relevant_memory(
         if "role" in r:
             role = r["role"]
         
+        metadata = r.get("metadata", {}) or {}
+        # Include message_uuid in metadata for citations
+        if "message_uuid" in r:
+            metadata["message_uuid"] = r["message_uuid"]
+        
         hit = MemoryHit(
             source_id=r.get("source_id", ""),
             message_id=r.get("message_id", ""),
@@ -338,9 +389,12 @@ def get_relevant_memory(
             source_type=r.get("source_type", "chat"),
             file_path=r.get("file_path"),
             created_at=r.get("created_at"),
-            metadata=r.get("metadata", {}) or {}
+            metadata=metadata
         )
         hits.append(hit)
+    
+    # 3) Add fact hits to the beginning (high priority)
+    hits = fact_hits + hits
     
     # 3) Compute recency boost for all hits
     # Find min and max timestamps to normalize age

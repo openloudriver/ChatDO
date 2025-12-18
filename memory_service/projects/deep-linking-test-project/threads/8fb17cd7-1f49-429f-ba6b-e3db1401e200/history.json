@@ -1,0 +1,170 @@
+[
+  {
+    "id": "e3f9f863-dbec-4398-be9d-f1e5ac0dfb53",
+    "role": "user",
+    "content": "What's my top cryptocurrency?",
+    "created_at": "2025-12-16T03:28:47.286810+00:00"
+  },
+  {
+    "id": "ea4d05ce-7510-4f19-bbd1-824e0eafdd7f",
+    "role": "assistant",
+    "content": "Bitcoin. [M1]\n\n## 📊 Your ranked list\n1) Bitcoin  \n2) Ethereum  \n3) Monero  \n4) Litecoin  [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-0",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8fb17cd7-1f49-429f-ba6b-e3db1401e200",
+          "message_id": "8fb17cd7-1f49-429f-ba6b-e3db1401e200-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:28:47.285802+00:00"
+  },
+  {
+    "id": "9c92524d-ab8a-4c97-b861-9b11d7344e2f",
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies?",
+    "created_at": "2025-12-16T03:32:10.820685+00:00"
+  },
+  {
+    "id": "31bdb286-9c64-47c2-a8b9-d6390eb3adfd",
+    "role": "assistant",
+    "content": "Bitcoin is your top cryptocurrency, followed by Ethereum, Monero, and Litecoin. [M1, M2]\n\n## 📊 Ranked list\n1) Bitcoin  \n2) Ethereum  \n3) Monero  \n4) Litecoin  [M1, M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-0",
+        "title": "What are my favorite cryptocurrencies?",
+        "description": "What are my favorite cryptocurrencies?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8fb17cd7-1f49-429f-ba6b-e3db1401e200",
+          "message_id": "8fb17cd7-1f49-429f-ba6b-e3db1401e200-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite cryptocurrencies?"
+        }
+      },
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-1",
+        "title": "Bitcoin. [M1]",
+        "description": "Bitcoin. [M1]\n\n## 📊 Your ranked list\n1) Bitcoin  \n2) Ethereum  \n3) Monero  \n4) Litecoin  [M1]",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8fb17cd7-1f49-429f-ba6b-e3db1401e200",
+          "message_id": "ea4d05ce-7510-4f19-bbd1-824e0eafdd7f",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Bitcoin. [M1]\n\n## 📊 Your ranked list\n1) Bitcoin  \n2) Ethereum  \n3) Monero  \n4) Litecoin  [M1]"
+        }
+      },
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-2",
+        "title": "What's my favorite hobby?",
+        "description": "What's my favorite hobby?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "c59587c6-657b-4440-b2ce-301b5d253181",
+          "message_id": "c59587c6-657b-4440-b2ce-301b5d253181-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite hobby?"
+        }
+      },
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-3",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "2a21036f-fab8-4635-a1e0-16f2e17d4234",
+          "message_id": "2a21036f-fab8-4635-a1e0-16f2e17d4234-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      },
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-4",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "6190501f-8912-43a0-90ab-cc05a7fc9e3a",
+          "message_id": "6190501f-8912-43a0-90ab-cc05a7fc9e3a-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      },
+      {
+        "id": "memory-project-16d81f10-8c66-4f60-a421-68aa442085c8-5",
+        "title": "Which country is my favorite?",
+        "description": "Which country is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "c5971c1f-a8d6-4f71-ba28-26f1456d7c4b",
+          "message_id": "c5971c1f-a8d6-4f71-ba28-26f1456d7c4b-user-0",
+          "file_path": null,
+          "source_id": "project-16d81f10-8c66-4f60-a421-68aa442085c8",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which country is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T03:32:10.819824+00:00"
+  }
+]

@@ -1,0 +1,230 @@
+[
+  {
+    "id": "60d52fa9-f7d0-40ba-b9af-ae30bab73573",
+    "role": "user",
+    "content": "What do I like?",
+    "created_at": "2025-12-16T02:56:40.718106+00:00"
+  },
+  {
+    "id": "e76686df-fcca-4a18-b06f-8eaa6734ed81",
+    "role": "assistant",
+    "content": "I don’t have any of your personal preferences saved yet—only my own ChatDO identity and operating principles are in memory. [M1]\n\n## What I currently know 🔎\n- Stored memory describes ChatDO’s identity, transparency, and response style, not your tastes or habits. [M1]\n\n## Help me learn your likes ✅\nReply to any of these and I’ll remember them for future answers:\n- Work: your role, tech stack, preferred tools/editors.\n- Communication: concise vs. detailed, examples vs. summaries, tone.\n- Decisions: speed vs. thoroughness, risk tolerance.\n- Daily prefs: time zone, typical hours, meeting preferences.\n- Media: favorite genres (books/podcasts/shows), learning style (video/text/hands-on).\n- Food & drink: coffee/tea, dietary preferences, favorites.\n- Misc: hobbies, exercise, travel preferences, pet peeves.\n\nExample format:\n- Communication: concise, bullets only\n- Tech: TypeScript, React, Next.js, Postgres\n- Time zone: PST, mornings best\n- Media: summaries first, links optional\n\nOnce you share, I’ll store and use them by default. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-0",
+        "title": "What do I like?",
+        "description": "What do I like?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-0",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What do I like?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:56:40.717404+00:00"
+  },
+  {
+    "id": "fa17d95f-d7ee-4523-9d07-f614fb2abaaf",
+    "role": "user",
+    "content": "Tell me about my preferences",
+    "created_at": "2025-12-16T02:57:02.410679+00:00"
+  },
+  {
+    "id": "ee1ba0f2-737f-49b0-9ccf-a034521281cd",
+    "role": "assistant",
+    "content": "I don’t have any of your personal preferences saved yet—only ChatDO’s identity and operating principles are in memory. [M1, M2]\n\n## What I currently know 🔎\n- Stored memory covers ChatDO’s identity, transparency, and response style—not your tastes or habits. [M1, M2]\n\n## Help me learn your likes ✅\nShare any of these and I’ll remember them for future answers:\n- Work: your role, tech stack, preferred tools/editors\n- Communication: concise vs. detailed, examples vs. summaries, tone\n- Decisions: speed vs. thoroughness, risk tolerance\n- Daily: time zone, typical hours, meeting preferences\n- Media: favorite genres, learning style (video/text/hands-on)\n- Food & drink: coffee/tea, dietary needs, favorites\n- Misc: hobbies, exercise, travel, pet peeves [M1]\n\n## Quick template ✍️\n- Communication:\n- Tech/tools:\n- Time zone:\n- Decisions:\n- Media/learning:\n- Food & drink:\n- Misc:\n\nOnce you share, I’ll store and use them by default. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-0",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-0",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      },
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-1",
+        "title": "I don’t have any of your personal preferences saved yet—only...",
+        "description": "I don’t have any of your personal preferences saved yet—only my own ChatDO identity and operating principles are in memory. [M1]\n\n## What I currently ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "e76686df-fcca-4a18-b06f-8eaa6734ed81",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have any of your personal preferences saved yet—only my own ChatDO identity and operating principles are in memory. [M1]\n\n## What I currently know 🔎\n- Stored memory describes ChatDO’s identity, transparency, and response style, not your tastes or habits. [M1]\n\n## Help me learn your likes ✅\nReply to any of these and I’ll remember them for future answers:\n- Work: your role, tech stack, preferred tools/editors.\n- Communication: concise vs. detailed, examples vs. summaries, tone.\n- Decisions: speed vs. thoroughness, risk tolerance.\n- Daily prefs: time zone, typical hours, meeting preferences.\n- Media: favorite genres (books/podcasts/shows), learning style (video/text/hands-on).\n- Food & drink: coffee/tea, dietary preferences, favorites.\n- Misc: hobbies, exercise, travel preferences, pet peeves.\n\nExample format:\n- Communication: concise, bullets only\n- Tech: TypeScript, React, Next.js, Postgres\n- Time zone: PST, mornings best\n- Media: summaries first, links optional\n\nOnce you share, I’ll store and use them by default. [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:57:02.409884+00:00"
+  },
+  {
+    "id": "e994f305-2ded-4436-bb1b-1cf8eda4de09",
+    "role": "user",
+    "content": "What are my favorites?",
+    "created_at": "2025-12-16T02:57:26.359490+00:00"
+  },
+  {
+    "id": "9e210b39-305f-490a-bf87-4bcf9162338e",
+    "role": "assistant",
+    "content": "I don’t have any of your favorites saved yet. [M1, M2]\n\n## What I can remember 🔎\nI can store favorites across categories so I use them automatically in future answers:\n- Food & drink: cuisines, restaurants, coffee/tea orders\n- Media: music artists, podcasts, movies/TV, books/authors, genres\n- Activities: hobbies, sports/teams, fitness\n- Travel: cities, airlines/hotels, seat preferences\n- Work/tech: languages, frameworks, tools/editors\n- Communication: tone, length, bullets vs. prose\n\n## Quick template ✍️\n- Food & drink favorites:\n- Music/podcasts:\n- Movies/TV/books:\n- Hobbies/activities:\n- Travel:\n- Work/tech:\n- Communication style:\n\nShare anything now, and I’ll remember and use it by default. [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-0",
+        "title": "What are my favorites?",
+        "description": "What are my favorites?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-0",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorites?"
+        }
+      },
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-1",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-2",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      },
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-2",
+        "title": "I don’t have any of your personal preferences saved yet—only...",
+        "description": "I don’t have any of your personal preferences saved yet—only ChatDO’s identity and operating principles are in memory. [M1, M2]\n\n## What I currently k...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "ee1ba0f2-737f-49b0-9ccf-a034521281cd",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t have any of your personal preferences saved yet—only ChatDO’s identity and operating principles are in memory. [M1, M2]\n\n## What I currently know 🔎\n- Stored memory covers ChatDO’s identity, transparency, and response style—not your tastes or habits. [M1, M2]\n\n## Help me learn your likes ✅\nShare any of these and I’ll remember them for future answers:\n- Work: your role, tech stack, preferred tools/editors\n- Communication: concise vs. detailed, examples vs. summaries, tone\n- Decisions: speed vs. thoroughness, risk tolerance\n- Daily: time zone, typical hours, meeting preferences\n- Media: favorite genres, learning style (video/text/hands-on)\n- Food & drink: coffee/tea, dietary needs, favorites\n- Misc: hobbies, exercise, travel, pet peeves [M1]\n\n## Quick template ✍️\n- Communication:\n- Tech/tools:\n- Time zone:\n- Decisions:\n- Media/learning:\n- Food & drink:\n- Misc:\n\nOnce you share, I’ll store and use them by default. [M1]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:57:26.358464+00:00"
+  },
+  {
+    "id": "dcb41fcc-5544-4a66-82f4-34faaead59ba",
+    "role": "user",
+    "content": "Show me what I've told you",
+    "created_at": "2025-12-16T02:57:56.098339+00:00"
+  },
+  {
+    "id": "a88e4dde-0de3-4a8d-bc27-47b39eae7f5c",
+    "role": "assistant",
+    "content": "You haven’t told me any personal preferences or favorites yet, so I have nothing saved about you. [M1, M2]\n\n## What you’ve said so far 🔍\n- “What do I like?”\n- “Tell me about my preferences”\n- “What are my favorites?”\n- “Show me what I've told you”\n\n## What’s saved about you 📂\n- No user-specific preferences or favorites on record. [M1, M2]\n- Stored memory only covers ChatDO’s identity/operating principles. [M1, M2]\n\n## Want me to remember things? ✅\nReply with any of these and I’ll store them:\n- Communication: concise vs. detailed, bullets vs. prose\n- Work/tech: languages, frameworks, tools/editors\n- Media: music, podcasts, movies/TV, books\n- Food & drink: favorites, dietary needs\n- Travel: cities, airlines/hotels, seat preference\n\nQuick template:\n- Communication:\n- Work/tech:\n- Media:\n- Food & drink:\n- Travel:\n- Misc:",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-0",
+        "title": "Show me what I've told you",
+        "description": "Show me what I've told you",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-0",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me what I've told you"
+        }
+      },
+      {
+        "id": "memory-project-31e85378-4c85-447b-8072-2db3a0d00ce9-1",
+        "title": "Tell me about my preferences",
+        "description": "Tell me about my preferences",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0",
+          "message_id": "40daf0af-b6cb-4815-b07a-29ffa6884ba0-user-2",
+          "file_path": null,
+          "source_id": "project-31e85378-4c85-447b-8072-2db3a0d00ce9",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Tell me about my preferences"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:57:56.097275+00:00"
+  }
+]

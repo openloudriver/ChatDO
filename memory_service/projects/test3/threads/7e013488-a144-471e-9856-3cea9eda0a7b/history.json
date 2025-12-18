@@ -1,0 +1,181 @@
+[
+  {
+    "id": "f63cf2e3-d307-4e4a-947f-7a4d21068bb0",
+    "role": "user",
+    "content": "My favorite cryptocurrencies are XMR, BTC, and XLM",
+    "created_at": "2025-12-16T02:24:01.101048+00:00"
+  },
+  {
+    "id": "617b03b6-d370-45f3-878c-2c9758f96933",
+    "role": "assistant",
+    "content": "Noted—I’ve saved that your favorite cryptocurrencies are XMR, BTC, and XLM. [M1]\n\n## What I can set up\n- Price watchlist and alerts (thresholds or daily/weekly summaries)\n- News digest focused on XMR, BTC, and XLM\n- Wallet and custody recommendations (privacy for XMR, multisig/custody for BTC, lightweight options for XLM)\n- Portfolio tracking with DCA/reminders\n\n## Quick questions\n1. Do you want price alerts, news digests, or both?\n2. Are you tracking actual holdings or just monitoring prices?\n3. Any preferred exchanges, wallets, or alert channels (email, push, SMS)? [M1]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4da55b95-4d64-4478-a384-d6f4846a8444-0",
+        "title": "My favorite cryptocurrencies are XMR, BTC, and XLM",
+        "description": "My favorite cryptocurrencies are XMR, BTC, and XLM",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7e013488-a144-471e-9856-3cea9eda0a7b",
+          "message_id": "7e013488-a144-471e-9856-3cea9eda0a7b-user-0",
+          "file_path": null,
+          "source_id": "project-4da55b95-4d64-4478-a384-d6f4846a8444",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are XMR, BTC, and XLM"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:24:01.099711+00:00"
+  },
+  {
+    "id": "1119621e-593e-4f5a-8605-ddea41465341",
+    "role": "user",
+    "content": "My favorite colors are red, white, and blue",
+    "created_at": "2025-12-16T02:24:51.995095+00:00"
+  },
+  {
+    "id": "76440810-c996-4055-9c03-62464dfc7ecd",
+    "role": "assistant",
+    "content": "Noted—your favorite colors are red, white, and blue. [M1]\n\n## Use them?\n- Do you want me to prefer these colors for themes, charts, or examples by default?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4da55b95-4d64-4478-a384-d6f4846a8444-0",
+        "title": "My favorite colors are red, white, and blue",
+        "description": "My favorite colors are red, white, and blue",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7e013488-a144-471e-9856-3cea9eda0a7b",
+          "message_id": "7e013488-a144-471e-9856-3cea9eda0a7b-user-0",
+          "file_path": null,
+          "source_id": "project-4da55b95-4d64-4478-a384-d6f4846a8444",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are red, white, and blue"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:24:51.994247+00:00"
+  },
+  {
+    "id": "13285078-906d-4918-a9cd-9dd961e4990b",
+    "role": "user",
+    "content": "I love apple pie. It's my favorite",
+    "created_at": "2025-12-16T02:28:38.203328+00:00"
+  },
+  {
+    "id": "83823bd5-20b5-474a-94c5-43cea73e808b",
+    "role": "assistant",
+    "content": "Noted—apple pie is your favorite. I’ll keep that in mind for recommendations and examples [M1].\n\n## Want anything apple-pie related now? 🍎\n- A foolproof classic apple pie recipe (buttery, flaky crust)\n- A quick 30-minute skillet/apple-galette option\n- Tips on best apples and spice blends\n- Healthier or gluten-free variations\n\n## Quick questions\n- Do you prefer classic double crust, Dutch crumb, or something creative (e.g., cheddar crust)?\n- Any dietary constraints I should account for?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-4da55b95-4d64-4478-a384-d6f4846a8444-0",
+        "title": "I love apple pie. It's my favorite",
+        "description": "I love apple pie. It's my favorite",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7e013488-a144-471e-9856-3cea9eda0a7b",
+          "message_id": "7e013488-a144-471e-9856-3cea9eda0a7b-user-0",
+          "file_path": null,
+          "source_id": "project-4da55b95-4d64-4478-a384-d6f4846a8444",
+          "source_type": "chat",
+          "role": "user",
+          "content": "I love apple pie. It's my favorite"
+        }
+      },
+      {
+        "id": "memory-project-4da55b95-4d64-4478-a384-d6f4846a8444-1",
+        "title": "My favorite colors are red, white, and blue",
+        "description": "My favorite colors are red, white, and blue",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7e013488-a144-471e-9856-3cea9eda0a7b",
+          "message_id": "7e013488-a144-471e-9856-3cea9eda0a7b-user-2",
+          "file_path": null,
+          "source_id": "project-4da55b95-4d64-4478-a384-d6f4846a8444",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are red, white, and blue"
+        }
+      },
+      {
+        "id": "memory-project-4da55b95-4d64-4478-a384-d6f4846a8444-2",
+        "title": "Noted—your favorite colors are red, white, and blue. [M1]",
+        "description": "Noted—your favorite colors are red, white, and blue. [M1]\n\n## Use them?\n- Do you want me to prefer these colors for themes, charts, or examples by def...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7e013488-a144-471e-9856-3cea9eda0a7b",
+          "message_id": "76440810-c996-4055-9c03-62464dfc7ecd",
+          "file_path": null,
+          "source_id": "project-4da55b95-4d64-4478-a384-d6f4846a8444",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite colors are red, white, and blue. [M1]\n\n## Use them?\n- Do you want me to prefer these colors for themes, charts, or examples by default?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T02:28:38.201762+00:00"
+  },
+  {
+    "role": "user",
+    "content": "Summarize: https://www.youtube.com/watch?v=pEo6eN9ZVnM"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "type": "article_card",
+    "data": {
+      "url": "https://www.youtube.com/watch?v=pEo6eN9ZVnM",
+      "title": "Top Physicist: “Reality Is Not Physical”",
+      "siteName": "Video",
+      "published": null,
+      "summary": "Summary: The video argues that classical, mechanistic science misses a deeper quantum reality in which fields, not particles, are fundamental and consciousness is primary. Citing microprocessor pioneer Federico Faggin, it claims bodies and cells are holographically connected through quantum fields, and that quantum information resembles subjective experience because it cannot be copied or fully observed. The speaker contends that observation (awareness) collapses quantum states, linking consciousness and free will to the creation of lived reality, while AI and classical models can only simulate structure without true meaning. Key Points:",
+      "keyPoints": [
+        "Asserts that particles are excitations of fields and that quantum computation implies processes beyond spacetime, challenging classical notions of separability.",
+        "Portrays the body as a self-organizing, field-based, holographic system where cells are connected to the whole via quantum fields.",
+        "Distinguishes classical vs. quantum information: classical bits are copyable; quantum information (qubits) is non-clonable and collapses upon measurement, making it “private.”",
+        "Proposes that the brain is a translator/filter of a deeper quantum awareness rather than the producer of consciousness.",
+        "Claims observation by consciousness drives wavefunction collapse, tying free will to the selection of outcomes and arguing AI can simulate form but not meaning or understanding."
+      ],
+      "whyMatters": "This perspective challenges reductionist models in physics, neuroscience, and AI by placing consciousness and meaning at the foundation of reality. If valid, it would prompt new frameworks for understanding mind, information, and the limits of computation."
+    },
+    "model": "YouTube transcript + GPT-5",
+    "provider": "youtube-transcript-api"
+  }
+]

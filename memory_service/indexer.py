@@ -272,7 +272,7 @@ def index_chat_message(
         # Upsert source (chat messages don't have a root_path, use empty string)
         source_db_id = db.upsert_source(source_id, project_id, "", None, None)
         
-        # Upsert chat message
+        # Upsert chat message (generates message_uuid if not provided)
         chat_message_id = db.upsert_chat_message(
             source_id=source_id,
             project_id=project_id,
@@ -283,6 +283,34 @@ def index_chat_message(
             timestamp=timestamp,
             message_index=message_index
         )
+        
+        # Get the message_uuid for fact storage
+        chat_message = db.get_chat_message_by_id(chat_message_id, source_id)
+        message_uuid = chat_message.message_uuid if chat_message else None
+        
+        # Extract and store facts (only for user messages)
+        if role == "user" and message_uuid:
+            try:
+                from memory_service.fact_extractor import get_fact_extractor
+                extractor = get_fact_extractor()
+                facts = extractor.extract_facts(content, role=role)
+                
+                for fact in facts:
+                    try:
+                        db.store_project_fact(
+                            project_id=project_id,
+                            fact_key=fact["fact_key"],
+                            value_text=fact["value_text"],
+                            value_type=fact["value_type"],
+                            source_message_uuid=message_uuid,
+                            confidence=fact.get("confidence", 1.0),
+                            source_id=source_id
+                        )
+                        logger.debug(f"Stored fact: {fact['fact_key']} = {fact['value_text']} (confidence: {fact.get('confidence', 1.0)})")
+                    except Exception as e:
+                        logger.warning(f"Failed to store fact {fact.get('fact_key')}: {e}")
+            except Exception as e:
+                logger.warning(f"Fact extraction failed for message {message_id}: {e}")
         
         # Chunk the content
         chunks = chunk_chat_message(content)

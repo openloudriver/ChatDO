@@ -1,0 +1,152 @@
+[
+  {
+    "id": "ac545c1b-88c8-433e-a3c5-1cd0f5db81e0",
+    "role": "user",
+    "content": "What is my top book?",
+    "created_at": "2025-12-17T00:55:44.602651+00:00"
+  },
+  {
+    "id": "ba500f21-40cd-40e1-a856-3fa249bef416",
+    "role": "assistant",
+    "content": "I don’t have your top book saved yet.\n\n## Want me to save it? 📌\n- Tell me the title and I’ll store it as your top book for future questions.\n- Example: “Set my top book to The Pragmatic Programmer.”\n\n## Quick follow-up\n- If you have a shortlist, share it and I can help you pick a “top” based on your criteria (impact, re-read value, etc.).",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "What is my top book?",
+        "description": "What is my top book?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8d588496-28a3-4ff4-857e-2fcc608d747c",
+          "message_id": "8d588496-28a3-4ff4-857e-2fcc608d747c-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What is my top book?"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-1",
+        "title": "What's my number one movie?",
+        "description": "What's my number one movie?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "391cb00f-1ae6-4f33-91c6-181f06bfd2c1",
+          "message_id": "391cb00f-1ae6-4f33-91c6-181f06bfd2c1-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my number one movie?"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-2",
+        "title": "What's my top cryptocurrency?",
+        "description": "What's my top cryptocurrency?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "eab3145f-748b-481a-8f9a-781562a0dd09",
+          "message_id": "eab3145f-748b-481a-8f9a-781562a0dd09-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my top cryptocurrency?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:55:44.601527+00:00"
+  },
+  {
+    "id": "41160026-1e87-4134-a681-82acb38f9fcc",
+    "role": "user",
+    "content": "What are my favorite books?",
+    "created_at": "2025-12-17T00:59:06.492937+00:00"
+  },
+  {
+    "id": "7b3429f8-ff36-40ce-9169-f658ae3ba3d0",
+    "role": "assistant",
+    "content": "I don’t have your favorite books saved yet.\n\n## Want to set them? 📚\n- Tell me your favorite books (optionally ranked), and I’ll save them for future questions.\n- You can share:\n  - A single favorite (your “top book”)\n  - A top 3–5, in order\n  - An unranked list\n\n## Examples\n- “Set my favorite books to: The Pragmatic Programmer, Dune, and Sapiens.”\n- “My ranked top 3: 1) Dune, 2) The Name of the Wind, 3) The Hobbit.”\n\n## Optional details\n- Include author, edition, or format (audiobook/ebook) if you care.\n- Tell me your selection criteria (impact, re-read value, fun, etc.) so I store it accurately.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "What are my favorite books?",
+        "description": "What are my favorite books?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "8d588496-28a3-4ff4-857e-2fcc608d747c",
+          "message_id": "8d588496-28a3-4ff4-857e-2fcc608d747c-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What are my favorite books?"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-1",
+        "title": "What's my favorite hobby?",
+        "description": "What's my favorite hobby?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "c0d82f3b-11df-4f97-8f19-e41cf99a7726",
+          "message_id": "c0d82f3b-11df-4f97-8f19-e41cf99a7726-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite hobby?"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-2",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b832cefb-5c8a-46a7-875e-d8c624205bbe",
+          "message_id": "b832cefb-5c8a-46a7-875e-d8c624205bbe-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:59:06.491266+00:00"
+  }
+]

@@ -1,0 +1,116 @@
+[
+  {
+    "id": "2a57e606-dd8c-4862-9be5-33917c65a4a5",
+    "role": "user",
+    "content": "What's my favorite food?",
+    "created_at": "2025-12-16T13:14:37.528286+00:00"
+  },
+  {
+    "id": "7352be64-cb4d-44b0-917e-d158fd860983",
+    "role": "assistant",
+    "content": "I don’t know your favorite food yet.\n\n## Help me learn it 🍽️\n- Tell me your favorite food and I’ll remember it for next time.\n- If you have a few favorites, list them and I can save them with notes (e.g., comfort food, special occasion, allergies).",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-9fd148b6-d091-4497-8931-599a66e25645-0",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "a5e9ce55-e7f0-4868-88f0-c5b8ef9570cc",
+          "message_id": "a5e9ce55-e7f0-4868-88f0-c5b8ef9570cc-user-0",
+          "file_path": null,
+          "source_id": "project-9fd148b6-d091-4497-8931-599a66e25645",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:14:37.526844+00:00"
+  },
+  {
+    "id": "39bc22ad-8f10-46c3-9744-de2bf1978d67",
+    "role": "user",
+    "content": "Show my favorite foods",
+    "created_at": "2025-12-16T13:19:22.761424+00:00"
+  },
+  {
+    "id": "21aa3a04-2e5a-4b02-9073-656a5ae328a6",
+    "role": "assistant",
+    "content": "I don’t know your favorite foods yet. [M2]\n\n## Help me learn it 🍽️\n- Tell me your favorite food(s) and I’ll remember them for next time. [M2]\n- If you have a few favorites, list them and I can save notes like comfort food, special occasion, or allergies. [M2]\n\n## Quick prompt\n- You can reply like: “Pizza (comfort), sushi (special), pad thai (no peanuts).”",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-9fd148b6-d091-4497-8931-599a66e25645-0",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "a5e9ce55-e7f0-4868-88f0-c5b8ef9570cc",
+          "message_id": "a5e9ce55-e7f0-4868-88f0-c5b8ef9570cc-user-0",
+          "file_path": null,
+          "source_id": "project-9fd148b6-d091-4497-8931-599a66e25645",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      },
+      {
+        "id": "memory-project-9fd148b6-d091-4497-8931-599a66e25645-1",
+        "title": "I don’t know your favorite food yet.",
+        "description": "I don’t know your favorite food yet.\n\n## Help me learn it 🍽️\n- Tell me your favorite food and I’ll remember it for next time.\n- If you have a few favo...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "a5e9ce55-e7f0-4868-88f0-c5b8ef9570cc",
+          "message_id": "7352be64-cb4d-44b0-917e-d158fd860983",
+          "file_path": null,
+          "source_id": "project-9fd148b6-d091-4497-8931-599a66e25645",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite food yet.\n\n## Help me learn it 🍽️\n- Tell me your favorite food and I’ll remember it for next time.\n- If you have a few favorites, list them and I can save them with notes (e.g., comfort food, special occasion, allergies)."
+        }
+      },
+      {
+        "id": "memory-project-9fd148b6-d091-4497-8931-599a66e25645-2",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b97e9ec9-f642-4b45-a813-3d4cefb5ce01",
+          "message_id": "b97e9ec9-f642-4b45-a813-3d4cefb5ce01-user-2",
+          "file_path": null,
+          "source_id": "project-9fd148b6-d091-4497-8931-599a66e25645",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-16T13:19:22.760826+00:00"
+  }
+]

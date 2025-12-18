@@ -1,0 +1,98 @@
+[
+  {
+    "id": "613f60d5-1f50-4771-a2bc-e942b70a5f37",
+    "role": "user",
+    "content": "Which programming language is my favorite?",
+    "created_at": "2025-12-17T00:54:59.433459+00:00"
+  },
+  {
+    "id": "fc804eb7-2f9f-4935-85a5-68061b02482d",
+    "role": "assistant",
+    "content": "I don’t know your favorite programming language yet.\n\n## Tell me once 📌\n- Share your favorite language (e.g., Python, Rust, JavaScript, Go, C#, etc.).\n- If you’d like, I’ll remember it for future context.\n\n## If you want me to guess 🔍\nTell me a bit about:\n- What you build (web, systems, data/ML, mobile, games).\n- Your preference: static vs dynamic typing, performance vs rapid prototyping.\n- Favorite tooling/ecosystem (e.g., npm, Cargo, pip, Maven/Gradle).",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "Which programming language is my favorite?",
+        "description": "Which programming language is my favorite?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "330cc828-7963-4ebb-9223-ee2241bdbd50",
+          "message_id": "330cc828-7963-4ebb-9223-ee2241bdbd50-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Which programming language is my favorite?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:54:59.432073+00:00"
+  },
+  {
+    "id": "27f6e855-f1a8-4e27-ac97-3f57b8c710ac",
+    "role": "user",
+    "content": "Show me my programming languages",
+    "created_at": "2025-12-17T00:58:18.666015+00:00"
+  },
+  {
+    "id": "60252946-bfe1-4ceb-9994-101a807ad9bb",
+    "role": "assistant",
+    "content": "I don’t have any programming languages saved for you yet. [M2]\n\n## Add yours 📌\n- Tell me your favorite(s) (e.g., Python, Rust, JavaScript, Go, C#, etc.).\n- If you want, I’ll remember them for future context. [M2]\n\n## Want me to guess? 🔍\nShare a bit about:\n- What you build (web, systems, data/ML, mobile, games)\n- Your preference: static vs dynamic typing; performance vs rapid prototyping\n- Favorite tooling/ecosystem (npm, Cargo, pip, Maven/Gradle) [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-0",
+        "title": "Show me my programming languages",
+        "description": "Show me my programming languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "330cc828-7963-4ebb-9223-ee2241bdbd50",
+          "message_id": "330cc828-7963-4ebb-9223-ee2241bdbd50-user-0",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show me my programming languages"
+        }
+      },
+      {
+        "id": "memory-project-d132e92c-d66e-40e5-9241-53e30814c5bc-1",
+        "title": "I don’t know your favorite programming language yet.",
+        "description": "I don’t know your favorite programming language yet.\n\n## Tell me once 📌\n- Share your favorite language (e.g., Python, Rust, JavaScript, Go, C#, etc.)....",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "330cc828-7963-4ebb-9223-ee2241bdbd50",
+          "message_id": "fc804eb7-2f9f-4935-85a5-68061b02482d",
+          "file_path": null,
+          "source_id": "project-d132e92c-d66e-40e5-9241-53e30814c5bc",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "I don’t know your favorite programming language yet.\n\n## Tell me once 📌\n- Share your favorite language (e.g., Python, Rust, JavaScript, Go, C#, etc.).\n- If you’d like, I’ll remember it for future context.\n\n## If you want me to guess 🔍\nTell me a bit about:\n- What you build (web, systems, data/ML, mobile, games).\n- Your preference: static vs dynamic typing, performance vs rapid prototyping.\n- Favorite tooling/ecosystem (e.g., npm, Cargo, pip, Maven/Gradle)."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T00:58:18.664740+00:00"
+  }
+]

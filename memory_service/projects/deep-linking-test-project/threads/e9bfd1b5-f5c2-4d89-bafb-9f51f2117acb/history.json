@@ -1,0 +1,42 @@
+[
+  {
+    "id": "2ba0e895-641c-4c28-aa22-bf148797d258",
+    "role": "user",
+    "content": "What's my number one sport?",
+    "created_at": "2025-12-17T02:05:20.503575+00:00"
+  },
+  {
+    "id": "fdba8f85-3226-497a-90b1-351acb6bb2ed",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:20.503235+00:00"
+  },
+  {
+    "id": "5aa31a1e-81b2-4156-bd2f-3fb23d00ff13",
+    "role": "user",
+    "content": "What are my favorite sports?",
+    "created_at": "2025-12-17T02:05:23.662829+00:00"
+  },
+  {
+    "id": "9d631945-f60e-4f52-af22-a445182e01c0",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:23.662528+00:00"
+  }
+]

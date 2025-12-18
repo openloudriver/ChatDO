@@ -1,0 +1,42 @@
+[
+  {
+    "id": "9741c754-78e7-4346-bb54-70c65106de19",
+    "role": "user",
+    "content": "What's my top cryptocurrency?",
+    "created_at": "2025-12-17T02:05:18.573459+00:00"
+  },
+  {
+    "id": "37bb8cd3-a159-406e-99f9-ae89f0e52c21",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:18.573006+00:00"
+  },
+  {
+    "id": "9dd0dd8e-7586-4cf9-839b-a2841ae9eba9",
+    "role": "user",
+    "content": "What are my favorite cryptocurrencies?",
+    "created_at": "2025-12-17T02:05:21.826318+00:00"
+  },
+  {
+    "id": "a572570b-7e6b-4593-8de9-739e1bb1a6e7",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:21.826019+00:00"
+  }
+]

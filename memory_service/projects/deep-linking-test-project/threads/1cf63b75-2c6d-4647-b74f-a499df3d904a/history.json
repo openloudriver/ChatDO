@@ -1,0 +1,98 @@
+[
+  {
+    "id": "e3b77b5a-2b1c-47ff-8722-c9a8b96ed693",
+    "role": "user",
+    "content": "What's my favorite food?",
+    "created_at": "2025-12-17T01:33:26.515960+00:00"
+  },
+  {
+    "id": "fc0a25e2-64ea-4ff3-9696-6ec9dc51c251",
+    "role": "assistant",
+    "content": "I don’t know your favorite food yet.\n\n## Tell me and I’ll remember 🍽️\n- What’s your favorite food (or top 3)?\n- Any no-gos or allergies I should avoid?\n- Want me to save this preference for future recommendations?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-939160e3-27af-40d3-84a2-fd6ccc8dea60-0",
+        "title": "What's my favorite food?",
+        "description": "What's my favorite food?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "1cf63b75-2c6d-4647-b74f-a499df3d904a",
+          "message_id": "1cf63b75-2c6d-4647-b74f-a499df3d904a-user-0",
+          "file_path": null,
+          "source_id": "project-939160e3-27af-40d3-84a2-fd6ccc8dea60",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite food?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:33:26.514561+00:00"
+  },
+  {
+    "id": "ce78e9d9-e2ec-4997-a74a-7b11a9139084",
+    "role": "user",
+    "content": "Show my favorite foods",
+    "created_at": "2025-12-17T01:37:50.767257+00:00"
+  },
+  {
+    "id": "8472f998-2ba3-435c-a8b2-ee796fbf3757",
+    "role": "assistant",
+    "content": "I don’t have any favorite foods saved for you yet.\n\n## Add your favorites 🍽️\n- Tell me your top foods (e.g., “sushi, tacos, pad thai”).\n- Optional: any no-gos or allergies to avoid.\n- I’ll save them so “Show my favorite foods” works next time.\n\n## Quick examples\n- “Save: sushi, ramen, Neapolitan pizza”\n- “Avoid: peanuts; Preference: vegetarian weekdays”\n\nIf you think you already shared this before, let me know and I’ll troubleshoot and re-save them.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-939160e3-27af-40d3-84a2-fd6ccc8dea60-0",
+        "title": "Show my favorite foods",
+        "description": "Show my favorite foods",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "1cf63b75-2c6d-4647-b74f-a499df3d904a",
+          "message_id": "1cf63b75-2c6d-4647-b74f-a499df3d904a-user-0",
+          "file_path": null,
+          "source_id": "project-939160e3-27af-40d3-84a2-fd6ccc8dea60",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Show my favorite foods"
+        }
+      },
+      {
+        "id": "memory-project-939160e3-27af-40d3-84a2-fd6ccc8dea60-1",
+        "title": "List my favorite colors",
+        "description": "List my favorite colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "7d6438a0-059d-45c4-967e-6cf059727218",
+          "message_id": "7d6438a0-059d-45c4-967e-6cf059727218-user-2",
+          "file_path": null,
+          "source_id": "project-939160e3-27af-40d3-84a2-fd6ccc8dea60",
+          "source_type": "chat",
+          "role": "user",
+          "content": "List my favorite colors"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-17T01:37:50.766135+00:00"
+  }
+]

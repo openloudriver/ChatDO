@@ -1,0 +1,42 @@
+[
+  {
+    "id": "eb8f9b2f-2455-4555-a6aa-d250d67eb343",
+    "role": "user",
+    "content": "What's my favorite food?",
+    "created_at": "2025-12-17T02:05:19.901331+00:00"
+  },
+  {
+    "id": "af197665-5507-4883-a872-79997fb6d4b1",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:19.900947+00:00"
+  },
+  {
+    "id": "03c1c972-3d6c-459e-91e6-6f0f7f5eeb56",
+    "role": "user",
+    "content": "Show my favorite foods",
+    "created_at": "2025-12-17T02:05:23.079415+00:00"
+  },
+  {
+    "id": "8b27ca79-64e2-4705-94bc-66f38e65f96b",
+    "role": "assistant",
+    "content": "stub reply",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "stub-provider",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-17T02:05:23.079153+00:00"
+  }
+]
