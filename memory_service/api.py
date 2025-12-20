@@ -141,36 +141,12 @@ class SearchResponse(BaseModel):
     results: List[SearchResult]
 
 
-class StoreFactRequest(BaseModel):
-    project_id: str
-    topic_key: str
-    kind: str  # "ranked" or "single"
-    value: str
-    source_message_id: str
-    chat_id: Optional[str] = None
-    rank: Optional[int] = None
-
-
-class GetFactsRequest(BaseModel):
-    project_id: str
-    topic_key: str
-    chat_id: Optional[str] = None
-
-
-class FactResponse(BaseModel):
-    id: int
-    project_id: str
-    chat_id: Optional[str]
-    topic_key: str
-    kind: str
-    rank: Optional[int]
-    value: str
-    source_message_id: str
-    created_at: str
-
-
-class FactsResponse(BaseModel):
-    facts: List[FactResponse]
+# REMOVED: NEW facts table system models
+# - StoreFactRequest
+# - GetFactsRequest  
+# - StructuredFactResponse
+# - FactsResponse
+# All fact operations now use project_facts table via /search-facts endpoint
 
 
 def _build_ann_index():
@@ -1137,139 +1113,12 @@ async def read_file(
 # Facts API Endpoints
 # ============================================================================
 
-@app.post("/facts/store")
-async def store_fact_endpoint(request: StoreFactRequest):
-    """
-    Store a structured fact (ranked list item or single preference).
-    
-    This is the authoritative storage for facts - all facts retrieval
-    must come from this database, not from thread metadata.
-    """
-    try:
-        fact_id = db.store_fact(
-            project_id=request.project_id,
-            topic_key=request.topic_key,
-            kind=request.kind,
-            value=request.value,
-            source_message_id=request.source_message_id,
-            chat_id=request.chat_id,
-            rank=request.rank
-        )
-        logger.info(f"[FACTS] Stored fact: project_id={request.project_id}, topic_key={request.topic_key}, kind={request.kind}, rank={request.rank}")
-        return {"status": "ok", "fact_id": fact_id}
-    except Exception as e:
-        logger.error(f"Error storing fact: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/facts/get", response_model=FactsResponse)
-async def get_facts_endpoint(request: GetFactsRequest):
-    """
-    Get all facts for a topic (project-scoped, optionally chat-scoped).
-    
-    Returns facts ordered by rank (for ranked) or created_at (for single).
-    """
-    try:
-        facts = db.get_facts_by_topic(
-            project_id=request.project_id,
-            topic_key=request.topic_key,
-            chat_id=request.chat_id
-        )
-        return FactsResponse(facts=[
-            FactResponse(
-                id=f.id,
-                project_id=f.project_id,
-                chat_id=f.chat_id,
-                topic_key=f.topic_key,
-                kind=f.kind,
-                rank=f.rank,
-                value=f.value,
-                source_message_id=f.source_message_id,
-                created_at=f.created_at.isoformat()
-            )
-            for f in facts
-        ])
-    except Exception as e:
-        logger.error(f"Error getting facts: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/facts/get-by-rank")
-async def get_fact_by_rank(
-    project_id: str,
-    topic_key: str,
-    rank: int,
-    chat_id: Optional[str] = None
-):
-    """
-    Get a specific ranked fact by rank (e.g., "second favorite color").
-    
-    Returns the fact at the specified rank, or None if not found.
-    """
-    try:
-        fact = db.get_fact_by_rank(
-            project_id=project_id,
-            topic_key=topic_key,
-            rank=rank,
-            chat_id=chat_id
-        )
-        if not fact:
-            return {"status": "not_found"}
-        return {
-            "status": "ok",
-            "fact": FactResponse(
-                id=fact.id,
-                project_id=fact.project_id,
-                chat_id=fact.chat_id,
-                topic_key=fact.topic_key,
-                kind=fact.kind,
-                rank=fact.rank,
-                value=fact.value,
-                source_message_id=fact.source_message_id,
-                created_at=fact.created_at.isoformat()
-            )
-        }
-    except Exception as e:
-        logger.error(f"Error getting fact by rank: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/facts/get-single")
-async def get_single_fact(
-    project_id: str,
-    topic_key: str,
-    chat_id: Optional[str] = None
-):
-    """
-    Get a single fact (non-ranked) for a topic.
-    
-    Returns the most recent single fact for the topic, or None if not found.
-    """
-    try:
-        fact = db.get_single_fact(
-            project_id=project_id,
-            topic_key=topic_key,
-            chat_id=chat_id
-        )
-        if not fact:
-            return {"status": "not_found"}
-        return {
-            "status": "ok",
-            "fact": FactResponse(
-                id=fact.id,
-                project_id=fact.project_id,
-                chat_id=fact.chat_id,
-                topic_key=fact.topic_key,
-                kind=fact.kind,
-                rank=fact.rank,
-                value=fact.value,
-                source_message_id=fact.source_message_id,
-                created_at=fact.created_at.isoformat()
-            )
-        }
-    except Exception as e:
-        logger.error(f"Error getting single fact: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+# REMOVED: All NEW facts table system endpoints
+# - /facts/store - use fact_extractor → store_project_fact instead
+# - /facts/get - use /search-facts endpoint instead
+# - /facts/get-by-rank - use /search-facts and filter by fact_key instead
+# - /facts/get-single - use get_current_fact() or /search-facts instead
+# All fact operations now use project_facts table via fact_extractor and /search-facts
 
 
 if __name__ == "__main__":

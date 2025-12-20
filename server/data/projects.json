@@ -234,7 +234,16 @@
     "default_target": "general",
     "sort_index": 25,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null
+    "trashed": true,
+    "trashed_at": "2025-12-19T12:18:23.542242+00:00"
+  },
+  {
+    "id": "2976a5ce-a0a2-404e-8cc5-384893211678",
+    "name": "Validate",
+    "default_target": "general",
+    "sort_index": 26,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-20T21:36:22.674052+00:00"
   }
 ]

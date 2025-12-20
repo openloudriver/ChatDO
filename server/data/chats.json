@@ -80,13 +80,13 @@
     "trashed_at": null
   },
   {
-    "id": "638fe84a-9398-48af-b945-7b3f364607a5",
-    "project_id": "93bf1224-0db8-4792-95b0-c477fedf2b11",
-    "title": "What are my favorite cryptos?",
-    "thread_id": "638fe84a-9398-48af-b945-7b3f364607a5",
-    "created_at": "2025-12-15T23:15:40.098872+00:00",
-    "updated_at": "2025-12-18T11:57:32.838874+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-18T11:57:32.838857+00:00"
+    "id": "d7fb8c29-7a6a-4acd-b955-6c27bee739b7",
+    "project_id": "general",
+    "title": "New Chat",
+    "thread_id": "d7fb8c29-7a6a-4acd-b955-6c27bee739b7",
+    "created_at": "2025-12-20T21:36:26.440149+00:00",
+    "updated_at": "2025-12-20T21:36:26.440165+00:00",
+    "trashed": false,
+    "trashed_at": null
   }
 ]

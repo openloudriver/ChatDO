@@ -445,7 +445,7 @@ async def chat_with_smart_search(
         try:
             from server.services.memory_service_client import get_memory_client
             from server.services.ranked_lists import extract_ranked_lists
-            from server.services.facts import normalize_topic_key
+            from server.services.facts import extract_topic_from_query
             from uuid import uuid4
             
             history = memory_store.load_thread_history(target_name, thread_id)
@@ -470,36 +470,9 @@ async def chat_with_smart_search(
             else:
                 logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
             
-            # Extract and store ranked facts ONLY when extraction is valid + topic is known
-            from server.services.facts import extract_ranked_facts
-            
-            # Compute topic_key and ranked facts
-            topic_key = normalize_topic_key(user_message)
-            ranked_facts = extract_ranked_facts(user_message)
-            
-            # Store ONLY if both topic_key and ranked facts exist
-            if topic_key and ranked_facts:
-                logger.info(f"[FACTS] Storing {len(ranked_facts)} ranked fact(s) for topic_key={topic_key}")
-                for rank, value in ranked_facts:
-                    success = memory_client.store_fact(
-                        project_id=project_id,
-                        topic_key=topic_key,
-                        kind="ranked",
-                        value=value,
-                        source_message_id=user_message_id,
-                        chat_id=thread_id,
-                        rank=rank
-                    )
-                    if success:
-                        logger.info(f"[FACTS] ✅ Stored fact: topic_key={topic_key}, rank={rank}, value={value}")
-                    else:
-                        logger.warning(f"[FACTS] ❌ Failed to store fact: topic_key={topic_key}, rank={rank}")
-            elif topic_key and not ranked_facts:
-                logger.debug(f"[FACTS] Topic key found ({topic_key}) but no ranked facts extracted - skipping storage")
-            elif not topic_key and ranked_facts:
-                logger.debug(f"[FACTS] Ranked facts found but no topic key - skipping storage")
-            else:
-                logger.debug(f"[FACTS] No topic key and no ranked facts - skipping storage")
+            # Facts are automatically extracted and stored via fact_extractor in index_chat_message()
+            # The index_chat_message() call above handles fact extraction → store_project_fact
+            # No additional fact storage needed here
         except Exception as e:
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
     
@@ -514,174 +487,37 @@ async def chat_with_smart_search(
     # The facts DB is still used, but facts are passed as Memory context to GPT-5
     # instead of being returned directly.
     
-    if False and project_id:  # Disabled - all queries go through GPT-5
-        from server.services.ranked_lists import detect_ordinal_query
-        from server.services.facts import extract_topic_from_query, normalize_topic_key
-        memory_client = get_memory_client()
+    # REMOVED: Disabled ordinal query handling (all queries go through GPT-5)
+    # This code was disabled and has been removed for clarity
+    
+    # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
+    if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
+        # Determine topic_key STRICTLY
+        # If query includes topic noun → use that topic_key only
+        topic_key = extract_topic_from_query(user_message)
         
-        # Check if this is an ordinal query (e.g., "second favorite color", "#2 favorite crypto")
-        ordinal_result = detect_ordinal_query(user_message)
-        if ordinal_result:
-            rank, topic = ordinal_result
-            logger.info(f"[FACTS] Detected ordinal query: rank={rank}, topic={topic}")
-            
-            # Determine topic_key STRICTLY
-            # If query includes topic noun → use that topic_key only
-            topic_key = normalize_topic_key(topic) if topic else None
-            
-            # If query does NOT include topic noun, use most recent topic_key in this chat_id ONLY
-            if not topic_key and thread_id:
-                from memory_service.memory_dashboard import db
-                topic_key = db.get_most_recent_topic_key_in_chat(project_id, thread_id)
-                if topic_key:
-                    logger.info(f"[FACTS] Using most recent topic_key in chat: {topic_key}")
-            
-            # If topic_key still None → return clarification question (no GPT-5 Mini)
-            if not topic_key:
-                clarification = "Which category (colors/cryptos/tv/candies)?"
-                logger.info(f"[FACTS] Topic key is None - returning clarification question")
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        model_label = "Model: Memory"
-                        history.append({
-                            "id": str(uuid4()),
-                            "role": "assistant",
-                            "content": clarification,
-                            "model": "Memory",
-                            "model_label": model_label,
-                            "provider": "memory",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save clarification to history: {e}")
-                
-                return {
-                    "type": "assistant_message",
-                    "content": clarification,
-                    "meta": {"usedFacts": True, "clarification": True},
-                    "model": "Memory",
-                    "model_label": "Model: Memory",
-                    "provider": "memory",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
-            else:
-                # Query facts DB for this rank (cross-chat: chat_id=None to search all chats in project)
-                fact = memory_client.get_fact_by_rank(
-                    project_id=project_id,
-                    topic_key=topic_key,
-                    rank=rank,
-                    chat_id=None  # Cross-chat: search all chats in project, not just current chat
-                )
-                
-                if fact:
-                    answer = fact.get("value")
-                    fact_chat_id = fact.get("chat_id")
-                    logger.info(f"[FACTS] ✅ Answering ordinal query from facts DB: rank={rank}, topic_key={topic_key}, answer={answer}, chat_id={fact_chat_id}")
-                    
-                    # Format response
-                    ordinal_words = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 
-                                    6: "sixth", 7: "seventh", 8: "eighth", 9: "ninth", 10: "tenth"}
-                    ordinal_word = ordinal_words.get(rank, f"#{rank}")
-                    topic_display = topic_key.replace("_", " ").replace("favorite ", "")
-                    formatted_answer = f"Your {topic_display} ranked {ordinal_word} is **{answer}**. [M1]"
-                    
-                    # Build sources array for UI to display source tag
-                    sources = []
-                    if fact_chat_id:
-                        sources.append({
-                            "id": "memory-fact-1",
-                            "title": "Stored Fact",
-                            "siteName": "Memory",
-                            "description": f"From chat {fact_chat_id[:8]}...",
-                            "rank": 0,
-                            "sourceType": "memory",
-                            "citationPrefix": "M",
-                            "meta": {
-                                "chat_id": fact_chat_id,
-                                "message_id": fact.get("source_message_id"),
-                                "topic_key": topic_key,
-                                "rank": rank,
-                                "value": answer
-                            }
-                        })
-                    
-                    # Save to history
-                    if thread_id:
-                        try:
-                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                            model_label = "Model: Memory"
-                            history.append({
-                                "id": str(uuid4()),
-                                "role": "assistant",
-                                "content": formatted_answer,
-                                "model": "Memory",
-                                "model_label": model_label,
-                                "provider": "memory",
-                                "created_at": assistant_msg_created_at
-                            })
-                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                        except Exception as e:
-                            logger.warning(f"Failed to save ordinal answer to history: {e}")
-                    
-                    # Return direct answer WITHOUT calling GPT-5 Mini
-                    return {
-                        "type": "assistant_message",
-                        "content": formatted_answer,
-                        "meta": {"usedFacts": True},
-                        "sources": sources,
-                        "model": "Memory",
-                        "model_label": "Model: Memory",
-                        "provider": "memory",
-                        "created_at": datetime.now(timezone.utc).isoformat()
-                    }
-                else:
-                    logger.info(f"[FACTS] Ordinal query detected but no fact found: rank={rank}, topic_key={topic_key}")
-                    # Return "I don't have that stored yet" - do NOT call GPT-5 Mini
-                    if thread_id:
-                        try:
-                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                            model_label = "Model: Memory"
-                            response_text = "I don't have that stored yet."
-                            history.append({
-                                "id": str(uuid4()),
-                                "role": "assistant",
-                                "content": response_text,
-                                "model": "Memory",
-                                "model_label": model_label,
-                                "provider": "memory",
-                                "created_at": assistant_msg_created_at
-                            })
-                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                        except Exception as e:
-                            logger.warning(f"Failed to save 'not found' answer to history: {e}")
-                    
-                    return {
-                        "type": "assistant_message",
-                        "content": "I don't have that stored yet.",
-                        "meta": {"usedFacts": True, "factNotFound": True},
-                        "model": "Memory",
-                        "model_label": "Model: Memory",
-                        "provider": "memory",
-                        "created_at": datetime.now(timezone.utc).isoformat()
-                    }
+        # REMOVED: get_most_recent_topic_key_in_chat() - function was removed with NEW system
+        # If topic_key is None, we'll just proceed without it (GPT-5 will handle the query)
+        if not topic_key:
+            logger.debug(f"[FACTS] No topic_key found for list query, proceeding with GPT-5")
         
-        # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
-        if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
+        # REMOVED: Clarification question logic - all queries go through GPT-5 now
+        logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
+        
+        # REMOVED: get_facts() - use /search-facts endpoint instead
+        # Facts are now retrieved via librarian's /search-facts which uses project_facts table
+        facts = []  # Disabled: facts retrieval now handled by librarian via project_facts table
+    
+    # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
+    if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
             # Determine topic_key STRICTLY
             # If query includes topic noun → use that topic_key only
             topic_key = extract_topic_from_query(user_message)
             
-            # If query does NOT include topic noun, use most recent topic_key in this chat_id ONLY
-            if not topic_key and thread_id:
-                from memory_service.memory_dashboard import db
-                topic_key = db.get_most_recent_topic_key_in_chat(project_id, thread_id)
-                if topic_key:
-                    logger.info(f"[FACTS] Using most recent topic_key in chat for list query: {topic_key}")
+            # REMOVED: get_most_recent_topic_key_in_chat() - function was removed with NEW system
+            # If topic_key is None, we'll just proceed without it (GPT-5 will handle the query)
+            if not topic_key:
+                logger.debug(f"[FACTS] No topic_key found for list query, proceeding with GPT-5")
             
             # If topic_key still None → return clarification question (no GPT-5 Mini)
             if not topic_key:
@@ -717,12 +553,9 @@ async def chat_with_smart_search(
             
             logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
             
-            # Get all facts for this topic (cross-chat: chat_id=None to search all chats in project)
-            facts = memory_client.get_facts(
-                project_id=project_id,
-                topic_key=topic_key,
-                chat_id=None  # Cross-chat: search all chats in project, not just current chat
-            )
+            # REMOVED: get_facts() - use /search-facts endpoint instead
+            # Facts are now retrieved via librarian's /search-facts which uses project_facts table
+            facts = []  # Disabled: use librarian search instead
             
             # Filter to only ranked facts (kind="ranked")
             ranked_facts = [f for f in facts if f.get("kind") == "ranked"]
@@ -848,42 +681,20 @@ async def chat_with_smart_search(
                 logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
             
             # Also retrieve structured facts for detected topics (cross-chat)
+            # NOTE: Disabled NEW facts table retrieval - using OLD project_facts table via librarian instead
+            # The librarian's get_relevant_memory() already searches project_facts via /search-facts endpoint
+            # This avoids the broken NEW facts table system and relies on the working OLD system
+            facts = []  # Disabled: facts retrieval now handled by librarian via project_facts table
             try:
                 from server.services.facts import extract_topic_from_query
                 topic_key = extract_topic_from_query(user_message)
                 if topic_key:
-                    facts = memory_client.get_facts(
-                        project_id=project_id,
-                        topic_key=topic_key,
-                        chat_id=None  # Cross-chat: search all chats in project
-                    )
-                    if facts:
-                        # Format facts as context for GPT-5
-                        ranked_facts = [f for f in facts if f.get("kind") == "ranked"]
-                        single_facts = [f for f in facts if f.get("kind") == "single"]
-                        
-                        facts_context_parts = []
-                        if ranked_facts:
-                            ranked_facts.sort(key=lambda f: f.get("rank", 0))
-                            facts_context_parts.append(f"\n[STORED FACTS - {topic_key.replace('_', ' ').title()}]")
-                            facts_context_parts.append("Ranked list (from all chats in this project):")
-                            for f in ranked_facts:
-                                facts_context_parts.append(f"  {f.get('rank', 0)}) {f.get('value')}")
-                        
-                        if single_facts:
-                            if not facts_context_parts:
-                                facts_context_parts.append(f"\n[STORED FACTS - {topic_key.replace('_', ' ').title()}]")
-                            facts_context_parts.append("Preferences:")
-                            for f in single_facts:
-                                facts_context_parts.append(f"  - {f.get('value')}")
-                        
-                        if facts_context_parts:
-                            facts_context = "\n".join(facts_context_parts)
-                            if memory_context:
-                                memory_context = f"{memory_context}\n{facts_context}"
-                            else:
-                                memory_context = facts_context
-                            logger.info(f"[FACTS] Added {len(facts)} facts to GPT-5 context for topic_key={topic_key}")
+                    # DISABLED: NEW facts table retrieval (broken)
+                    # facts = memory_client.get_facts(...)
+                    # Instead, facts are retrieved via librarian's /search-facts which uses project_facts table
+                    logger.debug(f"[FACTS] Topic detected: {topic_key}, but using librarian's project_facts search instead")
+                    # Facts are retrieved via librarian's /search-facts which uses project_facts table
+                    # No additional fact formatting needed - librarian handles it
             except Exception as e:
                 logger.warning(f"Failed to retrieve facts for GPT-5 context: {e}", exc_info=True)
             

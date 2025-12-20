@@ -186,6 +186,20 @@ class FactExtractor:
                         "confidence": 0.7
                     })
         
+        # 7. Extract ranked lists (e.g., "My favorite colors are 1) Blue, 2) Green" or "My favorite cryptos are XMR, BTC, XLM")
+        ranked_facts = self._extract_ranked_lists(content)
+        for rank, value, topic in ranked_facts:
+            # Create fact_key with rank: "user.favorite_color.1", "user.favorite_color.2", etc.
+            fact_key = f"user.{topic}.{rank}" if topic else f"user.ranked_item.{rank}"
+            facts.append({
+                "fact_key": fact_key,
+                "value_text": value,
+                "value_type": "string",
+                "confidence": 0.9,
+                "rank": rank,  # Store rank for reference
+                "topic": topic  # Store topic for reference
+            })
+        
         # Deduplicate facts by fact_key (keep highest confidence)
         seen_keys = {}
         for fact in facts:
@@ -194,6 +208,121 @@ class FactExtractor:
                 seen_keys[key] = fact
         
         return list(seen_keys.values())
+    
+    def _extract_ranked_lists(self, content: str) -> List[Tuple[int, str, Optional[str]]]:
+        """
+        Extract ranked lists from content.
+        
+        Supports:
+        - "My favorite colors are 1) Blue, 2) Green, 3) Red"
+        - "My favorite cryptos are XMR, BTC, and XLM" (implicit ranks)
+        - "#1 XMR, #2 BTC, #3 XLM"
+        - "first: Blue, second: Green"
+        
+        Returns:
+            List of (rank, value, topic) tuples
+        """
+        ranked_facts = []
+        content_lower = content.lower()
+        
+        # Pre-clean: Remove memory citations
+        cleaned = re.sub(r'\[M\d+(?:,\s*M\d+)*\]', '', content)
+        cleaned = re.sub(r'\bM\d+\b', '', cleaned)
+        
+        # Pattern 1: Explicit ranks with numbers: "1) Blue, 2) Green" or "1. Blue, 2. Green"
+        pattern1 = re.compile(r'(\d+)\s*[\)\.\:]\s*([^,\n]+)', re.IGNORECASE)
+        for match in pattern1.finditer(cleaned):
+            rank_str, value = match.groups()
+            rank = int(rank_str)
+            value = value.strip().rstrip(',').strip()
+            if rank >= 1 and value and len(value) < 200:
+                # Extract topic from context (look for "favorite X" before the list)
+                topic = self._extract_topic_from_context(cleaned, match.start())
+                ranked_facts.append((rank, value, topic))
+        
+        # Pattern 2: Hash-prefixed: "#1 XMR, #2 BTC"
+        pattern2 = re.compile(r'#(\d+)\s+([^,\n#]+)', re.IGNORECASE)
+        for match in pattern2.finditer(cleaned):
+            rank_str, value = match.groups()
+            rank = int(rank_str)
+            value = value.strip().rstrip(',').strip()
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
+        # Pattern 3: Ordinal words: "first: Blue, second: Green"
+        ordinal_map = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5}
+        pattern3 = re.compile(r'\b(first|second|third|fourth|fifth)\s*[:]\s*([^,\n]+)', re.IGNORECASE)
+        for match in pattern3.finditer(cleaned):
+            ordinal_str, value = match.groups()
+            rank = ordinal_map.get(ordinal_str.lower())
+            if rank and value:
+                value = value.strip().rstrip(',').strip()
+                if value and len(value) < 200:
+                    if not any(r == rank for r, _, _ in ranked_facts):
+                        topic = self._extract_topic_from_context(cleaned, match.start())
+                        ranked_facts.append((rank, value, topic))
+        
+        # Pattern 4: Comma-separated list after "favorite X are" (implicit ranks)
+        # "My favorite cryptocurrencies are XMR, BTC, and XLM"
+        pattern4 = re.compile(
+            r'(?:my\s+)?favorite\s+(\w+(?:\s+\w+)?)\s+are\s+([^\.\?\!]+)',
+            re.IGNORECASE
+        )
+        for match in pattern4.finditer(cleaned):
+            topic_part = match.group(1).strip()
+            list_text = match.group(2).strip()
+            # Normalize topic
+            topic = self._normalize_topic(topic_part)
+            
+            # Split by comma and "and"
+            items = re.split(r',\s*(?:and\s+)?', list_text)
+            items = [item.strip() for item in items if item.strip()]
+            
+            # Only process if we have 2+ items and no explicit ranks found
+            if len(items) >= 2 and not ranked_facts:
+                for idx, item in enumerate(items, start=1):
+                    item = item.strip().rstrip(',').strip()
+                    item = re.sub(r'\s+and\s*$', '', item, flags=re.IGNORECASE)
+                    if item and len(item) < 200:
+                        ranked_facts.append((idx, item, topic))
+                break  # Only process first match
+        
+        # Sort by rank and return
+        ranked_facts.sort(key=lambda x: x[0])
+        return ranked_facts
+    
+    def _extract_topic_from_context(self, content: str, position: int) -> Optional[str]:
+        """Extract topic from context before the ranked list."""
+        # Look back up to 100 chars for "favorite X" pattern
+        context = content[max(0, position-100):position].lower()
+        match = re.search(r'(?:my\s+)?favorite\s+(\w+(?:\s+\w+)?)', context)
+        if match:
+            topic_part = match.group(1).strip()
+            return self._normalize_topic(topic_part)
+        return None
+    
+    def _normalize_topic(self, topic: str) -> str:
+        """Normalize topic to canonical form."""
+        topic = topic.lower().strip()
+        # Map common variations to canonical forms
+        topic_map = {
+            'color': 'favorite_color',
+            'colors': 'favorite_color',
+            'crypto': 'favorite_crypto',
+            'cryptos': 'favorite_crypto',
+            'cryptocurrency': 'favorite_crypto',
+            'cryptocurrencies': 'favorite_crypto',
+            'candy': 'favorite_candy',
+            'candies': 'favorite_candy',
+            'chocolate': 'favorite_candy',
+            'tv show': 'favorite_tv',
+            'tv': 'favorite_tv',
+            'show': 'favorite_tv',
+            'television show': 'favorite_tv',
+        }
+        return topic_map.get(topic, topic.replace(' ', '_'))
     
     def _infer_key_from_context(self, content: str, match_start: int) -> str:
         """Infer fact key from surrounding context."""

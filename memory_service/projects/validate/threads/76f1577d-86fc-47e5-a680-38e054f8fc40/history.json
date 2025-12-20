@@ -1,0 +1,42 @@
+[
+  {
+    "id": "52a2767f-8fbb-4f7a-ab39-0ec314cb5478",
+    "role": "user",
+    "content": "What's my favorite color?",
+    "created_at": "2025-12-20T02:54:57.696505+00:00"
+  },
+  {
+    "id": "15985d7c-cd3b-4f00-933a-85fa04ac05ca",
+    "role": "assistant",
+    "content": "I don’t know your favorite color yet [M1].\n\n## Tell me and I’ll remember 🧠\n- Share your favorite color, and I’ll save it for future conversations [M1].\n\n## Quick question\n- What’s your favorite color?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2976a5ce-a0a2-404e-8cc5-384893211678-0",
+        "title": "What's my favorite color?",
+        "description": "What's my favorite color?",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "76f1577d-86fc-47e5-a680-38e054f8fc40",
+          "message_id": "76f1577d-86fc-47e5-a680-38e054f8fc40-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-2976a5ce-a0a2-404e-8cc5-384893211678",
+          "source_type": "chat",
+          "role": "user",
+          "content": "What's my favorite color?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T02:54:57.695607+00:00"
+  }
+]

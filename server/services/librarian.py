@@ -394,9 +394,11 @@ def get_relevant_memory(
             role = r["role"]
         
         metadata = r.get("metadata", {}) or {}
+        # Extract message_uuid from result or metadata for deep linking
+        message_uuid = r.get("message_uuid") or metadata.get("message_uuid")
         # Include message_uuid in metadata for citations
-        if "message_uuid" in r:
-            metadata["message_uuid"] = r["message_uuid"]
+        if message_uuid:
+            metadata["message_uuid"] = message_uuid
         
         hit = MemoryHit(
             source_id=r.get("source_id", ""),
@@ -408,7 +410,8 @@ def get_relevant_memory(
             source_type=r.get("source_type", "chat"),
             file_path=r.get("file_path"),
             created_at=r.get("created_at"),
-            metadata=metadata
+            metadata=metadata,
+            message_uuid=message_uuid  # CRITICAL: Set message_uuid for deep linking
         )
         hits.append(hit)
     

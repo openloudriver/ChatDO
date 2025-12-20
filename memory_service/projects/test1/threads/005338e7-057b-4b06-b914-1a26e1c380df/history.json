@@ -1,0 +1,22 @@
+[
+  {
+    "id": "83660f61-abc1-4246-8fc4-459931a093b9",
+    "role": "user",
+    "content": "Do you remember what my favorite color is?",
+    "created_at": "2025-12-19T03:06:47.779628+00:00"
+  },
+  {
+    "id": "053cdf6c-8adc-478f-94f1-14d001540bc0",
+    "role": "assistant",
+    "content": "I don’t have your favorite color in memory yet.\n\n## 🧠 Help me remember\n- Tell me your favorite color (and any specifics like shade), and I’ll save it for next time.",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-19T03:06:47.778868+00:00"
+  }
+]

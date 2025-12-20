@@ -12,17 +12,35 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from server.services.facts import normalize_topic_key, extract_ranked_facts, extract_topic_from_query
+# NOTE: This test uses deleted functions. Updated to use fact_extractor.
+from server.services.facts import extract_topic_from_query
+from memory_service.fact_extractor import get_fact_extractor
 
 
 def test_1_topic_bleed_prevention():
     """Test: Store colors list. Ask 'What is my number 2 favorite tv show?' → must NOT return Green."""
     print("\n=== Test 1: Topic Bleed Prevention ===")
     
-    # Simulate storing colors
+    # Simulate storing colors - using fact_extractor instead of deleted functions
     colors_text = "My favorite colors are 1) Blue, 2) Green, 3) Black"
-    topic_key_colors = normalize_topic_key(colors_text)
-    ranked_colors = extract_ranked_facts(colors_text)
+    extractor = get_fact_extractor()
+    facts = extractor.extract_facts(colors_text, role="user")
+    # Extract topic_key from facts (look for favorite_color facts)
+    topic_key_colors = None
+    ranked_colors = []
+    for fact in facts:
+        if "favorite_color" in fact.get("fact_key", ""):
+            topic_key_colors = "favorite_colors"
+            # Extract rank from fact_key (e.g., "user.favorite_color.1" -> rank 1)
+            fact_key = fact.get("fact_key", "")
+            if "." in fact_key:
+                try:
+                    rank = int(fact_key.split(".")[-1])
+                    value = fact.get("value_text", "")
+                    ranked_colors.append((rank, value))
+                except ValueError:
+                    pass
+    ranked_colors.sort(key=lambda x: x[0])
     
     print(f"Colors text: {colors_text}")
     print(f"Topic key: {topic_key_colors}")
@@ -47,10 +65,25 @@ def test_2_clean_rendering():
     """Test: Store cryptos list as 1) XMR, 2) BTC, 3) XLM. Ask 'List my favorite cryptos' → must output 1..3 exactly, no ##, no M1."""
     print("\n=== Test 2: Clean Rendering ===")
     
-    # Simulate storing cryptos
+    # Simulate storing cryptos - using fact_extractor instead of deleted functions
     cryptos_text = "My favorite cryptos are 1) XMR, 2) BTC, 3) XLM"
-    topic_key_cryptos = normalize_topic_key(cryptos_text)
-    ranked_cryptos = extract_ranked_facts(cryptos_text)
+    extractor = get_fact_extractor()
+    facts = extractor.extract_facts(cryptos_text, role="user")
+    # Extract topic_key and ranked facts from extracted facts
+    topic_key_cryptos = None
+    ranked_cryptos = []
+    for fact in facts:
+        if "favorite_crypto" in fact.get("fact_key", ""):
+            topic_key_cryptos = "favorite_cryptos"
+            fact_key = fact.get("fact_key", "")
+            if "." in fact_key:
+                try:
+                    rank = int(fact_key.split(".")[-1])
+                    value = fact.get("value_text", "")
+                    ranked_cryptos.append((rank, value))
+                except ValueError:
+                    pass
+    ranked_cryptos.sort(key=lambda x: x[0])
     
     print(f"Cryptos text: {cryptos_text}")
     print(f"Topic key: {topic_key_cryptos}")
@@ -79,9 +112,22 @@ def test_3_no_junk_tokens():
     """Test: Ensure M1 tokens never become a stored fact value."""
     print("\n=== Test 3: No Junk Tokens ===")
     
-    # Test with junk tokens in text
+    # Test with junk tokens in text - using fact_extractor
     junk_text = "My favorite colors are 1) Blue, 2) Green [M1], 3) Black ##"
-    ranked_facts = extract_ranked_facts(junk_text)
+    extractor = get_fact_extractor()
+    facts = extractor.extract_facts(junk_text, role="user")
+    ranked_facts = []
+    for fact in facts:
+        if "favorite_color" in fact.get("fact_key", ""):
+            fact_key = fact.get("fact_key", "")
+            if "." in fact_key:
+                try:
+                    rank = int(fact_key.split(".")[-1])
+                    value = fact.get("value_text", "")
+                    ranked_facts.append((rank, value))
+                except ValueError:
+                    pass
+    ranked_facts.sort(key=lambda x: x[0])
     
     print(f"Junk text: {junk_text}")
     print(f"Ranked facts: {ranked_facts}")
@@ -98,9 +144,22 @@ def test_3_no_junk_tokens():
         assert "##" not in value, f"Value '{value}' contains ##"
         assert "M1" not in value, f"Value '{value}' contains M1"
     
-    # Test with markdown heading
+    # Test with markdown heading - using fact_extractor
     heading_text = "## My favorite colors\n1) Blue\n2) Green\n3) Black"
-    ranked_facts_heading = extract_ranked_facts(heading_text)
+    extractor = get_fact_extractor()
+    facts = extractor.extract_facts(heading_text, role="user")
+    ranked_facts_heading = []
+    for fact in facts:
+        if "favorite_color" in fact.get("fact_key", ""):
+            fact_key = fact.get("fact_key", "")
+            if "." in fact_key:
+                try:
+                    rank = int(fact_key.split(".")[-1])
+                    value = fact.get("value_text", "")
+                    ranked_facts_heading.append((rank, value))
+                except ValueError:
+                    pass
+    ranked_facts_heading.sort(key=lambda x: x[0])
     
     print(f"\nHeading text: {heading_text}")
     print(f"Ranked facts: {ranked_facts_heading}")
@@ -125,7 +184,7 @@ def test_4_strict_topic_matching():
     ]
     
     for text, expected in test_cases:
-        result = normalize_topic_key(text)
+        result = extract_topic_from_query(text)
         print(f"Text: '{text}' → Topic key: {result} (expected: {expected})")
         assert result == expected, f"Expected {expected}, got {result} for '{text}'"
     

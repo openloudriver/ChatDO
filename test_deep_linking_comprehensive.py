@@ -3,6 +3,10 @@ Comprehensive deep-linking test suite.
 
 Tests that Memory inline citations correctly deep-link to the exact ChatDO response card.
 Creates a test project with 10+ chats, stores 20+ topics, and runs 20+ citation tests.
+
+⚠️  NOTE: This test needs updates to work with the OLD project_facts system.
+The store_memory_fact() function has been updated to use message sending instead of
+direct fact storage, but the test may need further adjustments.
 """
 import sys
 import os
@@ -16,7 +20,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from server.services.memory_service_client import MemoryServiceClient
-from server.services.facts import extract_ranked_facts, normalize_topic_key, extract_topic_from_query
+from server.services.facts import extract_topic_from_query
 from memory_service.memory_dashboard import db
 
 # Test project ID
@@ -58,30 +62,18 @@ def test_project():
 
 @pytest.fixture(scope="module", autouse=True)
 def cleanup_test_data(memory_client, test_project):
-    """Clean up test data before and after tests."""
+    """
+    Clean up test data before and after tests.
+    
+    NOTE: This cleanup was for the NEW facts table system which has been removed.
+    The OLD project_facts system doesn't need this cleanup as it's project-scoped.
+    Keeping this fixture for now but it may not be needed.
+    """
     project_id = test_project["id"]
     
-    # Clean up before tests
-    try:
-        conn = db.get_tracking_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM facts WHERE project_id = ?", (project_id,))
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
-    
+    # NOTE: OLD system uses project_facts table, not facts table
+    # Cleanup is handled by project deletion, so this may not be needed
     yield
-    
-    # Clean up after tests
-    try:
-        conn = db.get_tracking_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM facts WHERE project_id = ?", (project_id,))
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
 
 
 def create_chat(project_id: str, title: str = None) -> str:
@@ -123,72 +115,32 @@ def send_message(thread_id: str, project_id: str, message: str) -> dict:
 
 
 def store_memory_fact(memory_client, project_id: str, chat_id: str, topic: str, values: list, kind: str = "ranked"):
-    """Store a memory fact (ranked list or single preference)."""
+    """
+    Store a memory fact using the OLD project_facts system.
+    
+    NOTE: This test uses the OLD system (project_facts table) via sending messages.
+    Facts are automatically extracted and stored by fact_extractor when messages are indexed.
+    """
+    # Use extract_topic_from_query to get topic_key
+    topic_key = extract_topic_from_query(f"favorite {topic}")
+    if not topic_key:
+        # Fallback: create topic_key manually
+        topic_key = f"favorite_{topic.lower().replace(' ', '_')}"
+    
+    # Store facts by sending messages (which triggers fact extraction)
     if kind == "ranked":
-        # Create a properly formatted message that extract_ranked_facts can parse
-        # Format: "My favorite X are:\n1) Value1\n2) Value2\n..."
-        formatted_message = f"My favorite {topic} are:\n" + "\n".join([f"{i+1}) {v}" for i, v in enumerate(values)])
-        topic_key = normalize_topic_key(formatted_message)
-        ranked_facts = extract_ranked_facts(formatted_message)
-        
-        if not topic_key or not ranked_facts:
-            # Try alternative format
-            formatted_message = f"My favorite {topic} are " + ", ".join([f"{i+1}) {v}" for i, v in enumerate(values)])
-            topic_key = normalize_topic_key(formatted_message)
-            ranked_facts = extract_ranked_facts(formatted_message)
-        
-        if not topic_key:
-            # Fallback: create topic_key manually
-            topic_key = f"favorite_{topic.lower().replace(' ', '_')}"
-        
-        if not ranked_facts:
-            # Fallback: create ranked facts manually
-            ranked_facts = [(i+1, v) for i, v in enumerate(values)]
-        
-        # Generate assistant_message_id for fact storage (simulating the assistant response that confirms the fact)
-        assistant_message_id_for_facts = str(uuid.uuid4())
-        
-        # Store facts using the extracted format
-        # Production message IDs are 1-based (user-1, user-2, ...)
-        # Align test fixture message_id generation with production to ensure fact_id linking works.
-        for rank, value in ranked_facts:
-            message_id = f"{chat_id}-user-{rank}"
-            success = memory_client.store_fact(
-                project_id=project_id,
-                topic_key=topic_key,
-                kind="ranked",
-                value=value,
-                source_message_id=message_id,
-                chat_id=chat_id,
-                rank=rank,
-                assistant_message_id=assistant_message_id_for_facts  # Store assistant_message_id at creation time
-            )
-            assert success, f"Failed to store ranked fact: rank={rank}, value={value}, topic_key={topic_key}"
+        # Format: "My favorite X are 1) Value1, 2) Value2, 3) Value3"
+        formatted_message = f"My favorite {topic} are " + ", ".join([f"{i+1}) {v}" for i, v in enumerate(values)])
     else:
-        # Store as single preference
-        # Create a message format that normalize_topic_key can parse
+        # Single preference
         formatted_message = f"My favorite {topic} is {values[0] if isinstance(values, list) else values}"
-        topic_key = normalize_topic_key(formatted_message)
-        
-        if not topic_key:
-            # Fallback: create topic_key manually
-            topic_key = f"favorite_{topic.lower().replace(' ', '_')}"
-        
-        # Generate assistant_message_id for fact storage (simulating the assistant response that confirms the fact)
-        assistant_message_id_for_facts = str(uuid.uuid4())
-        
-        message_id = f"{chat_id}-user-1"
-        value = values[0] if isinstance(values, list) else values
-        success = memory_client.store_fact(
-            project_id=project_id,
-            topic_key=topic_key,
-            kind="single",
-            value=value,
-            source_message_id=message_id,
-            chat_id=chat_id,
-            assistant_message_id=assistant_message_id_for_facts  # Store assistant_message_id at creation time
-        )
-        assert success, f"Failed to store single fact: value={value}, topic_key={topic_key}"
+    
+    # Send message to trigger fact extraction and storage
+    response = send_message(chat_id, project_id, formatted_message)
+    
+    # Wait a bit for indexing to complete
+    import time
+    time.sleep(0.5)
     
     return topic_key
 

@@ -236,135 +236,11 @@ class MemoryServiceClient:
             logger.warning(f"Memory Service index_chat_message failed: {e}")
             return False
     
-    def store_fact(
-        self,
-        project_id: str,
-        topic_key: str,
-        kind: str,
-        value: str,
-        source_message_id: str,
-        chat_id: Optional[str] = None,
-        rank: Optional[int] = None
-    ) -> bool:
-        """
-        Store a structured fact (ranked list item or single preference).
-        
-        Args:
-            project_id: Project ID (required)
-            topic_key: Normalized topic key (e.g., "favorite_colors")
-            kind: "ranked" or "single"
-            value: The fact value
-            source_message_id: ID of the message that contained this fact
-            chat_id: Optional chat ID
-            rank: Optional rank (for ranked lists, 1-based)
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        if not self.is_available():
-            return False
-        
-        try:
-            response = requests.post(
-                f"{self.base_url}/facts/store",
-                json={
-                    "project_id": project_id,
-                    "topic_key": topic_key,
-                    "kind": kind,
-                    "value": value,
-                    "source_message_id": source_message_id,
-                    "chat_id": chat_id,
-                    "rank": rank
-                },
-                timeout=5
-            )
-            response.raise_for_status()
-            return True
-        except Exception as e:
-            logger.warning(f"Memory Service store_fact failed: {e}")
-            return False
-    
-    def get_facts(
-        self,
-        project_id: str,
-        topic_key: str,
-        chat_id: Optional[str] = None
-    ) -> List[Dict]:
-        """
-        Get all facts for a topic (project-scoped, optionally chat-scoped).
-        
-        Args:
-            project_id: Project ID
-            topic_key: Normalized topic key
-            chat_id: Optional chat ID filter
-            
-        Returns:
-            List of fact dictionaries, ordered by rank (for ranked) or created_at (for single)
-        """
-        if not self.is_available():
-            return []
-        
-        try:
-            response = requests.post(
-                f"{self.base_url}/facts/get",
-                json={
-                    "project_id": project_id,
-                    "topic_key": topic_key,
-                    "chat_id": chat_id
-                },
-                timeout=5
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data.get("facts", [])
-        except Exception as e:
-            logger.warning(f"Memory Service get_facts failed: {e}")
-            return []
-    
-    def get_fact_by_rank(
-        self,
-        project_id: str,
-        topic_key: str,
-        rank: int,
-        chat_id: Optional[str] = None
-    ) -> Optional[Dict]:
-        """
-        Get a specific ranked fact by rank.
-        
-        Args:
-            project_id: Project ID
-            topic_key: Normalized topic key
-            rank: Rank (1-based)
-            chat_id: Optional chat ID filter
-            
-        Returns:
-            Fact dictionary or None if not found
-        """
-        if not self.is_available():
-            return None
-        
-        try:
-            params = {
-                "project_id": project_id,
-                "topic_key": topic_key,
-                "rank": rank
-            }
-            if chat_id:
-                params["chat_id"] = chat_id
-            
-            response = requests.get(
-                f"{self.base_url}/facts/get-by-rank",
-                params=params,
-                timeout=5
-            )
-            response.raise_for_status()
-            data = response.json()
-            if data.get("status") == "not_found":
-                return None
-            return data.get("fact")
-        except Exception as e:
-            logger.warning(f"Memory Service get_fact_by_rank failed: {e}")
-            return None
+    # REMOVED: NEW facts table system client methods
+    # - store_fact() - facts are stored via fact_extractor → store_project_fact
+    # - get_facts() - use search_facts() instead
+    # - get_fact_by_rank() - use search_facts() and filter by fact_key instead
+    # All fact operations now use project_facts table via fact_extractor and /search-facts
     
     def get_single_fact(
         self,
@@ -394,16 +270,9 @@ class MemoryServiceClient:
             if chat_id:
                 params["chat_id"] = chat_id
             
-            response = requests.get(
-                f"{self.base_url}/facts/get-single",
-                params=params,
-                timeout=5
-            )
-            response.raise_for_status()
-            data = response.json()
-            if data.get("status") == "not_found":
-                return None
-            return data.get("fact")
+            # REMOVED: /facts/get-single endpoint - use /search-facts instead
+            # This method is no longer used
+            return None
         except Exception as e:
             logger.warning(f"Memory Service get_single_fact failed: {e}")
             return None
