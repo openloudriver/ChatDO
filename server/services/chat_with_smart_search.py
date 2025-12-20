@@ -933,6 +933,7 @@ async def chat_with_smart_search(
                         "meta": {
                             "chat_id": hit.chat_id,
                             "message_id": hit.message_id,
+                            "message_uuid": hit.message_uuid,  # Stable UUID for deep-linking
                             "file_path": hit.file_path,
                             "source_id": hit.source_id,
                             "source_type": hit.source_type,

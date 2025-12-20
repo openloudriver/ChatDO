@@ -9,9 +9,16 @@ import logging
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 import dateparser
-import quantulum3
 
 logger = logging.getLogger(__name__)
+
+# Make quantulum3 optional
+try:
+    import quantulum3
+    QUANTULUM_AVAILABLE = True
+except ImportError:
+    QUANTULUM_AVAILABLE = False
+    logger.debug("quantulum3 not available. Quantity extraction will be skipped.")
 
 # Try to import spaCy, but make it optional
 try:
@@ -60,7 +67,9 @@ class FactExtractor:
                 self._setup_patterns()
             except OSError:
                 logger.warning("spaCy English model not found. Run: python -m spacy download en_core_web_sm")
-                SPACY_AVAILABLE = False
+                # Don't modify module-level variable, just mark instance as unavailable
+                self.nlp = None
+                self.matcher = None
     
     def _setup_patterns(self):
         """Setup spaCy matcher patterns."""
@@ -259,8 +268,10 @@ class FactExtractor:
     def _extract_quantities(self, content: str) -> List[Tuple[str, float]]:
         """Extract quantities from content."""
         quantities = []
+        if not QUANTULUM_AVAILABLE:
+            return quantities
         try:
-            quants = quantulum3.parse(content)
+            quants = quantulum3.parser.parse(content)
             for qty in quants:
                 quantities.append((qty.surface, qty.value))
         except Exception:

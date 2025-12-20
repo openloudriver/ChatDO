@@ -1469,6 +1469,9 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
     """
     Search current facts by fact_key or value_text.
     
+    Extracts keywords from the query to improve matching (e.g., "What is my favorite color?"
+    will match facts with "color" in the key or value).
+    
     Args:
         project_id: Project ID
         query: Search query (searches fact_key and value_text)
@@ -1485,17 +1488,46 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
     conn = get_db_connection(source_id, project_id=project_id)
     cursor = conn.cursor()
     
-    search_pattern = f"%{query}%"
-    cursor.execute("""
+    # Extract meaningful keywords from query (remove common question words)
+    import re
+    query_lower = query.lower()
+    # Remove common question words and stop words
+    stop_words = {'what', 'is', 'my', 'your', 'the', 'a', 'an', 'do', 'you', 'remember', 'know', 'tell', 'me', 'about'}
+    words = re.findall(r'\b\w+\b', query_lower)
+    keywords = [w for w in words if w not in stop_words and len(w) > 2]
+    
+    # If no keywords extracted, use the original query
+    if not keywords:
+        keywords = [query_lower]
+    
+    # Build search patterns for each keyword
+    search_patterns = [f"%{kw}%" for kw in keywords]
+    
+    # Build SQL with OR conditions for each keyword
+    conditions = []
+    params = [project_id]
+    for pattern in search_patterns:
+        conditions.append("(fact_key LIKE ? OR value_text LIKE ?)")
+        params.extend([pattern, pattern])
+    
+    # Combine all conditions with OR, then wrap in parentheses
+    if conditions:
+        search_condition = f"({' OR '.join(conditions)})"
+    else:
+        # Fallback: use original query if no keywords extracted
+        search_pattern = f"%{query}%"
+        search_condition = "(fact_key LIKE ? OR value_text LIKE ?)"
+        params.extend([search_pattern, search_pattern])
+    
+    cursor.execute(f"""
         SELECT fact_id, project_id, fact_key, value_text, value_type,
                confidence, source_message_uuid, created_at, effective_at,
                supersedes_fact_id, is_current
         FROM project_facts
-        WHERE project_id = ? AND is_current = 1
-          AND (fact_key LIKE ? OR value_text LIKE ?)
+        WHERE project_id = ? AND is_current = 1 AND {search_condition}
         ORDER BY effective_at DESC, created_at DESC
         LIMIT ?
-    """, (project_id, search_pattern, search_pattern, limit))
+    """, params + [limit])
     
     rows = cursor.fetchall()
     conn.close()

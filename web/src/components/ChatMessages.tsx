@@ -1203,6 +1203,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         return (
           <div
             key={message.id}
+            id={message.uuid ? `message-${message.uuid}` : `message-${message.id}`}
             ref={(el) => {
               if (el && message.role === 'user') {
                 userMessageRefs.current.set(message.id, el);

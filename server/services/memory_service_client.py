@@ -105,7 +105,10 @@ class MemoryServiceClient:
         for i, result in enumerate(results, 1):
             source_type = result.get("source_type", "file")
             
-            if source_type == "chat":
+            if source_type == "fact":
+                # Format fact source - facts are stored preferences/facts
+                context_parts.append(f"\n[M{i}] (Stored Fact)")
+            elif source_type == "chat":
                 # Format chat message source - just include citation marker, no verbose chat_id
                 context_parts.append(f"\n[M{i}]")
             else:

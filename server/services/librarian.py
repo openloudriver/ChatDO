@@ -32,6 +32,7 @@ class MemoryHit:
     created_at: Optional[str] = None
     metadata: Dict[str, Any] = None
     recency_boost: float = 0.0  # Recency boost factor (0.0 to RECENCY_WEIGHT)
+    message_uuid: Optional[str] = None  # Stable UUID for deep linking/citations
 
     def __post_init__(self):
         """Ensure metadata is always a dict."""
@@ -315,14 +316,28 @@ def get_relevant_memory(
                 )
                 if response.status_code == 200:
                     facts_data = response.json()
-                    for fact in facts_data.get("facts", []):
+                    facts_list = facts_data.get("facts", [])
+                    if facts_list:
+                        logger.info(f"[FACTS] Found {len(facts_list)} facts for query '{query}' in project {project_id}")
+                    for fact in facts_list:
                         # Create a MemoryHit-like entry for the fact
+                        # Format fact content in a user-friendly way
+                        fact_key = fact.get('fact_key', '')
+                        value_text = fact.get('value_text', '')
+                        
+                        # Convert fact_key to readable format (e.g., "user.color" -> "favorite color")
+                        readable_key = fact_key.replace('user.', '').replace('_', ' ')
+                        if 'favorite' in readable_key or 'preferred' in readable_key:
+                            content = f"Your {readable_key} is {value_text}"
+                        else:
+                            content = f"Your {readable_key}: {value_text}"
+                        
                         fact_hit = MemoryHit(
                             source_id=f"project-{project_id}",
-                            message_id="",  # Will use source_message_uuid for citation
+                            message_id=fact.get("source_message_uuid", ""),  # Use source_message_uuid for citation
                             chat_id=None,
                             role="fact",
-                            content=f"{fact.get('fact_key', '')}: {fact.get('value_text', '')}",
+                            content=content,
                             score=0.95,  # High score for facts
                             source_type="fact",
                             file_path=None,
@@ -334,11 +349,14 @@ def get_relevant_memory(
                                 "value_type": fact.get("value_type"),
                                 "source_message_uuid": fact.get("source_message_uuid"),
                                 "is_fact": True
-                            }
+                            },
+                            message_uuid=fact.get("source_message_uuid")  # For deep linking - stored in metadata too
                         )
                         fact_hits.append(fact_hit)
+                        logger.debug(f"[FACTS] Added fact hit: {fact_key}={value_text}")
+                    logger.info(f"[FACTS] Created {len(fact_hits)} fact hits from {len(facts_list)} facts")
             except Exception as e:
-                logger.debug(f"Fact search failed (may not be implemented yet): {e}")
+                logger.warning(f"Fact search failed: {e}", exc_info=True)
     except Exception as e:
         logger.debug(f"Fact retrieval failed: {e}")
     
@@ -356,6 +374,7 @@ def get_relevant_memory(
         chat_id=None  # Include all chats for cross-chat memory
     )
     
+    logger.info(f"[LIBRARIAN] raw_results={len(raw_results)}, fact_hits={len(fact_hits)}")
     if not raw_results and not fact_hits:
         logger.info(
             "[LIBRARIAN] %s: query=%r -> 0 hits (no results from Memory Service)",

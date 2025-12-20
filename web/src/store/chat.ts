@@ -23,6 +23,7 @@ axios.interceptors.response.use(
 
 export interface Message {
   id: string;
+  uuid?: string;  // Stable UUID from backend for deep-linking (message_uuid)
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
@@ -1048,7 +1049,8 @@ export const useChatStore = create<ChatStore>((set) => ({
         }
         
         messages.push({
-          id: `${conversation.id}-${messages.length}`,
+          id: msg.id || `${conversation.id}-${messages.length}`,  // Preserve backend message ID
+          uuid: msg.uuid || msg.message_uuid,  // Preserve stable UUID from backend for deep-linking
           role: msg.role,
           content: msg.content || '',
           type: msg.type || undefined, // Preserve structured message types (article_card, web_search_results, rag_response)
@@ -1057,7 +1059,7 @@ export const useChatStore = create<ChatStore>((set) => ({
           model_label: msg.model_label || undefined, // Preserve model_label from backend (most accurate)
           provider: msg.provider || undefined, // Preserve provider attribution
           sources: sources, // Use converted sources
-          timestamp: new Date() // Backend doesn't provide timestamps, use current time
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date() // Use backend timestamp if available
         });
       }
       

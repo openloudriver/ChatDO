@@ -201,6 +201,7 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
     e.stopPropagation();
     const chatId = source.meta?.chat_id;
     const filePath = source.meta?.file_path;
+    const messageUuid = source.meta?.message_uuid; // Stable UUID for deep-linking
 
     if (chatId) {
       // Try to find the conversation in loaded chats
@@ -219,7 +220,31 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
       if (targetConversation) {
         await setCurrentConversation(targetConversation);
         setOpen(false);
-        // TODO: Scroll to specific message if message_id is available
+        
+        // Deep-link to specific message using message_uuid
+        if (messageUuid) {
+          try {
+            const { navigateToMessage } = await import('../utils/messageDeepLink');
+            // Wait a bit for the conversation to load and messages to render
+            setTimeout(async () => {
+              try {
+                await navigateToMessage(messageUuid, {
+                  updateUrl: true,
+                  timeout: 5000,
+                });
+              } catch (error) {
+                console.warn(`[DEEP-LINK] Failed to navigate to message ${messageUuid}:`, error);
+                // Fallback: scroll to bottom if specific message not found
+                const messagesContainer = document.querySelector('[class*="overflow-y-auto"]');
+                if (messagesContainer) {
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+              }
+            }, 300);
+          } catch (error) {
+            console.error('[DEEP-LINK] Failed to import navigateToMessage:', error);
+          }
+        }
       } else {
         console.warn(`Chat ${chatId} not found`);
         // Could show a toast/notification here

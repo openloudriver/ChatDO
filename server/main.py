@@ -1128,7 +1128,7 @@ async def summarize_article(request: ArticleSummaryRequest):
         if is_youtube_url(request.url):
             # --- Tier 1: YouTube-only ---
             # youtube-transcript-api + GPT-5
-            # NO FALLBACK: If transcript API fails, return error (do NOT call yt-dlp or Whisper)
+            # FALLBACK: If transcript API fails with network/API errors, fall back to yt-dlp + Whisper
             try:
                 article_text = get_youtube_transcript(request.url)
                 parsed = urlparse(request.url)
@@ -1142,18 +1142,69 @@ async def summarize_article(request: ArticleSummaryRequest):
                     article_title = f"Video from {parsed.netloc}"
                 model_label = "YouTube transcript + GPT-5"
             except YouTubeTranscriptError as e:
-                # Explicitly do NOT fall back to audio pipeline
-                logger.warning("Tier 1 (YouTube transcript) failed: url=%s error=%s", request.url, e)
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Could not obtain YouTube transcript: {str(e)}",
-                ) from e
+                error_str = str(e).lower()
+                # Check if it's a network/API error (502, 503, connection issues) vs. transcript unavailable
+                is_network_error = (
+                    "502" in error_str or 
+                    "503" in error_str or 
+                    "504" in error_str or
+                    "bad gateway" in error_str or
+                    "server error" in error_str or
+                    "connection" in error_str or
+                    "timeout" in error_str or
+                    "network" in error_str
+                )
+                
+                if is_network_error:
+                    # Fall back to Tier 2 (yt-dlp + Whisper) for network/API errors
+                    logger.warning("Tier 1 (YouTube transcript API) failed with network error, falling back to Tier 2 (yt-dlp + Whisper): url=%s error=%s", request.url, e)
+                    try:
+                        from server.services.video_transcription import get_transcript_from_url
+                        article_text = await get_transcript_from_url(request.url, conversation_id=conversation_id_str)
+                        parsed = urlparse(request.url)
+                        article_site_name = "Video"
+                        from server.services.video_source import get_video_title
+                        video_title = await get_video_title(request.url)
+                        if video_title:
+                            article_title = video_title
+                        else:
+                            article_title = f"Video from {parsed.netloc}"
+                        model_label = "yt-dlp + Whisper-small-FP16 + GPT-5"
+                    except Exception as fallback_error:
+                        logger.exception("Tier 2 fallback also failed for YouTube URL: url=%s", request.url)
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Could not obtain YouTube transcript via API or audio transcription: {str(fallback_error)}",
+                        ) from fallback_error
+                else:
+                    # No transcript available (not a network error) - return error without fallback
+                    logger.warning("Tier 1 (YouTube transcript) failed: url=%s error=%s", request.url, e)
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Could not obtain YouTube transcript: {str(e)}",
+                    ) from e
             except Exception as e:
                 logger.exception("Tier 1 (YouTube transcript) unexpected error: url=%s", request.url)
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Error retrieving YouTube transcript: {str(e)}",
-                ) from e
+                # For unexpected errors, try fallback to Tier 2
+                logger.info("Attempting Tier 2 fallback for unexpected YouTube transcript error")
+                try:
+                    from server.services.video_transcription import get_transcript_from_url
+                    article_text = await get_transcript_from_url(request.url, conversation_id=conversation_id_str)
+                    parsed = urlparse(request.url)
+                    article_site_name = "Video"
+                    from server.services.video_source import get_video_title
+                    video_title = await get_video_title(request.url)
+                    if video_title:
+                        article_title = video_title
+                    else:
+                        article_title = f"Video from {parsed.netloc}"
+                    model_label = "yt-dlp + Whisper-small-FP16 + GPT-5"
+                except Exception as fallback_error:
+                    logger.exception("Tier 2 fallback also failed for YouTube URL: url=%s", request.url)
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Error retrieving YouTube transcript: {str(e)}",
+                    ) from e
         elif is_other_video_host(request.url):
             # --- Tier 2: Non-YouTube video hosts ---
             # Rumble / BitChute / Archive.org

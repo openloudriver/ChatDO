@@ -968,12 +968,14 @@ async def search_facts(request: SearchFactsRequest):
     """
     try:
         source_id = f"project-{request.project_id}"
+        logger.info(f"[FACTS-API] Searching facts for project_id={request.project_id}, query='{request.query}', source_id={source_id}")
         facts = db.search_current_facts(
             project_id=request.project_id,
             query=request.query,
             limit=request.limit,
             source_id=source_id
         )
+        logger.info(f"[FACTS-API] Found {len(facts)} facts for query '{request.query}'")
         
         fact_responses = [
             FactResponse(
