@@ -26,7 +26,7 @@ class MemoryServiceClient:
         except Exception:
             return False
     
-    def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None, chat_id: Optional[str] = None) -> List[Dict]:
+    def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None, chat_id: Optional[str] = None, exclude_chat_ids: Optional[List[str]] = None) -> List[Dict]:
         """
         Search for relevant chunks in a project's indexed files and chat messages.
         
@@ -37,6 +37,7 @@ class MemoryServiceClient:
             source_ids: Optional list of source IDs to search. If None, uses [project_id] as fallback.
             chat_id: DEPRECATED - kept for backward compatibility but no longer excludes chats.
                      All chats in the project are now included in search results.
+            exclude_chat_ids: Optional list of chat_ids to exclude from search (e.g., trashed chats)
             
         Returns:
             List of search results with score, file_path, text, etc.
@@ -67,7 +68,8 @@ class MemoryServiceClient:
                     "query": query,
                     "limit": limit,
                     "source_ids": source_ids,
-                    "chat_id": chat_id
+                    "chat_id": chat_id,
+                    "exclude_chat_ids": exclude_chat_ids
                 },
                 timeout=5
             )
@@ -524,10 +526,32 @@ def get_project_sources_with_details(project_id: str) -> List[Dict[str, str]]:
         return [{"id": sid, "display_name": sid} for sid in source_ids]
 
 
+def get_trashed_chat_ids_for_project(project_id: str) -> List[str]:
+    """
+    Get list of trashed chat_ids for a project.
+    
+    Args:
+        project_id: The project ID
+        
+    Returns:
+        List of chat_ids that are trashed for this project
+    """
+    try:
+        from server.main import load_chats, get_trashed_chats
+        chats = load_chats()
+        trashed_chats = get_trashed_chats(chats)
+        # Filter to only chats for this project
+        return [c.get("id") for c in trashed_chats if c.get("project_id") == project_id]
+    except Exception as e:
+        logger.warning(f"Failed to get trashed chat_ids for project {project_id}: {e}")
+        return []
+
+
 def get_project_memory_context(project_id: str | None, query: str, limit: int = 8, chat_id: Optional[str] = None) -> Optional[tuple[str, bool]]:
     """
     Get memory context for a project and format it for injection into prompts.
     Includes both file-based sources and cross-chat memory from ALL chats in the project.
+    Excludes trashed chats from cross-chat memory.
     
     Args:
         project_id: The project ID (can be None)
@@ -546,9 +570,12 @@ def get_project_memory_context(project_id: str | None, query: str, limit: int = 
     # Even if no file sources, we still want to search chat messages
     # So we don't return None here - we'll search chats regardless
     
+    # Get trashed chat_ids to exclude from search
+    exclude_chat_ids = get_trashed_chat_ids_for_project(project_id)
+    
     client = get_memory_client()
-    # Pass None for chat_id to include ALL chats (including current chat)
-    results = client.search(project_id, query, limit, source_ids, chat_id=None)
+    # Pass None for chat_id to include ALL chats (including current chat), but exclude trashed chats
+    results = client.search(project_id, query, limit, source_ids, chat_id=None, exclude_chat_ids=exclude_chat_ids)
     if results:
         return client.format_context(results), True
     return "", False

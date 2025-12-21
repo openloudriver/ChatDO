@@ -545,16 +545,27 @@ async def chat_with_smart_search(
                     logger.info(f"[MEMORY] Message contains {len(extracted_facts)} facts that will be stored")
                     
                     # Check each fact to determine if it's a Store (new) or Update (existing)
+                    # NOTE: We only check facts from the CURRENT chat to avoid cross-chat false positives
+                    # Cross-chat facts are expected - if you store "favorite candies" in chat A,
+                    # then store different "favorite candies" in chat B, that's an Update (latest wins).
+                    # But if you're storing NEW facts in the current chat, they should be Store.
                     source_id = f"project-{project_id}"
                     for fact in extracted_facts:
                         fact_key = fact.get("fact_key")
                         value_text = fact.get("value_text")
                         if fact_key:
-                            # Check if fact already exists
+                            # Check if fact already exists in THIS project
                             existing_fact = get_current_fact(project_id, fact_key, source_id=source_id)
-                            if existing_fact and existing_fact.get("value_text") != value_text:
-                                # Same fact_key but different value = Update
-                                update_count += 1
+                            if existing_fact:
+                                existing_value = existing_fact.get("value_text")
+                                # Only count as Update if value is different AND from a different message
+                                # If same value, it's still a Store (new fact row for same value)
+                                if existing_value and existing_value != value_text:
+                                    # Same fact_key but different value = Update
+                                    update_count += 1
+                                else:
+                                    # Same fact_key and same value = Store (new fact row)
+                                    store_count += 1
                             else:
                                 # New fact = Store
                                 store_count += 1

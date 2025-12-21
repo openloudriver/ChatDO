@@ -120,6 +120,7 @@ class SearchRequest(BaseModel):
     limit: int = 10
     source_ids: Optional[List[str]] = None
     chat_id: Optional[str] = None  # DEPRECATED: No longer excludes chats. All chats are included.
+    exclude_chat_ids: Optional[List[str]] = None  # List of chat_ids to exclude from search (e.g., trashed chats)
 
 
 class SearchResult(BaseModel):
@@ -727,7 +728,8 @@ async def search(request: SearchRequest):
             raise HTTPException(status_code=400, detail="project_id is required and cannot be empty")
         
         # Debug logging for every memory query
-        logger.info(f"[MEMORY-QUERY] project_id={request.project_id}, chat_id={request.chat_id}, limit={request.limit}, source_ids={request.source_ids}")
+        exclude_count = len(request.exclude_chat_ids) if request.exclude_chat_ids else 0
+        logger.info(f"[MEMORY-QUERY] project_id={request.project_id}, chat_id={request.chat_id}, limit={request.limit}, source_ids={request.source_ids}, exclude_chat_ids={exclude_count} chats")
         # Query expansion: extract key terms and search for them individually
         # Note: We allow empty source_ids to enable chat-only searches
         # This helps with table-heavy PDFs where the full query might not match well
@@ -765,7 +767,8 @@ async def search(request: SearchRequest):
                     primary_query_embedding,
                     top_k=request.limit * 2,  # Get more candidates
                     filter_source_ids=filter_source_ids,
-                    filter_project_id=request.project_id  # CRITICAL: Filter by project_id for isolation
+                    filter_project_id=request.project_id,  # CRITICAL: Filter by project_id for isolation
+                    exclude_chat_ids=request.exclude_chat_ids  # CRITICAL: Exclude trashed chats
                 )
             except Exception as e:
                 logger.warning(f"[ANN] ANN search failed, falling back to brute-force: {e}")
@@ -786,12 +789,13 @@ async def search(request: SearchRequest):
                         logger.warning(f"Error searching source {source_id}: {e}")
                         continue
             
-            # Also search chat messages for this project (include ALL chats, including current chat)
+            # Also search chat messages for this project (exclude trashed chats)
             try:
                 chat_embeddings = db.get_chat_embeddings_for_project(
                     request.project_id, 
                     EMBEDDING_MODEL, 
-                    exclude_chat_id=None  # Include all chats, including current chat
+                    exclude_chat_id=None,  # Backward compatibility
+                    exclude_chat_ids=request.exclude_chat_ids  # Exclude trashed chats
                 )
                 all_embeddings.extend(chat_embeddings)
             except Exception as e:
@@ -849,12 +853,19 @@ async def search(request: SearchRequest):
                     "message_uuid": message_uuid,
                 })
         
-        # Build results from ANN results, FILTERING BY PROJECT_ID
+        # Build results from ANN results, FILTERING BY PROJECT_ID AND EXCLUDED CHAT_IDS
         results = []
+        excluded_chat_ids_set = set(request.exclude_chat_ids) if request.exclude_chat_ids else set()
         for result in ann_results:
             # CRITICAL: Filter by project_id to ensure strict isolation
             if result.get("project_id") != request.project_id:
                 logger.warning(f"[ISOLATION] Filtered out result with wrong project_id: {result.get('project_id')} (expected {request.project_id})")
+                continue
+            
+            # CRITICAL: Filter out trashed chats
+            chat_id = result.get("chat_id")
+            if chat_id and chat_id in excluded_chat_ids_set:
+                logger.debug(f"[TRASH-FILTER] Filtered out result from trashed chat_id: {chat_id}")
                 continue
             
             source_type = "chat" if result.get("chat_id") is not None else "file"
@@ -883,6 +894,24 @@ async def search(request: SearchRequest):
         
     except Exception as e:
         logger.error(f"Error searching: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/chats/{project_id}/{chat_id}")
+async def delete_chat_messages(project_id: str, chat_id: str):
+    """
+    Delete all chat messages for a specific chat_id from memory_service.
+    This is called when a chat is permanently deleted.
+    """
+    try:
+        deleted_count = db.delete_chat_messages_by_chat_id(project_id, chat_id)
+        return {
+            "status": "ok",
+            "message": f"Deleted {deleted_count} chat messages for chat_id={chat_id}",
+            "deleted_count": deleted_count
+        }
+    except Exception as e:
+        logger.error(f"Failed to delete chat messages: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

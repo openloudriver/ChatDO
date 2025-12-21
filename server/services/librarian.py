@@ -369,13 +369,17 @@ def get_relevant_memory(
     client = memory_service_client.get_memory_client()
     source_ids = memory_service_client.get_memory_sources_for_project(project_id)
     
+    # Get trashed chat_ids to exclude from search
+    exclude_chat_ids = memory_service_client.get_trashed_chat_ids_for_project(project_id)
+    
     # Request 3x the limit to have enough candidates for re-ranking
     raw_results = client.search(
         project_id=project_id,
         query=query,
         limit=max_hits * 3,
         source_ids=source_ids,
-        chat_id=None  # Include all chats for cross-chat memory
+        chat_id=None,  # Include all chats for cross-chat memory
+        exclude_chat_ids=exclude_chat_ids  # Exclude trashed chats
     )
     
     logger.info(f"[LIBRARIAN] raw_results={len(raw_results)}, fact_hits={len(fact_hits)}")

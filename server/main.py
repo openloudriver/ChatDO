@@ -37,6 +37,7 @@ from chatdo.config import load_target, TargetConfig
 from chatdo.agents.ai_router import run_agent
 from chatdo.memory.store import delete_thread_history, load_thread_history, save_thread_history, load_thread_sources, add_thread_source, memory_root
 from chatdo.executor import parse_tasks_block, apply_tasks
+from memory_service.config import PROJECTS_PATH, get_project_directory_name
 from server.uploads import handle_file_upload
 from server.scraper import scrape_url
 from server.ws import websocket_endpoint
@@ -223,23 +224,39 @@ def purge_trashed_chats() -> int:
                 continue
     
     # Purge each chat
+    import requests
+    memory_service_url = "http://127.0.0.1:5858"
+    
     for chat in chats_to_purge:
-        # Delete thread history
+        project_id = chat.get("project_id")
+        thread_id = chat.get("thread_id")
+        chat_id = chat.get("id")
+        
+        # Delete thread history (old system)
         project = None
         projects = load_projects()
         for p in projects:
-            if p.get("id") == chat.get("project_id"):
+            if p.get("id") == project_id:
                 project = p
                 break
         
-        if project:
+        if project and thread_id:
             target_name = get_target_name_from_project(project)
-            thread_id = chat.get("thread_id")
-            if thread_id:
-                try:
-                    delete_thread_history(target_name, thread_id)
-                except Exception as e:
-                    print(f"Warning: Failed to delete thread history for {thread_id}: {e}")
+            try:
+                delete_thread_history(target_name, thread_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete thread history for {thread_id}: {e}")
+        
+        # Delete chat messages from memory_service (new system)
+        if project_id and chat_id:
+            try:
+                response = requests.delete(f"{memory_service_url}/chats/{project_id}/{chat_id}", timeout=5)
+                if response.status_code == 200:
+                    logger.info(f"Deleted chat messages from memory_service for chat_id={chat_id}")
+                else:
+                    logger.warning(f"Memory service returned {response.status_code} when deleting chat_id={chat_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete chat messages from memory_service for chat_id={chat_id}: {e}")
         
         # Remove from chats list
         chats = [c for c in chats if c.get("id") != chat.get("id")]
@@ -290,7 +307,7 @@ def purge_trashed_projects() -> int:
         # Remove all chats for this project from the chats list
         chats = [c for c in chats if c.get("project_id") != project_id]
         
-        # Delete the project's memory folder
+        # Delete the project's memory folder (old system)
         project_memory_dir = memory_root() / target_name
         if project_memory_dir.exists():
             try:
@@ -298,6 +315,17 @@ def purge_trashed_projects() -> int:
                 shutil.rmtree(project_memory_dir)
             except Exception as e:
                 logger.warning(f"Failed to delete memory folder for project {project_id}: {e}")
+        
+        # Delete the project's memory_service/projects folder (new system)
+        project_dir_name = get_project_directory_name(project_id)
+        memory_project_dir = PROJECTS_PATH / project_dir_name
+        if memory_project_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(memory_project_dir)
+                logger.info(f"Deleted memory_service/projects/{project_dir_name}/ for project {project_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete memory_service/projects folder for project {project_id}: {e}")
         
         # Remove project from projects list
         projects = [p for p in projects if p.get("id") != project_id]
@@ -315,6 +343,52 @@ def purge_trashed_projects() -> int:
     return purged_count
 
 
+def sync_memory_service_projects():
+    """
+    Sync memory_service/projects folders to match UI projects.
+    Creates missing folders and deletes orphaned folders.
+    """
+    import shutil
+    from memory_service.config import slugify
+    
+    projects = load_projects()
+    PROJECTS_PATH.mkdir(parents=True, exist_ok=True)
+    
+    # Build set of expected project directory names (from UI projects)
+    expected_dirs = set()
+    for project in projects:
+        if not project.get("trashed", False):  # Only sync non-trashed projects
+            project_id = project.get("id")
+            project_name = project.get("name", "")
+            if project_name:
+                dir_name = slugify(project_name)
+            else:
+                dir_name = project_id
+            expected_dirs.add(dir_name)
+    
+    # Get all existing directories in memory_service/projects
+    existing_dirs = {d.name for d in PROJECTS_PATH.iterdir() if d.is_dir()}
+    
+    # Create missing directories
+    for dir_name in expected_dirs:
+        project_dir = PROJECTS_PATH / dir_name
+        if not project_dir.exists():
+            project_dir.mkdir(parents=True, exist_ok=True)
+            # Create standard subdirectories
+            (project_dir / "threads").mkdir(exist_ok=True)
+            (project_dir / "index").mkdir(exist_ok=True)
+            logger.info(f"Created memory_service/projects/{dir_name}/")
+    
+    # Delete orphaned directories (not in UI projects)
+    for dir_name in existing_dirs - expected_dirs:
+        orphaned_dir = PROJECTS_PATH / dir_name
+        try:
+            shutil.rmtree(orphaned_dir)
+            logger.info(f"Deleted orphaned memory_service/projects/{dir_name}/")
+        except Exception as e:
+            logger.warning(f"Failed to delete orphaned directory {dir_name}: {e}")
+
+
 def ensure_project_folders():
     """Ensure all projects have their memory folders created"""
     projects = load_projects()
@@ -322,12 +396,18 @@ def ensure_project_folders():
         target_name = get_target_name_from_project(project)
         project_memory_dir = memory_root() / target_name / "threads"
         project_memory_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Also sync memory_service/projects folders
+    sync_memory_service_projects()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ensure all project folders exist
     ensure_project_folders()
+    
+    # Startup: sync memory_service/projects folders with UI projects
+    sync_memory_service_projects()
     
     # Startup: purge old trashed chats
     purged = purge_trashed_chats()
@@ -541,6 +621,9 @@ async def create_project(project_data: ProjectCreate):
     project_memory_dir = memory_root() / target_name / "threads"
     project_memory_dir.mkdir(parents=True, exist_ok=True)
     
+    # Sync memory_service/projects folders
+    sync_memory_service_projects()
+    
     return new_project
 
 
@@ -562,6 +645,9 @@ async def update_project(project_id: str, project_data: ProjectUpdate):
     # Update project name
     projects[project_index]["name"] = project_data.name.strip()
     save_projects(projects)
+    
+    # Sync memory_service/projects folders (in case directory name changed)
+    sync_memory_service_projects()
     
     return projects[project_index]
 
@@ -601,7 +687,71 @@ async def delete_project(project_id: str):
         save_chats(chats)
         logger.info(f"Soft deleted {len(chats_to_trash)} chats for project {project_id}")
     
+    # Sync memory_service/projects folders (remove trashed project)
+    sync_memory_service_projects()
+    
     return {"success": True, "chats_trashed": len(chats_to_trash)}
+
+
+@app.delete("/api/projects/{project_id}/purge")
+async def purge_project(project_id: str):
+    """Permanently delete a project immediately (not waiting 30 days)"""
+    import shutil
+    projects = load_projects()
+    chats = load_chats()
+    
+    # Find the project
+    project = next((p for p in projects if p.get("id") == project_id), None)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    if not project.get("trashed", False):
+        raise HTTPException(status_code=400, detail="Project must be trashed before purging")
+    
+    target_name = get_target_name_from_project(project)
+    
+    # Delete all chats associated with this project
+    chats_to_delete = [c for c in chats if c.get("project_id") == project_id]
+    for chat in chats_to_delete:
+        thread_id = chat.get("thread_id")
+        if thread_id:
+            try:
+                delete_thread_history(target_name, thread_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete thread history for {thread_id}: {e}")
+    
+    # Remove all chats for this project from the chats list
+    chats = [c for c in chats if c.get("project_id") != project_id]
+    
+    # Delete the project's memory folder (old system)
+    project_memory_dir = memory_root() / target_name
+    if project_memory_dir.exists():
+        try:
+            shutil.rmtree(project_memory_dir)
+        except Exception as e:
+            logger.warning(f"Failed to delete memory folder for project {project_id}: {e}")
+    
+    # Delete the project's memory_service/projects folder (new system)
+    project_dir_name = get_project_directory_name(project_id)
+    memory_project_dir = PROJECTS_PATH / project_dir_name
+    if memory_project_dir.exists():
+        try:
+            shutil.rmtree(memory_project_dir)
+            logger.info(f"Deleted memory_service/projects/{project_dir_name}/ for project {project_id}")
+        except Exception as e:
+            logger.warning(f"Failed to delete memory_service/projects folder for project {project_id}: {e}")
+    
+    # Remove project from projects list
+    projects = [p for p in projects if p.get("id") != project_id]
+    save_chats(chats)
+    save_projects(projects)
+    
+    # Reindex remaining projects to maintain sequential sort_index
+    for i, p in enumerate(projects):
+        p["sort_index"] = i
+    save_projects(projects)
+    
+    return {"success": True, "message": f"Project {project_id} permanently deleted"}
 
 
 @app.post("/api/projects/reorder", response_model=List[Project])
@@ -2663,6 +2813,7 @@ async def restore_chat(chat_id: str):
 @app.post("/api/chats/{chat_id}/purge")
 async def purge_chat(chat_id: str):
     """Permanently delete a chat and its thread history"""
+    import requests
     chats = load_chats()
     
     # Find chat by ID
@@ -2675,7 +2826,7 @@ async def purge_chat(chat_id: str):
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
     
-    # Delete thread history
+    # Delete thread history (old system)
     project_id = chat.get("project_id")
     thread_id = chat.get("thread_id")
     
@@ -2687,7 +2838,19 @@ async def purge_chat(chat_id: str):
             try:
                 delete_thread_history(target_name, thread_id)
             except Exception as e:
-                print(f"Warning: Failed to delete thread history for {thread_id}: {e}")
+                logger.warning(f"Failed to delete thread history for {thread_id}: {e}")
+    
+    # Delete chat messages from memory_service (new system)
+    if project_id:
+        try:
+            memory_service_url = "http://127.0.0.1:5858"
+            response = requests.delete(f"{memory_service_url}/chats/{project_id}/{chat_id}", timeout=5)
+            if response.status_code == 200:
+                logger.info(f"Deleted chat messages from memory_service for chat_id={chat_id}")
+            else:
+                logger.warning(f"Memory service returned {response.status_code} when deleting chat_id={chat_id}")
+        except Exception as e:
+            logger.warning(f"Failed to delete chat messages from memory_service for chat_id={chat_id}: {e}")
     
     # Remove from chats list
     chats = [c for c in chats if c.get("id") != chat_id]
@@ -2788,25 +2951,40 @@ async def api_delete_memory_source(source_id: str):
 @app.post("/api/chats/purge_all_trashed")
 async def purge_all_trashed():
     """Permanently delete ALL trashed chats (regardless of age)"""
+    import requests
     chats = load_chats()
     projects = load_projects()
+    memory_service_url = "http://127.0.0.1:5858"
     
     # Find all trashed chats
     trashed_chat_ids = []
     for chat in chats:
         if chat.get("trashed", False):
             trashed_chat_ids.append(chat.get("id"))
-            # Get project to find target_name for thread deletion
-            project = next((p for p in projects if p.get("id") == chat.get("project_id")), None)
-            target_name = get_target_name_from_project(project)
+            project_id = chat.get("project_id")
             thread_id = chat.get("thread_id")
             
-            # Delete thread history if it exists
-            if thread_id:
+            # Get project to find target_name for thread deletion
+            project = next((p for p in projects if p.get("id") == project_id), None)
+            target_name = get_target_name_from_project(project) if project else None
+            
+            # Delete thread history if it exists (old system)
+            if thread_id and target_name:
                 try:
                     delete_thread_history(target_name, thread_id)
                 except Exception as e:
-                    print(f"Warning: Failed to delete thread history for {thread_id}: {e}")
+                    logger.warning(f"Failed to delete thread history for {thread_id}: {e}")
+            
+            # Delete chat messages from memory_service (new system)
+            if project_id:
+                try:
+                    response = requests.delete(f"{memory_service_url}/chats/{project_id}/{chat.get('id')}", timeout=5)
+                    if response.status_code == 200:
+                        logger.info(f"Deleted chat messages from memory_service for chat_id={chat.get('id')}")
+                    else:
+                        logger.warning(f"Memory service returned {response.status_code} when deleting chat_id={chat.get('id')}")
+                except Exception as e:
+                    logger.warning(f"Failed to delete chat messages from memory_service for chat_id={chat.get('id')}: {e}")
     
     # Remove all trashed chats from the list
     chats = [c for c in chats if not c.get("trashed", False)]

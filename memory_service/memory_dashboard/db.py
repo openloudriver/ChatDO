@@ -466,27 +466,42 @@ def get_all_embeddings_for_source(source_id: str, model_name: str) -> List[Tuple
     return results
 
 
-def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_chat_id: Optional[str] = None) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str], Optional[str]]]:
+def get_chat_embeddings_for_project(project_id: str, model_name: str, exclude_chat_id: Optional[str] = None, exclude_chat_ids: Optional[List[str]] = None) -> List[Tuple[int, np.ndarray, Optional[int], Optional[str], str, str, str, Optional[str], int, int, int, Optional[str], Optional[str], Optional[str]]]:
     """
-    Get all chat message embeddings for a project, optionally excluding a specific chat.
+    Get all chat message embeddings for a project, optionally excluding specific chats.
     Returns same format as get_all_embeddings_for_source (includes message_uuid).
+    
+    Args:
+        project_id: Project ID
+        model_name: Embedding model name
+        exclude_chat_id: DEPRECATED - single chat_id to exclude (for backward compatibility)
+        exclude_chat_ids: List of chat_ids to exclude (e.g., trashed chats)
     """
     source_id = f"project-{project_id}"
+    
+    # Build list of excluded chat_ids (support both old and new parameters)
+    excluded_ids = set()
+    if exclude_chat_id:
+        excluded_ids.add(exclude_chat_id)
+    if exclude_chat_ids:
+        excluded_ids.update(exclude_chat_ids)
     
     try:
         # Pass project_id to route to projects/<project_name>/index/
         conn = get_db_connection(source_id, project_id=project_id)
         cursor = conn.cursor()
         
-        if exclude_chat_id:
-            cursor.execute("""
+        if excluded_ids:
+            # Build SQL with IN clause for multiple exclusions
+            placeholders = ",".join("?" * len(excluded_ids))
+            cursor.execute(f"""
                 SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id, cm.message_uuid
                 FROM embeddings e
                 JOIN chunks c ON e.chunk_id = c.id
                 JOIN chat_messages cm ON c.chat_message_id = cm.id
                 JOIN sources s ON cm.source_id = s.id
-                WHERE s.project_id = ? AND e.model_name = ? AND c.chat_message_id IS NOT NULL AND cm.chat_id != ?
-            """, (project_id, model_name, exclude_chat_id))
+                WHERE s.project_id = ? AND e.model_name = ? AND c.chat_message_id IS NOT NULL AND cm.chat_id NOT IN ({placeholders})
+            """, (project_id, model_name, *excluded_ids))
         else:
             cursor.execute("""
                 SELECT e.chunk_id, e.embedding, NULL as file_id, NULL as path, c.text, s.source_id, s.project_id, NULL as filetype, c.chunk_index, c.start_char, c.end_char, cm.chat_id, cm.message_id, cm.message_uuid
@@ -983,6 +998,76 @@ def upsert_chat_message(
     conn.commit()
     conn.close()
     return chat_message_id
+
+
+def delete_chat_messages_by_chat_id(project_id: str, chat_id: str) -> int:
+    """
+    Delete all chat messages for a specific chat_id from memory_service.
+    Also deletes associated chunks and embeddings.
+    
+    Args:
+        project_id: Project ID
+        chat_id: Chat/conversation ID to delete
+        
+    Returns:
+        Number of chat messages deleted
+    """
+    source_id = f"project-{project_id}"
+    
+    try:
+        init_db(source_id, project_id=project_id)
+        conn = get_db_connection(source_id, project_id=project_id)
+        cursor = conn.cursor()
+        
+        # Get all chat_message_ids for this chat_id
+        cursor.execute("SELECT id FROM chat_messages WHERE chat_id = ?", (chat_id,))
+        chat_message_rows = cursor.fetchall()
+        chat_message_ids = [row["id"] for row in chat_message_rows]
+        
+        if not chat_message_ids:
+            conn.close()
+            return 0
+        
+        # Get all chunk_ids for these chat messages (for ANN index removal)
+        placeholders = ",".join("?" * len(chat_message_ids))
+        cursor.execute(f"""
+            SELECT e.chunk_id 
+            FROM embeddings e
+            JOIN chunks c ON e.chunk_id = c.id
+            WHERE c.chat_message_id IN ({placeholders})
+        """, chat_message_ids)
+        chunk_rows = cursor.fetchall()
+        chunk_ids_to_remove = [row["chunk_id"] for row in chunk_rows]
+        
+        # Delete embeddings first (foreign key constraint)
+        if chunk_ids_to_remove:
+            chunk_placeholders = ",".join("?" * len(chunk_ids_to_remove))
+            cursor.execute(f"DELETE FROM embeddings WHERE chunk_id IN ({chunk_placeholders})", chunk_ids_to_remove)
+        
+        # Delete chunks
+        cursor.execute(f"DELETE FROM chunks WHERE chat_message_id IN ({placeholders})", chat_message_ids)
+        
+        # Delete chat messages
+        cursor.execute(f"DELETE FROM chat_messages WHERE id IN ({placeholders})", chat_message_ids)
+        
+        conn.commit()
+        conn.close()
+        
+        # Remove from ANN index
+        if chunk_ids_to_remove:
+            try:
+                from memory_service.api import ann_index_manager
+                if ann_index_manager.is_available():
+                    ann_index_manager.remove_embeddings(chunk_ids_to_remove)
+                    logger.debug(f"[ANN] Removed {len(chunk_ids_to_remove)} embeddings from ANN index for chat_id={chat_id}")
+            except Exception as e:
+                logger.warning(f"[ANN] Failed to remove embeddings from ANN index for chat_id={chat_id}: {e}")
+        
+        logger.info(f"Deleted {len(chat_message_ids)} chat messages for chat_id={chat_id} in project_id={project_id}")
+        return len(chat_message_ids)
+    except Exception as e:
+        logger.warning(f"Failed to delete chat messages for chat_id={chat_id} in project_id={project_id}: {e}")
+        return 0
 
 
 def get_chat_message_by_id(chat_message_id: int, source_id: str) -> Optional[ChatMessage]:

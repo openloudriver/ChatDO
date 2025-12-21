@@ -216,7 +216,7 @@ class AnnIndexManager:
         if removed_count > 0:
             logger.info(f"[ANN] Removed {removed_count} embeddings from index (marked inactive)")
     
-    def search(self, query_vector: np.ndarray, top_k: int, filter_source_ids: Optional[List[str]] = None, filter_project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search(self, query_vector: np.ndarray, top_k: int, filter_source_ids: Optional[List[str]] = None, filter_project_id: Optional[str] = None, exclude_chat_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """
         Search for nearest neighbors.
         
@@ -225,6 +225,7 @@ class AnnIndexManager:
             top_k: Number of results to return
             filter_source_ids: Optional list of source_ids to filter results (file sources connected to project)
             filter_project_id: REQUIRED for project isolation
+            exclude_chat_ids: Optional list of chat_ids to exclude (e.g., trashed chats)
             
         PROJECT ISOLATION:
         - Chat sources (source_id starts with "project-"): Strict project isolation - must match filter_project_id
@@ -313,6 +314,12 @@ class AnnIndexManager:
                         # If source_id not in filter_source_ids, it was already filtered above
                         # So at this point, if we have a file source, it's allowed regardless of project_id
                         pass
+                
+                # Filter out excluded chat_ids (e.g., trashed chats)
+                if exclude_chat_ids:
+                    chat_id = metadata.get("chat_id")
+                    if chat_id and chat_id in exclude_chat_ids:
+                        continue
                 
                 # Convert inner product to normalized cosine similarity [0, 1]
                 # Inner product of normalized vectors is in [-1, 1], normalize to [0, 1]

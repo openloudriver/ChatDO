@@ -306,6 +306,24 @@
     "default_target": "general",
     "sort_index": 33,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-21T15:20:36.712348+00:00"
+  },
+  {
+    "id": "48b849a0-ae43-4d83-9786-3065bbb4bce5",
+    "name": "Validate8",
+    "default_target": "general",
+    "sort_index": 34,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-21T15:20:40.993663+00:00"
+  },
+  {
+    "id": "01d83439-c49a-453c-a787-6ae56ae66b82",
+    "name": "Test1",
+    "default_target": "general",
+    "sort_index": 35,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   }

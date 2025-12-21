@@ -80,22 +80,12 @@
     "trashed_at": null
   },
   {
-    "id": "7aeea3c5-d7d7-4108-9096-609ec34cfd92",
-    "project_id": "general",
-    "title": "My favorite candies are Reese\u2019s, Twix, KitKat, ...",
-    "thread_id": "7aeea3c5-d7d7-4108-9096-609ec34cfd92",
-    "created_at": "2025-12-21T05:50:01.202629+00:00",
-    "updated_at": "2025-12-21T05:57:05.801066+00:00",
-    "trashed": true,
-    "trashed_at": "2025-12-21T05:57:05.801048+00:00"
-  },
-  {
-    "id": "661ad9e8-3bac-43de-a5ca-0e64a2d8ae79",
-    "project_id": "a4e0a39b-9496-455a-af13-e7a59c89c913",
-    "title": "My favorite candies are Reese\u2019s, Twix, KitKat, ...",
-    "thread_id": "661ad9e8-3bac-43de-a5ca-0e64a2d8ae79",
-    "created_at": "2025-12-21T05:57:50.760770+00:00",
-    "updated_at": "2025-12-21T05:58:22.224153+00:00",
+    "id": "f355241c-ee65-484f-ac08-b597538c4689",
+    "project_id": "01d83439-c49a-453c-a787-6ae56ae66b82",
+    "title": "My favorite cryptocurrencies are ETH, BTC, and ...",
+    "thread_id": "f355241c-ee65-484f-ac08-b597538c4689",
+    "created_at": "2025-12-21T15:24:08.248513+00:00",
+    "updated_at": "2025-12-21T15:24:19.143580+00:00",
     "trashed": false,
     "trashed_at": null
   }
