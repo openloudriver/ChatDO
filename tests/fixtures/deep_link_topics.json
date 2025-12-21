@@ -1,0 +1,303 @@
+{
+  "topics": [
+    {
+      "topic_key": "favorite_candies",
+      "aliases": ["candy", "candies", "chocolate", "chocolates", "sweets", "treats", "snacks"],
+      "question_templates": [
+        "What are my favorite candies?",
+        "Tell me my favorite candies",
+        "List my favorite candies",
+        "What's my favorite candy?",
+        "What did I say about my favorite candies?",
+        "Remind me my favorite candies",
+        "I forgot my favorite candies, cite them",
+        "What are my top candies?",
+        "Show me my favorite candies with citations",
+        "Cite my favorite candies"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_colors",
+      "aliases": ["color", "colors", "hue", "hues"],
+      "question_templates": [
+        "What are my favorite colors?",
+        "Tell me my favorite colors",
+        "What's my favorite color?",
+        "List my favorite colors",
+        "What did I say about colors?",
+        "Remind me my favorite colors",
+        "Cite my favorite colors"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_cryptos",
+      "aliases": ["crypto", "cryptos", "cryptocurrency", "cryptocurrencies", "coin", "coins"],
+      "question_templates": [
+        "What are my favorite cryptocurrencies?",
+        "Tell me my favorite cryptos",
+        "What's my top crypto?",
+        "List my favorite cryptos",
+        "What did I say about crypto?",
+        "Remind me my favorite cryptos",
+        "Cite my favorite cryptos"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_movies",
+      "aliases": ["movie", "movies", "film", "films"],
+      "question_templates": [
+        "What are my favorite movies?",
+        "Tell me my favorite movies",
+        "What's my favorite movie?",
+        "List my favorite movies",
+        "What did I say about movies?",
+        "Remind me my favorite movies"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_tv",
+      "aliases": ["tv", "tv show", "tv shows", "television", "show", "shows"],
+      "question_templates": [
+        "What are my favorite TV shows?",
+        "Tell me my favorite tv shows",
+        "What's my favorite show?",
+        "List my favorite shows",
+        "What did I say about TV?",
+        "Remind me my favorite shows"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_books",
+      "aliases": ["book", "books", "novel", "novels"],
+      "question_templates": [
+        "What are my favorite books?",
+        "Tell me my favorite books",
+        "What's my favorite book?",
+        "List my favorite books",
+        "What did I say about books?"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_foods",
+      "aliases": ["food", "foods", "dish", "dishes", "meal", "meals"],
+      "question_templates": [
+        "What are my favorite foods?",
+        "Tell me my favorite foods",
+        "What's my favorite food?",
+        "List my favorite foods",
+        "What did I say about food?"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_countries",
+      "aliases": ["country", "countries", "nation", "nations"],
+      "question_templates": [
+        "What are my favorite countries?",
+        "Tell me my favorite countries",
+        "What's my favorite country?",
+        "List my favorite countries"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_sports",
+      "aliases": ["sport", "sports", "game", "games"],
+      "question_templates": [
+        "What are my favorite sports?",
+        "Tell me my favorite sports",
+        "What's my favorite sport?",
+        "List my favorite sports"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_music_genres",
+      "aliases": ["music", "genre", "genres", "music genre"],
+      "question_templates": [
+        "What are my favorite music genres?",
+        "Tell me my favorite music genres",
+        "What's my favorite music?",
+        "List my favorite genres"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_hobbies",
+      "aliases": ["hobby", "hobbies", "pastime", "pastimes"],
+      "question_templates": [
+        "What are my favorite hobbies?",
+        "Tell me my favorite hobbies",
+        "What's my favorite hobby?",
+        "List my favorite hobbies"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_programming_languages",
+      "aliases": ["programming language", "programming languages", "language", "languages", "lang", "langs"],
+      "question_templates": [
+        "What are my favorite programming languages?",
+        "Tell me my favorite languages",
+        "What's my favorite language?",
+        "List my favorite languages"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "paycheck_amount",
+      "aliases": ["paycheck", "salary", "income", "wage", "pay"],
+      "question_templates": [
+        "What is my paycheck amount?",
+        "Tell me my paycheck",
+        "What did I say about my paycheck?",
+        "Remind me my paycheck amount",
+        "Cite my paycheck"
+      ],
+      "fact_types": ["single", "numeric"]
+    },
+    {
+      "topic_key": "electricity_rate",
+      "aliases": ["electricity", "power", "energy", "rate", "cost"],
+      "question_templates": [
+        "What is my electricity rate?",
+        "Tell me my electricity cost",
+        "What did I say about electricity?",
+        "Remind me my electricity rate",
+        "Cite my electricity rate"
+      ],
+      "fact_types": ["single", "numeric"]
+    },
+    {
+      "topic_key": "power_consumption",
+      "aliases": ["power consumption", "wattage", "watts", "consumption"],
+      "question_templates": [
+        "What is my power consumption?",
+        "Tell me my power consumption",
+        "What did I say about power?",
+        "Remind me my power consumption"
+      ],
+      "fact_types": ["single", "numeric"]
+    },
+    {
+      "topic_key": "retirement_date",
+      "aliases": ["retirement", "retire", "date"],
+      "question_templates": [
+        "What is my retirement date?",
+        "Tell me my retirement date",
+        "What did I say about retirement?",
+        "Remind me my retirement date",
+        "Cite my retirement date"
+      ],
+      "fact_types": ["single", "date"]
+    },
+    {
+      "topic_key": "favorite_saints",
+      "aliases": ["saint", "saints"],
+      "question_templates": [
+        "What are my favorite saints?",
+        "Tell me my favorite saints",
+        "What's my favorite saint?",
+        "List my favorite saints"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_bible_translations",
+      "aliases": ["bible translation", "bible translations", "translation", "translations"],
+      "question_templates": [
+        "What are my favorite Bible translations?",
+        "Tell me my favorite translations",
+        "What's my favorite translation?",
+        "List my favorite translations"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "favorite_airlines",
+      "aliases": ["airline", "airlines"],
+      "question_templates": [
+        "What are my favorite airlines?",
+        "Tell me my favorite airlines",
+        "What's my favorite airline?",
+        "List my favorite airlines"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "least_favorite_candies",
+      "aliases": ["least favorite", "hate", "dislike", "don't like"],
+      "question_templates": [
+        "What are my least favorite candies?",
+        "What candies do I hate?",
+        "What candies don't I like?",
+        "Tell me candies I dislike"
+      ],
+      "fact_types": ["ranked", "single"]
+    },
+    {
+      "topic_key": "preferred_over",
+      "aliases": ["prefer", "preferred", "over", "vs", "versus"],
+      "question_templates": [
+        "Do I prefer X over Y?",
+        "What did I say about X vs Y?",
+        "Tell me my preference between X and Y"
+      ],
+      "fact_types": ["single", "comparison"]
+    }
+  ],
+  "transformations": {
+    "synonyms": {
+      "favorite": ["favorite", "preferred", "go-to", "top pick", "best", "favored"],
+      "what": ["what", "tell me", "show me", "list", "remind me"],
+      "are": ["are", "were", "is", "was"]
+    },
+    "filler_words": ["quickly", "just", "again", "please", "really", "actually"],
+    "punctuation": ["?", "??", "???", "!", "!!", "…", ".", ""],
+    "casing_variants": ["lowercase", "UPPERCASE", "Title Case", "sentence case"],
+    "typo_patterns": [
+      {"pattern": "favorite", "typos": ["favrite", "favorite", "favortie"]},
+      {"pattern": "candies", "typos": ["candys", "candies", "candis"]},
+      {"pattern": "what", "typos": ["wat", "wht", "what"]},
+      {"pattern": "cite", "typos": ["cte", "cite", "ciet"]}
+    ],
+    "emoji": ["🍫", "🎯", "✅", "📝", "💬"],
+    "indirect_phrasing": [
+      "remind me",
+      "I forgot",
+      "I don't remember",
+      "help me recall",
+      "what did I say"
+    ],
+    "constraints": [
+      "cite the exact source message",
+      "cite each item",
+      "with citations",
+      "and cite it"
+    ],
+    "multilingual": {
+      "spanish": {
+        "what are my": "¿Cuáles son mis",
+        "favorite candies": "dulces favoritos",
+        "cite": "cítalo"
+      },
+      "french": {
+        "what are my": "Quels sont mes",
+        "favorite candies": "bonbons préférés",
+        "cite": "citez-le"
+      },
+      "portuguese": {
+        "what are my": "Quais são meus",
+        "favorite candies": "doces favoritos",
+        "cite": "cite-o"
+      }
+    }
+  }
+}
+

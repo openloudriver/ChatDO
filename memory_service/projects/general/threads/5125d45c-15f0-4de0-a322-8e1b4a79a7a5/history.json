@@ -1,0 +1,1775 @@
+[
+  {
+    "id": "9b386ec6-ef53-4a61-b0ec-f7c0f978ea39",
+    "role": "user",
+    "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::0::V60Z4Z::favorite_programming_languages",
+    "created_at": "2025-12-20T23:23:49.195042+00:00"
+  },
+  {
+    "id": "798a794c-e453-4795-8ff1-290c2a180972",
+    "role": "assistant",
+    "content": "Got it — your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M4]\n\n## 🔍 Summary\n- Ranking recorded and treated as ordered (Value1 > Value2 > Value3). [M4]\n- Anchor captured: favorite_programming_languages. [M4]\n- I’ll default to Value1 in examples and recommendations. [M4]\n\n## ✅ Next\n- Should I apply this ranking when choosing languages for examples/snippets, recommending tools, and proposing solutions?\n- Are “Value1 / Value2 / Value3” placeholders or your actual languages? If placeholders, share the real names and I’ll update the record.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "Your paycheck: value1",
+        "description": "Your paycheck: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "03ac09aa-00e8-4452-8448-2f2fa4c23d83",
+          "message_uuid": "03ac09aa-00e8-4452-8448-2f2fa4c23d83",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your paycheck: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your retirement: value1",
+        "description": "Your retirement: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "message_uuid": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your retirement: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your electricity: value1",
+        "description": "Your electricity: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "361066c7-c6d9-460e-8980-ca17acad596c",
+          "message_uuid": "361066c7-c6d9-460e-8980-ca17acad596c",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your electricity: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::0::V60Z4Z::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5",
+          "message_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::0::V60Z4Z::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::YK0KZ8::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41265570-d3ae-4cb2-b191-06e2d63fb916",
+          "message_id": "41265570-d3ae-4cb2-b191-06e2d63fb916-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::YK0KZ8::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::0::O19SFS::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::0::O19SFS::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::EKVCNW::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::EKVCNW::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "Saved: your ranked favorite programming languages are 1) Val...",
+        "description": "Saved: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M4]\n\n## 🔍 Summary\n- Ranking recorded and treated as ordered (V...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41265570-d3ae-4cb2-b191-06e2d63fb916",
+          "message_id": "41265570-d3ae-4cb2-b191-06e2d63fb916-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M4]\n\n## 🔍 Summary\n- Ranking recorded and treated as ordered (Value1 > Value2 > Value3). [M4]\n- Anchor captured: favorite_programming_languages. [M4]\n- I’ll default to Value1 in examples and recommendations. [M4]\n\n## ✅ Next\n- Should I apply this ranking when choosing languages for examples/snippets, recommending tools, and proposing solutions?\n- Are “Value1 / Value2 / Value3” placeholders or your actual languages? If placeholders, share the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "Saved: your favorite programming languages are 1) Value1, 2)...",
+        "description": "Saved: your favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved and treated as ordered. [M1]\n- Anch...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved and treated as ordered. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- I’ll default to Value1 in examples and recommendations. [M4]\n\n## ✅ Next\n- Should I apply this ranking when choosing languages for examples/snippets, recommending tools, and proposing solutions? [M3]\n- Are “Value1 / Value2 / Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record. [M3]"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR...",
+        "description": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::9::4DO6Z7::favorite_books",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-18",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::9::4DO6Z7::favorite_books"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "message_uuid": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-18",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::Q3IC04::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::Q3IC04::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::5::I31CIA::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::5::I31CIA::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::UX8NET::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::UX8NET::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-18",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::5822Y5::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 18,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::5822Y5::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-19",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::1FXOU5::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 19,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::1FXOU5::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-20",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 20,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-21",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::7::H3AQX0::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 21,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::7::H3AQX0::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-22",
+        "title": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 22,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies"
+        }
+      },
+      {
+        "id": "memory-project-general-23",
+        "title": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::7::HW9YSA::favorite_movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 23,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::7::HW9YSA::favorite_movies"
+        }
+      },
+      {
+        "id": "memory-project-general-24",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 24,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-25",
+        "title": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::...",
+        "description": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 25,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv"
+        }
+      },
+      {
+        "id": "memory-project-general-26",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::3::9TEZRJ::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 26,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::3::9TEZRJ::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-27",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::PFPQ7F::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 27,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::PFPQ7F::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-28",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 28,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-29",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 29,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:23:49.194034+00:00"
+  },
+  {
+    "id": "b0874e22-fba3-43c9-b815-a2b0cbc70498",
+    "role": "user",
+    "content": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::paycheck_amount",
+    "created_at": "2025-12-20T23:24:29.472055+00:00"
+  },
+  {
+    "id": "ab936f51-e436-45f8-83e7-d8f75a893b8b",
+    "role": "assistant",
+    "content": "Saved: your favorite paycheck is Value1. [M4]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor Y0RMX4). [M4]\n- This matches your existing paycheck record on file. [M1]\n\n## ✅ Next\n- Is “Value1” a placeholder? If so, share the actual amount, currency, and pay period (e.g., USD biweekly) and I’ll update it.\n- Want me to use this for budgeting, savings targets, or paycheck breakdowns going forward?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "Your paycheck: value1",
+        "description": "Your paycheck: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "effe486b-ccba-47cb-8ab5-47576d8f6ea8",
+          "message_uuid": "effe486b-ccba-47cb-8ab5-47576d8f6ea8",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your paycheck: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your retirement: value1",
+        "description": "Your retirement: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "message_uuid": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your retirement: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your electricity: value1",
+        "description": "Your electricity: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "361066c7-c6d9-460e-8980-ca17acad596c",
+          "message_uuid": "361066c7-c6d9-460e-8980-ca17acad596c",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your electricity: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5",
+          "message_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41265570-d3ae-4cb2-b191-06e2d63fb916",
+          "message_id": "41265570-d3ae-4cb2-b191-06e2d63fb916-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Saved: your favorite paycheck is Value1. [M2]",
+        "description": "Saved: your favorite paycheck is Value1. [M2]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor 2CDT0N). [M2]\n- This aligns with your existing...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite paycheck is Value1. [M2]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor 2CDT0N). [M2]\n- This aligns with your existing paycheck record on file. [M1]\n\n## ✅ Next\n- Is “Value1” a placeholder? If so, share the real amount and I’ll update it. \n- Want me to capture currency and pay period (e.g., USD monthly/biweekly)?"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "Saved: your favorite paycheck is Value1. [M4]",
+        "description": "Saved: your favorite paycheck is Value1. [M4]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor UB78MG). [M4]\n- This matches your existing pay...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite paycheck is Value1. [M4]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor UB78MG). [M4]\n- This matches your existing paycheck record on file. [M1]\n- I’ll default to “Value1” in pay-related examples and recommendations. [M4]\n\n## ✅ Next\n- Is “Value1” a placeholder? If so, share the actual amount, currency, and pay period (e.g., USD biweekly) and I’ll update it.\n- Want me to use this for budgeting, savings targets, or paycheck breakdowns going forward?"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "Saved: your favorite paycheck is Value1. [M4]",
+        "description": "Saved: your favorite paycheck is Value1. [M4]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor 3PKE9K). [M4]\n- This aligns with your existing...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41265570-d3ae-4cb2-b191-06e2d63fb916",
+          "message_id": "41265570-d3ae-4cb2-b191-06e2d63fb916-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite paycheck is Value1. [M4]\n\n## 🔍 Summary\n- Stored under key: paycheck_amount (anchor 3PKE9K). [M4]\n- This aligns with your existing paycheck record on file. [M1]\n- I’ll default to “Value1” in pay-related examples and recommendations. [M4]\n\n## ✅ Next\n- Is “Value1” a placeholder? If so, share the actual amount, currency, and pay period (e.g., USD biweekly) and I’ll update it.\n- Want me to use this for budgeting, savings targets, or paycheck breakdowns going forward?"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "message_uuid": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::reti...",
+        "description": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::retirement_date",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::retirement_date"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::reti...",
+        "description": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::retirement_date",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::retirement_date"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::ele...",
+        "description": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::electricity_rate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::electricity_rate"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::ele...",
+        "description": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::electricity_rate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::electricity_rate"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-18",
+        "title": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 18,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "20667d90-6ff3-4e2b-8e75-0b94ee9bf704",
+          "message_id": "20667d90-6ff3-4e2b-8e75-0b94ee9bf704-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-19",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 19,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-20",
+        "title": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 20,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-21",
+        "title": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::...",
+        "description": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 21,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv"
+        }
+      },
+      {
+        "id": "memory-project-general-22",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 22,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-23",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 23,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-24",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 24,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-25",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 25,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-26",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::2::UH40IS::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 26,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::2::UH40IS::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-27",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::PFPQ7F::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 27,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::PFPQ7F::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-28",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 28,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-18",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-29",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::3::R27RNW::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 29,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::3::R27RNW::favorite_airlines"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:24:29.470850+00:00"
+  },
+  {
+    "id": "d299f828-0a42-492b-ab08-ca7d026e196a",
+    "role": "user",
+    "content": "My favorite electricity is Value1. ANCHOR::1::2::C23KMP::electricity_rate",
+    "created_at": "2025-12-20T23:25:04.631772+00:00"
+  },
+  {
+    "id": "2251e74c-be7c-49c5-b873-243725197356",
+    "role": "assistant",
+    "content": "Saved: your favorite electricity is Value1 (key: electricity_rate, anchor: C23KMP). [M4]\n\n## 🔍 Summary\n- Stored under electricity_rate with anchor C23KMP. [M4]\n- Consistent with your existing electricity record. [M1]\n\n## ✅ Next\n- Is “Value1” a placeholder? If so, share the actual rate (e.g., cents/kWh), provider/plan name, and region so I can record it precisely.\n- Want me to use this as the default for energy cost estimates and plan comparisons going forward?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "Your electricity: value1",
+        "description": "Your electricity: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "effe486b-ccba-47cb-8ab5-47576d8f6ea8",
+          "message_uuid": "effe486b-ccba-47cb-8ab5-47576d8f6ea8",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your electricity: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your paycheck: value1",
+        "description": "Your paycheck: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "38ebedfb-1b4b-42eb-b0ec-8d95ece2a3dc",
+          "message_uuid": "38ebedfb-1b4b-42eb-b0ec-8d95ece2a3dc",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your paycheck: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your retirement: value1",
+        "description": "Your retirement: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "message_uuid": "921da9a9-1f3a-47e6-af78-45d9d1dc6a7f",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your retirement: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite electricity is Value1. ANCHOR::1::2::C23KMP::ele...",
+        "description": "My favorite electricity is Value1. ANCHOR::1::2::C23KMP::electricity_rate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5",
+          "message_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite electricity is Value1. ANCHOR::1::2::C23KMP::electricity_rate"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::ele...",
+        "description": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::electricity_rate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite electricity is Value1. ANCHOR::0::3::YU6XE0::electricity_rate"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::ele...",
+        "description": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::electricity_rate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite electricity is Value1. ANCHOR::1::2::LU86MP::electricity_rate"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "message_uuid": "1c27da7f-df16-48b2-9191-cf4412dde244",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "My favorite power consumption is Value1. ANCHOR::1::3::LTOBT...",
+        "description": "My favorite power consumption is Value1. ANCHOR::1::3::LTOBTA::power_consumption",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite power consumption is Value1. ANCHOR::1::3::LTOBTA::power_consumption"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite power consumption is Value1. ANCHOR::0::4::7GPPC...",
+        "description": "My favorite power consumption is Value1. ANCHOR::0::4::7GPPCM::power_consumption",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite power consumption is Value1. ANCHOR::0::4::7GPPCM::power_consumption"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::5::V7Q3SM::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41265570-d3ae-4cb2-b191-06e2d63fb916",
+          "message_id": "41265570-d3ae-4cb2-b191-06e2d63fb916-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::0::2::3PKE9K::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "20667d90-6ff3-4e2b-8e75-0b94ee9bf704",
+          "message_id": "20667d90-6ff3-4e2b-8e75-0b94ee9bf704-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::2::1::T5WGQE::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::1::4::L08OKO::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::1::1::UB78MG::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::reti...",
+        "description": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::retirement_date",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite retirement is Value1. ANCHOR::0::5::K6VK5M::retirement_date"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5",
+          "message_id": "5125d45c-15f0-4de0-a322-8e1b4a79a7a5-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::1::1::Y0RMX4::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-18",
+        "title": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 18,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::1::2::CDM8GL::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-19",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 19,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W0H4U1::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-20",
+        "title": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::payche...",
+        "description": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::paycheck_amount",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 20,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3",
+          "message_id": "81b0014f-6dfb-44d7-800f-d23b99962bf3-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite paycheck is Value1. ANCHOR::0::2::2CDT0N::paycheck_amount"
+        }
+      },
+      {
+        "id": "memory-project-general-21",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 21,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-22",
+        "title": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::...",
+        "description": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 22,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::8::W7BAGA::favorite_tv"
+        }
+      },
+      {
+        "id": "memory-project-general-23",
+        "title": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR...",
+        "description": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::9::4DO6Z7::favorite_books",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 23,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-18",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite book are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::9::4DO6Z7::favorite_books"
+        }
+      },
+      {
+        "id": "memory-project-general-24",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 24,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-25",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 25,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-18",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::V78IUU::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-26",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::2::UH40IS::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 26,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "17259c9f-5d7c-4839-86ab-7e47919158ff",
+          "message_id": "17259c9f-5d7c-4839-86ab-7e47919158ff-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::2::UH40IS::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-27",
+        "title": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::reti...",
+        "description": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::retirement_date",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 27,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "cd9362dd-2b63-48b3-96f0-bfb750530272",
+          "message_id": "cd9362dd-2b63-48b3-96f0-bfb750530272-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite retirement is Value1. ANCHOR::1::4::A0PDPI::retirement_date"
+        }
+      },
+      {
+        "id": "memory-project-general-28",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::UX8NET::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 28,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c",
+          "message_id": "b7ad31ba-2261-4cbf-bab8-60363a51b89c-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::1::6::UX8NET::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-29",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::3::R27RNW::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 29,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94",
+          "message_id": "faf1ff54-f874-42cb-9317-572c6f4cbc94-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::3::R27RNW::favorite_airlines"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:25:04.629646+00:00"
+  }
+]

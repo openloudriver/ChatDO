@@ -1,0 +1,508 @@
+[
+  {
+    "id": "e3fdcaf2-8e3b-4110-801b-372c4e57c0c2",
+    "role": "user",
+    "content": "My favorite colors are blue, green and black.",
+    "created_at": "2025-12-20T23:36:38.449994+00:00"
+  },
+  {
+    "id": "0dc25a49-b5e8-4b15-b1c4-efb33fb8fb0c",
+    "role": "assistant",
+    "content": "Noted—your favorite colors are blue, green, and black. [M1]\n\n## 🔍 Summary\n- Favorites: blue, green, black [M1]\n\n## 💡 Want me to use these?\n- Apply them to themes (UI, charts, slides, code highlighting)\n- Suggest palettes or combinations for design/branding\n- Tailor examples and visuals using these colors\n\nTell me where you want them applied.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite colors are blue, green and black.",
+        "description": "My favorite colors are blue, green and black.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are blue, green and black."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:36:38.448802+00:00"
+  },
+  {
+    "id": "a456c245-33b4-459a-b847-bd588307d6c8",
+    "role": "user",
+    "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+    "created_at": "2025-12-20T23:37:20.009848+00:00"
+  },
+  {
+    "id": "9cb15116-7b0c-42a1-b8a6-46580f69de83",
+    "role": "assistant",
+    "content": "Noted — your favorite holidays are Christmas, Thanksgiving, and the Fourth of July [M1].\n\n## How I can help 🎯\n- Plan menus, shopping lists, and timelines for Thanksgiving or Christmas.\n- Curate gift ideas and budget trackers for Christmas.\n- Suggest patriotic party themes, playlists, and safe fireworks tips for the 4th.\n- Set reminders for prep milestones (travel, reservations, orders).\n\n## Quick check\n- Do you host, travel, or keep it low-key for these holidays?\n- Want me to set any reminders or start a planning checklist?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite holidays are Christmas, Thanksgiving, and the Fo...",
+        "description": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:37:20.008578+00:00"
+  },
+  {
+    "id": "0b97e079-ba68-445f-aae9-3b98191fd8ec",
+    "role": "user",
+    "content": "My favorite candies are jelly beans, hershey kisses, and nerds.",
+    "created_at": "2025-12-20T23:39:20.384060+00:00"
+  },
+  {
+    "id": "57f115c4-ae5b-406c-981d-812eade4d2ec",
+    "role": "assistant",
+    "content": "Noted—your favorite candies are jelly beans, Hershey’s Kisses, and Nerds [M1].\n\n## 📌 Saved preference\n- I’ll use this for gift ideas, snack picks, and event planning.\n- If you ever change your list, just tell me and I’ll update it.\n\n## Quick follow-ups\n- Any candies to avoid (allergies, dislikes)?\n- Want me to use this when suggesting holiday treats or party favors? [M2]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite candies are jelly beans, hershey kisses, and ner...",
+        "description": "My favorite candies are jelly beans, hershey kisses, and nerds.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candies are jelly beans, hershey kisses, and nerds."
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-1",
+        "title": "My favorite holidays are Christmas, Thanksgiving, and the Fo...",
+        "description": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-2",
+        "title": "Noted — your favorite holidays are Christmas, Thanksgiving, ...",
+        "description": "Noted — your favorite holidays are Christmas, Thanksgiving, and the Fourth of July [M1].\n\n## How I can help 🎯\n- Plan menus, shopping lists, and timeli...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted — your favorite holidays are Christmas, Thanksgiving, and the Fourth of July [M1].\n\n## How I can help 🎯\n- Plan menus, shopping lists, and timelines for Thanksgiving or Christmas.\n- Curate gift ideas and budget trackers for Christmas.\n- Suggest patriotic party themes, playlists, and safe fireworks tips for the 4th.\n- Set reminders for prep milestones (travel, reservations, orders).\n\n## Quick check\n- Do you host, travel, or keep it low-key for these holidays?\n- Want me to set any reminders or start a planning checklist?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:39:20.382975+00:00"
+  },
+  {
+    "id": "ecb3bfde-b9d9-4f98-9aab-fba9ce7cd56f",
+    "role": "user",
+    "content": "My favorite states are New York, California, and Hawaii",
+    "created_at": "2025-12-20T23:40:16.074154+00:00"
+  },
+  {
+    "id": "7455d94d-b52f-4269-8dd0-ed03b852d79a",
+    "role": "assistant",
+    "content": "Saved: your favorite states are New York, California, and Hawaii. [M1]\n\n## 📌 Saved preference\n- I’ll use this for travel ideas, local event suggestions, and prioritizing news or alerts from those states. [M1]\n\n## Quick follow-ups\n- Any favorite cities in NY, CA, or HI?\n- Any states you want me to avoid suggesting?\n- Want me to bias trip ideas and weekend getaways toward these?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite states are New York, California, and Hawaii",
+        "description": "My favorite states are New York, California, and Hawaii",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite states are New York, California, and Hawaii"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-1",
+        "title": "My favorite holidays are Christmas, Thanksgiving, and the Fo...",
+        "description": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-2",
+        "title": "Noted—your favorite candies are jelly beans, Hershey’s Kisse...",
+        "description": "Noted—your favorite candies are jelly beans, Hershey’s Kisses, and Nerds [M1].\n\n## 📌 Saved preference\n- I’ll use this for gift ideas, snack picks, and...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite candies are jelly beans, Hershey’s Kisses, and Nerds [M1].\n\n## 📌 Saved preference\n- I’ll use this for gift ideas, snack picks, and event planning.\n- If you ever change your list, just tell me and I’ll update it.\n\n## Quick follow-ups\n- Any candies to avoid (allergies, dislikes)?\n- Want me to use this when suggesting holiday treats or party favors? [M2]"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-3",
+        "title": "My favorite candies are jelly beans, hershey kisses, and ner...",
+        "description": "My favorite candies are jelly beans, hershey kisses, and nerds.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candies are jelly beans, hershey kisses, and nerds."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:40:16.072545+00:00"
+  },
+  {
+    "id": "29e7e79d-4465-4608-ad61-fd2b4117d8fc",
+    "role": "user",
+    "content": "My favorite cryptocurrencies are USDT, USDC, and ETH",
+    "created_at": "2025-12-20T23:41:14.504041+00:00"
+  },
+  {
+    "id": "3a0380e5-7f71-41e9-8b75-98630add42ac",
+    "role": "assistant",
+    "content": "Saved: your favorite cryptocurrencies are USDT, USDC, and ETH. [M1]\n\n## 📌 Saved preference\n- I’ll prioritize these for market updates, comparisons, and alerts (price moves, depeg risk, gas/fees, staking yields). [M1]\n\n## Quick follow-ups\n- Want price or depeg alerts for USDT/USDC and price/gas alerts for ETH? Any thresholds?\n- Which exchanges or wallets do you use (for tailored steps)?\n- Interested in staking/ETH yield, or just tracking?\n- Any coins you want me to avoid suggesting?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite cryptocurrencies are USDT, USDC, and ETH",
+        "description": "My favorite cryptocurrencies are USDT, USDC, and ETH",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are USDT, USDC, and ETH"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-1",
+        "title": "My favorite states are New York, California, and Hawaii",
+        "description": "My favorite states are New York, California, and Hawaii",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite states are New York, California, and Hawaii"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-2",
+        "title": "My favorite holidays are Christmas, Thanksgiving, and the Fo...",
+        "description": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-3",
+        "title": "Saved: your favorite states are New York, California, and Ha...",
+        "description": "Saved: your favorite states are New York, California, and Hawaii. [M1]\n\n## 📌 Saved preference\n- I’ll use this for travel ideas, local event suggestion...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite states are New York, California, and Hawaii. [M1]\n\n## 📌 Saved preference\n- I’ll use this for travel ideas, local event suggestions, and prioritizing news or alerts from those states. [M1]\n\n## Quick follow-ups\n- Any favorite cities in NY, CA, or HI?\n- Any states you want me to avoid suggesting?\n- Want me to bias trip ideas and weekend getaways toward these?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:41:14.502877+00:00"
+  },
+  {
+    "id": "7c61fa92-8638-408e-8d05-45b6077ecbbc",
+    "role": "user",
+    "content": "My favorite operating systems are MacOS, Linux, and Windows",
+    "created_at": "2025-12-20T23:41:56.882500+00:00"
+  },
+  {
+    "id": "48e09928-3cd1-4758-9424-f5b2181f60d8",
+    "role": "assistant",
+    "content": "Saved: your favorite operating systems are macOS, Linux, and Windows, and I’ll prioritize tips, tooling, and troubleshooting for those going forward. [M1]\n\n## 📌 Saved preference\n- I’ll bias software recommendations, commands, and workflows for macOS, Linux, and Windows. [M1]\n- I’ll give OS-specific caveats (install steps, paths, permissions, shortcuts) and cross-OS equivalents. [M1]\n- I’ll prefer examples using common package managers (brew/apt/dnf/pacman/winget/choco) when relevant.\n\n## Quick follow-ups\n- Which Linux distro(s) and desktop environment do you use (e.g., Ubuntu, Fedora, Arch; GNOME/KDE)?\n- Do you have preferred package managers (brew, apt, dnf, pacman, winget, choco)?\n- What versions are you on for macOS and Windows (for accurate commands and UI steps)?\n- Any preferred editors/IDEs (VS Code, JetBrains, Neovim) and languages to tailor dev setup?\n- Interested in cross-OS workflows (dotfiles, containers, WSL, SSH, virtualization) or setup scripts?\n- Any OS-specific news or security alerts you want me to track?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-0",
+        "title": "My favorite operating systems are MacOS, Linux, and Windows",
+        "description": "My favorite operating systems are MacOS, Linux, and Windows",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite operating systems are MacOS, Linux, and Windows"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-1",
+        "title": "My favorite cryptocurrencies are USDT, USDC, and ETH",
+        "description": "My favorite cryptocurrencies are USDT, USDC, and ETH",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are USDT, USDC, and ETH"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-2",
+        "title": "My favorite states are New York, California, and Hawaii",
+        "description": "My favorite states are New York, California, and Hawaii",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite states are New York, California, and Hawaii"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-3",
+        "title": "My favorite holidays are Christmas, Thanksgiving, and the Fo...",
+        "description": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite holidays are Christmas, Thanksgiving, and the Fourth of July"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-4",
+        "title": "Saved: your favorite states are New York, California, and Ha...",
+        "description": "Saved: your favorite states are New York, California, and Hawaii. [M1]\n\n## 📌 Saved preference\n- I’ll use this for travel ideas, local event suggestion...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite states are New York, California, and Hawaii. [M1]\n\n## 📌 Saved preference\n- I’ll use this for travel ideas, local event suggestions, and prioritizing news or alerts from those states. [M1]\n\n## Quick follow-ups\n- Any favorite cities in NY, CA, or HI?\n- Any states you want me to avoid suggesting?\n- Want me to bias trip ideas and weekend getaways toward these?"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-5",
+        "title": "Saved: your favorite cryptocurrencies are USDT, USDC, and ET...",
+        "description": "Saved: your favorite cryptocurrencies are USDT, USDC, and ETH. [M1]\n\n## 📌 Saved preference\n- I’ll prioritize these for market updates, comparisons, an...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-assistant-9",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved: your favorite cryptocurrencies are USDT, USDC, and ETH. [M1]\n\n## 📌 Saved preference\n- I’ll prioritize these for market updates, comparisons, and alerts (price moves, depeg risk, gas/fees, staking yields). [M1]\n\n## Quick follow-ups\n- Want price or depeg alerts for USDT/USDC and price/gas alerts for ETH? Any thresholds?\n- Which exchanges or wallets do you use (for tailored steps)?\n- Interested in staking/ETH yield, or just tracking?\n- Any coins you want me to avoid suggesting?"
+        }
+      },
+      {
+        "id": "memory-project-ba3ca2e0-3819-487e-aad2-ea5d25552974-6",
+        "title": "My favorite candies are jelly beans, hershey kisses, and ner...",
+        "description": "My favorite candies are jelly beans, hershey kisses, and nerds.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "645f9fa8-4807-433f-8503-d8b14d5b2973",
+          "message_id": "645f9fa8-4807-433f-8503-d8b14d5b2973-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-ba3ca2e0-3819-487e-aad2-ea5d25552974",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candies are jelly beans, hershey kisses, and nerds."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T23:41:56.880595+00:00"
+  }
+]

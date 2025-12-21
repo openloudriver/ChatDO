@@ -295,22 +295,27 @@ def index_chat_message(
                 extractor = get_fact_extractor()
                 facts = extractor.extract_facts(content, role=role)
                 
-                for fact in facts:
-                    try:
-                        db.store_project_fact(
-                            project_id=project_id,
-                            fact_key=fact["fact_key"],
-                            value_text=fact["value_text"],
-                            value_type=fact["value_type"],
-                            source_message_uuid=message_uuid,
-                            confidence=fact.get("confidence", 1.0),
-                            source_id=source_id
-                        )
-                        logger.debug(f"Stored fact: {fact['fact_key']} = {fact['value_text']} (confidence: {fact.get('confidence', 1.0)})")
-                    except Exception as e:
-                        logger.warning(f"Failed to store fact {fact.get('fact_key')}: {e}")
+                logger.info(f"[FACT-EXTRACT] Extracted {len(facts)} facts from message {message_id} (project={project_id})")
+                
+                if facts:
+                    for fact in facts:
+                        try:
+                            fact_id, action_type = db.store_project_fact(
+                                project_id=project_id,
+                                fact_key=fact["fact_key"],
+                                value_text=fact["value_text"],
+                                value_type=fact["value_type"],
+                                source_message_uuid=message_uuid,
+                                confidence=fact.get("confidence", 1.0),
+                                source_id=source_id
+                            )
+                            logger.info(f"[FACT-EXTRACT] ✅ {action_type.upper()} fact: {fact['fact_key']} = {fact['value_text']} (fact_id={fact_id}, message_uuid={message_uuid})")
+                        except Exception as e:
+                            logger.error(f"[FACT-EXTRACT] ❌ Failed to store fact {fact.get('fact_key')}: {e}", exc_info=True)
+                else:
+                    logger.debug(f"[FACT-EXTRACT] No facts extracted from message: {content[:100]}")
             except Exception as e:
-                logger.warning(f"Fact extraction failed for message {message_id}: {e}")
+                logger.error(f"[FACT-EXTRACT] ❌ Fact extraction failed for message {message_id}: {e}", exc_info=True)
         
         # Chunk the content
         chunks = chunk_chat_message(content)

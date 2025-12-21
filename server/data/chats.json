@@ -80,12 +80,12 @@
     "trashed_at": null
   },
   {
-    "id": "d7fb8c29-7a6a-4acd-b955-6c27bee739b7",
-    "project_id": "general",
-    "title": "New Chat",
-    "thread_id": "d7fb8c29-7a6a-4acd-b955-6c27bee739b7",
-    "created_at": "2025-12-20T21:36:26.440149+00:00",
-    "updated_at": "2025-12-20T21:36:26.440165+00:00",
+    "id": "ecd88dc2-f63b-4f1b-8ce3-e4cac8bf5055",
+    "project_id": "ba3ca2e0-3819-487e-aad2-ea5d25552974",
+    "title": "My favorite colors are red, white, and blue",
+    "thread_id": "ecd88dc2-f63b-4f1b-8ce3-e4cac8bf5055",
+    "created_at": "2025-12-21T00:10:36.930355+00:00",
+    "updated_at": "2025-12-21T00:10:45.557379+00:00",
     "trashed": false,
     "trashed_at": null
   }

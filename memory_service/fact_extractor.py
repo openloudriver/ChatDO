@@ -8,9 +8,16 @@ import re
 import logging
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
-import dateparser
 
 logger = logging.getLogger(__name__)
+
+# Make dateparser optional
+try:
+    import dateparser
+    DATEPARSER_AVAILABLE = True
+except ImportError:
+    DATEPARSER_AVAILABLE = False
+    logger.debug("dateparser not available. Date extraction will be limited.")
 
 # Make quantulum3 optional
 try:
@@ -128,16 +135,17 @@ class FactExtractor:
                             "confidence": 0.9  # High confidence for explicit statements
                         })
         
-        # 2. Extract dates
-        dates = self._extract_dates(content)
-        for date_str, date_obj in dates:
-            fact_key = "user.mentioned_date"
-            facts.append({
-                "fact_key": fact_key,
-                "value_text": date_str,
-                "value_type": "date",
-                "confidence": 0.7
-            })
+        # 2. Extract dates (only if dateparser available)
+        if DATEPARSER_AVAILABLE:
+            dates = self._extract_dates(content)
+            for date_str, date_obj in dates:
+                fact_key = "user.mentioned_date"
+                facts.append({
+                    "fact_key": fact_key,
+                    "value_text": date_str,
+                    "value_type": "date",
+                    "confidence": 0.7
+                })
         
         # 3. Extract quantities/numbers
         quantities = self._extract_quantities(content)
@@ -376,10 +384,14 @@ class FactExtractor:
         except ValueError:
             pass
         
-        # Check for date
-        parsed_date = dateparser.parse(value)
-        if parsed_date:
-            return "date", parsed_date.isoformat()
+        # Check for date (only if dateparser available)
+        if DATEPARSER_AVAILABLE:
+            try:
+                parsed_date = dateparser.parse(value)
+                if parsed_date:
+                    return "date", parsed_date.isoformat()
+            except Exception:
+                pass
         
         # Default to string
         return "string", value
@@ -387,11 +399,16 @@ class FactExtractor:
     def _extract_dates(self, content: str) -> List[Tuple[str, datetime]]:
         """Extract dates from content."""
         dates = []
+        if not DATEPARSER_AVAILABLE:
+            return dates
         # Use dateparser to find dates
         # This is a simple approach - could be improved
-        parsed = dateparser.parse(content)
-        if parsed:
-            dates.append((content, parsed))
+        try:
+            parsed = dateparser.parse(content)
+            if parsed:
+                dates.append((content, parsed))
+        except Exception as e:
+            logger.debug(f"Date parsing failed: {e}")
         return dates
     
     def _extract_quantities(self, content: str) -> List[Tuple[str, float]]:

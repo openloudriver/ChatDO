@@ -1022,6 +1022,55 @@ def get_chat_message_by_id(chat_message_id: int, source_id: str) -> Optional[Cha
     )
 
 
+def get_message_uuid(project_id: str, chat_id: str, message_id: str) -> Optional[str]:
+    """
+    Get message_uuid from chat_messages table using project_id, chat_id, and message_id.
+    
+    Args:
+        project_id: Project ID
+        chat_id: Chat/conversation ID
+        message_id: Message ID (from thread history)
+        
+    Returns:
+        message_uuid if found, None otherwise
+    """
+    try:
+        source_id = f"project-{project_id}"
+        init_db(source_id, project_id=project_id)
+        conn = get_db_connection(source_id)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT message_uuid FROM chat_messages 
+            WHERE project_id = ? AND chat_id = ? AND message_id = ?
+            LIMIT 1
+        """, (project_id, chat_id, message_id))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            message_uuid = row["message_uuid"] if "message_uuid" in row.keys() else None
+            # If UUID is missing, generate one and update the record
+            if not message_uuid:
+                message_uuid = str(uuid.uuid4())
+                conn = get_db_connection(source_id)
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE chat_messages 
+                    SET message_uuid = ? 
+                    WHERE project_id = ? AND chat_id = ? AND message_id = ?
+                """, (message_uuid, project_id, chat_id, message_id))
+                conn.commit()
+                conn.close()
+            return message_uuid
+        
+        return None
+    except Exception as e:
+        logger.debug(f"Failed to get message_uuid for project_id={project_id}, chat_id={chat_id}, message_id={message_id}: {e}")
+        return None
+
+
 # ============================================================================
 # REMOVED: NEW facts table system (facts table)
 # All fact storage now uses project_facts table via store_project_fact()
@@ -1048,7 +1097,7 @@ def store_project_fact(
     effective_at: Optional[datetime] = None,
     source_id: Optional[str] = None,
     created_at: Optional[datetime] = None  # For testing: deterministic timestamps
-) -> str:
+) -> tuple[str, str]:
     """
     Store a project fact with "latest wins" semantics.
     
@@ -1067,7 +1116,9 @@ def store_project_fact(
         source_id: Source ID for database connection (uses project-based source)
         
     Returns:
-        The fact_id (UUID) of the stored fact
+        Tuple of (fact_id, action_type) where:
+        - fact_id: The UUID of the stored fact
+        - action_type: "store" if new fact, "update" if existing fact value changed
     """
     if source_id is None:
         source_id = f"project-{project_id}"
@@ -1085,13 +1136,22 @@ def store_project_fact(
     
     # Find the most recent current fact with this key
     cursor.execute("""
-        SELECT fact_id FROM project_facts
+        SELECT fact_id, value_text FROM project_facts
         WHERE project_id = ? AND fact_key = ? AND is_current = 1
         ORDER BY effective_at DESC, created_at DESC
         LIMIT 1
     """, (project_id, fact_key))
     previous_fact = cursor.fetchone()
     supersedes_fact_id = previous_fact[0] if previous_fact else None
+    
+    # Determine if this is a Store (new) or Update (existing fact changed)
+    action_type = "store"  # Default: new fact
+    if previous_fact:
+        previous_value = previous_fact[1] if len(previous_fact) > 1 else None
+        if previous_value and previous_value != value_text:
+            # Same fact_key but different value = Update
+            action_type = "update"
+        # If same fact_key and same value, still counts as "store" (new fact row)
     
     # Mark all previous facts with this key as not current
     if previous_fact:
@@ -1117,7 +1177,7 @@ def store_project_fact(
     
     conn.commit()
     conn.close()
-    return fact_id
+    return (fact_id, action_type)
 
 
 def get_current_fact(project_id: str, fact_key: str, source_id: Optional[str] = None) -> Optional[dict]:

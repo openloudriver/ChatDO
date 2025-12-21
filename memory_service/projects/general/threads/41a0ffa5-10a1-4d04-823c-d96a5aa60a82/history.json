@@ -1,0 +1,61 @@
+[
+  {
+    "id": "2506685f-3a9a-4e0c-ac4c-16a1264b4d27",
+    "role": "user",
+    "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+    "created_at": "2025-12-20T22:47:21.422321+00:00"
+  },
+  {
+    "id": "491e96ce-1bae-43bf-b6db-3d465132b0a8",
+    "role": "assistant",
+    "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "message_uuid": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:47:21.421114+00:00"
+  }
+]

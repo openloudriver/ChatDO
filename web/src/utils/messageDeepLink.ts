@@ -31,6 +31,7 @@ export async function waitForMessageElement(
     // First, check if element already exists
     const existingElement = document.getElementById(elementId);
     if (existingElement) {
+      console.log(`[DEEP-LINK] Element ${elementId} already exists, resolving immediately`);
       resolve(existingElement);
       return;
     }
@@ -38,20 +39,34 @@ export async function waitForMessageElement(
     const startTime = Date.now();
     let retryCount = 0;
     const maxRetries = Math.floor(timeout / retryInterval);
+    let timeoutId: NodeJS.Timeout | null = null;
+    let observer: MutationObserver | null = null;
+
+    const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    };
 
     // Use MutationObserver for efficient watching
     if (useObserver && typeof MutationObserver !== 'undefined') {
-      const observer = new MutationObserver((mutations, obs) => {
+      observer = new MutationObserver((mutations, obs) => {
         const element = document.getElementById(elementId);
         if (element) {
-          obs.disconnect();
+          console.log(`[DEEP-LINK] Found element ${elementId} via MutationObserver`);
+          cleanup();
           resolve(element);
           return;
         }
 
         // Check timeout
         if (Date.now() - startTime > timeout) {
-          obs.disconnect();
+          cleanup();
           reject(new Error(`Timeout waiting for element ${elementId}`));
         }
       });
@@ -62,32 +77,34 @@ export async function waitForMessageElement(
         document.body;
       
       if (observeTarget) {
+        console.log(`[DEEP-LINK] Observing container for element ${elementId}`);
         observer.observe(observeTarget, {
           childList: true,
           subtree: true,
         });
+      } else {
+        console.warn(`[DEEP-LINK] No container found for observation, falling back to polling`);
       }
 
       // Fallback timeout
-      const timeoutId = setTimeout(() => {
-        observer.disconnect();
+      timeoutId = setTimeout(() => {
         const element = document.getElementById(elementId);
         if (element) {
+          console.log(`[DEEP-LINK] Found element ${elementId} via timeout fallback`);
+          cleanup();
           resolve(element);
         } else {
+          console.warn(`[DEEP-LINK] Timeout waiting for element ${elementId}`);
+          cleanup();
           reject(new Error(`Timeout waiting for element ${elementId}`));
         }
       }, timeout);
-
-      // Cleanup on resolve/reject
-      Promise.resolve().then(() => {
-        // This ensures cleanup happens
-      });
     } else {
       // Fallback to polling
       const poll = () => {
         const element = document.getElementById(elementId);
         if (element) {
+          console.log(`[DEEP-LINK] Found element ${elementId} via polling (attempt ${retryCount})`);
           resolve(element);
           return;
         }

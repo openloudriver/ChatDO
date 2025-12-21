@@ -2386,6 +2386,9 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
     chat_created_at = chat.get("created_at", now_iso())  # Fallback for legacy messages
     last_timestamp = chat_created_at  # Track for monotonic enforcement
     
+    # Import db module for message_uuid lookup
+    from memory_service.memory_dashboard import db as memory_db
+    
     print(f"[DIAG] Loading messages for chat {chat_id}: history has {len(history)} messages")
     for idx, msg in enumerate(history):
         # Skip system messages for display
@@ -2398,6 +2401,18 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
             "role": msg.get("role"),
             "content": msg.get("content", "")
         }
+        
+        # Look up message_uuid from Memory Service database for deep-linking
+        message_id = msg.get("id")
+        message_uuid = None
+        if message_id and project_id:
+            try:
+                message_uuid = memory_db.get_message_uuid(project_id, thread_id, message_id)
+                if message_uuid:
+                    message_obj["uuid"] = message_uuid
+                    message_obj["message_uuid"] = message_uuid  # Also include for backward compatibility
+            except Exception as e:
+                logger.debug(f"Failed to get message_uuid for message_id={message_id}: {e}")
         
         # Handle created_at: use from message, or fallback to chat created_at, or ensure monotonic
         msg_created_at = msg.get("created_at")
@@ -2441,7 +2456,11 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         if msg.get("sources"):
             message_obj["sources"] = msg.get("sources")
         
-        print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, created_at={message_obj.get('created_at', 'missing')}, model_label={message_obj.get('model_label', 'none')}")
+        # Preserve message ID for frontend
+        if message_id:
+            message_obj["id"] = message_id
+        
+        print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, created_at={message_obj.get('created_at', 'missing')}, model_label={message_obj.get('model_label', 'none')}, uuid={message_obj.get('uuid', 'none')}")
         messages.append(message_obj)
     
     print(f"[DIAG] Returning {len(messages)} messages to frontend")

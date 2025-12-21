@@ -1,0 +1,42 @@
+[
+  {
+    "id": "955456e8-f62b-46c2-84fc-21353124d403",
+    "role": "user",
+    "content": "My favorite colors are red, white, and blue",
+    "created_at": "2025-12-21T00:11:00.276582+00:00"
+  },
+  {
+    "id": "5850613c-974f-4a4d-baa6-3c127b7bb572",
+    "role": "assistant",
+    "content": "Got it—I’ll remember that your favorite colors are red, white, and blue.\n\n## 🔍 Summary\n- Favorite colors: red, white, blue\n\n## 🎯 How I’ll use this\n- Default to these colors for themes, charts, and examples\n- Offer matching palettes for designs or documents\n- Prioritize these in UI/branding suggestions\n\nIf you have a preferred order or specific shades (e.g., hex codes), tell me and I’ll store that too.",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-21T00:11:00.275441+00:00"
+  },
+  {
+    "id": "362391b3-476d-4ab1-90d2-b23ff6dba4fc",
+    "role": "user",
+    "content": "My favorite states are washington, oregon, and california",
+    "created_at": "2025-12-21T00:11:17.744254+00:00"
+  },
+  {
+    "id": "07f8efd3-01de-4b5b-a4ff-a676f33cba1b",
+    "role": "assistant",
+    "content": "Noted—your favorite states are Washington, Oregon, and California.\n\n## 🧠 Memory\nWould you like me to remember these as your preferred states for future recommendations (travel ideas, examples, news filters)?\n\n## 💡 Next\n- What do you like most about them (coast, forests, cities, climate, culture)?\n- Want tailored suggestions (road trips, national parks, coastal towns, tech hubs, cost-of-living comparisons)?",
+    "model": "GPT-5",
+    "model_label": "Model: GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false
+    },
+    "created_at": "2025-12-21T00:11:17.743510+00:00"
+  }
+]

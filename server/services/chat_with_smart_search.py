@@ -357,34 +357,55 @@ FILETREE_READ_TOOL = {
 }
 
 
-def build_model_label(used_web: bool, used_memory: bool, escalated: bool = True) -> str:
+def build_model_label(
+    used_web: bool,
+    memory_actions: Optional[dict] = None,
+    escalated: bool = True
+) -> str:
     """
-    Build model label based on what was used.
+    Build model label with explicit multi-action Memory tag format.
     
-    NOTE: Memory is now a tool only. GPT-5 always generates responses.
-    "Model: Memory" is preserved as a source label to indicate Memory-backed responses.
+    Format: Memory-S(n) + Memory-U(n) + Memory-R(n) + GPT-5
+    Only renders memory tokens with count > 0.
+    GPT-5 is always rendered.
     
     Args:
         used_web: Whether Brave web search was used
-        used_memory: Whether Memory was used
+        memory_actions: Dict with keys S, U, R, F (all integers >= 0, F is bool)
         escalated: Always True (GPT-5 is always used, kept for compatibility)
     
     Returns:
-        - "GPT-5" if nothing special
-        - "Memory" if only memory (source label - GPT-5 still generates response)
-        - "Memory + GPT-5" if only memory (alternative label format)
-        - "Brave + GPT-5" if only web
-        - "Brave + Memory + GPT-5" if both web and memory
+        Model label string (e.g., "Memory-S(3) + Memory-R(1) + GPT-5")
     """
-    if used_web and used_memory:
-        return "Brave + Memory + GPT-5"
-    elif used_web:
-        return "Brave + GPT-5"
-    elif used_memory:
-        # Return "Memory + GPT-5" to show GPT-5 generated the response using Memory
-        return "Memory + GPT-5"
-    else:
-        return "GPT-5"
+    # Handle failure case
+    if memory_actions and memory_actions.get("F", False):
+        if used_web:
+            return "Memory-F + Brave + GPT-5"
+        return "Memory-F + GPT-5"
+    
+    # Build memory tokens
+    memory_tokens = []
+    if memory_actions:
+        s_count = memory_actions.get("S", 0)
+        u_count = memory_actions.get("U", 0)
+        r_count = memory_actions.get("R", 0)
+        
+        if s_count > 0:
+            memory_tokens.append(f"Memory-S({s_count})")
+        if u_count > 0:
+            memory_tokens.append(f"Memory-U({u_count})")
+        if r_count > 0:
+            memory_tokens.append(f"Memory-R({r_count})")
+    
+    # Build final label
+    parts = []
+    if memory_tokens:
+        parts.extend(memory_tokens)
+    if used_web:
+        parts.append("Brave")
+    parts.append("GPT-5")
+    
+    return " + ".join(parts)
 
 
 async def chat_with_smart_search(
@@ -453,28 +474,81 @@ async def chat_with_smart_search(
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
             user_message_id = f"{thread_id}-user-{message_index}"
             
+            # Extract facts and track S/U counts BEFORE indexing
+            # This allows us to count Store vs Update actions
+            facts_were_stored = False
+            store_count = 0
+            update_count = 0
+            try:
+                from memory_service.fact_extractor import get_fact_extractor
+                from memory_service.memory_dashboard.db import get_current_fact
+                extractor = get_fact_extractor()
+                extracted_facts = extractor.extract_facts(user_message, role="user")
+                if extracted_facts:
+                    facts_were_stored = True
+                    logger.info(f"[MEMORY] Message contains {len(extracted_facts)} facts that will be stored")
+                    
+                    # Check each fact to determine if it's a Store (new) or Update (existing)
+                    source_id = f"project-{project_id}"
+                    for fact in extracted_facts:
+                        fact_key = fact.get("fact_key")
+                        value_text = fact.get("value_text")
+                        if fact_key:
+                            # Check if fact already exists
+                            existing_fact = get_current_fact(project_id, fact_key, source_id=source_id)
+                            if existing_fact and existing_fact.get("value_text") != value_text:
+                                # Same fact_key but different value = Update
+                                update_count += 1
+                            else:
+                                # New fact = Store
+                                store_count += 1
+                    
+                    memory_actions["S"] = store_count
+                    memory_actions["U"] = update_count
+                    logger.info(f"[MEMORY] Fact counts: S={store_count}, U={update_count}")
+            except Exception as e:
+                logger.warning(f"[MEMORY] ❌ Exception tracking fact counts: {e}", exc_info=True)
+                memory_failure = True
+                memory_actions["F"] = True
+            
             # Index user message immediately (before memory search)
             memory_client = get_memory_client()
             logger.info(f"[MEMORY] Indexing user message BEFORE memory search: {user_message_id} for project {project_id}")
-            success = memory_client.index_chat_message(
-                project_id=project_id,
-                chat_id=thread_id,
-                message_id=user_message_id,
-                role="user",
-                content=user_message,
-                timestamp=user_msg_created_at,
-                message_index=message_index
-            )
-            if success:
-                logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (before search)")
-            else:
-                logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+            try:
+                success = memory_client.index_chat_message(
+                    project_id=project_id,
+                    chat_id=thread_id,
+                    message_id=user_message_id,
+                    role="user",
+                    content=user_message,
+                    timestamp=user_msg_created_at,
+                    message_index=message_index
+                )
+                if success:
+                    # Only set memory_stored if facts were actually stored (not just message indexing)
+                    if facts_were_stored:
+                        memory_stored = True  # Memory service was used (for fact storage)
+                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (facts stored)")
+                    else:
+                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (no facts)")
+                else:
+                    logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+                    if facts_were_stored:
+                        memory_failure = True
+                        memory_actions["F"] = True
+            except Exception as e:
+                logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+                if facts_were_stored:
+                    memory_failure = True
+                    memory_actions["F"] = True
             
             # Facts are automatically extracted and stored via fact_extractor in index_chat_message()
             # The index_chat_message() call above handles fact extraction → store_project_fact
             # No additional fact storage needed here
         except Exception as e:
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
+            memory_failure = True
+            memory_actions["F"] = True
     
     # ============================================================================
     # REMOVED: Facts retrieval bypass
@@ -507,9 +581,9 @@ async def chat_with_smart_search(
         # REMOVED: get_facts() - use /search-facts endpoint instead
         # Facts are now retrieved via librarian's /search-facts which uses project_facts table
         facts = []  # Disabled: facts retrieval now handled by librarian via project_facts table
-    
-    # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
-    if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
+        
+        # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
+        if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
             # Determine topic_key STRICTLY
             # If query includes topic noun → use that topic_key only
             topic_key = extract_topic_from_query(user_message)
@@ -653,10 +727,15 @@ async def chat_with_smart_search(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
     
+    # 0. Initialize memory action tracking
+    memory_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
+    memory_failure = False
+    
     # 0. Get memory context if project_id is available
     memory_context = ""
     sources = []
     has_memory = False
+    memory_stored = False  # Track if memory was stored (fact extraction/indexing)
     searched_memory = False  # Track if we attempted to search memory (even if no results)
     hits = []  # Initialize hits to empty list so it's always defined
     if project_id:
@@ -676,6 +755,23 @@ async def chat_with_smart_search(
                 has_memory = True
                 logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
                 logger.info(f"[MEMORY] Will pass Memory context to GPT-5: has_memory={has_memory}, hits_count={len(hits)}")
+                
+                # Count distinct canonical topic keys from fact hits (for R count)
+                # Fact keys are like "user.favorite_color" or "user.favorite_color.1" (ranked)
+                # Canonical topic key is without the rank suffix (e.g., "user.favorite_color")
+                retrieved_topic_keys = set()
+                for hit in hits:
+                    if hit.metadata and hit.metadata.get("is_fact"):
+                        fact_key = hit.metadata.get("fact_key", "")
+                        if fact_key:
+                            # Extract canonical topic key (remove rank suffix if present)
+                            # e.g., "user.favorite_color.1" -> "user.favorite_color"
+                            canonical_key = fact_key.rsplit(".", 1)[0] if "." in fact_key and fact_key.split(".")[-1].isdigit() else fact_key
+                            retrieved_topic_keys.add(canonical_key)
+                
+                memory_actions["R"] = len(retrieved_topic_keys)
+                if memory_actions["R"] > 0:
+                    logger.info(f"[MEMORY] Retrieved {memory_actions['R']} distinct topic keys: {sorted(retrieved_topic_keys)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
                 logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
@@ -795,7 +891,8 @@ async def chat_with_smart_search(
         # 2a. Memory-only or GPT-5 chat (no Brave)
         # Always use GPT-5 - Memory is a tool, not a speaking model
         used_web = False
-        used_memory = has_memory
+        # Memory tag shows if memory was stored OR retrieved (Memory service was used)
+        used_memory = has_memory or memory_stored
         
         # Always route to GPT-5 (never GPT-5 Mini)
         logger.info(f"[MEMORY] Routing to GPT-5 with Memory context ({len(hits) if hits else 0} hits)")
@@ -805,9 +902,8 @@ async def chat_with_smart_search(
             intent="general_chat",
             project_id=project_id
         )
-        # Model label: "Memory" if memory was used, "GPT-5" otherwise
-        # "Model: Memory" is preserved as a source label to indicate Memory-backed responses
-        model_display = build_model_label(used_web=used_web, used_memory=used_memory, escalated=True)
+        # Build model label with memory actions
+        model_display = build_model_label(used_web=used_web, memory_actions=memory_actions, escalated=True)
         logger.info(f"[MODEL] model label = {model_display}")
         
         # Build model_label and created_at BEFORE the thread_id check (needed for return statement)
@@ -868,7 +964,7 @@ async def chat_with_smart_search(
                     "model_label": model_label,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False, "usedMemory": used_memory},
+                    "meta": {"usedWebSearch": False, "usedMemory": used_memory, "memory_actions": memory_actions},
                     "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
@@ -905,6 +1001,7 @@ async def chat_with_smart_search(
             "meta": {
                 "usedWebSearch": False,
                 "usedMemory": used_memory,
+                "memory_actions": memory_actions,
             },
             "model": model_display,
             "model_label": model_label,
@@ -990,7 +1087,8 @@ async def chat_with_smart_search(
             "content": content,
             "meta": {
                 "usedWebSearch": False,
-                "webSearchError": str(e)
+                "webSearchError": str(e),
+                "memory_actions": memory_actions
             },
             "model": model_display,
             "model_label": model_label,
@@ -1044,7 +1142,8 @@ async def chat_with_smart_search(
             "content": content,
             "meta": {
                 "usedWebSearch": False,
-                "webSearchEmpty": True
+                "webSearchEmpty": True,
+                "memory_actions": memory_actions
             },
             "model": model_display,
             "model_label": model_label,
@@ -1180,7 +1279,8 @@ async def chat_with_smart_search(
                 all_sources.extend(web_sources)  # Web sources (already Source objects)
             
             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-            model_label = build_model_label(used_web=bool(web_sources), used_memory=has_memory, escalated=True)
+            # Build model label with memory actions
+            model_label = build_model_label(used_web=bool(web_sources), memory_actions=memory_actions, escalated=True)
             assistant_message = {
                 "id": str(uuid4()),
                 "role": "assistant",
@@ -1191,7 +1291,8 @@ async def chat_with_smart_search(
                 "sources": all_sources if all_sources else None,
                 "meta": {
                     "usedWebSearch": True,
-                    "webResultsPreview": web_results[:5]
+                    "webResultsPreview": web_results[:5],
+                    "memory_actions": memory_actions
                 },
                 "created_at": assistant_msg_created_at
             }
@@ -1234,7 +1335,8 @@ async def chat_with_smart_search(
     
     # Get created_at and model_label from saved message or generate
     assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-    model_label = build_model_label(used_web=bool(web_sources), used_memory=searched_memory, escalated=True)
+    # Build model label with memory actions
+    model_label = build_model_label(used_web=bool(web_sources), memory_actions=memory_actions, escalated=True)
     if thread_id:
         try:
             history = memory_store.load_thread_history(target_name, thread_id)
@@ -1252,8 +1354,9 @@ async def chat_with_smart_search(
         "content": content,
         "meta": {
             "usedWebSearch": True,
-            "usedMemory": has_memory,
-            "webResultsPreview": web_results[:5]  # Top 5 for sources display
+            "usedMemory": has_memory or memory_stored,  # Memory was stored or retrieved
+            "webResultsPreview": web_results[:5],  # Top 5 for sources display
+            "memory_actions": memory_actions
         },
         "model": model_label.replace("Model: ", ""),  # Return without "Model: " prefix for backward compatibility
         "model_label": model_label,

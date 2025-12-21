@@ -800,13 +800,55 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       previousMessagesLengthRef.current = 0;
       previousLastMessageRoleRef.current = null;
       
-      // Immediately scroll to bottom on conversation change (no animation)
-      // Use requestAnimationFrame to ensure DOM is ready
-      requestAnimationFrame(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      });
+      // Check if URL has a hash fragment for deep-linking
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#message-')) {
+        // Extract message ID from hash
+        const messageId = hash.replace('#message-', '');
+        console.log(`[DEEP-LINK] URL hash detected: ${hash}, messageId: ${messageId}`);
+        
+        // Wait for messages to load, then navigate
+        const navigateToHashMessage = async (attempt: number = 1, maxAttempts: number = 5) => {
+          try {
+            const { navigateToMessage } = await import('../utils/messageDeepLink');
+            const messagesContainer = messagesContainerRef.current;
+            
+            if (!messagesContainer) {
+              throw new Error('Messages container not found');
+            }
+            
+            await navigateToMessage(messageId, {
+              updateUrl: true,
+              timeout: 10000,
+              container: messagesContainer,
+            });
+            console.log(`[DEEP-LINK] Successfully navigated to message from URL hash: ${messageId}`);
+          } catch (error) {
+            if (attempt < maxAttempts) {
+              // Retry after a delay
+              console.log(`[DEEP-LINK] Attempt ${attempt} failed for URL hash ${messageId}, retrying in ${attempt * 200}ms...`);
+              setTimeout(() => navigateToHashMessage(attempt + 1, maxAttempts), attempt * 200);
+            } else {
+              console.warn(`[DEEP-LINK] Failed to navigate to message from URL hash ${messageId} after ${maxAttempts} attempts:`, error);
+              // Fallback: scroll to bottom
+              if (messagesContainerRef.current) {
+                messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+              }
+            }
+          }
+        };
+        
+        // Wait a bit for messages to render, then start navigation
+        setTimeout(() => navigateToHashMessage(), 500);
+      } else {
+        // No hash - scroll to bottom on conversation change (no animation)
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          }
+        });
+      }
     }
   }, [currentConversation?.id]);
 

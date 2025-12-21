@@ -1,0 +1,17 @@
+{
+  "name": "deep-link-torture-tests",
+  "version": "1.0.0",
+  "description": "Playwright tests for deep-linking torture testing",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:torture": "playwright test deep_link_torture.spec.ts",
+    "test:torture:headed": "playwright test deep_link_torture.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0"
+  }
+}
+

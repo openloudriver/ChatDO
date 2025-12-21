@@ -225,22 +225,37 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         if (messageUuid) {
           try {
             const { navigateToMessage } = await import('../utils/messageDeepLink');
-            // Wait a bit for the conversation to load and messages to render
-            setTimeout(async () => {
+            // Wait for conversation to load and messages to render
+            // Use a longer delay and retry logic to handle async message loading
+            const attemptNavigation = async (attempt: number = 1, maxAttempts: number = 5) => {
               try {
+                // Find the messages container for better observation
+                const messagesContainer = document.querySelector('[class*="overflow-y-auto"]') as HTMLElement;
+                
                 await navigateToMessage(messageUuid, {
                   updateUrl: true,
-                  timeout: 5000,
+                  timeout: 10000, // Increased timeout to 10 seconds
+                  container: messagesContainer, // Pass container for better observation
                 });
+                console.log(`[DEEP-LINK] Successfully navigated to message ${messageUuid}`);
               } catch (error) {
-                console.warn(`[DEEP-LINK] Failed to navigate to message ${messageUuid}:`, error);
-                // Fallback: scroll to bottom if specific message not found
-                const messagesContainer = document.querySelector('[class*="overflow-y-auto"]');
-                if (messagesContainer) {
-                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                if (attempt < maxAttempts) {
+                  // Retry after a longer delay
+                  console.log(`[DEEP-LINK] Attempt ${attempt} failed, retrying in ${attempt * 200}ms...`);
+                  setTimeout(() => attemptNavigation(attempt + 1, maxAttempts), attempt * 200);
+                } else {
+                  console.warn(`[DEEP-LINK] Failed to navigate to message ${messageUuid} after ${maxAttempts} attempts:`, error);
+                  // Fallback: scroll to bottom if specific message not found
+                  const messagesContainer = document.querySelector('[class*="overflow-y-auto"]') as HTMLElement;
+                  if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                  }
                 }
               }
-            }, 300);
+            };
+            
+            // Start navigation after initial delay to allow conversation to load
+            setTimeout(() => attemptNavigation(), 500);
           } catch (error) {
             console.error('[DEEP-LINK] Failed to import navigateToMessage:', error);
           }

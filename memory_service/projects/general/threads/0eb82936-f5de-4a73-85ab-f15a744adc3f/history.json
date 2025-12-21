@@ -1,0 +1,2815 @@
+[
+  {
+    "id": "9fb6714e-c9c3-4fdf-a7a2-ee54a8d5484f",
+    "role": "user",
+    "content": "My favorite bible translation are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::XGI9C8::favorite_bible_translations",
+    "created_at": "2025-12-20T22:49:00.081193+00:00"
+  },
+  {
+    "id": "fcb2bf2b-f1e1-4e90-81ef-591879021bbd",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite bible translation are 1) Value1, 2) Value2, 3) V...",
+        "description": "My favorite bible translation are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::XGI9C8::favorite_bible_translations",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite bible translation are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::XGI9C8::favorite_bible_translations"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "message_uuid": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:49:00.080403+00:00"
+  },
+  {
+    "id": "033d070e-f5b3-4a2f-b7ca-7f3ae1442691",
+    "role": "user",
+    "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+    "created_at": "2025-12-20T22:49:26.896047+00:00"
+  },
+  {
+    "id": "8338a8dc-9607-425f-b702-7b089ecd8bc6",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "message_uuid": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:49:26.895185+00:00"
+  },
+  {
+    "id": "fa7f3027-fc0f-49ac-8d7b-ff63d78f2c10",
+    "role": "user",
+    "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+    "created_at": "2025-12-20T22:49:50.017269+00:00"
+  },
+  {
+    "id": "7a133f7f-00db-4476-bc92-6a806d99608d",
+    "role": "assistant",
+    "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "message_uuid": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:49:50.016094+00:00"
+  },
+  {
+    "id": "30557625-b95f-40e2-8932-0fd52a8e17d1",
+    "role": "user",
+    "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+    "created_at": "2025-12-20T22:50:16.161968+00:00"
+  },
+  {
+    "id": "5d19d58a-8e65-4a40-87b8-eb5db7b5dc18",
+    "role": "assistant",
+    "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "70e08d9d-94ff-4bcd-ab3a-7b4a5986158b",
+          "message_uuid": "70e08d9d-94ff-4bcd-ab3a-7b4a5986158b",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:50:16.160646+00:00"
+  },
+  {
+    "id": "9812c4d9-87c7-4cdd-9355-e86935fcb356",
+    "role": "user",
+    "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+    "created_at": "2025-12-20T22:50:41.015535+00:00"
+  },
+  {
+    "id": "3f2db90c-f395-4c86-afba-737c5ebd86c4",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n- I also have your least favorite candies on file under least_favorite_candies. [M4]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting snacks/gifts, then Value2 → Value3? [M1]\n  - Combine this with your least-favorite list to avoid conflicts in suggestions? [M1, M4]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (e.g., crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:50:41.013184+00:00"
+  },
+  {
+    "id": "5cb51fe3-ec28-4c44-8ff2-8f601ab36b4a",
+    "role": "user",
+    "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+    "created_at": "2025-12-20T22:51:16.198027+00:00"
+  },
+  {
+    "id": "49cccab8-8d78-422e-8548-24ea370cba6b",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n\n## ✅ Next\n- Want me to prefer Value1 by default in suggestions, then Value2 → Value3? [M1]\n- Combine this with your least-favorite list to avoid conflicts in recommendations? [M6]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Saved—your ranked favorite candies are 1) Value1, 2) Value2,...",
+        "description": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-9",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n- I also have your least favorite candies on file under least_favorite_candies. [M4]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting snacks/gifts, then Value2 → Value3? [M1]\n  - Combine this with your least-favorite list to avoid conflicts in suggestions? [M1, M4]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (e.g., crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:51:16.195928+00:00"
+  },
+  {
+    "id": "6871b56a-1323-44dc-a69d-d7ed887ec9f2",
+    "role": "user",
+    "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+    "created_at": "2025-12-20T22:51:35.852955+00:00"
+  },
+  {
+    "id": "f5e923e3-ad9a-4b28-9143-7ce8659e9728",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_colors. [M1]\n\n## ✅ Next\n- Should I default to Value1 in themes, visuals, and examples, then fall back to Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual colors and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any specific hex/RGB codes or brand palette?\n- Light/dark mode preferences or accessibility contrast requirements?\n- Context rules (e.g., headers vs. accents vs. backgrounds)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Saved—your ranked favorite candies are 1) Value1, 2) Value2,...",
+        "description": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-11",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n\n## ✅ Next\n- Want me to prefer Value1 by default in suggestions, then Value2 → Value3? [M1]\n- Combine this with your least-favorite list to avoid conflicts in recommendations? [M6]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:51:35.850629+00:00"
+  },
+  {
+    "id": "5f928881-96fd-4555-bd69-e535a808e8b8",
+    "role": "user",
+    "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+    "created_at": "2025-12-20T22:51:52.744831+00:00"
+  },
+  {
+    "id": "c4c0fdd7-668c-4296-aadd-706a5bb5af10",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_cryptos. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_cryptos. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when giving examples, news, or suggestions, then Value2 → Value3? [M1]\n  - Use this order when proposing portfolios, DCA examples, or comparing wallets/exchanges? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual tickers/names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Custody: self-custody vs. exchange custody (preferred wallets, hardware vs. software)?\n- Chains/features to prioritize (L1/L2, staking, DeFi, NFTs)?\n- Risk tolerance and time horizon (trading vs. long-term holding)?\n- Regions/exchanges to use or avoid, and tax tracking preferences/tools?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "Saved—your ranked favorite candies are 1) Value1, 2) Value2,...",
+        "description": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-11",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n\n## ✅ Next\n- Want me to prefer Value1 by default in suggestions, then Value2 → Value3? [M1]\n- Combine this with your least-favorite list to avoid conflicts in recommendations? [M6]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, ...",
+        "description": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-13",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_colors. [M1]\n\n## ✅ Next\n- Should I default to Value1 in themes, visuals, and examples, then fall back to Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual colors and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any specific hex/RGB codes or brand palette?\n- Light/dark mode preferences or accessibility contrast requirements?\n- Context rules (e.g., headers vs. accents vs. backgrounds)?"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:51:52.742006+00:00"
+  },
+  {
+    "id": "83e8be1c-0498-4c5a-a246-a6290f4fe78d",
+    "role": "user",
+    "content": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies",
+    "created_at": "2025-12-20T22:52:08.521879+00:00"
+  },
+  {
+    "id": "ef2faed1-6574-48cb-b0e9-6eca2deb197f",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite movies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_movies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_movies. [M1]\n\n## ✅ Next\n- Should I default to Value1 when suggesting watch lists, then Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual titles and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Preferred genres, directors, or actors?\n- Content limits (violence/gore, language, runtime)?\n- Language/subtitles and region/streaming platform availability?\n- Mood-based picks (comfort rewatches vs. new releases)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "Saved—your ranked favorite candies are 1) Value1, 2) Value2,...",
+        "description": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-11",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n\n## ✅ Next\n- Want me to prefer Value1 by default in suggestions, then Value2 → Value3? [M1]\n- Combine this with your least-favorite list to avoid conflicts in recommendations? [M6]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2...",
+        "description": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_cryptos. [M1]\n\n## 🔍 Summary\n- Ranking record...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-15",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_cryptos. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_cryptos. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when giving examples, news, or suggestions, then Value2 → Value3? [M1]\n  - Use this order when proposing portfolios, DCA examples, or comparing wallets/exchanges? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual tickers/names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Custody: self-custody vs. exchange custody (preferred wallets, hardware vs. software)?\n- Chains/features to prioritize (L1/L2, staking, DeFi, NFTs)?\n- Risk tolerance and time horizon (trading vs. long-term holding)?\n- Regions/exchanges to use or avoid, and tax tracking preferences/tools?"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, ...",
+        "description": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-13",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_colors. [M1]\n\n## ✅ Next\n- Should I default to Value1 in themes, visuals, and examples, then fall back to Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual colors and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any specific hex/RGB codes or brand palette?\n- Light/dark mode preferences or accessibility contrast requirements?\n- Context rules (e.g., headers vs. accents vs. backgrounds)?"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-18",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 18,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-19",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 19,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:52:08.518215+00:00"
+  },
+  {
+    "id": "e7c53de0-2af4-4561-95a9-8f733c816028",
+    "role": "user",
+    "content": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::RC6AXT::favorite_tv",
+    "created_at": "2025-12-20T22:52:33.841219+00:00"
+  },
+  {
+    "id": "952d2542-7f18-4d4a-9fca-c0680f46ff52",
+    "role": "assistant",
+    "content": "Saved—your ranked favorite TV shows are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_tv. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_tv. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when suggesting watchlists or similar shows, then Value2 → Value3? [M1]\n  - Prioritize these when recommending news, episode guides, or rewatch plans? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual shows and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Preferred genres, tones (comedy/drama), or formats (serialized vs. episodic)?\n- Streaming platforms to prefer/avoid and region availability?\n- Content limits (violence, language) or runtime preferences (30 vs. 60 min)?\n- Spoiler sensitivity and status preference (finished vs. ongoing)?",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::...",
+        "description": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::RC6AXT::favorite_tv",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite tv are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::9::RC6AXT::favorite_tv"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-16",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite movie are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::8::7HJD7I::favorite_movies"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "message_uuid": "306564b1-78f4-4a88-b71b-35c25f782321",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-12",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite color are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::6::DTQ05D::favorite_colors"
+        }
+      },
+      {
+        "id": "memory-project-general-4",
+        "title": "Saved—your ranked favorite movies are 1) Value1, 2) Value2, ...",
+        "description": "Saved—your ranked favorite movies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_movies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-17",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite movies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_movies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_movies. [M1]\n\n## ✅ Next\n- Should I default to Value1 when suggesting watch lists, then Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual titles and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Preferred genres, directors, or actors?\n- Content limits (violence/gore, language, runtime)?\n- Language/subtitles and region/streaming platform availability?\n- Mood-based picks (comfort rewatches vs. new releases)?"
+        }
+      },
+      {
+        "id": "memory-project-general-5",
+        "title": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANC...",
+        "description": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite airline are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::1::I4CJ3X::favorite_airlines"
+        }
+      },
+      {
+        "id": "memory-project-general-6",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-7",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-10",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::5::2TZTRH::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-8",
+        "title": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHO...",
+        "description": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 8,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-8",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candy are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::4::E3VWXB::favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-9",
+        "title": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCH...",
+        "description": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 9,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-14",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::7::962CWQ::favorite_cryptos"
+        }
+      },
+      {
+        "id": "memory-project-general-10",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 10,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-11",
+        "title": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 11,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::3::6MIRPR::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-12",
+        "title": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, ...",
+        "description": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 ...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 12,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-13",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite colors are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_colors. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_colors. [M1]\n\n## ✅ Next\n- Should I default to Value1 in themes, visuals, and examples, then fall back to Value2 → Value3? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual colors and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any specific hex/RGB codes or brand palette?\n- Light/dark mode preferences or accessibility contrast requirements?\n- Context rules (e.g., headers vs. accents vs. backgrounds)?"
+        }
+      },
+      {
+        "id": "memory-project-general-13",
+        "title": "My favorite least favorite are 1) Value1, 2) Value2, 3) Valu...",
+        "description": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 13,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite least favorite are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::2::VJQTGL::least_favorite_candies"
+        }
+      },
+      {
+        "id": "memory-project-general-14",
+        "title": "Saved—your ranked favorite candies are 1) Value1, 2) Value2,...",
+        "description": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 14,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-11",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_candies. [M1]\n\n## ✅ Next\n- Want me to prefer Value1 by default in suggestions, then Value2 → Value3? [M1]\n- Combine this with your least-favorite list to avoid conflicts in recommendations? [M6]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Texture/flavor preferences to generalize (crunchy vs. chewy, sour vs. chocolatey)?\n- Situational exceptions (okay in mixes but not standalone)?"
+        }
+      },
+      {
+        "id": "memory-project-general-15",
+        "title": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2...",
+        "description": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_cryptos. [M1]\n\n## 🔍 Summary\n- Ranking record...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 15,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-15",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite cryptocurrencies are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_cryptos. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_cryptos. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when giving examples, news, or suggestions, then Value2 → Value3? [M1]\n  - Use this order when proposing portfolios, DCA examples, or comparing wallets/exchanges? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual tickers/names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Custody: self-custody vs. exchange custody (preferred wallets, hardware vs. software)?\n- Chains/features to prioritize (L1/L2, staking, DeFi, NFTs)?\n- Risk tolerance and time horizon (trading vs. long-term holding)?\n- Regions/exchanges to use or avoid, and tax tracking preferences/tools?"
+        }
+      },
+      {
+        "id": "memory-project-general-16",
+        "title": "Saved—your ranked favorite Bible translations are 1) Value1,...",
+        "description": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- R...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 16,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite Bible translations are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_bible_translations. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_bible_translations. [M1]\n\n## ✅ Next\n- Should I:\n  - Default to Value1 when quoting scripture, then fall back to Value2 → Value3? [M1]\n  - Prefer these when recommending study tools, reading plans, or parallel views? [M1]\n  - Use this order when comparing verse renderings or translation choices? [M1]\n- Are “Value1/Value2/Value3” placeholders? If so, share the actual translations and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Different defaults by context (e.g., devotionals vs. deep study vs. memorization)?\n- Any must-avoid translations or formatting preferences (red-letter, cross-references, footnotes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-17",
+        "title": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2...",
+        "description": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Val...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 17,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked favorite airlines are 1) Value1, 2) Value2, 3) Value3 under the anchor favorite_airlines. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_airlines. [M1]\n\n## ✅ Next\n- Should I:\n  - Prefer Value1 by default when suggesting flights, then Value2 → Value3? [M1]\n  - Use this order when recommending redemptions, status matches, or lounge strategies? [M1]\n  - Weigh this ranking when routing options involve multiple carriers/alliances? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual airline names and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any alliance preferences (Star Alliance, oneworld, SkyTeam)?\n- Cabin/seat preferences (e.g., A350 over 787, true window seats, no middle seats)?\n- Fare rules to avoid (basic economy, no changes), or must-have perks (Wi‑Fi, power, lounges)?\n- Loyalty programs/points you want prioritized for earning or redemptions?"
+        }
+      },
+      {
+        "id": "memory-project-general-18",
+        "title": "Recorded: your ranked favorite programming languages are 1) ...",
+        "description": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 18,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record."
+        }
+      },
+      {
+        "id": "memory-project-general-19",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 19,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      },
+      {
+        "id": "memory-project-general-20",
+        "title": "Saved—your ranked least favorite candies are 1) Value1, 2) V...",
+        "description": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking rec...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 20,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your ranked least favorite candies are 1) Value1, 2) Value2, 3) Value3 under the anchor least_favorite_candies. [M1]\n\n## 🔍 Summary\n- Ranking recorded: Value1 > Value2 > Value3 (most disliked → less disliked). [M1]\n- Anchor captured: least_favorite_candies. [M1]\n\n## ✅ Next\n- Should I:\n  - Avoid these by default when suggesting snacks, desserts, or gift baskets? [M1]\n  - Substitute alternatives in recipes/party menus that would include these? [M1]\n  - Filter them out when comparing candy options or promotions? [M1]\n- Are “Value1/Value2/Value3” placeholders? If yes, share the actual candies and I’ll update the record. [M1]\n\n## 💡 Optional refinements\n- Any allergies or must-avoid ingredients (nuts, dairy, gelatin)?\n- Context-based exceptions (e.g., okay in trail mix but not standalone)?\n- Preferred replacements I should suggest instead (top candy picks or flavor profiles)?\n- Texture/flavor dislikes to generalize (e.g., sticky caramels, licorice, sour gummies)?"
+        }
+      },
+      {
+        "id": "memory-project-general-21",
+        "title": "Saved—your preference is Value1 under the anchor preferred_o...",
+        "description": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference al...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 21,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f",
+          "message_id": "0eb82936-f5de-4a73-85ab-f15a744adc3f-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your preference is Value1 under the anchor preferred_over. [M1, M2]\n\n## 🔍 Summary\n- Preference recorded: Value1. [M1, M2]\n- Global preference already on file: Value1. [M3]\n- Anchor captured: preferred_over. [M1, M2]\n\n## ✅ Next\n- Should I always prefer Value1 when offering options? If yes, in which domains (e.g., tools, formats, frameworks, themes)? [M4]\n- If “preferred_over” implies “prefer Value1 over X,” what is X so I can apply it precisely? [M4]\n- Are “Value1” placeholders? If so, share the actual item name and I’ll update the record. [M4]"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:52:33.837510+00:00"
+  }
+]

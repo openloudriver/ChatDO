@@ -1,0 +1,99 @@
+[
+  {
+    "id": "86589795-92f2-4ced-8c8c-f2b69df025e2",
+    "role": "user",
+    "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+    "created_at": "2025-12-20T22:48:19.595928+00:00"
+  },
+  {
+    "id": "6ed0aa7f-9c03-44fc-892b-c514e282d822",
+    "role": "assistant",
+    "content": "Recorded: your ranked favorite programming languages are 1) Value1, 2) Value2, 3) Value3. [M1]\n\n## 🔍 Summary\n- Ranking saved: Value1 > Value2 > Value3. [M1]\n- Anchor captured: favorite_programming_languages. [M1]\n- Previously noted global preference: Value1. [M2]\n\n## ✅ Next\n- Should I apply this ranking when:\n  - Choosing languages for examples/snippets?\n  - Recommending tools, frameworks, or libraries?\n  - Proposing solutions (prefer Value1, then Value2, then Value3)?\n- Are “Value1/Value2/Value3” placeholders or your actual languages? If placeholders, tell me the real names and I’ll update the record.",
+    "model": "Memory + GPT-5",
+    "model_label": "Model: Memory + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-general-0",
+        "title": "My favorite programming language are 1) Value1, 2) Value2, 3...",
+        "description": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f",
+          "message_id": "3e7a7d92-999f-40d5-9126-8d98cc79a93f-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite programming language are 1) Value1, 2) Value2, 3) Value3. ANCHOR::0::0::HEYVP2::favorite_programming_languages"
+        }
+      },
+      {
+        "id": "memory-project-general-1",
+        "title": "Your prefer: value1",
+        "description": "Your prefer: value1",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": null,
+          "message_id": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "message_uuid": "ddf449bd-3bc6-4320-bcbf-a4641c89bb88",
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your prefer: value1"
+        }
+      },
+      {
+        "id": "memory-project-general-2",
+        "title": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferre...",
+        "description": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite prefer is Value1. ANCHOR::0::0::4ZB3H5::preferred_over"
+        }
+      },
+      {
+        "id": "memory-project-general-3",
+        "title": "Noted—your preference is Value1, and it’s recorded. [M1, M2]",
+        "description": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this s...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "chat_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82",
+          "message_id": "41a0ffa5-10a1-4d04-823c-d96a5aa60a82-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "source_id": "project-general",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your preference is Value1, and it’s recorded. [M1, M2]\n\n## 🔍 Summary\n- Preference set: Value1. [M1, M2]\n- Anchor seen: preferred_over. If this should apply in a specific context (e.g., “prefer Value1 over X”), tell me the target so I apply it correctly.\n\n## ✅ Next\n- Do you want me to always prefer Value1 when offering options? If yes, in what domains (tools, formats, frameworks, themes)?"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true
+    },
+    "created_at": "2025-12-20T22:48:19.595271+00:00"
+  }
+]
