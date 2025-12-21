@@ -279,6 +279,7 @@ def get_relevant_memory(
     *,
     chat_id: Optional[str] = None,
     max_hits: int = 30,
+    exclude_message_uuid: Optional[str] = None,
 ) -> List[MemoryHit]:
     """
     High-level helper used by chat_with_smart_search.
@@ -291,6 +292,8 @@ def get_relevant_memory(
         query: The search query (typically the user's message)
         chat_id: Optional chat ID (deprecated, kept for compatibility)
         max_hits: Maximum number of hits to return (default: 30)
+        exclude_message_uuid: Optional message UUID to exclude from fact search
+                             (prevents Facts-R from counting facts just stored in current message)
         
     Returns:
         List of MemoryHit instances, sorted by score (descending)
@@ -310,7 +313,8 @@ def get_relevant_memory(
                     json={
                         "project_id": project_id,
                         "query": query,
-                        "limit": 10
+                        "limit": 10,
+                        "exclude_message_uuid": exclude_message_uuid  # Exclude facts from current message
                     },
                     timeout=5
                 )

@@ -243,7 +243,7 @@ def index_chat_message(
     content: str,
     timestamp: datetime,
     message_index: int
-) -> bool:
+) -> Tuple[bool, Optional[str]]:
     """
     Index a chat message into the Memory Service.
     
@@ -260,7 +260,8 @@ def index_chat_message(
         message_index: Index of message in the conversation
         
     Returns:
-        True if indexed successfully, False otherwise
+        Tuple of (success: bool, message_uuid: Optional[str])
+        message_uuid is returned so callers can exclude facts from this message when searching
     """
     try:
         # Use a special source_id for chat messages: "project-{project_id}"
@@ -321,7 +322,7 @@ def index_chat_message(
         chunks = chunk_chat_message(content)
         if not chunks:
             logger.warning(f"No chunks extracted from chat message {message_id}")
-            return False
+            return False, None
         
         # Insert chunks
         chunk_data = [(idx, txt, start, end) for idx, txt, start, end in chunks]
@@ -372,11 +373,11 @@ def index_chat_message(
             logger.warning(f"[ANN] Failed to add chat embeddings to ANN index: {e}")
         
         logger.debug(f"Successfully indexed chat message {message_id} ({len(chunks)} chunks)")
-        return True
+        return True, message_uuid
         
     except Exception as e:
         logger.error(f"Error indexing chat message {message_id}: {e}", exc_info=True)
-        return False
+        return False, None
 
 
 def chunk_text(text: str) -> List[Tuple[int, str, int, int]]:

@@ -5,7 +5,7 @@ Calls the Memory Service HTTP API to retrieve project-aware context.
 """
 import requests
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ class MemoryServiceClient:
         content: str,
         timestamp: str,
         message_index: int
-    ) -> bool:
+    ) -> Tuple[bool, Optional[str]]:
         """
         Index a chat message into the Memory Service.
         
@@ -210,11 +210,12 @@ class MemoryServiceClient:
             message_index: Index of message in the conversation
             
         Returns:
-            True if indexed successfully, False otherwise
+            Tuple of (success: bool, message_uuid: Optional[str])
+            message_uuid is returned so callers can exclude facts from this message when searching
         """
         if not self.is_available():
             logger.warning("[MEMORY] Memory Service is not available, skipping chat message indexing")
-            return False
+            return False, None
         
         try:
             response = requests.post(
@@ -231,10 +232,12 @@ class MemoryServiceClient:
                 timeout=10
             )
             response.raise_for_status()
-            return True
+            data = response.json()
+            message_uuid = data.get("message_uuid")
+            return True, message_uuid
         except Exception as e:
             logger.warning(f"Memory Service index_chat_message failed: {e}")
-            return False
+            return False, None
     
     # REMOVED: NEW facts table system client methods
     # - store_fact() - facts are stored via fact_extractor → store_project_fact

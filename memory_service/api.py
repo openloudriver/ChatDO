@@ -888,7 +888,7 @@ async def index_chat_message_endpoint(request: IndexChatMessageRequest):
         timestamp = datetime.fromisoformat(request.timestamp.replace('Z', '+00:00'))
         
         # Index the message
-        success = index_chat_message(
+        success, message_uuid = index_chat_message(
             project_id=request.project_id,
             chat_id=request.chat_id,
             message_id=request.message_id,
@@ -899,11 +899,11 @@ async def index_chat_message_endpoint(request: IndexChatMessageRequest):
         )
         
         if success:
-            logger.info(f"[MEMORY] Indexed chat message chat_id={request.chat_id} project_id={request.project_id}")
-            return {"status": "ok", "message": "Chat message indexed successfully"}
+            logger.info(f"[MEMORY] Indexed chat message chat_id={request.chat_id} project_id={request.project_id}, message_uuid={message_uuid}")
+            return {"status": "ok", "message": "Chat message indexed successfully", "message_uuid": message_uuid}
         else:
             logger.warning(f"[MEMORY] Failed to index chat message chat_id={request.chat_id} project_id={request.project_id}")
-            return {"status": "error", "message": "Failed to index chat message"}
+            return {"status": "error", "message": "Failed to index chat message", "message_uuid": None}
             
     except Exception as e:
         logger.error(f"Error indexing chat message: {e}", exc_info=True)
@@ -914,6 +914,7 @@ class SearchFactsRequest(BaseModel):
     project_id: str
     query: str
     limit: int = 10
+    exclude_message_uuid: Optional[str] = None  # Exclude facts from this message UUID (prevents counting facts just stored)
 
 
 class FactResponse(BaseModel):
@@ -944,12 +945,13 @@ async def search_facts(request: SearchFactsRequest):
     """
     try:
         source_id = f"project-{request.project_id}"
-        logger.info(f"[FACTS-API] Searching facts for project_id={request.project_id}, query='{request.query}', source_id={source_id}")
+        logger.info(f"[FACTS-API] Searching facts for project_id={request.project_id}, query='{request.query}', source_id={source_id}, exclude_message_uuid={request.exclude_message_uuid}")
         facts = db.search_current_facts(
             project_id=request.project_id,
             query=request.query,
             limit=request.limit,
-            source_id=source_id
+            source_id=source_id,
+            exclude_message_uuid=request.exclude_message_uuid  # Exclude facts from current message
         )
         logger.info(f"[FACTS-API] Found {len(facts)} facts for query '{request.query}'")
         

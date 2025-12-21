@@ -570,8 +570,9 @@ async def chat_with_smart_search(
             # Index user message immediately (before memory search)
             memory_client = get_memory_client()
             logger.info(f"[MEMORY] Indexing user message BEFORE memory search: {user_message_id} for project {project_id}")
+            current_message_uuid = None  # Will be set if indexing succeeds
             try:
-                success = memory_client.index_chat_message(
+                success, message_uuid = memory_client.index_chat_message(
                     project_id=project_id,
                     chat_id=thread_id,
                     message_id=user_message_id,
@@ -581,6 +582,7 @@ async def chat_with_smart_search(
                     message_index=message_index
                 )
                 if success:
+                    current_message_uuid = message_uuid  # Capture message_uuid to exclude from fact search
                     index_status = "P"
                     # Only set memory_stored if facts were actually stored (not just message indexing)
                     if facts_were_stored:
@@ -805,11 +807,13 @@ async def chat_with_smart_search(
         try:
             # Use Librarian for smarter ranking and deduplication
             # Librarian handles cross-chat memory and boosts answers over questions
+            # Exclude facts from current message to prevent Facts-R from counting facts just stored
             hits = librarian.get_relevant_memory(
                 project_id=project_id,
                 query=user_message,
                 chat_id=None,  # Include all chats for cross-chat memory
-                max_hits=30
+                max_hits=30,
+                exclude_message_uuid=current_message_uuid  # Exclude facts from current message
             )
             searched_memory = True  # We attempted to search, regardless of results
             if hits:

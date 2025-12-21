@@ -1230,7 +1230,7 @@ def get_current_fact(project_id: str, fact_key: str, source_id: Optional[str] = 
     }
 
 
-def search_current_facts(project_id: str, query: str, limit: int = 10, source_id: Optional[str] = None) -> List[dict]:
+def search_current_facts(project_id: str, query: str, limit: int = 10, source_id: Optional[str] = None, exclude_message_uuid: Optional[str] = None) -> List[dict]:
     """
     Search current facts by fact_key or value_text.
     
@@ -1242,9 +1242,11 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
         query: Search query (searches fact_key and value_text)
         limit: Maximum number of results
         source_id: Optional source ID (uses project-based source if not provided)
+        exclude_message_uuid: Optional message UUID to exclude from results
+                             (prevents Facts-R from counting facts just stored in current message)
         
     Returns:
-        List of fact dicts matching the query
+        List of fact dicts matching the query (excluding facts from exclude_message_uuid if provided)
     """
     if source_id is None:
         source_id = f"project-{project_id}"
@@ -1284,12 +1286,19 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
         search_condition = "(fact_key LIKE ? OR value_text LIKE ?)"
         params.extend([search_pattern, search_pattern])
     
+    # Add exclusion filter if exclude_message_uuid is provided
+    # This prevents Facts-R from counting facts that were just stored in the current message
+    exclusion_condition = ""
+    if exclude_message_uuid:
+        exclusion_condition = "AND source_message_uuid != ?"
+        params.append(exclude_message_uuid)
+    
     cursor.execute(f"""
         SELECT fact_id, project_id, fact_key, value_text, value_type,
                confidence, source_message_uuid, created_at, effective_at,
                supersedes_fact_id, is_current
         FROM project_facts
-        WHERE project_id = ? AND is_current = 1 AND {search_condition}
+        WHERE project_id = ? AND is_current = 1 AND {search_condition} {exclusion_condition}
         ORDER BY effective_at DESC, created_at DESC
         LIMIT ?
     """, params + [limit])
