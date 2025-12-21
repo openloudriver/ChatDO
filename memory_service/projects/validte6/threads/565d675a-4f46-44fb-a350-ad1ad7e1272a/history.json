@@ -1,0 +1,75 @@
+[
+  {
+    "id": "d94cce6d-0afc-42de-a669-fbf6c79b53a5",
+    "role": "user",
+    "content": "My favorite states are Delaware, Florida, Kansas, and Maine.",
+    "created_at": "2025-12-21T05:37:08.325531+00:00"
+  },
+  {
+    "id": "b4f70462-94d9-499b-8246-908094c19e88",
+    "role": "assistant",
+    "content": "Noted—your favorite states are Delaware, Florida, Kansas, and Maine.\n\n## 🔍 Summary\n- This matches what I already have on file for you [M2].\n\n## ✅ Want me to tailor anything?\n- I can prioritize travel ideas, events, or news from those states.\n- I can also build quick guides (top cities, parks, food spots) for any of them.",
+    "model": "Facts-S(4) + Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(4) + Facts-R(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-20dce03e-b264-438d-8b46-a32885bdf0a3-0",
+        "title": "Your states.4: Maine",
+        "description": "Your states.4: Maine",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": null,
+          "message_id": "1f3ed2cb-1db0-49c7-a204-e90023c900c1",
+          "message_uuid": "1f3ed2cb-1db0-49c7-a204-e90023c900c1",
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-20dce03e-b264-438d-8b46-a32885bdf0a3",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your states.4: Maine"
+        }
+      },
+      {
+        "id": "memory-project-20dce03e-b264-438d-8b46-a32885bdf0a3-1",
+        "title": "My favorite states are Delaware, Florida, Kansas, and Maine.",
+        "description": "My favorite states are Delaware, Florida, Kansas, and Maine.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "565d675a-4f46-44fb-a350-ad1ad7e1272a",
+          "message_id": "565d675a-4f46-44fb-a350-ad1ad7e1272a-user-0",
+          "message_uuid": "1f3ed2cb-1db0-49c7-a204-e90023c900c1",
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-20dce03e-b264-438d-8b46-a32885bdf0a3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite states are Delaware, Florida, Kansas, and Maine."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 4,
+        "U": 0,
+        "R": 1,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P"
+    },
+    "created_at": "2025-12-21T05:37:08.324405+00:00"
+  }
+]

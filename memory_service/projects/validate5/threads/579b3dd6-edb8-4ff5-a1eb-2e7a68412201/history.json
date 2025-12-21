@@ -1,0 +1,75 @@
+[
+  {
+    "id": "52d9ee96-7cd4-4d7b-927c-13dd65881501",
+    "role": "user",
+    "content": "My favorite colors are magenta, red, blue and pink",
+    "created_at": "2025-12-21T05:01:58.569686+00:00"
+  },
+  {
+    "id": "5075c1fd-79cf-44f2-a5f9-ff5ed8aa01b6",
+    "role": "assistant",
+    "content": "Noted—your favorite colors are magenta, red, blue, and pink. [M2]\n\n## 🔍 Summary\n- Preference saved and will be used for color-related suggestions, themes, and examples. [M2]\n\n## 💡 Optional\n- Want me to apply these to your app/theme accents or generate a matching palette (hex codes + accessibility-checked pairs)?",
+    "model": "Facts-S(3) + Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(3) + Facts-R(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-3510b327-3c36-4f4a-bf5c-d524a573f15e-0",
+        "title": "Your favorite color.3 is blue and pink",
+        "description": "Your favorite color.3 is blue and pink",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": null,
+          "message_id": "b6d240e1-722f-421f-bdb0-c8254b9a414e",
+          "message_uuid": "b6d240e1-722f-421f-bdb0-c8254b9a414e",
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-3510b327-3c36-4f4a-bf5c-d524a573f15e",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your favorite color.3 is blue and pink"
+        }
+      },
+      {
+        "id": "memory-project-3510b327-3c36-4f4a-bf5c-d524a573f15e-1",
+        "title": "My favorite colors are magenta, red, blue and pink",
+        "description": "My favorite colors are magenta, red, blue and pink",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "579b3dd6-edb8-4ff5-a1eb-2e7a68412201",
+          "message_id": "579b3dd6-edb8-4ff5-a1eb-2e7a68412201-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-3510b327-3c36-4f4a-bf5c-d524a573f15e",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite colors are magenta, red, blue and pink"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 3,
+        "U": 0,
+        "R": 1,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P"
+    },
+    "created_at": "2025-12-21T05:01:58.569100+00:00"
+  }
+]

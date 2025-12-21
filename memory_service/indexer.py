@@ -377,6 +377,18 @@ def index_chat_message(
         
     except Exception as e:
         logger.error(f"Error indexing chat message {message_id}: {e}", exc_info=True)
+        # Return message_uuid even if indexing failed - it was created early and is needed for fact exclusion
+        # Try to get it from the database if we have it
+        try:
+            if 'message_uuid' in locals() and message_uuid:
+                return False, message_uuid
+            # Fallback: try to look it up from the database
+            source_id = f"project-{project_id}"
+            chat_message = db.get_chat_message_by_id(chat_message_id, source_id) if 'chat_message_id' in locals() else None
+            if chat_message and chat_message.message_uuid:
+                return False, chat_message.message_uuid
+        except:
+            pass
         return False, None
 
 

@@ -1135,11 +1135,11 @@ def store_project_fact(
         effective_at = created_at
     
     # Find the most recent current fact with this key
-    cursor.execute("""
+        cursor.execute("""
         SELECT fact_id, value_text FROM project_facts
         WHERE project_id = ? AND fact_key = ? AND is_current = 1
         ORDER BY effective_at DESC, created_at DESC
-        LIMIT 1
+            LIMIT 1
     """, (project_id, fact_key))
     previous_fact = cursor.fetchone()
     supersedes_fact_id = previous_fact[0] if previous_fact else None

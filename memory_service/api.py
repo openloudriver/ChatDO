@@ -17,6 +17,7 @@ import threading
 from memory_service.config import API_HOST, API_PORT, EMBEDDING_MODEL, EMBEDDING_DIM, load_sources, create_dynamic_source, BASE_DIR, MEMORY_DASHBOARD_PATH, DYNAMIC_SOURCES_PATH, MEMORY_SOURCES_YAML, load_dynamic_sources, save_dynamic_sources, load_static_sources
 from memory_service.memory_dashboard import db
 from memory_service.indexer import index_source, index_chat_message
+from memory_service.indexing_queue import get_indexing_queue
 from memory_service.watcher import WatcherManager
 from memory_service.vector_cache import get_query_embedding
 from memory_service.ann_index import AnnIndexManager
@@ -60,6 +61,11 @@ async def lifespan(app: FastAPI):
     # Note: Per-source databases are initialized on first use
     logger.info("Database system ready")
     
+    # Start indexing queue workers
+    indexing_queue = get_indexing_queue()
+    indexing_queue.start()
+    logger.info("Indexing queue started")
+    
     # Build ANN index in background thread (non-blocking)
     def build_ann_index_background():
         _build_ann_index()
@@ -78,6 +84,11 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Memory Service...")
     watcher_manager.stop_all()
     logger.info("File watchers stopped")
+    
+    # Stop indexing queue
+    indexing_queue = get_indexing_queue()
+    indexing_queue.stop()
+    logger.info("Indexing queue stopped")
 
 
 app = FastAPI(title="Memory Service", version="1.0.0", lifespan=lifespan)
@@ -878,17 +889,28 @@ async def search(request: SearchRequest):
 @app.post("/index-chat-message")
 async def index_chat_message_endpoint(request: IndexChatMessageRequest):
     """
-    Index a chat message into the Memory Service.
+    Enqueue a chat message for async indexing.
     
-    This endpoint is called by the Backend Server after saving a message
-    to index it for cross-chat memory retrieval.
+    This endpoint is called by the Backend Server after saving a message.
+    It enqueues the message for background indexing and returns immediately.
+    Indexing happens asynchronously via worker threads.
+    
+    Returns:
+        - job_id: Unique job identifier
+        - message_uuid: Message UUID (if available immediately, otherwise None)
+        - status: "queued" if successfully enqueued, "error" if enqueue failed
     """
     try:
         # Parse timestamp
         timestamp = datetime.fromisoformat(request.timestamp.replace('Z', '+00:00'))
         
-        # Index the message
-        success, message_uuid = index_chat_message(
+        # Create message_uuid early (before enqueueing) for fact exclusion
+        # This is a lightweight operation that just upserts the message record
+        source_id = f"project-{request.project_id}"
+        db.init_db(source_id, project_id=request.project_id)
+        db.upsert_source(source_id, request.project_id, "", None, None)
+        chat_message_id = db.upsert_chat_message(
+            source_id=source_id,
             project_id=request.project_id,
             chat_id=request.chat_id,
             message_id=request.message_id,
@@ -897,16 +919,64 @@ async def index_chat_message_endpoint(request: IndexChatMessageRequest):
             timestamp=timestamp,
             message_index=request.message_index
         )
+        chat_message = db.get_chat_message_by_id(chat_message_id, source_id)
+        message_uuid = chat_message.message_uuid if chat_message else None
+        
+        # Enqueue job for async processing (with message_uuid for fact exclusion)
+        indexing_queue = get_indexing_queue()
+        job_id, success = indexing_queue.enqueue(
+            project_id=request.project_id,
+            chat_id=request.chat_id,
+            message_id=request.message_id,
+            role=request.role,
+            content=request.content,
+            timestamp=timestamp,
+            message_index=request.message_index,
+            message_uuid=message_uuid  # Pass message_uuid to job
+        )
         
         if success:
-            logger.info(f"[MEMORY] Indexed chat message chat_id={request.chat_id} project_id={request.project_id}, message_uuid={message_uuid}")
-            return {"status": "ok", "message": "Chat message indexed successfully", "message_uuid": message_uuid}
+            logger.info(f"[MEMORY] Enqueued indexing job {job_id} for chat_id={request.chat_id} project_id={request.project_id}, message_uuid={message_uuid}")
+            return {
+                "status": "queued",
+                "message": "Indexing job enqueued successfully",
+                "job_id": job_id,
+                "message_uuid": message_uuid  # Available immediately for fact exclusion
+            }
         else:
-            logger.warning(f"[MEMORY] Failed to index chat message chat_id={request.chat_id} project_id={request.project_id}")
-            return {"status": "error", "message": "Failed to index chat message", "message_uuid": None}
+            logger.warning(f"[MEMORY] Failed to enqueue indexing job for chat_id={request.chat_id} project_id={request.project_id}")
+            return {
+                "status": "error",
+                "message": "Failed to enqueue indexing job",
+                "job_id": None,
+                "message_uuid": message_uuid  # Still return message_uuid even if enqueue failed
+            }
             
     except Exception as e:
-        logger.error(f"Error indexing chat message: {e}", exc_info=True)
+        logger.error(f"Error enqueueing indexing job: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/index-job-status/{job_id}")
+async def get_index_job_status(job_id: str):
+    """
+    Get the status of an indexing job.
+    
+    Returns job state, timing, and completion status for tooltip display.
+    """
+    try:
+        indexing_queue = get_indexing_queue()
+        job_status = indexing_queue.get_job_status(job_id)
+        
+        if not job_status:
+            raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+        
+        return job_status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting job status: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

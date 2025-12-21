@@ -1,0 +1,32 @@
+[
+  {
+    "id": "6673e3fc-db8a-4443-8f37-ef2d90e2f413",
+    "role": "user",
+    "content": "My favorite candies are Reese’s, Twix, KitKat, and Nerds",
+    "created_at": "2025-12-21T05:50:22.216805+00:00"
+  },
+  {
+    "id": "2f935a8b-9226-4226-b179-9ed6344718e9",
+    "role": "assistant",
+    "content": "Noted—your favorite candies are Reese’s, Twix, KitKat, and Nerds.\n\n## 🔍 Summary\n- Reese’s\n- Twix\n- KitKat\n- Nerds\n\n## 💾 Memory\nWant me to remember this preference for future recommendations and gifts?",
+    "model": "Facts-S(4) + Index-F + GPT-5",
+    "model_label": "Facts-S(4) + Index-F + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 4,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "F"
+    },
+    "created_at": "2025-12-21T05:50:22.216044+00:00"
+  }
+]

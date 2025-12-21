@@ -196,9 +196,9 @@ class MemoryServiceClient:
         content: str,
         timestamp: str,
         message_index: int
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
-        Index a chat message into the Memory Service.
+        Enqueue a chat message for async indexing.
         
         Args:
             project_id: The project ID
@@ -210,12 +210,14 @@ class MemoryServiceClient:
             message_index: Index of message in the conversation
             
         Returns:
-            Tuple of (success: bool, message_uuid: Optional[str])
-            message_uuid is returned so callers can exclude facts from this message when searching
+            Tuple of (success: bool, job_id: Optional[str], message_uuid: Optional[str])
+            - success: True if job was enqueued, False if enqueue failed
+            - job_id: Job identifier for status tracking (None if failed)
+            - message_uuid: Will be None initially, available after job completes
         """
         if not self.is_available():
             logger.warning("[MEMORY] Memory Service is not available, skipping chat message indexing")
-            return False, None
+            return False, None, None
         
         try:
             response = requests.post(
@@ -229,15 +231,50 @@ class MemoryServiceClient:
                     "timestamp": timestamp,
                     "message_index": message_index
                 },
-                timeout=10
+                timeout=5  # Short timeout - just for enqueue, not actual indexing
             )
             response.raise_for_status()
             data = response.json()
-            message_uuid = data.get("message_uuid")
-            return True, message_uuid
+            status = data.get("status")
+            job_id = data.get("job_id")
+            
+            if status == "queued":
+                logger.info(f"[MEMORY] Enqueued indexing job {job_id} for message {message_id}")
+                return True, job_id, None  # message_uuid will be available after job completes
+            else:
+                logger.warning(f"[MEMORY] Failed to enqueue indexing job: {data.get('message')}")
+                return False, None, None
+                
+        except requests.exceptions.Timeout:
+            logger.warning(f"[MEMORY] Memory Service enqueue timed out after 5s")
+            return False, None, None
         except Exception as e:
-            logger.warning(f"Memory Service index_chat_message failed: {e}")
-            return False, None
+            logger.warning(f"[MEMORY] Memory Service index_chat_message failed: {e}")
+            return False, None, None
+    
+    def get_index_job_status(self, job_id: str) -> Optional[Dict]:
+        """
+        Get the status of an indexing job.
+        
+        Args:
+            job_id: Job identifier
+            
+        Returns:
+            Job status dict or None if job not found
+        """
+        if not self.is_available():
+            return None
+        
+        try:
+            response = requests.get(
+                f"{self.base_url}/index-job-status/{job_id}",
+                timeout=2
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.debug(f"[MEMORY] Failed to get job status for {job_id}: {e}")
+            return None
     
     # REMOVED: NEW facts table system client methods
     # - store_fact() - facts are stored via fact_extractor → store_project_fact

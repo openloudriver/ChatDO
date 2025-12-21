@@ -567,12 +567,14 @@ async def chat_with_smart_search(
                 logger.warning(f"[MEMORY] ❌ Exception tracking fact counts: {e}", exc_info=True)
                 # Don't set F=True here - this is just pre-counting, actual storage happens in index_chat_message
             
-            # Index user message immediately (before memory search)
+            # Enqueue user message for async indexing (non-blocking)
+            # Index-P/Index-F reflects pipeline health (enqueue success), not completion
             memory_client = get_memory_client()
-            logger.info(f"[MEMORY] Indexing user message BEFORE memory search: {user_message_id} for project {project_id}")
-            current_message_uuid = None  # Will be set if indexing succeeds
+            logger.info(f"[MEMORY] Enqueueing user message for async indexing: {user_message_id} for project {project_id}")
+            current_message_uuid = None
+            user_index_job_id = None
             try:
-                success, message_uuid = memory_client.index_chat_message(
+                success, job_id, message_uuid = memory_client.index_chat_message(
                     project_id=project_id,
                     chat_id=thread_id,
                     message_id=user_message_id,
@@ -581,36 +583,28 @@ async def chat_with_smart_search(
                     timestamp=user_msg_created_at,
                     message_index=message_index
                 )
+                
+                # Capture message_uuid for fact exclusion (created early during enqueue)
+                if message_uuid:
+                    current_message_uuid = message_uuid
+                    logger.info(f"[MEMORY] Captured message_uuid={message_uuid} for exclusion from fact search")
+                
+                # Index-P = pipeline operational, job accepted/queued
+                # Index-F = pipeline failed to accept/queue job
                 if success:
-                    current_message_uuid = message_uuid  # Capture message_uuid to exclude from fact search
                     index_status = "P"
-                    # Only set memory_stored if facts were actually stored (not just message indexing)
-                    if facts_were_stored:
-                        memory_stored = True  # Memory service was used (for fact storage)
-                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (facts stored)")
-                    else:
-                        logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (no facts)")
+                    user_index_job_id = job_id
+                    logger.info(f"[MEMORY] ✅ Enqueued indexing job {job_id} for user message {user_message_id} (message_uuid={message_uuid})")
                 else:
                     index_status = "F"
-                    # Indexing failed - but facts might still have been stored (they're stored early in the process)
-                    # Don't set F=True here - facts are stored before chunking/embedding, so they might succeed
-                    # even if indexing fails later. Keep the S/U counts we pre-calculated.
-                    logger.warning(f"[MEMORY] ⚠️  Indexing returned False for user message {user_message_id} for project {project_id}, but facts may have been stored")
-                    if facts_were_stored:
-                        # Facts were likely stored (they happen early), so keep S/U counts
-                        # Only clear them if we can verify facts weren't stored
-                        logger.info(f"[MEMORY] Keeping S/U counts (S={facts_actions['S']}, U={facts_actions['U']}) since facts are stored early in indexing process")
+                    logger.warning(f"[MEMORY] ⚠️  Failed to enqueue indexing job for user message {user_message_id}")
+                    
             except Exception as e:
-                logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
-                # Exception during indexing - but facts might still have been stored (they're stored early)
-                # Don't set F=True here - facts are stored before chunking/embedding, so they might succeed
-                # even if indexing fails later. Keep the S/U counts we pre-calculated.
-                if facts_were_stored:
-                    logger.info(f"[MEMORY] Exception during indexing, but keeping S/U counts (S={facts_actions['S']}, U={facts_actions['U']}) since facts are stored early")
+                index_status = "F"
+                logger.warning(f"[MEMORY] ❌ Exception enqueueing user message: {e}", exc_info=True)
             
-            # Facts are automatically extracted and stored via fact_extractor in index_chat_message()
-            # The index_chat_message() call above handles fact extraction → store_project_fact
-            # No additional fact storage needed here
+            # Note: Facts are extracted and stored during async job processing, not here
+            # The pre-counting above is just for display purposes
         except Exception as e:
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
             # Only set F=True if we were in the middle of storing facts
@@ -1036,7 +1030,33 @@ async def chat_with_smart_search(
                 else:
                     logger.warning(f"[MEMORY] ⚠️  Skipping user message indexing: project_id is None (thread_id={thread_id})")
                 
-                # Add assistant message with timestamp and model_label
+                # Enqueue assistant message for async indexing (non-blocking) BEFORE adding to history
+                assistant_index_job_id = None
+                if project_id:
+                    try:
+                        memory_client = get_memory_client()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        logger.info(f"[MEMORY] Enqueueing assistant message for async indexing: {assistant_message_id} for project {project_id}")
+                        success, job_id, _ = memory_client.index_chat_message(
+                            project_id=project_id,
+                            chat_id=thread_id,
+                            message_id=assistant_message_id,
+                            role="assistant",
+                            content=content,
+                            timestamp=assistant_msg_created_at,
+                            message_index=message_index + 1
+                        )
+                        if success:
+                            assistant_index_job_id = job_id
+                            logger.info(f"[MEMORY] ✅ Enqueued indexing job {job_id} for assistant message {assistant_message_id}")
+                        else:
+                            logger.warning(f"[MEMORY] ⚠️  Failed to enqueue indexing job for assistant message {assistant_message_id}")
+                    except Exception as e:
+                        logger.warning(f"[MEMORY] ❌ Exception enqueueing assistant message: {e}", exc_info=True)
+                else:
+                    logger.warning(f"[MEMORY] ⚠️  Skipping assistant message indexing: project_id is None (thread_id={thread_id})")
+                
+                # Add assistant message with timestamp and model_label (after enqueueing so job_id is available)
                 history.append({
                     "id": str(uuid4()),
                     "role": "assistant",
@@ -1050,35 +1070,15 @@ async def chat_with_smart_search(
                         "usedMemory": used_memory,
                         "facts_actions": facts_actions,
                         "files_actions": files_actions,
-                        "index_status": index_status
+                        "index_status": index_status,
+                        "index_job": {
+                            "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
+                            "assistant_job_id": assistant_index_job_id
+                        } if (('user_index_job_id' in locals() and user_index_job_id) or assistant_index_job_id) else None
                     },
                     "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                
-                # Index assistant message into Memory Service for cross-chat search
-                if project_id:
-                    try:
-                        memory_client = get_memory_client()
-                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
-                        logger.info(f"[MEMORY] Attempting to index assistant message {assistant_message_id} for project {project_id}")
-                        success = memory_client.index_chat_message(
-                            project_id=project_id,
-                            chat_id=thread_id,
-                            message_id=assistant_message_id,
-                            role="assistant",
-                            content=content,
-                            timestamp=assistant_msg_created_at,
-                            message_index=message_index + 1
-                        )
-                        if success:
-                            logger.info(f"[MEMORY] ✅ Successfully indexed assistant message {assistant_message_id} for project {project_id}")
-                        else:
-                            logger.warning(f"[MEMORY] ❌ Failed to index assistant message {assistant_message_id} for project {project_id} (Memory Service returned False)")
-                    except Exception as e:
-                        logger.warning(f"[MEMORY] ❌ Exception indexing assistant message: {e}", exc_info=True)
-                else:
-                    logger.warning(f"[MEMORY] ⚠️  Skipping assistant message indexing: project_id is None (thread_id={thread_id})")
             except Exception as e:
                 logger.warning(f"Failed to save conversation history: {e}")
         
@@ -1090,7 +1090,11 @@ async def chat_with_smart_search(
                 "usedMemory": used_memory,
                 "facts_actions": facts_actions,
                 "files_actions": files_actions,
-                "index_status": index_status
+                "index_status": index_status,
+                "index_job": {
+                    "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
+                    "assistant_job_id": assistant_index_job_id if 'assistant_index_job_id' in locals() else None
+                } if ('user_index_job_id' in locals() and user_index_job_id) or ('assistant_index_job_id' in locals() and assistant_index_job_id) else None
             },
             "model": model_display,
             "model_label": model_label,
@@ -1180,7 +1184,11 @@ async def chat_with_smart_search(
                 "webSearchError": str(e),
                 "facts_actions": facts_actions,
                 "files_actions": files_actions,
-                "index_status": index_status
+                "index_status": index_status,
+                "index_job": {
+                    "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
+                    "assistant_job_id": None
+                } if 'user_index_job_id' in locals() and user_index_job_id else None
             },
             "model": model_display,
             "model_label": model_label,
@@ -1238,7 +1246,11 @@ async def chat_with_smart_search(
                 "webSearchEmpty": True,
                 "facts_actions": facts_actions,
                 "files_actions": files_actions,
-                "index_status": index_status
+                "index_status": index_status,
+                "index_job": {
+                    "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
+                    "assistant_job_id": None
+                } if 'user_index_job_id' in locals() and user_index_job_id else None
             },
             "model": model_display,
             "model_label": model_label,
@@ -1396,8 +1408,12 @@ async def chat_with_smart_search(
                     "usedWebSearch": True,
                     "webResultsPreview": web_results[:5],
                     "facts_actions": facts_actions,
-                "files_actions": files_actions,
-                "index_status": index_status
+                    "files_actions": files_actions,
+                    "index_status": index_status,
+                    "index_job": {
+                        "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
+                        "assistant_job_id": None
+                    } if 'user_index_job_id' in locals() and user_index_job_id else None
                 },
                 "created_at": assistant_msg_created_at
             }

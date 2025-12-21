@@ -11,6 +11,7 @@ import { InlineSourceCitations } from './InlineSourceCitations';
 import type { RagFile } from '../types/rag';
 import type { Source } from '../types/sources';
 import { useTheme } from '../contexts/ThemeContext';
+import { IndexJobTooltip } from './IndexJobTooltip';
 
 /**
  * Format timestamp for display: "13 Dec 2025 · 18:43"
@@ -1987,7 +1988,43 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             {message.model_label ? (
                               // Use model_label from backend if available (most accurate)
                               // Backend now returns format without "Model: " prefix
-                              <div>{message.model_label.startsWith('Model: ') ? message.model_label : `Model: ${message.model_label}`}</div>
+                              (() => {
+                                const fullLabel = message.model_label.startsWith('Model: ') ? message.model_label : `Model: ${message.model_label}`;
+                                // Extract Index-P or Index-F from the label
+                                const indexMatch = fullLabel.match(/Index-([PF])/);
+                                const indexStatus = indexMatch ? (indexMatch[1] as 'P' | 'F') : undefined;
+                                
+                                // Get job IDs from meta
+                                const userJobId = message.meta?.index_job?.user_job_id;
+                                const assistantJobId = message.meta?.index_job?.assistant_job_id;
+                                // Use assistant job ID if available (for assistant messages), otherwise user job ID
+                                const jobId = message.role === 'assistant' ? assistantJobId : userJobId;
+                                
+                                // If we have an Index tag, wrap it with tooltip
+                                if (indexStatus && (jobId || indexStatus === 'F')) {
+                                  // Split the label to separate Index-P/F from the rest
+                                  const parts = fullLabel.split(/(Index-[PF])/);
+                                  return (
+                                    <div>
+                                      {parts.map((part, idx) => {
+                                        if (part.match(/Index-[PF]/)) {
+                                          return (
+                                            <IndexJobTooltip
+                                              key={idx}
+                                              jobId={jobId || null}
+                                              indexStatus={indexStatus}
+                                            >
+                                              <span>{part}</span>
+                                            </IndexJobTooltip>
+                                          );
+                                        }
+                                        return <span key={idx}>{part}</span>;
+                                      })}
+                                    </div>
+                                  );
+                                }
+                                return <div>{fullLabel}</div>;
+                              })()
                             ) : message.type === 'web_search_results' ? (
                               <div>Model: Brave</div>
                             ) : (() => {

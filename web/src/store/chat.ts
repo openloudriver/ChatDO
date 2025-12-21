@@ -64,7 +64,21 @@ export interface Message {
   meta?: {
     usedWebSearch?: boolean;
     webResultsPreview?: Array<{ title: string; url: string; snippet: string }>;
-  };  // Metadata for messages (e.g., web search usage)
+    index_job?: {
+      user_job_id?: string | null;
+      assistant_job_id?: string | null;
+    };
+    index_status?: string;  // "P" or "F"
+    facts_actions?: {
+      S?: number;
+      U?: number;
+      R?: number;
+      F?: boolean;
+    };
+    files_actions?: {
+      R?: number;
+    };
+  };  // Metadata for messages (e.g., web search usage, indexing jobs)
 }
 
 export interface Conversation {
@@ -1073,7 +1087,8 @@ export const useChatStore = create<ChatStore>((set) => ({
           model_label: msg.model_label || undefined, // Preserve model_label from backend (most accurate)
           provider: msg.provider || undefined, // Preserve provider attribution
           sources: sources, // Use converted sources
-          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date() // Use backend timestamp if available
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(), // Use backend timestamp if available
+          meta: msg.meta || undefined // Preserve meta including index_job, index_status, facts_actions, files_actions
         });
       }
       
