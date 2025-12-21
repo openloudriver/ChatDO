@@ -173,6 +173,15 @@ export function scrollToAndHighlightMessage(
  * @param messageId - The message ID to navigate to
  * @param options - Navigation options
  */
+/**
+ * Navigate to a message by UUID, waiting for it to appear and scrolling to it.
+ * Also updates the URL hash fragment.
+ * 
+ * CANONICAL RULE: messageId must be a UUID-only (message_uuid), no suffixes.
+ * 
+ * @param messageId - The message UUID to navigate to (must be UUID-only, no -user-* or -assistant-* suffixes)
+ * @param options - Navigation options
+ */
 export async function navigateToMessage(
   messageId: string,
   options: {
@@ -187,9 +196,19 @@ export async function navigateToMessage(
     container = null,
   } = options;
 
+  // Validate that messageId is a UUID (36 chars: 8-4-4-4-12)
+  // Reject any IDs with -user-* or -assistant-* suffixes
+  const uuidPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+  if (!uuidPattern.test(messageId)) {
+    const error = new Error(`Invalid message ID format: ${messageId}. Expected UUID-only (no -user-* or -assistant-* suffixes)`);
+    console.error(`[DEEP-LINK] ${error.message}`);
+    throw error;
+  }
+
+  // Canonical element ID: message-<uuid>
   const elementId = `message-${messageId}`;
 
-  // Update URL hash if requested
+  // Update URL hash if requested (canonical format: #message-<uuid>)
   if (updateUrl && typeof window !== 'undefined') {
     const newHash = `#${elementId}`;
     if (window.location.hash !== newHash) {
@@ -205,7 +224,7 @@ export async function navigateToMessage(
       container,
     });
     
-    console.log(`[DEEP-LINK] Found element ${elementId}, scrolling to TOP of viewport...`);
+    console.log(`[DEEP-LINK] Found element ${element.id}, scrolling to TOP of viewport...`);
     // Scroll and highlight - explicitly use 'start' to position at TOP
     scrollToAndHighlightMessage(element, {
       block: 'start',  // Position at top of viewport - critical for reading from beginning

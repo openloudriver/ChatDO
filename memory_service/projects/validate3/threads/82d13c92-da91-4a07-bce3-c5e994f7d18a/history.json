@@ -1,0 +1,75 @@
+[
+  {
+    "id": "eb3bdaed-d40c-4af8-a98f-c7858dae023f",
+    "role": "user",
+    "content": "My favorite pies are peach, apple, cherry, and chocolate",
+    "created_at": "2025-12-21T04:17:26.796660+00:00"
+  },
+  {
+    "id": "18897985-dd64-41b1-8394-e27347876dff",
+    "role": "assistant",
+    "content": "Got it — your favorite pies are peach, apple, cherry, and chocolate. [M2]\n\n## 📌 Noted\n- I’ll prioritize these flavors in any dessert suggestions, menus, or gift ideas.\n- If you ever want them ranked or want recipe suggestions by difficulty or time, I can do that.\n\n## Next step?\n- Want a quick recipe or a top pick between these today?",
+    "model": "Facts-S(4) + Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(4) + Facts-R(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-2895539c-5d93-4c9b-8e90-f03832cbb947-0",
+        "title": "Your pies.4: chocolate",
+        "description": "Your pies.4: chocolate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": null,
+          "message_id": "a47c3f09-a866-48df-9822-363009ec1e9d",
+          "message_uuid": "a47c3f09-a866-48df-9822-363009ec1e9d",
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-2895539c-5d93-4c9b-8e90-f03832cbb947",
+          "source_type": "fact",
+          "role": "fact",
+          "content": "Your pies.4: chocolate"
+        }
+      },
+      {
+        "id": "memory-project-2895539c-5d93-4c9b-8e90-f03832cbb947-1",
+        "title": "My favorite pies are peach, apple, cherry, and chocolate",
+        "description": "My favorite pies are peach, apple, cherry, and chocolate",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "82d13c92-da91-4a07-bce3-c5e994f7d18a",
+          "message_id": "82d13c92-da91-4a07-bce3-c5e994f7d18a-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-2895539c-5d93-4c9b-8e90-f03832cbb947",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite pies are peach, apple, cherry, and chocolate"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 4,
+        "U": 0,
+        "R": 1,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P"
+    },
+    "created_at": "2025-12-21T04:17:26.795556+00:00"
+  }
+]

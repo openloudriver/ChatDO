@@ -803,43 +803,50 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       // Check if URL has a hash fragment for deep-linking
       const hash = window.location.hash;
       if (hash && hash.startsWith('#message-')) {
-        // Extract message ID from hash
-        const messageId = hash.replace('#message-', '');
-        console.log(`[DEEP-LINK] URL hash detected: ${hash}, messageId: ${messageId}`);
+        // Extract message UUID from hash (canonical format: #message-<uuid>)
+        const messageUuid = hash.replace('#message-', '');
         
-        // Wait for messages to load, then navigate
-        const navigateToHashMessage = async (attempt: number = 1, maxAttempts: number = 5) => {
-          try {
-            const { navigateToMessage } = await import('../utils/messageDeepLink');
-            const messagesContainer = messagesContainerRef.current;
-            
-            if (!messagesContainer) {
-              throw new Error('Messages container not found');
-            }
-            
-            await navigateToMessage(messageId, {
-              updateUrl: true,
-              timeout: 10000,
-              container: messagesContainer,
-            });
-            console.log(`[DEEP-LINK] Successfully navigated to message from URL hash: ${messageId}`);
-          } catch (error) {
-            if (attempt < maxAttempts) {
-              // Retry after a delay
-              console.log(`[DEEP-LINK] Attempt ${attempt} failed for URL hash ${messageId}, retrying in ${attempt * 200}ms...`);
-              setTimeout(() => navigateToHashMessage(attempt + 1, maxAttempts), attempt * 200);
-            } else {
-              console.warn(`[DEEP-LINK] Failed to navigate to message from URL hash ${messageId} after ${maxAttempts} attempts:`, error);
-              // Fallback: scroll to bottom
-              if (messagesContainerRef.current) {
-                messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        // Validate UUID format (reject any with -user-* or -assistant-* suffixes)
+        const uuidPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+        if (!uuidPattern.test(messageUuid)) {
+          console.warn(`[DEEP-LINK] Invalid UUID format in URL hash: ${messageUuid}. Expected UUID-only. Ignoring hash.`);
+        } else {
+          console.log(`[DEEP-LINK] URL hash detected: ${hash}, messageUuid: ${messageUuid}`);
+          
+          // Wait for messages to load, then navigate
+          const navigateToHashMessage = async (attempt: number = 1, maxAttempts: number = 5) => {
+            try {
+              const { navigateToMessage } = await import('../utils/messageDeepLink');
+              const messagesContainer = messagesContainerRef.current;
+              
+              if (!messagesContainer) {
+                throw new Error('Messages container not found');
+              }
+              
+              await navigateToMessage(messageUuid, {
+                updateUrl: true,
+                timeout: 10000,
+                container: messagesContainer,
+              });
+              console.log(`[DEEP-LINK] Successfully navigated to message from URL hash: ${messageUuid}`);
+            } catch (error) {
+              if (attempt < maxAttempts) {
+                // Retry after a delay
+                console.log(`[DEEP-LINK] Attempt ${attempt} failed for URL hash ${messageUuid}, retrying in ${attempt * 200}ms...`);
+                setTimeout(() => navigateToHashMessage(attempt + 1, maxAttempts), attempt * 200);
+              } else {
+                console.warn(`[DEEP-LINK] Failed to navigate to message from URL hash ${messageUuid} after ${maxAttempts} attempts:`, error);
+                // Fallback: scroll to bottom
+                if (messagesContainerRef.current) {
+                  messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+                }
               }
             }
-          }
-        };
-        
-        // Wait a bit for messages to render, then start navigation
-        setTimeout(() => navigateToHashMessage(), 500);
+          };
+          
+          // Wait a bit for messages to render, then start navigation
+          setTimeout(() => navigateToHashMessage(), 500);
+        }
       } else {
         // No hash - scroll to bottom on conversation change (no animation)
         // Use requestAnimationFrame to ensure DOM is ready
@@ -1242,10 +1249,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {messages.map((message: Message) => {
         const isCopied = copiedMessageId === message.id;
         
+        // Canonical rule: DOM element ID must be message-<uuid> (UUID-only, no suffixes)
+        // Only render ID if message.uuid exists (messages without UUIDs are not deep-linkable)
+        const elementId = message.uuid ? `message-${message.uuid}` : undefined;
+        if (!message.uuid) {
+          // Log warning for messages without UUIDs (they can't be deep-linked)
+          console.warn(`[DEEP-LINK] Message ${message.id} has no UUID - cannot be deep-linked`);
+        }
+        
         return (
           <div
             key={message.id}
-            id={message.uuid ? `message-${message.uuid}` : `message-${message.id}`}
+            id={elementId}
             ref={(el) => {
               if (el && message.role === 'user') {
                 userMessageRefs.current.set(message.id, el);

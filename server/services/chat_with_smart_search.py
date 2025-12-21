@@ -146,21 +146,21 @@ async def call_ai_router_with_tool_loop(
         tools=tools
     )
     
-        # Process tool calls if present (tool loop)
-        if assistant_messages and len(assistant_messages) > 0:
-            assistant_message = assistant_messages[0]
-            # Check if there are tool_calls to process
-            if assistant_message.get("tool_calls"):
-                logger.info(f"[TOOL-LOOP] Starting tool loop with {len(assistant_message.get('tool_calls', []))} tool call(s)")
-                # Process tool calls in a loop
-                _, content = await process_tool_calls(
-                    messages=messages,
-                    assistant_message=assistant_message,
-                    tools=tools,
-                    max_iterations=10,
-                    project_id=project_id,
-                    files_actions=files_actions
-                )
+    # Process tool calls if present (tool loop)
+    if assistant_messages and len(assistant_messages) > 0:
+        assistant_message = assistant_messages[0]
+        # Check if there are tool_calls to process
+        if assistant_message.get("tool_calls"):
+            logger.info(f"[TOOL-LOOP] Starting tool loop with {len(assistant_message.get('tool_calls', []))} tool call(s)")
+            # Process tool calls in a loop
+            _, content = await process_tool_calls(
+                messages=messages,
+                assistant_message=assistant_message,
+                tools=tools,
+                max_iterations=10,
+                project_id=project_id,
+                files_actions=files_actions
+            )
         else:
             # No tool calls, just extract content
             content = assistant_message.get("content", "")
