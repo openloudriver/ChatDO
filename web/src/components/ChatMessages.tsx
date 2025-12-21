@@ -809,7 +809,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         // Validate UUID format (reject any with -user-* or -assistant-* suffixes)
         const uuidPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
         if (!uuidPattern.test(messageUuid)) {
-          console.warn(`[DEEP-LINK] Invalid UUID format in URL hash: ${messageUuid}. Expected UUID-only. Ignoring hash.`);
+          // Invalid format (likely old URL with -user-* or -assistant-* suffix) - silently clear it
+          // This is expected behavior when opening new chats with old URL hashes
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
         } else {
           console.log(`[DEEP-LINK] URL hash detected: ${hash}, messageUuid: ${messageUuid}`);
           
@@ -1251,11 +1255,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         
         // Canonical rule: DOM element ID must be message-<uuid> (UUID-only, no suffixes)
         // Only render ID if message.uuid exists (messages without UUIDs are not deep-linkable)
+        // Note: It's expected that some messages (especially old ones) won't have UUIDs
         const elementId = message.uuid ? `message-${message.uuid}` : undefined;
-        if (!message.uuid) {
-          // Log warning for messages without UUIDs (they can't be deep-linked)
-          console.warn(`[DEEP-LINK] Message ${message.id} has no UUID - cannot be deep-linked`);
-        }
         
         return (
           <div

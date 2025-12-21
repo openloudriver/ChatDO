@@ -853,6 +853,10 @@ export const useChatStore = create<ChatStore>((set) => ({
   setCurrentConversation: async (conversation) => {
     if (!conversation) {
       localStorage.removeItem('chatdo:lastChatId');
+      // Clear URL hash when clearing conversation
+      if (typeof window !== 'undefined' && window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       set({ 
         currentConversation: null,
         messages: [],
@@ -861,6 +865,16 @@ export const useChatStore = create<ChatStore>((set) => ({
         // Note: ragFilesByConversationId is preserved so switching back works
       });
       return;
+    }
+    
+    // Clear URL hash when switching to a new conversation (will be set by deep-link if needed)
+    // This prevents old hashes from persisting across conversation switches
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash;
+      // Only clear if it's a message hash (we'll set a new one if deep-linking is needed)
+      if (hash.startsWith('#message-')) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     }
     
     // Persist last chat and project to localStorage
