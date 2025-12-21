@@ -1970,7 +1970,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           <div>
                             {message.model_label ? (
                               // Use model_label from backend if available (most accurate)
-                              <div>{message.model_label}</div>
+                              // Backend now returns format without "Model: " prefix
+                              <div>{message.model_label.startsWith('Model: ') ? message.model_label : `Model: ${message.model_label}`}</div>
                             ) : message.type === 'web_search_results' ? (
                               <div>Model: Brave</div>
                             ) : (() => {

@@ -199,11 +199,14 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
   // Handle Memory source clicks (navigate to chat or show file)
   const handleMemorySourceClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const kind = source.meta?.kind; // "chat" or "file"
     const chatId = source.meta?.chat_id;
     const filePath = source.meta?.file_path;
-    const messageUuid = source.meta?.message_uuid; // Stable UUID for deep-linking
+    const fileId = source.meta?.file_id;
+    const messageUuid = source.meta?.message_uuid; // Stable UUID for deep-linking (chat/facts only)
 
-    if (chatId) {
+    // Navigation based on kind
+    if (kind === "chat" && chatId) {
       // Try to find the conversation in loaded chats
       let targetConversation = allConversations.find(c => c.id === chatId);
       
@@ -264,17 +267,21 @@ export const InlineCitation: React.FC<InlineCitationProps> = ({ index, source, t
         console.warn(`Chat ${chatId} not found`);
         // Could show a toast/notification here
       }
-    } else if (filePath) {
-      // For file sources, show the path (could be enhanced to open file viewer)
-      console.log('Memory file source:', filePath);
-      // TODO: Implement file viewer if available
-      // For now, copy path to clipboard
-      try {
-        await navigator.clipboard.writeText(filePath);
-        console.log('File path copied to clipboard:', filePath);
-      } catch (error) {
-        console.error('Failed to copy file path:', error);
+    } else if (kind === "file" && (filePath || fileId)) {
+      // For file sources, open file viewer or navigate to file route
+      console.log('Memory file source:', filePath || fileId);
+      // TODO: Implement file viewer navigation
+      // For now, copy path to clipboard as fallback
+      if (filePath) {
+        try {
+          await navigator.clipboard.writeText(filePath);
+          console.log('File path copied to clipboard:', filePath);
+        } catch (error) {
+          console.error('Failed to copy file path:', error);
+        }
       }
+    } else {
+      console.warn(`Unknown source kind or missing required fields: kind=${kind}, chatId=${chatId}, filePath=${filePath}, fileId=${fileId}`);
     }
   };
 

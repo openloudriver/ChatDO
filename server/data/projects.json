@@ -252,6 +252,15 @@
     "default_target": "general",
     "sort_index": 27,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-21T01:28:25.240380+00:00"
+  },
+  {
+    "id": "8b69db2f-aac5-46c1-bd99-0b0ca55e07cc",
+    "name": "Validate2",
+    "default_target": "general",
+    "sort_index": 28,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null
   }

@@ -80,12 +80,32 @@
     "trashed_at": null
   },
   {
-    "id": "ecd88dc2-f63b-4f1b-8ce3-e4cac8bf5055",
-    "project_id": "ba3ca2e0-3819-487e-aad2-ea5d25552974",
-    "title": "My favorite colors are red, white, and blue",
-    "thread_id": "ecd88dc2-f63b-4f1b-8ce3-e4cac8bf5055",
-    "created_at": "2025-12-21T00:10:36.930355+00:00",
-    "updated_at": "2025-12-21T00:10:45.557379+00:00",
+    "id": "9b9f142d-aaa9-42b5-a82f-82105dd44934",
+    "project_id": "8b69db2f-aac5-46c1-bd99-0b0ca55e07cc",
+    "title": "My favorite colors are orange, black and purple",
+    "thread_id": "9b9f142d-aaa9-42b5-a82f-82105dd44934",
+    "created_at": "2025-12-21T01:28:36.806382+00:00",
+    "updated_at": "2025-12-21T01:33:48.633440+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-21T01:33:48.633416+00:00"
+  },
+  {
+    "id": "4d7007a2-7a99-49ba-b9a7-565b65d4b067",
+    "project_id": "8b69db2f-aac5-46c1-bd99-0b0ca55e07cc",
+    "title": "My favorite colors are red, yellow, and blue",
+    "thread_id": "4d7007a2-7a99-49ba-b9a7-565b65d4b067",
+    "created_at": "2025-12-21T01:33:50.550944+00:00",
+    "updated_at": "2025-12-21T01:39:36.424131+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-21T01:39:36.424112+00:00"
+  },
+  {
+    "id": "f26309cc-0f29-4cb2-b34c-9aa2fa9de344",
+    "project_id": "8b69db2f-aac5-46c1-bd99-0b0ca55e07cc",
+    "title": "My favorite cryptocurrencies are ETH, XRP, and ...",
+    "thread_id": "f26309cc-0f29-4cb2-b34c-9aa2fa9de344",
+    "created_at": "2025-12-21T01:39:40.329042+00:00",
+    "updated_at": "2025-12-21T01:39:58.342071+00:00",
     "trashed": false,
     "trashed_at": null
   }

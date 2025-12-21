@@ -1,0 +1,28 @@
+[
+  {
+    "id": "36fb8b5c-6905-4c28-a27e-743b37e27659",
+    "role": "user",
+    "content": "My favorite colors are red, yellow, and blue",
+    "created_at": "2025-12-21T01:36:00.499567+00:00"
+  },
+  {
+    "id": "fc4e1206-4f67-48ad-a706-079acd140164",
+    "role": "assistant",
+    "content": "Noted—your favorite colors are red, yellow, and blue.\n\n## 📌 Saved\n- I’ll remember these as your preferred colors for future suggestions and defaults.\n\n## 🔧 Want me to use them for anything now?\n- Theme/previews (light/dark accents)\n- Charts/data viz palettes\n- UI mockups or design suggestions\n- Code snippet highlight accents\n\nOptional: do you care about the order (e.g., primary → secondary → tertiary) or any specific shades/hex values?",
+    "model": "Memory-F + GPT-5",
+    "model_label": "Model: Memory-F + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "memory_actions": {
+        "S": 3,
+        "U": 0,
+        "R": 0,
+        "F": true
+      }
+    },
+    "created_at": "2025-12-21T01:36:00.498356+00:00"
+  }
+]

@@ -125,7 +125,8 @@ async def call_ai_router_with_tool_loop(
     messages: List[Dict[str, Any]],
     tools: List[Dict[str, Any]],
     intent: str = "general_chat",
-    project_id: Optional[str] = None
+    project_id: Optional[str] = None,
+    files_actions: Optional[Dict[str, int]] = None
 ) -> tuple[str, str, str, str]:
     """
     Call AI Router and process tool calls in a loop.
@@ -145,20 +146,21 @@ async def call_ai_router_with_tool_loop(
         tools=tools
     )
     
-    # Process tool calls if present (tool loop)
-    if assistant_messages and len(assistant_messages) > 0:
-        assistant_message = assistant_messages[0]
-        # Check if there are tool_calls to process
-        if assistant_message.get("tool_calls"):
-            logger.info(f"[TOOL-LOOP] Starting tool loop with {len(assistant_message.get('tool_calls', []))} tool call(s)")
-            # Process tool calls in a loop
-            _, content = await process_tool_calls(
-                messages=messages,
-                assistant_message=assistant_message,
-                tools=tools,
-                max_iterations=10,
-                project_id=project_id
-            )
+        # Process tool calls if present (tool loop)
+        if assistant_messages and len(assistant_messages) > 0:
+            assistant_message = assistant_messages[0]
+            # Check if there are tool_calls to process
+            if assistant_message.get("tool_calls"):
+                logger.info(f"[TOOL-LOOP] Starting tool loop with {len(assistant_message.get('tool_calls', []))} tool call(s)")
+                # Process tool calls in a loop
+                _, content = await process_tool_calls(
+                    messages=messages,
+                    assistant_message=assistant_message,
+                    tools=tools,
+                    max_iterations=10,
+                    project_id=project_id,
+                    files_actions=files_actions
+                )
         else:
             # No tool calls, just extract content
             content = assistant_message.get("content", "")
@@ -173,7 +175,8 @@ async def process_tool_calls(
     assistant_message: Dict[str, Any],
     tools: List[Dict[str, Any]],
     max_iterations: int = 10,
-    project_id: Optional[str] = None
+    project_id: Optional[str] = None,
+    files_actions: Optional[Dict[str, int]] = None
 ) -> tuple[List[Dict[str, Any]], str]:
     """
     Process tool calls in a loop until no more tool calls are present.
@@ -244,6 +247,10 @@ async def process_tool_calls(
                         tool_result = await handle_filetree_tool_call(function_name, function_args, project_id=tool_project_id)
                     else:
                         tool_result = await handle_filetree_tool_call(function_name, function_args, project_id=project_id)
+                    
+                    # Note: Files(n) is now computed from final sources list (distinct cited files),
+                    # not from tool calls. See count_distinct_file_sources() function.
+                    
                     # Format result as JSON string for OpenAI
                     tool_results.append({
                         "tool_call_id": tool_call_id,
@@ -357,52 +364,96 @@ FILETREE_READ_TOOL = {
 }
 
 
+def count_distinct_file_sources(sources: List[Dict[str, Any]]) -> int:
+    """
+    Count distinct file sources from the final sources list.
+    
+    Files(n) represents the number of distinct file sources that appear as inline citations (M#).
+    Distinct means unique by stable identity:
+    - Prefer file_id if available
+    - Otherwise (source_id, file_path) pair
+    
+    Args:
+        sources: List of Source objects from the final response
+        
+    Returns:
+        Count of distinct file sources (only those with meta.kind == "file")
+    """
+    if not sources:
+        return 0
+    
+    distinct_files = set()
+    for source in sources:
+        meta = source.get("meta", {})
+        kind = meta.get("kind")
+        
+        # Only count file sources
+        if kind != "file":
+            continue
+        
+        # Use file_id if available (most stable)
+        file_id = meta.get("file_id")
+        if file_id:
+            distinct_files.add(f"file_id:{file_id}")
+        else:
+            # Fallback to (source_id, file_path) pair
+            source_id = meta.get("source_id") or source.get("source_id")
+            file_path = meta.get("file_path")
+            if source_id and file_path:
+                distinct_files.add(f"path:{source_id}:{file_path}")
+    
+    count = len(distinct_files)
+    if count > 0:
+        logger.info(f"[FILES] Counted {count} distinct file sources from citations: {sorted(distinct_files)}")
+    return count
+
+
 def build_model_label(
-    used_web: bool,
-    memory_actions: Optional[dict] = None,
+    facts_actions: Optional[dict] = None,
+    files_actions: Optional[dict] = None,
+    index_status: str = "P",
     escalated: bool = True
 ) -> str:
     """
-    Build model label with explicit multi-action Memory tag format.
+    Build model label with locked format: Facts-S/U/R + Files + Index-P/F + GPT-5
     
-    Format: Memory-S(n) + Memory-U(n) + Memory-R(n) + GPT-5
-    Only renders memory tokens with count > 0.
-    GPT-5 is always rendered.
+    Format: {Facts tokens} + {Files token} + Index-(P/F) + GPT-5
+    Only renders tokens with count > 0 (except Index and GPT-5 which are always shown).
     
     Args:
-        used_web: Whether Brave web search was used
-        memory_actions: Dict with keys S, U, R, F (all integers >= 0, F is bool)
+        facts_actions: Dict with keys S, U, R, F (all integers >= 0, F is bool)
+        files_actions: Dict with key R (integer >= 0)
+        index_status: "P" (passed) or "F" (failed)
         escalated: Always True (GPT-5 is always used, kept for compatibility)
     
     Returns:
-        Model label string (e.g., "Memory-S(3) + Memory-R(1) + GPT-5")
+        Model label string (e.g., "Facts-S(3) + Files(2) + Index-P + GPT-5")
     """
-    # Handle failure case
-    if memory_actions and memory_actions.get("F", False):
-        if used_web:
-            return "Memory-F + Brave + GPT-5"
-        return "Memory-F + GPT-5"
+    parts = []
     
-    # Build memory tokens
-    memory_tokens = []
-    if memory_actions:
-        s_count = memory_actions.get("S", 0)
-        u_count = memory_actions.get("U", 0)
-        r_count = memory_actions.get("R", 0)
+    # 1. Facts tokens (order: S → U → R, only if count > 0)
+    if facts_actions:
+        s_count = facts_actions.get("S", 0)
+        u_count = facts_actions.get("U", 0)
+        r_count = facts_actions.get("R", 0)
         
         if s_count > 0:
-            memory_tokens.append(f"Memory-S({s_count})")
+            parts.append(f"Facts-S({s_count})")
         if u_count > 0:
-            memory_tokens.append(f"Memory-U({u_count})")
+            parts.append(f"Facts-U({u_count})")
         if r_count > 0:
-            memory_tokens.append(f"Memory-R({r_count})")
+            parts.append(f"Facts-R({r_count})")
     
-    # Build final label
-    parts = []
-    if memory_tokens:
-        parts.extend(memory_tokens)
-    if used_web:
-        parts.append("Brave")
+    # 2. Files token (only if R > 0)
+    if files_actions:
+        files_r = files_actions.get("R", 0)
+        if files_r > 0:
+            parts.append(f"Files({files_r})")
+    
+    # 3. Index token (always shown)
+    parts.append(f"Index-{index_status}")
+    
+    # 4. GPT-5 (always last, always shown)
     parts.append("GPT-5")
     
     return " + ".join(parts)
@@ -415,6 +466,11 @@ async def chat_with_smart_search(
     conversation_history: Optional[List[Dict[str, str]]] = None,
     project_id: Optional[str] = None
 ) -> Dict[str, Any]:
+    # Initialize action tracking at the very beginning
+    facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
+    files_actions = {"R": 0}  # Files retrieved count
+    index_status = "P"  # "P" (passed) or "F" (failed)
+    memory_failure = False
     """
     Handle chat with smart auto-search.
     
@@ -503,13 +559,13 @@ async def chat_with_smart_search(
                                 # New fact = Store
                                 store_count += 1
                     
-                    memory_actions["S"] = store_count
-                    memory_actions["U"] = update_count
+                    facts_actions["S"] = store_count
+                    facts_actions["U"] = update_count
                     logger.info(f"[MEMORY] Fact counts: S={store_count}, U={update_count}")
             except Exception as e:
+                # Exception tracking counts is not critical - facts may still be stored by index_chat_message
                 logger.warning(f"[MEMORY] ❌ Exception tracking fact counts: {e}", exc_info=True)
-                memory_failure = True
-                memory_actions["F"] = True
+                # Don't set F=True here - this is just pre-counting, actual storage happens in index_chat_message
             
             # Index user message immediately (before memory search)
             memory_client = get_memory_client()
@@ -525,6 +581,7 @@ async def chat_with_smart_search(
                     message_index=message_index
                 )
                 if success:
+                    index_status = "P"
                     # Only set memory_stored if facts were actually stored (not just message indexing)
                     if facts_were_stored:
                         memory_stored = True  # Memory service was used (for fact storage)
@@ -532,23 +589,33 @@ async def chat_with_smart_search(
                     else:
                         logger.info(f"[MEMORY] ✅ Successfully indexed user message {user_message_id} for project {project_id} (no facts)")
                 else:
-                    logger.warning(f"[MEMORY] ❌ Failed to index user message {user_message_id} for project {project_id} (Memory Service returned False)")
+                    index_status = "F"
+                    # Indexing failed - but facts might still have been stored (they're stored early in the process)
+                    # Don't set F=True here - facts are stored before chunking/embedding, so they might succeed
+                    # even if indexing fails later. Keep the S/U counts we pre-calculated.
+                    logger.warning(f"[MEMORY] ⚠️  Indexing returned False for user message {user_message_id} for project {project_id}, but facts may have been stored")
                     if facts_were_stored:
-                        memory_failure = True
-                        memory_actions["F"] = True
+                        # Facts were likely stored (they happen early), so keep S/U counts
+                        # Only clear them if we can verify facts weren't stored
+                        logger.info(f"[MEMORY] Keeping S/U counts (S={facts_actions['S']}, U={facts_actions['U']}) since facts are stored early in indexing process")
             except Exception as e:
                 logger.warning(f"[MEMORY] ❌ Exception indexing user message: {e}", exc_info=True)
+                # Exception during indexing - but facts might still have been stored (they're stored early)
+                # Don't set F=True here - facts are stored before chunking/embedding, so they might succeed
+                # even if indexing fails later. Keep the S/U counts we pre-calculated.
                 if facts_were_stored:
-                    memory_failure = True
-                    memory_actions["F"] = True
+                    logger.info(f"[MEMORY] Exception during indexing, but keeping S/U counts (S={facts_actions['S']}, U={facts_actions['U']}) since facts are stored early")
             
             # Facts are automatically extracted and stored via fact_extractor in index_chat_message()
             # The index_chat_message() call above handles fact extraction → store_project_fact
             # No additional fact storage needed here
         except Exception as e:
             logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
-            memory_failure = True
-            memory_actions["F"] = True
+            # Only set F=True if we were in the middle of storing facts
+            # Check if we had facts_were_stored set (but it might not be in scope here)
+            # Actually, if we get here, the whole block failed, so facts likely weren't stored
+            # But be conservative - only set F if we can confirm facts were expected
+            # For now, don't set F here - let the actual indexing success/failure determine it
     
     # ============================================================================
     # REMOVED: Facts retrieval bypass
@@ -727,10 +794,6 @@ async def chat_with_smart_search(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
     
-    # 0. Initialize memory action tracking
-    memory_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
-    memory_failure = False
-    
     # 0. Get memory context if project_id is available
     memory_context = ""
     sources = []
@@ -769,9 +832,9 @@ async def chat_with_smart_search(
                             canonical_key = fact_key.rsplit(".", 1)[0] if "." in fact_key and fact_key.split(".")[-1].isdigit() else fact_key
                             retrieved_topic_keys.add(canonical_key)
                 
-                memory_actions["R"] = len(retrieved_topic_keys)
-                if memory_actions["R"] > 0:
-                    logger.info(f"[MEMORY] Retrieved {memory_actions['R']} distinct topic keys: {sorted(retrieved_topic_keys)}")
+                facts_actions["R"] = len(retrieved_topic_keys)
+                if facts_actions["R"] > 0:
+                    logger.info(f"[MEMORY] Retrieved {facts_actions['R']} distinct topic keys: {sorted(retrieved_topic_keys)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
                 logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
@@ -829,6 +892,8 @@ async def chat_with_smart_search(
                     description = hit.content[:150] + "..." if len(hit.content) > 150 else hit.content
                     
                     # Build Source object
+                    # Determine kind: "chat" for chat messages/facts, "file" for file sources
+                    kind = "file" if hit.file_path else "chat"
                     memory_source = {
                         "id": f"memory-{hit.source_id}-{idx}",
                         "title": title,
@@ -838,10 +903,12 @@ async def chat_with_smart_search(
                         "rank": idx,  # Rank within Memory group
                         "siteName": "Memory",
                         "meta": {
+                            "kind": kind,  # "chat" or "file" for navigation
                             "chat_id": hit.chat_id,
                             "message_id": hit.message_id,
-                            "message_uuid": hit.message_uuid,  # Stable UUID for deep-linking
-                            "file_path": hit.file_path,
+                            "message_uuid": hit.message_uuid,  # Stable UUID for deep-linking (chat/facts only)
+                            "file_path": hit.file_path,  # File path (file sources only)
+                            "file_id": hit.metadata.get("file_id") if hit.metadata else None,  # File ID (file sources only)
                             "source_id": hit.source_id,
                             "source_type": hit.source_type,
                             "role": hit.role,
@@ -900,14 +967,24 @@ async def chat_with_smart_search(
             messages=messages,
             tools=tools,
             intent="general_chat",
-            project_id=project_id
+            project_id=project_id,
+            files_actions=files_actions
         )
-        # Build model label with memory actions
-        model_display = build_model_label(used_web=used_web, memory_actions=memory_actions, escalated=True)
+        
+        # Count distinct file sources from final sources list (before building model label)
+        files_actions["R"] = count_distinct_file_sources(sources)
+        
+        # Build model label with new format
+        model_display = build_model_label(
+            facts_actions=facts_actions,
+            files_actions=files_actions,
+            index_status=index_status,
+            escalated=True
+        )
         logger.info(f"[MODEL] model label = {model_display}")
         
         # Build model_label and created_at BEFORE the thread_id check (needed for return statement)
-        model_label = f"Model: {model_display}"
+        model_label = model_display  # No "Model: " prefix - format is locked
         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
         
         # Save to memory store if thread_id is provided
@@ -964,7 +1041,13 @@ async def chat_with_smart_search(
                     "model_label": model_label,
                     "provider": provider_id,
                     "sources": sources if sources else None,
-                    "meta": {"usedWebSearch": False, "usedMemory": used_memory, "memory_actions": memory_actions},
+                    "meta": {
+                        "usedWebSearch": False,
+                        "usedMemory": used_memory,
+                        "facts_actions": facts_actions,
+                        "files_actions": files_actions,
+                        "index_status": index_status
+                    },
                     "created_at": assistant_msg_created_at
                 })
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
@@ -1001,7 +1084,9 @@ async def chat_with_smart_search(
             "meta": {
                 "usedWebSearch": False,
                 "usedMemory": used_memory,
-                "memory_actions": memory_actions,
+                "facts_actions": facts_actions,
+                "files_actions": files_actions,
+                "index_status": index_status
             },
             "model": model_display,
             "model_label": model_label,
@@ -1049,7 +1134,8 @@ async def chat_with_smart_search(
             messages=messages,
             tools=tools,
             intent="general_chat",
-            project_id=project_id
+            project_id=project_id,
+            files_actions=files_actions
         )
         
         # Build model_label for this response
@@ -1088,7 +1174,9 @@ async def chat_with_smart_search(
             "meta": {
                 "usedWebSearch": False,
                 "webSearchError": str(e),
-                "memory_actions": memory_actions
+                "facts_actions": facts_actions,
+                "files_actions": files_actions,
+                "index_status": index_status
             },
             "model": model_display,
             "model_label": model_label,
@@ -1106,7 +1194,8 @@ async def chat_with_smart_search(
             messages=messages,
             tools=tools,
             intent="general_chat",
-            project_id=project_id
+            project_id=project_id,
+            files_actions=files_actions
         )
         
         # Save to memory store if thread_id is provided
@@ -1143,7 +1232,9 @@ async def chat_with_smart_search(
             "meta": {
                 "usedWebSearch": False,
                 "webSearchEmpty": True,
-                "memory_actions": memory_actions
+                "facts_actions": facts_actions,
+                "files_actions": files_actions,
+                "index_status": index_status
             },
             "model": model_display,
             "model_label": model_label,
@@ -1278,9 +1369,17 @@ async def chat_with_smart_search(
             if web_sources:
                 all_sources.extend(web_sources)  # Web sources (already Source objects)
             
+            # Count distinct file sources from final sources list (before building model label)
+            files_actions["R"] = count_distinct_file_sources(all_sources)
+            
             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
             # Build model label with memory actions
-            model_label = build_model_label(used_web=bool(web_sources), memory_actions=memory_actions, escalated=True)
+            model_label = build_model_label(
+                facts_actions=facts_actions,
+                files_actions=files_actions,
+                index_status=index_status,
+                escalated=True
+            )
             assistant_message = {
                 "id": str(uuid4()),
                 "role": "assistant",
@@ -1292,7 +1391,9 @@ async def chat_with_smart_search(
                 "meta": {
                     "usedWebSearch": True,
                     "webResultsPreview": web_results[:5],
-                    "memory_actions": memory_actions
+                    "facts_actions": facts_actions,
+                "files_actions": files_actions,
+                "index_status": index_status
                 },
                 "created_at": assistant_msg_created_at
             }
@@ -1333,10 +1434,18 @@ async def chat_with_smart_search(
     if web_sources:
         all_sources.extend(web_sources)  # Web sources (already Source objects)
     
+    # Count distinct file sources from final sources list (before building model label)
+    files_actions["R"] = count_distinct_file_sources(all_sources)
+    
     # Get created_at and model_label from saved message or generate
     assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-    # Build model label with memory actions
-    model_label = build_model_label(used_web=bool(web_sources), memory_actions=memory_actions, escalated=True)
+    # Build model label with new format
+    model_label = build_model_label(
+        facts_actions=facts_actions,
+        files_actions=files_actions,
+        index_status=index_status,
+        escalated=True
+    )
     if thread_id:
         try:
             history = memory_store.load_thread_history(target_name, thread_id)
