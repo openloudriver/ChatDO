@@ -493,8 +493,11 @@ Notes:
                 print(f"[DIAG] run_agent: Task preview: {task[:200]}...")
                 # Don't save the user message, only save assistant response
                 assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                # Use constructed message_id to match indexing (enables UUID lookup)
+                message_index = len(history)
+                assistant_message_id = f"{thread_id}-assistant-{message_index}"
                 history.append({
-                    "id": str(uuid4()),
+                    "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": final_content,
                     "model": model_display,
@@ -510,8 +513,11 @@ Notes:
             print(f"[DIAG] run_agent: WARNING - Task is too long ({len(task_to_save)} chars), likely contains full document text. NOT saving to history.")
             # Don't save the user message, only save assistant response
             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+            # Use constructed message_id to match indexing (enables UUID lookup)
+            message_index = len(history)
+            assistant_message_id = f"{thread_id}-assistant-{message_index}"
             history.append({
-                "id": str(uuid4()),
+                "id": assistant_message_id,  # Use constructed ID to match indexing
                 "role": "assistant",
                 "content": final_content,
                 "model": model_display,
@@ -525,14 +531,18 @@ Notes:
         # Save user and assistant messages with timestamps
         user_msg_created_at = datetime.now(timezone.utc).isoformat()
         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+        # Use constructed message_id to match indexing (enables UUID lookup)
+        message_index = len(history)
+        user_message_id = f"{thread_id}-user-{message_index}"
+        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
         history.append({
-            "id": str(uuid4()),
+            "id": user_message_id,  # Use constructed ID to match indexing
             "role": "user",
             "content": task_to_save,
             "created_at": user_msg_created_at
         })
         history.append({
-            "id": str(uuid4()),
+            "id": assistant_message_id,  # Use constructed ID to match indexing
             "role": "assistant",
             "content": final_content,
             "model": model_display,

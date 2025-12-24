@@ -453,16 +453,20 @@ Keep it concise, neutral, and factual."""
                         history = load_thread_history(target_name, conversation_id)
                         # Add user message with timestamp
                         user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        # Use constructed message_id to match indexing (enables UUID lookup)
+                        message_index = len(history)
+                        user_message_id = f"{conversation_id}-user-{message_index}"
                         history.append({
-                            "id": str(uuid4()),
+                            "id": user_message_id,  # Use constructed ID to match indexing
                             "role": "user",
                             "content": message,
                             "created_at": user_msg_created_at
                         })
                         # Add assistant message with structured data, timestamp, and model_label
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        assistant_message_id = f"{conversation_id}-assistant-{message_index + 1}"
                         assistant_message = {
-                            "id": str(uuid4()),
+                            "id": assistant_message_id,  # Use constructed ID to match indexing
                             "role": "assistant",
                             "content": "",  # Empty content for structured messages
                             "type": "web_search_results",
@@ -680,7 +684,10 @@ Keep it concise, neutral, and factual."""
                             if history[i].get("role") == "assistant":
                                 # Update existing message with structured type, timestamp, and model_label
                                 if not history[i].get("id"):
-                                    history[i]["id"] = str(uuid4())
+                                    # Use constructed message_id to match indexing (enables UUID lookup)
+                                    message_index = i
+                                    assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                                    history[i]["id"] = assistant_message_id
                                 if not history[i].get("created_at"):
                                     history[i]["created_at"] = rag_response_created_at
                                 history[i]["type"] = "rag_response"

@@ -676,8 +676,11 @@ async def chat_with_smart_search(
                         history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
+                        # Use constructed message_id to match indexing (enables UUID lookup)
+                        message_index = len(history)
+                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
                         history.append({
-                            "id": str(uuid4()),
+                            "id": assistant_message_id,  # Use constructed ID to match indexing
                             "role": "assistant",
                             "content": clarification,
                             "model": "Memory",
@@ -745,8 +748,11 @@ async def chat_with_smart_search(
                         history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
+                        # Use constructed message_id to match indexing (enables UUID lookup)
+                        message_index = len(history)
+                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
                         history.append({
-                            "id": str(uuid4()),
+                            "id": assistant_message_id,  # Use constructed ID to match indexing
                             "role": "assistant",
                             "content": list_text,
                             "model": "Memory",
@@ -778,8 +784,11 @@ async def chat_with_smart_search(
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                         model_label = "Model: Memory"
                         response_text = "I don't have that stored yet."
+                        # Use constructed message_id to match indexing (enables UUID lookup)
+                        message_index = len(history)
+                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
                         history.append({
-                            "id": str(uuid4()),
+                            "id": assistant_message_id,  # Use constructed ID to match indexing
                             "role": "assistant",
                             "content": response_text,
                             "model": "Memory",
@@ -1006,8 +1015,10 @@ async def chat_with_smart_search(
                 
                 # Add user message with timestamp
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                # Use constructed message_id to match indexing (enables UUID lookup)
+                user_message_id = f"{thread_id}-user-{message_index}"
                 user_msg = {
-                    "id": str(uuid4()),
+                    "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at
@@ -1021,7 +1032,7 @@ async def chat_with_smart_search(
                 if project_id:
                     try:
                         memory_client = get_memory_client()
-                        user_message_id = f"{thread_id}-user-{message_index}"
+                        # user_message_id already defined above
                         logger.debug(f"[MEMORY] Re-indexing user message {user_message_id} for project {project_id} (already indexed early, this is redundant)")
                         success = memory_client.index_chat_message(
                             project_id=project_id,
@@ -1051,7 +1062,7 @@ async def chat_with_smart_search(
                         success, job_id, _ = memory_client.index_chat_message(
                             project_id=project_id,
                             chat_id=thread_id,
-                            message_id=assistant_message_id,
+                            message_id=assistant_message_id,  # This matches the "id" we'll save to history
                             role="assistant",
                             content=content,
                             timestamp=assistant_msg_created_at,
@@ -1068,8 +1079,10 @@ async def chat_with_smart_search(
                     logger.warning(f"[MEMORY] ⚠️  Skipping assistant message indexing: project_id is None (thread_id={thread_id})")
                 
                 # Add assistant message with timestamp and model_label (after enqueueing so job_id is available)
+                # Use constructed message_id to match indexing (enables UUID lookup)
+                assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                 history.append({
-                    "id": str(uuid4()),
+                    "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
@@ -1166,14 +1179,18 @@ async def chat_with_smart_search(
             try:
                 history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                # Use constructed message_id to match indexing (enables UUID lookup)
+                message_index = len(history)
+                user_message_id = f"{thread_id}-user-{message_index}"
+                assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                 history.append({
-                    "id": str(uuid4()),
+                    "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at
                 })
                 history.append({
-                    "id": str(uuid4()),
+                    "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
@@ -1228,14 +1245,18 @@ async def chat_with_smart_search(
             try:
                 history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                # Use constructed message_id to match indexing (enables UUID lookup)
+                message_index = len(history)
+                user_message_id = f"{thread_id}-user-{message_index}"
+                assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                 history.append({
-                    "id": str(uuid4()),
+                    "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at
                 })
                 history.append({
-                    "id": str(uuid4()),
+                    "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
                     "model": model_display,
@@ -1352,8 +1373,10 @@ async def chat_with_smart_search(
             # Add user message with timestamp
             from uuid import uuid4
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
+            # Use constructed message_id to match indexing (enables UUID lookup)
+            user_message_id = f"{thread_id}-user-{message_index}"
             user_msg = {
-                "id": str(uuid4()),
+                "id": user_message_id,  # Use constructed ID to match indexing
                 "role": "user",
                 "content": user_message,
                 "created_at": user_msg_created_at
@@ -1367,7 +1390,7 @@ async def chat_with_smart_search(
             if project_id:
                 try:
                     memory_client = get_memory_client()
-                    user_message_id = f"{thread_id}-user-{message_index}"
+                    # user_message_id already defined above
                     logger.debug(f"[MEMORY] Re-indexing user message {user_message_id} for project {project_id} (already indexed early, this is redundant)")
                     success = memory_client.index_chat_message(
                         project_id=project_id,
@@ -1407,8 +1430,10 @@ async def chat_with_smart_search(
                 index_status=index_status,
                 escalated=True
             )
+            # Use constructed message_id to match indexing (enables UUID lookup)
+            assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
             assistant_message = {
-                "id": str(uuid4()),
+                "id": assistant_message_id,  # Use constructed ID to match indexing
                 "role": "assistant",
                 "content": content,
                 "model": model_label.replace("Model: ", ""),  # Store without "Model: " prefix
@@ -1435,7 +1460,7 @@ async def chat_with_smart_search(
             if project_id:
                 try:
                     memory_client = get_memory_client()
-                    assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                    # assistant_message_id already defined above
                     logger.info(f"[MEMORY] Attempting to index assistant message {assistant_message_id} for project {project_id}")
                     success = memory_client.index_chat_message(
                         project_id=project_id,
