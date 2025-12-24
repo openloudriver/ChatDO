@@ -93,6 +93,17 @@ const SearchResults: React.FC = () => {
                   )}
                   {chats.map((chat) => {
                     const isSelected = currentConversation?.id === chat.id;
+                    // Determine badge based on status
+                    let badge = 'Active';
+                    let badgeColor = 'bg-green-500/20 text-green-600';
+                    if (chat.trashed) {
+                      badge = 'Trash';
+                      badgeColor = 'bg-red-500/20 text-red-600';
+                    } else if (chat.archived) {
+                      badge = 'Archived';
+                      badgeColor = 'bg-yellow-500/20 text-yellow-600';
+                    }
+                    
                     return (
                       <button
                         key={chat.id}
@@ -108,9 +119,14 @@ const SearchResults: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className={`font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>
-                            {chat.title}
-                          </h3>
+                          <div className="flex items-center gap-2 flex-1">
+                            <h3 className={`font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>
+                              {chat.title}
+                            </h3>
+                            <span className={`text-xs px-2 py-0.5 rounded ${badgeColor} font-medium`}>
+                              {badge}
+                            </span>
+                          </div>
                           <span className="text-xs text-[var(--text-secondary)] ml-4 flex-shrink-0">
                             {formatDate(chat.createdAt)}
                           </span>

@@ -8,6 +8,7 @@ import ProjectChatList from './components/ProjectChatList';
 import TrashChatList from './components/TrashChatList';
 import SearchResults from './components/SearchResults';
 import MemoryDashboard from './components/MemoryDashboard';
+import Library from './components/Library';
 import { ImpactWorkspacePage } from './components/ImpactWorkspacePage';
 import ConnectProjectModal from './components/ConnectProjectModal';
 
@@ -148,6 +149,10 @@ const App: React.FC = () => {
     
     if (viewMode === 'trashList') {
       return <TrashChatList />;
+    }
+    
+    if (viewMode === 'library') {
+      return <Library />;
     }
     
     if (viewMode === 'projectList' && currentProject) {

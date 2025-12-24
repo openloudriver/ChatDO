@@ -19,12 +19,29 @@ class MemoryServiceClient:
         self.base_url = base_url
     
     def is_available(self) -> bool:
-        """Check if Memory Service is running."""
-        try:
-            response = requests.get(f"{self.base_url}/health", timeout=2)
-            return response.status_code == 200
-        except Exception:
-            return False
+        """Check if Memory Service is running.
+        
+        Uses a longer timeout and retries to handle temporary slowdowns.
+        """
+        import time
+        max_retries = 2
+        timeout = 5  # Increased from 2 to 5 seconds
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(f"{self.base_url}/health", timeout=timeout)
+                if response.status_code == 200:
+                    return True
+            except requests.exceptions.Timeout:
+                if attempt < max_retries - 1:
+                    time.sleep(0.5)  # Brief delay before retry
+                    continue
+                logger.debug(f"[MEMORY] Health check timeout (attempt {attempt + 1}/{max_retries})")
+            except Exception as e:
+                logger.debug(f"[MEMORY] Health check failed: {e}")
+                break
+        
+        return False
     
     def search(self, project_id: str, query: str, limit: int = 8, source_ids: Optional[List[str]] = None, chat_id: Optional[str] = None, exclude_chat_ids: Optional[List[str]] = None) -> List[Dict]:
         """

@@ -285,38 +285,15 @@ def index_chat_message(
             message_index=message_index
         )
         
-        # Get the message_uuid for fact storage
+        # Get the message_uuid (needed for embeddings metadata, but NOT for fact storage)
+        # Facts are now stored synchronously in the backend before indexing, so we skip fact extraction here
         chat_message = db.get_chat_message_by_id(chat_message_id, source_id)
         message_uuid = chat_message.message_uuid if chat_message else None
         
-        # Extract and store facts (only for user messages)
-        if role == "user" and message_uuid:
-            try:
-                from memory_service.fact_extractor import get_fact_extractor
-                extractor = get_fact_extractor()
-                facts = extractor.extract_facts(content, role=role)
-                
-                logger.info(f"[FACT-EXTRACT] Extracted {len(facts)} facts from message {message_id} (project={project_id})")
-                
-                if facts:
-                    for fact in facts:
-                        try:
-                            fact_id, action_type = db.store_project_fact(
-                                project_id=project_id,
-                                fact_key=fact["fact_key"],
-                                value_text=fact["value_text"],
-                                value_type=fact["value_type"],
-                                source_message_uuid=message_uuid,
-                                confidence=fact.get("confidence", 1.0),
-                                source_id=source_id
-                            )
-                            logger.info(f"[FACT-EXTRACT] ✅ {action_type.upper()} fact: {fact['fact_key']} = {fact['value_text']} (fact_id={fact_id}, message_uuid={message_uuid})")
-                        except Exception as e:
-                            logger.error(f"[FACT-EXTRACT] ❌ Failed to store fact {fact.get('fact_key')}: {e}", exc_info=True)
-                else:
-                    logger.debug(f"[FACT-EXTRACT] No facts extracted from message: {content[:100]}")
-            except Exception as e:
-                logger.error(f"[FACT-EXTRACT] ❌ Fact extraction failed for message {message_id}: {e}", exc_info=True)
+        # REMOVED: Fact extraction and storage from indexing path
+        # Facts are now persisted synchronously in chat_with_smart_search.py before indexing
+        # This prevents double-extraction, double-write, and ensures facts persist even if indexing fails
+        # Indexing job now only handles: chunking, embeddings, vector/ANN updates, chat_messages upsert
         
         # Chunk the content
         chunks = chunk_chat_message(content)

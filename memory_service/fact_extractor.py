@@ -274,8 +274,9 @@ class FactExtractor:
         
         # Pattern 4: Comma-separated list after "favorite X are" (implicit ranks)
         # "My favorite cryptocurrencies are XMR, BTC, and XLM"
+        # "My favorite states of water are liquid, steam and ice"
         pattern4 = re.compile(
-            r'(?:my\s+)?favorite\s+(\w+(?:\s+\w+)?)\s+are\s+([^\.\?\!]+)',
+            r'(?:my\s+)?favorite\s+((?:\w+\s+)*\w+)\s+are\s+([^\.\?\!]+)',
             re.IGNORECASE
         )
         for match in pattern4.finditer(cleaned):
@@ -284,15 +285,34 @@ class FactExtractor:
             # Normalize topic
             topic = self._normalize_topic(topic_part)
             
-            # Split by comma and "and"
-            items = re.split(r',\s*(?:and\s+)?', list_text)
+            # Split by comma and "and" - handle both "A, B, C and D" and "A, B, C, and D" (Oxford comma)
+            # First, normalize: replace " and " with ", " to make splitting consistent
+            # But preserve "and" that's part of item names (e.g., "rock and roll")
+            # Strategy: split on commas first, then check if last item contains " and " and split that too
+            items = re.split(r',\s*', list_text)
             items = [item.strip() for item in items if item.strip()]
+            
+            # If the last item contains " and " (not at start/end), split it
+            # Only split once to avoid infinite recursion with items like "a and b and c"
+            if items and ' and ' in items[-1]:
+                last_item = items[-1]
+                # Split on " and " but be careful - only split if it looks like a list separator
+                # Pattern: word(s) + " and " + word(s) at the end
+                # Use a more specific pattern to avoid matching compound items like "rock and roll"
+                # Only split if "and" is surrounded by word boundaries (not part of a compound noun)
+                and_match = re.search(r'^(.+?)\s+and\s+(\w+)$', last_item, re.IGNORECASE)
+                if and_match:
+                    # Split the last item (only once)
+                    items[-1] = and_match.group(1).strip()
+                    items.append(and_match.group(2).strip())
+            
+            # Clean up: remove any trailing "and" from items (shouldn't happen, but safety check)
+            items = [re.sub(r'\s+and\s*$', '', item, flags=re.IGNORECASE).strip() for item in items]
+            items = [item for item in items if item]  # Remove empty items
             
             # Only process if we have 2+ items and no explicit ranks found
             if len(items) >= 2 and not ranked_facts:
                 for idx, item in enumerate(items, start=1):
-                    item = item.strip().rstrip(',').strip()
-                    item = re.sub(r'\s+and\s*$', '', item, flags=re.IGNORECASE)
                     if item and len(item) < 200:
                         ranked_facts.append((idx, item, topic))
                 break  # Only process first match

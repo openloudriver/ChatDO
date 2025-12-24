@@ -517,73 +517,64 @@ async def chat_with_smart_search(
     # CRITICAL: Index user message BEFORE searching memory to avoid race condition
     # This ensures that if the user asks a follow-up question immediately, the Memory Service
     # can find the message they just sent
-    # Also extract and store facts (ranked lists) from user messages into facts DB
+    # Phase 1: Synchronous Facts Persistence (does NOT depend on Memory Service)
+    # Store facts immediately and deterministically, get actual counts from DB writes
+    current_message_uuid = None
+    if thread_id and project_id:
+        try:
+            from server.services.facts_persistence import persist_facts_synchronously
+            from datetime import datetime as dt
+            
+            history = memory_store.load_thread_history(target_name, thread_id)
+            message_index = len(history)
+            user_msg_created_at = datetime.now(timezone.utc)
+            user_message_id = f"{thread_id}-user-{message_index}"
+            
+            # Persist facts synchronously (does NOT require Memory Service)
+            store_count, update_count, stored_fact_keys, message_uuid = persist_facts_synchronously(
+                project_id=project_id,
+                message_content=user_message,
+                role="user",
+                chat_id=thread_id,
+                message_id=user_message_id,
+                timestamp=user_msg_created_at,
+                message_index=message_index
+            )
+            
+            # Set counts from actual DB writes (truthful, not optimistic)
+            facts_actions["S"] = store_count
+            facts_actions["U"] = update_count
+            
+            # Use message_uuid for fact exclusion (needed for Facts-R)
+            if message_uuid:
+                current_message_uuid = message_uuid
+                logger.info(f"[MEMORY] Got message_uuid={current_message_uuid} for fact exclusion")
+            
+            logger.info(
+                f"[MEMORY] ✅ Facts persisted synchronously: S={store_count} U={update_count} "
+                f"keys={stored_fact_keys} (message_uuid={current_message_uuid})"
+            )
+            
+        except Exception as e:
+            logger.error(f"[MEMORY] ❌ Exception during synchronous fact persistence: {e}", exc_info=True)
+            # Facts persistence failure doesn't block the response, but counts remain 0
+    
+    # Phase 2: Async Indexing (best-effort, non-blocking)
+    # Index-P/Index-F reflects pipeline health (enqueue success), independent of Facts
     if thread_id and project_id:
         try:
             from server.services.memory_service_client import get_memory_client
-            from server.services.ranked_lists import extract_ranked_lists
-            from server.services.facts import extract_topic_from_query
-            from uuid import uuid4
             
             history = memory_store.load_thread_history(target_name, thread_id)
             message_index = len(history)
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
             user_message_id = f"{thread_id}-user-{message_index}"
             
-            # Extract facts and track S/U counts BEFORE indexing
-            # This allows us to count Store vs Update actions
-            facts_were_stored = False
-            store_count = 0
-            update_count = 0
-            try:
-                from memory_service.fact_extractor import get_fact_extractor
-                from memory_service.memory_dashboard.db import get_current_fact
-                extractor = get_fact_extractor()
-                extracted_facts = extractor.extract_facts(user_message, role="user")
-                if extracted_facts:
-                    facts_were_stored = True
-                    logger.info(f"[MEMORY] Message contains {len(extracted_facts)} facts that will be stored")
-                    
-                    # Check each fact to determine if it's a Store (new) or Update (existing)
-                    # NOTE: We only check facts from the CURRENT chat to avoid cross-chat false positives
-                    # Cross-chat facts are expected - if you store "favorite candies" in chat A,
-                    # then store different "favorite candies" in chat B, that's an Update (latest wins).
-                    # But if you're storing NEW facts in the current chat, they should be Store.
-                    source_id = f"project-{project_id}"
-                    for fact in extracted_facts:
-                        fact_key = fact.get("fact_key")
-                        value_text = fact.get("value_text")
-                        if fact_key:
-                            # Check if fact already exists in THIS project
-                            existing_fact = get_current_fact(project_id, fact_key, source_id=source_id)
-                            if existing_fact:
-                                existing_value = existing_fact.get("value_text")
-                                # Only count as Update if value is different AND from a different message
-                                # If same value, it's still a Store (new fact row for same value)
-                                if existing_value and existing_value != value_text:
-                                    # Same fact_key but different value = Update
-                                    update_count += 1
-                                else:
-                                    # Same fact_key and same value = Store (new fact row)
-                                    store_count += 1
-                            else:
-                                # New fact = Store
-                                store_count += 1
-                    
-                    facts_actions["S"] = store_count
-                    facts_actions["U"] = update_count
-                    logger.info(f"[MEMORY] Fact counts: S={store_count}, U={update_count}")
-            except Exception as e:
-                # Exception tracking counts is not critical - facts may still be stored by index_chat_message
-                logger.warning(f"[MEMORY] ❌ Exception tracking fact counts: {e}", exc_info=True)
-                # Don't set F=True here - this is just pre-counting, actual storage happens in index_chat_message
-            
             # Enqueue user message for async indexing (non-blocking)
             # Index-P/Index-F reflects pipeline health (enqueue success), not completion
             memory_client = get_memory_client()
             logger.info(f"[MEMORY] Enqueueing user message for async indexing: {user_message_id} for project {project_id}")
-            current_message_uuid = None
-            user_index_job_id = None
+            
             try:
                 success, job_id, message_uuid = memory_client.index_chat_message(
                     project_id=project_id,
@@ -595,17 +586,16 @@ async def chat_with_smart_search(
                     message_index=message_index
                 )
                 
-                # Capture message_uuid for fact exclusion (created early during enqueue)
-                if message_uuid:
+                # Use message_uuid from indexing if we don't have one yet
+                if message_uuid and not current_message_uuid:
                     current_message_uuid = message_uuid
-                    logger.info(f"[MEMORY] Captured message_uuid={message_uuid} for exclusion from fact search")
+                    logger.info(f"[MEMORY] Captured message_uuid={message_uuid} from indexing for fact exclusion")
                 
                 # Index-P = pipeline operational, job accepted/queued
                 # Index-F = pipeline failed to accept/queue job
                 if success:
                     index_status = "P"
-                    user_index_job_id = job_id
-                    logger.info(f"[MEMORY] ✅ Enqueued indexing job {job_id} for user message {user_message_id} (message_uuid={message_uuid})")
+                    logger.info(f"[MEMORY] ✅ Enqueued indexing job {job_id} for user message {user_message_id}")
                 else:
                     index_status = "F"
                     logger.warning(f"[MEMORY] ⚠️  Failed to enqueue indexing job for user message {user_message_id}")
@@ -613,16 +603,12 @@ async def chat_with_smart_search(
             except Exception as e:
                 index_status = "F"
                 logger.warning(f"[MEMORY] ❌ Exception enqueueing user message: {e}", exc_info=True)
+                # Don't block response - Facts already persisted, indexing is best-effort
             
-            # Note: Facts are extracted and stored during async job processing, not here
-            # The pre-counting above is just for display purposes
         except Exception as e:
-            logger.warning(f"[MEMORY] ❌ Exception indexing user message before search: {e}", exc_info=True)
-            # Only set F=True if we were in the middle of storing facts
-            # Check if we had facts_were_stored set (but it might not be in scope here)
-            # Actually, if we get here, the whole block failed, so facts likely weren't stored
-            # But be conservative - only set F if we can confirm facts were expected
-            # For now, don't set F here - let the actual indexing success/failure determine it
+            index_status = "F"
+            logger.warning(f"[MEMORY] ❌ Exception setting up async indexing: {e}", exc_info=True)
+            # Don't block response - Facts already persisted, indexing is best-effort
     
     # ============================================================================
     # REMOVED: Facts retrieval bypass
@@ -704,12 +690,83 @@ async def chat_with_smart_search(
             
             logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
             
-            # REMOVED: get_facts() - use /search-facts endpoint instead
-            # Facts are now retrieved via librarian's /search-facts which uses project_facts table
-            facts = []  # Disabled: use librarian search instead
+            # Actually search for facts using the Memory Service /search-facts endpoint
+            facts = []
+            if project_id and topic_key:
+                try:
+                    import requests
+                    memory_service_url = "http://127.0.0.1:5858"
+                    search_query = user_message  # Use the full user message as the search query
+                    response = requests.post(
+                        f"{memory_service_url}/search-facts",
+                        json={
+                            "project_id": project_id,
+                            "query": search_query,
+                            "limit": 50  # Get enough facts to find ranked lists
+                        },
+                        timeout=5
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        facts = data.get("facts", [])
+                        logger.info(f"[FACTS] Found {len(facts)} facts for query '{search_query}'")
+                    else:
+                        logger.warning(f"[FACTS] Search failed with status {response.status_code}")
+                except Exception as e:
+                    logger.warning(f"[FACTS] Failed to search facts: {e}", exc_info=True)
             
-            # Filter to only ranked facts (kind="ranked")
-            ranked_facts = [f for f in facts if f.get("kind") == "ranked"]
+            # Filter to only ranked facts (facts with rank in fact_key, e.g., "user.favorite_crypto.1", "user.favorite_crypto.2")
+            # Ranked facts have fact_key pattern: user.{topic}.{rank}
+            # IMPORTANT: Only include facts from the SAME topic as the query
+            ranked_facts = []
+            for fact in facts:
+                fact_key = fact.get("fact_key", "")
+                # Check if fact_key matches pattern user.{topic}.{rank} where rank is a number
+                if re.match(r'^user\.(.+)\.\d+$', fact_key):
+                    # Extract the topic part (everything before the rank)
+                    topic_match = re.match(r'^user\.(.+)\.\d+$', fact_key)
+                    if topic_match:
+                        fact_topic = topic_match.group(1)
+                        
+                        # CRITICAL: Only include facts that match the query topic
+                        # Use the same topic normalization as fact_extractor for consistency
+                        if topic_key:
+                            # Normalize the topic_key to match fact_extractor's normalization
+                            from memory_service.fact_extractor import get_fact_extractor
+                            extractor = get_fact_extractor()
+                            normalized_topic_key = extractor._normalize_topic(topic_key.replace('_', ' '))
+                            
+                            # Extract the base topic from fact_key (e.g., "favorite_crypto" from "user.favorite_crypto.1")
+                            fact_topic_base = fact_topic.lower()
+                            
+                            # Check if the normalized topic_key matches the fact topic
+                            # Handle both "favorite_crypto" and "crypto" variations
+                            topics_match = (
+                                fact_topic_base == normalized_topic_key or
+                                fact_topic_base.replace('favorite_', '') == normalized_topic_key.replace('favorite_', '') or
+                                # Handle plurals (crypto vs cryptos)
+                                fact_topic_base.replace('favorite_', '').rstrip('s') == normalized_topic_key.replace('favorite_', '').rstrip('s') or
+                                # Check if one contains the other (for multi-word topics)
+                                (normalized_topic_key.replace('favorite_', '') in fact_topic_base.replace('favorite_', '')) or
+                                (fact_topic_base.replace('favorite_', '') in normalized_topic_key.replace('favorite_', ''))
+                            )
+                            
+                            if not topics_match:
+                                # Skip facts from different topics
+                                logger.debug(f"[FACTS] Skipping fact {fact_key} - topic mismatch: fact_topic='{fact_topic_base}' vs query_topic='{normalized_topic_key}'")
+                                continue
+                        
+                        # Extract rank from fact_key (last number after final dot)
+                        rank_match = re.search(r'\.(\d+)$', fact_key)
+                        if rank_match:
+                            rank = int(rank_match.group(1))
+                            ranked_facts.append({
+                                "rank": rank,
+                                "value": fact.get("value_text", ""),
+                                "fact_key": fact_key,
+                                "source_message_uuid": fact.get("source_message_uuid"),
+                                "chat_id": None  # Will be extracted from message_uuid if needed
+                            })
             
             if ranked_facts:
                 # Sort by rank
@@ -838,21 +895,67 @@ async def chat_with_smart_search(
                 logger.info(f"[MEMORY] Will pass Memory context to GPT-5: has_memory={has_memory}, hits_count={len(hits)}")
                 
                 # Count distinct canonical topic keys from fact hits (for R count)
+                # IMPORTANT: Only count facts that are RELEVANT to the current query
+                # Filter fact hits to only include those that match the query topic
                 # Fact keys are like "user.favorite_color" or "user.favorite_color.1" (ranked)
                 # Canonical topic key is without the rank suffix (e.g., "user.favorite_color")
                 retrieved_topic_keys = set()
+                query_lower = user_message.lower()
+                
+                # Extract topic keywords from query (remove stop words)
+                # Note: 're' is already imported at module level
+                stop_words = {'what', 'is', 'my', 'your', 'the', 'a', 'an', 'do', 'you', 'remember', 'know', 'tell', 'me', 'about', 'are', 'favorite', 'favorites', 'and', 'or', 'but', 'with', 'for', 'from', 'to', 'of', 'in', 'on', 'at', 'by'}
+                query_words = set(re.findall(r'\b\w+\b', query_lower))
+                topic_keywords = [w for w in query_words if w not in stop_words and len(w) > 2]
+                
+                # Extract the main topic noun from the query (e.g., "food", "pies", "candies" from "My favorite X are...")
+                # This is more reliable than matching any keyword
+                main_topic = None
+                topic_match = re.search(r'favorite\s+(\w+(?:\s+\w+)?)', query_lower)
+                if topic_match:
+                    main_topic = topic_match.group(1).strip()
+                    # Remove common suffixes
+                    main_topic = re.sub(r'\s+(are|is|was|were)$', '', main_topic)
+                
                 for hit in hits:
                     if hit.metadata and hit.metadata.get("is_fact"):
                         fact_key = hit.metadata.get("fact_key", "")
+                        value_text = hit.metadata.get("value_text", "").lower()
+                        
                         if fact_key:
                             # Extract canonical topic key (remove rank suffix if present)
                             # e.g., "user.favorite_color.1" -> "user.favorite_color"
                             canonical_key = fact_key.rsplit(".", 1)[0] if "." in fact_key and fact_key.split(".")[-1].isdigit() else fact_key
-                            retrieved_topic_keys.add(canonical_key)
+                            
+                            # Only count this fact if it's relevant to the query
+                            is_relevant = False
+                            
+                            # Primary check: main topic must match fact key
+                            if main_topic:
+                                fact_key_lower = canonical_key.lower()
+                                # Check if main topic appears in fact key (e.g., "food" in "user.food" or "user.favorite_food")
+                                if main_topic in fact_key_lower:
+                                    is_relevant = True
+                                # Also check if main topic appears in value_text (for cases like "favorite food" stored as "food")
+                                elif main_topic in value_text:
+                                    is_relevant = True
+                            
+                            # Fallback: if no main topic extracted, use keyword matching (but stricter)
+                            if not is_relevant and topic_keywords:
+                                fact_key_lower = canonical_key.lower()
+                                # Require at least 2 keywords to match (to avoid false positives)
+                                matching_keywords = [kw for kw in topic_keywords if kw in fact_key_lower or kw in value_text]
+                                if len(matching_keywords) >= 2:
+                                    is_relevant = True
+                            
+                            # If no keywords at all, don't count (safer than counting everything)
+                            
+                            if is_relevant:
+                                retrieved_topic_keys.add(canonical_key)
                 
                 facts_actions["R"] = len(retrieved_topic_keys)
                 if facts_actions["R"] > 0:
-                    logger.info(f"[MEMORY] Retrieved {facts_actions['R']} distinct topic keys: {sorted(retrieved_topic_keys)}")
+                    logger.info(f"[MEMORY] Retrieved {facts_actions['R']} distinct topic keys (filtered for relevance): {sorted(retrieved_topic_keys)}")
             else:
                 logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
                 logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")

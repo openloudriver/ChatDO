@@ -91,6 +91,8 @@ class Chat(BaseModel):
     updated_at: str
     trashed: bool = False
     trashed_at: Optional[str] = None
+    archived: bool = False
+    archived_at: Optional[str] = None
 
 
 class ChatCreate(BaseModel):
@@ -129,13 +131,23 @@ def save_chats(chats: List[dict]) -> None:
 
 
 def get_active_chats(chats: List[dict]) -> List[dict]:
-    """Get chats that are not trashed"""
-    return [c for c in chats if not c.get("trashed", False)]
+    """Get chats that are not trashed and not archived"""
+    return [c for c in chats if not c.get("trashed", False) and not c.get("archived", False)]
 
 
 def get_trashed_chats(chats: List[dict]) -> List[dict]:
     """Get chats that are trashed"""
     return [c for c in chats if c.get("trashed", False)]
+
+
+def filter_archived_chats(chats: List[dict]) -> List[dict]:
+    """Get chats that are archived (but not trashed)"""
+    return [c for c in chats if c.get("archived", False) and not c.get("trashed", False)]
+
+
+def filter_archived_projects(projects: List[dict]) -> List[dict]:
+    """Get projects that are archived (but not trashed)"""
+    return [p for p in projects if p.get("archived", False) and not p.get("trashed", False)]
 
 
 def now_iso() -> str:
@@ -498,6 +510,8 @@ class Project(BaseModel):
     sort_index: int = 0
     trashed: bool = False
     trashed_at: Optional[str] = None
+    archived: bool = False
+    archived_at: Optional[str] = None
 
 
 class ProjectCreate(BaseModel):
@@ -569,27 +583,54 @@ async def root():
 
 
 @app.get("/api/projects", response_model=List[Project])
-async def get_projects():
-    """Return list of available projects, ensuring General exists"""
+async def get_projects(
+    scope: Optional[str] = Query("active", description="Scope: 'active', 'archived', 'trash', or 'all'")
+):
+    """Return list of projects based on scope
+    
+    - active: Only active projects (default, excludes archived and trashed)
+    - archived: Only archived projects
+    - trash: Only trashed projects
+    - all: All projects (active + archived, excludes trashed)
+    """
     projects = load_projects()
     
-    # Filter out trashed projects
-    projects = [p for p in projects if not p.get("trashed", False)]
+    # Filter based on scope
+    if scope == "active":
+        # Default: exclude trashed and archived
+        projects = [p for p in projects if not p.get("trashed", False) and not p.get("archived", False)]
+    elif scope == "archived":
+        # Only archived (not trashed)
+        projects = [p for p in projects if p.get("archived", False) and not p.get("trashed", False)]
+    elif scope == "trash":
+        # Only trashed
+        projects = [p for p in projects if p.get("trashed", False)]
+    elif scope == "all":
+        # All non-trashed (active + archived)
+        projects = [p for p in projects if not p.get("trashed", False)]
+    else:
+        # Default to active
+        projects = [p for p in projects if not p.get("trashed", False) and not p.get("archived", False)]
     
-    # Ensure General project exists
-    general_project = next((p for p in projects if p.get("name") == "General"), None)
-    if not general_project:
-        # Create General project
-        general_project = {
-            "id": str(uuid.uuid4()),
-            "name": "General",
-            "default_target": "general",
-            "sort_index": 0,
-            "created_at": now_iso(),
-            "updated_at": now_iso()
-        }
-        projects.insert(0, general_project)
-        save_projects(projects)
+    # Ensure General project exists (only for active scope)
+    if scope == "active" or scope is None:
+        general_project = next((p for p in projects if p.get("name") == "General"), None)
+        if not general_project:
+            # Create General project
+            general_project = {
+                "id": str(uuid.uuid4()),
+                "name": "General",
+                "default_target": "general",
+                "sort_index": 0,
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+                "trashed": False,
+                "trashed_at": None,
+                "archived": False,
+                "archived_at": None
+            }
+            projects.insert(0, general_project)
+            save_projects(projects)
     
     return projects
 
@@ -652,6 +693,55 @@ async def update_project(project_id: str, project_data: ProjectUpdate):
     return projects[project_index]
 
 
+@app.post("/api/projects/{project_id}/archive")
+async def archive_project(project_id: str):
+    """Archive a project (hide from default lists, keep searchable)"""
+    projects = load_projects()
+    
+    # Find the project
+    project_index = None
+    for i, p in enumerate(projects):
+        if p.get("id") == project_id:
+            project_index = i
+            break
+    
+    if project_index is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    if projects[project_index].get("trashed", False):
+        raise HTTPException(status_code=400, detail="Cannot archive a trashed project")
+    
+    # Archive - mark project as archived
+    projects[project_index]["archived"] = True
+    projects[project_index]["archived_at"] = now_iso()
+    save_projects(projects)
+    
+    return {"success": True, "message": f"Project {project_id} archived"}
+
+
+@app.post("/api/projects/{project_id}/unarchive")
+async def unarchive_project(project_id: str):
+    """Unarchive a project (restore to active)"""
+    projects = load_projects()
+    
+    # Find the project
+    project_index = None
+    for i, p in enumerate(projects):
+        if p.get("id") == project_id:
+            project_index = i
+            break
+    
+    if project_index is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Unarchive
+    projects[project_index]["archived"] = False
+    projects[project_index]["archived_at"] = None
+    save_projects(projects)
+    
+    return {"success": True, "message": f"Project {project_id} unarchived"}
+
+
 @app.delete("/api/projects/{project_id}")
 async def delete_project(project_id: str):
     """Soft delete a project (move to trash) and all its chats"""
@@ -671,6 +761,10 @@ async def delete_project(project_id: str):
     # Soft delete - mark project as trashed
     projects[project_index]["trashed"] = True
     projects[project_index]["trashed_at"] = now_iso()
+    # Clear archive status when trashing (can't be both archived and trashed)
+    if projects[project_index].get("archived", False):
+        projects[project_index]["archived"] = False
+        projects[project_index]["archived_at"] = None
     save_projects(projects)
     
     # Soft delete all chats belonging to this project
@@ -805,7 +899,9 @@ async def new_conversation(request: NewConversationRequest):
         "created_at": now_iso(),
         "updated_at": now_iso(),
         "trashed": False,
-        "trashed_at": None
+        "trashed_at": None,
+        "archived": False,
+        "archived_at": None
     }
     
     chats.append(new_chat)
@@ -2445,9 +2541,16 @@ async def scrape_url_endpoint(
 @app.get("/api/chats", response_model=List[Chat])
 async def get_chats(
     project_id: Optional[str] = Query(None),
-    include_trashed: bool = Query(False)
+    include_trashed: bool = Query(False),  # DEPRECATED: use scope instead
+    scope: Optional[str] = Query("active", description="Scope: 'active', 'archived', 'trash', or 'all'")
 ):
-    """Get chats, optionally filtered by project and including trashed"""
+    """Get chats, optionally filtered by project and scope
+    
+    - active: Only active chats (default, excludes archived and trashed)
+    - archived: Only archived chats
+    - trash: Only trashed chats
+    - all: All chats (active + archived, excludes trashed)
+    """
     chats = load_chats()
     projects = load_projects()
     
@@ -2460,7 +2563,11 @@ async def get_chats(
             "default_target": "general",
             "sort_index": 0,
             "created_at": now_iso(),
-            "updated_at": now_iso()
+            "updated_at": now_iso(),
+            "trashed": False,
+            "trashed_at": None,
+            "archived": False,
+            "archived_at": None
         }
         projects.insert(0, general_project)
         save_projects(projects)
@@ -2471,6 +2578,14 @@ async def get_chats(
         if not chat.get("project_id"):
             chat["project_id"] = general_project["id"]
             chat["updated_at"] = now_iso()
+            if "archived" not in chat:
+                chat["archived"] = False
+                chat["archived_at"] = None
+            needs_save = True
+        # Ensure archived fields exist
+        if "archived" not in chat:
+            chat["archived"] = False
+            chat["archived_at"] = None
             needs_save = True
     
     if needs_save:
@@ -2484,9 +2599,25 @@ async def get_chats(
     if project_id:
         chats = [c for c in chats if c.get("project_id") == project_id]
     
-    # Filter trashed if not including them
-    if not include_trashed:
-        chats = get_active_chats(chats)
+    # Filter based on scope (backward compatibility: include_trashed overrides scope)
+    if include_trashed:
+        # Legacy behavior: include trashed but still exclude archived
+        chats = [c for c in chats if not c.get("archived", False)]
+    elif scope == "active":
+        # Default: exclude trashed and archived
+        chats = [c for c in chats if not c.get("trashed", False) and not c.get("archived", False)]
+    elif scope == "archived":
+        # Only archived (not trashed)
+        chats = [c for c in chats if c.get("archived", False) and not c.get("trashed", False)]
+    elif scope == "trash":
+        # Only trashed
+        chats = [c for c in chats if c.get("trashed", False)]
+    elif scope == "all":
+        # All non-trashed (active + archived)
+        chats = [c for c in chats if not c.get("trashed", False)]
+    else:
+        # Default to active
+        chats = [c for c in chats if not c.get("trashed", False) and not c.get("archived", False)]
     
     return chats
 
@@ -2699,6 +2830,10 @@ async def soft_delete_chat(chat_id: str):
     chats[chat_index]["trashed"] = True
     chats[chat_index]["trashed_at"] = now_iso()
     chats[chat_index]["updated_at"] = now_iso()
+    # Clear archive status when trashing (can't be both archived and trashed)
+    if chats[chat_index].get("archived", False):
+        chats[chat_index]["archived"] = False
+        chats[chat_index]["archived_at"] = None
     
     save_chats(chats)
     return chats[chat_index]
@@ -2784,6 +2919,73 @@ async def move_chat_to_project(chat_id: str, request: MoveChatRequest):
     logger.info(f"[CHATS] Moved chat {chat_id} from project {old_project_id} -> project {new_project_id}")
     
     return chats[chat_index]
+
+
+@app.post("/api/chats/{chat_id}/archive")
+async def archive_chat(chat_id: str):
+    """Archive a chat (hide from default lists, keep searchable)"""
+    chats = load_chats()
+    
+    # Find chat by ID
+    chat_index = None
+    for i, c in enumerate(chats):
+        if c.get("id") == chat_id:
+            chat_index = i
+            break
+    
+    if chat_index is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    if chats[chat_index].get("trashed", False):
+        raise HTTPException(status_code=400, detail="Cannot archive a trashed chat")
+    
+    # Archive - mark chat as archived
+    chats[chat_index]["archived"] = True
+    chats[chat_index]["archived_at"] = now_iso()
+    chats[chat_index]["updated_at"] = now_iso()
+    
+    save_chats(chats)
+    return chats[chat_index]
+
+
+@app.post("/api/chats/{chat_id}/unarchive")
+async def unarchive_chat(chat_id: str):
+    """Unarchive a chat (restore to active)"""
+    chats = load_chats()
+    
+    # Find chat by ID
+    chat_index = None
+    for i, c in enumerate(chats):
+        if c.get("id") == chat_id:
+            chat_index = i
+            break
+    
+    if chat_index is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    # Unarchive
+    chats[chat_index]["archived"] = False
+    chats[chat_index]["archived_at"] = None
+    chats[chat_index]["updated_at"] = now_iso()
+    
+    save_chats(chats)
+    return chats[chat_index]
+
+
+@app.get("/api/chats/archived", response_model=List[Chat])
+async def get_archived_chats():
+    """Get all archived chats"""
+    chats = load_chats()
+    archived_chats = filter_archived_chats(chats)
+    return archived_chats
+
+
+@app.get("/api/projects/archived", response_model=List[Project])
+async def get_archived_projects():
+    """Get all archived projects"""
+    projects = load_projects()
+    archived_projects = filter_archived_projects(projects)
+    return archived_projects
 
 
 @app.post("/api/chats/{chat_id}/restore", response_model=Chat)
