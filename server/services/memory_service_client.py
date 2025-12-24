@@ -547,11 +547,63 @@ def get_trashed_chat_ids_for_project(project_id: str) -> List[str]:
         return []
 
 
+def get_archived_chat_ids_for_project(project_id: str) -> List[str]:
+    """
+    Get list of archived chat_ids for a project.
+    
+    Args:
+        project_id: The project ID
+        
+    Returns:
+        List of chat_ids that are archived (but not trashed) for this project
+    """
+    try:
+        from server.main import load_chats, get_archived_chats
+        chats = load_chats()
+        archived_chats = get_archived_chats(chats)
+        # Filter to only chats for this project
+        return [c.get("id") for c in archived_chats if c.get("project_id") == project_id]
+    except Exception as e:
+        logger.warning(f"Failed to get archived chat_ids for project {project_id}: {e}")
+        return []
+
+
+def get_excluded_chat_ids_for_recall(project_id: str) -> List[str]:
+    """
+    Get list of chat_ids to exclude from ChatDO recall.
+    
+    RECALL IS ALWAYS ACTIVE-ONLY:
+    - Archived chats are ALWAYS excluded from recall
+    - Trashed chats are ALWAYS excluded from recall
+    - This is enforced server-side, independent of UI search scope
+    
+    Args:
+        project_id: The project ID
+        
+    Returns:
+        List of chat_ids to exclude from recall (trashed + archived)
+    """
+    excluded = []
+    
+    # Always exclude trashed (never recalled)
+    excluded.extend(get_trashed_chat_ids_for_project(project_id))
+    
+    # Always exclude archived (never recalled - must restore to Active to be recalled)
+    excluded.extend(get_archived_chat_ids_for_project(project_id))
+    
+    return excluded
+
+
 def get_project_memory_context(project_id: str | None, query: str, limit: int = 8, chat_id: Optional[str] = None) -> Optional[tuple[str, bool]]:
     """
     Get memory context for a project and format it for injection into prompts.
-    Includes both file-based sources and cross-chat memory from ALL chats in the project.
-    Excludes trashed chats from cross-chat memory.
+    Includes both file-based sources and cross-chat memory from ACTIVE chats only.
+    
+    RECALL IS ALWAYS ACTIVE-ONLY:
+    - Archived chats are NEVER included in recall
+    - Trashed chats are NEVER included in recall
+    - Archived projects are NEVER used for recall
+    - This is enforced server-side, independent of UI search scope
     
     Args:
         project_id: The project ID (can be None)
@@ -566,15 +618,22 @@ def get_project_memory_context(project_id: str | None, query: str, limit: int = 
     if not project_id:
         return None
     
+    # Check if project is archived - archived projects are never used for recall
+    from server.services import projects_config
+    project = projects_config.get_project(project_id)
+    if project and (project.get("archived", False) or project.get("trashed", False)):
+        logger.debug(f"[RECALL] Project {project_id} is archived or trashed - excluding from recall")
+        return "", False
+    
     source_ids = get_memory_sources_for_project(project_id)
     # Even if no file sources, we still want to search chat messages
     # So we don't return None here - we'll search chats regardless
     
-    # Get trashed chat_ids to exclude from search
-    exclude_chat_ids = get_trashed_chat_ids_for_project(project_id)
+    # Get chat_ids to exclude from recall (ALWAYS excludes trashed + archived)
+    exclude_chat_ids = get_excluded_chat_ids_for_recall(project_id)
     
     client = get_memory_client()
-    # Pass None for chat_id to include ALL chats (including current chat), but exclude trashed chats
+    # Pass None for chat_id to include ALL chats (including current chat), but exclude trashed/archived chats
     results = client.search(project_id, query, limit, source_ids, chat_id=None, exclude_chat_ids=exclude_chat_ids)
     if results:
         return client.format_context(results), True

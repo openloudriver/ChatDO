@@ -91,6 +91,8 @@ export interface Conversation {
   updatedAt?: string;  // ISO string from backend updated_at
   trashed?: boolean;
   trashed_at?: string;
+  archived?: boolean;
+  archived_at?: string;
   thread_id?: string;
 }
 
@@ -99,9 +101,13 @@ export interface Project {
   name: string;
   default_target: string;
   sort_index?: number;
+  trashed?: boolean;
+  trashed_at?: string;
+  archived?: boolean;
+  archived_at?: string;
 }
 
-export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory' | 'impact';
+export type ViewMode = 'projectList' | 'chat' | 'trashList' | 'search' | 'memory' | 'impact' | 'library';
 export type WebMode = 'auto' | 'on';
 
 export interface ConnectProjectModalState {
@@ -156,8 +162,10 @@ interface ChatStore {
   restoreChat: (id: string) => Promise<void>;
   purgeChat: (id: string) => Promise<void>;
   purgeAllTrashedChats: () => Promise<void>;
-  searchChats: (query: string) => Promise<void>;
+  searchChats: (query: string, scope?: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
+  searchScope: string;  // 'all', 'active', 'archived', 'trash'
+  setSearchScope: (scope: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   openConnectProjectModal: (projectId: string, projectName: string) => void;
   closeConnectProjectModal: () => void;
@@ -200,13 +208,14 @@ export const useChatStore = create<ChatStore>((set) => ({
   viewMode: (() => {
     // Restore viewMode from localStorage on initialization
     const saved = localStorage.getItem('chatdo:viewMode');
-    if (saved && ['projectList', 'chat', 'trashList', 'search', 'memory', 'impact'].includes(saved)) {
+    if (saved && ['projectList', 'chat', 'trashList', 'search', 'memory', 'impact', 'library'].includes(saved)) {
       return saved as ViewMode;
     }
     return 'projectList';
   })(),
   searchQuery: '',
   searchResults: [],
+  searchScope: 'all',  // Default: search all (active + archived)
   sources: [],
   ragFileIds: [],
   ragFilesByConversationId: {},
@@ -242,7 +251,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   loadProjects: async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/projects');
+      // Load only active projects (excludes archived and trashed)
+      const response = await axios.get('http://localhost:8000/api/projects?scope=active');
       const projects = response.data;
       set(() => {
         // Don't auto-select project - let startup logic handle it
@@ -386,11 +396,11 @@ export const useChatStore = create<ChatStore>((set) => ({
   
   loadChats: async (projectId) => {
     try {
-      // For project lists, only load active chats (not trashed)
-      // For loading all chats (no projectId), include trashed to populate trashedChats
+      // For project lists, only load active chats (not trashed, not archived)
+      // For loading all chats (no projectId), use scope=all to get active+archived (for Recent section)
       const url = projectId
-        ? `http://localhost:8000/api/chats?project_id=${projectId}&include_trashed=false`
-        : `http://localhost:8000/api/chats?include_trashed=true`;
+        ? `http://localhost:8000/api/chats?project_id=${projectId}&scope=active`
+        : `http://localhost:8000/api/chats?scope=all`;
       const response = await axios.get(url);
       const allChats = response.data;
       
@@ -428,14 +438,19 @@ export const useChatStore = create<ChatStore>((set) => ({
           updatedAt: chat.updated_at,  // Map updated_at from backend
           trashed: chat.trashed || false,
           trashed_at: chat.trashed_at,
+          archived: chat.archived || false,
+          archived_at: chat.archived_at,
           thread_id: chat.thread_id
         };
         
         if (chat.trashed) {
           trashedChats.push(conversation);
-        } else {
+        } else if (!chat.archived) {
+          // Only add to activeChats if not trashed and not archived
           activeChats.push(conversation);
         }
+        // Note: archived chats are included in allConversations (for Recent section)
+        // but excluded from activeChats (default list views)
       }
       
       // Sort by updated_at (most recent first)
@@ -475,8 +490,10 @@ export const useChatStore = create<ChatStore>((set) => ({
         };
         
         // If loading all chats (no project filter), update allConversations and trashedChats
+        // Note: allConversations should only include active chats (excludes archived and trashed)
+        // Archived chats are searchable via search scope but don't appear in default lists
         if (!projectId) {
-          update.allConversations = activeChats;  // Update global list with all active chats
+          update.allConversations = activeChats;  // Update global list with all active chats (excludes archived)
           update.trashedChats = trashedChats;
         } else {
           // When loading a specific project's chats, merge into allConversations
@@ -1400,7 +1417,11 @@ export const useChatStore = create<ChatStore>((set) => ({
     }
   },
   
-  searchChats: async (query: string) => {
+  setSearchScope: (scope: string) => {
+    set({ searchScope: scope });
+  },
+
+  searchChats: async (query: string, scope?: string) => {
     if (!query.trim()) {
       set((state) => {
         const newViewMode = state.viewMode === 'search' ? 'projectList' : state.viewMode;
@@ -1412,9 +1433,13 @@ export const useChatStore = create<ChatStore>((set) => ({
       return;
     }
     
+    // Use provided scope or default from state
+    const searchScope = scope || useChatStore.getState().searchScope;
+    
     try {
-      // Load all chats (not filtered by project)
-      const response = await axios.get('http://localhost:8000/api/chats?include_trashed=false');
+      // Load chats based on scope
+      const scopeParam = searchScope === 'all' ? 'all' : searchScope === 'active' ? 'active' : searchScope === 'archived' ? 'archived' : 'trash';
+      const response = await axios.get(`http://localhost:8000/api/chats?scope=${scopeParam}`);
       const allChats = response.data;
       
       const state = useChatStore.getState();
@@ -1460,8 +1485,10 @@ export const useChatStore = create<ChatStore>((set) => ({
             targetName: defaultTarget,
             createdAt: new Date(chat.created_at),
             updatedAt: chat.updated_at,  // Map updated_at from backend
-            trashed: false,
-            trashed_at: undefined,
+            trashed: chat.trashed || false,
+            trashed_at: chat.trashed_at,
+            archived: chat.archived || false,
+            archived_at: chat.archived_at,
             thread_id: chat.thread_id
           };
           

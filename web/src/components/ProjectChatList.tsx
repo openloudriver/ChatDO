@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useChatStore } from '../store/chat';
 import type { Conversation } from '../store/chat';
 import ConfirmDialog from './ConfirmDialog';
@@ -236,7 +237,12 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
   };
 
   // Filter conversations for this project
-  const projectChats = conversations.filter(c => c.projectId === projectId);
+  // Exclude archived and trashed chats from default list views
+  const projectChats = conversations.filter(c => 
+    c.projectId === projectId && 
+    !c.archived && 
+    !c.trashed
+  );
 
   return (
     <div 
@@ -392,6 +398,22 @@ const ProjectChatList: React.FC<ProjectChatListProps> = ({ projectId }) => {
                         className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
                       >
                         Move Chat
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setOpenMenuId(null);
+                          setMenuPosition(null);
+                          try {
+                            const response = await axios.post(`http://localhost:8000/api/chats/${chat.id}/${chat.archived ? 'unarchive' : 'archive'}`);
+                            await loadChats(projectId);
+                          } catch (error) {
+                            console.error('Failed to archive/unarchive chat:', error);
+                            alert('Failed to archive/unarchive chat. Please try again.');
+                          }
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                      >
+                        {chat.archived ? 'Unarchive Chat' : 'Archive Chat'}
                       </button>
                       <button
                         onClick={() => handleDeleteChat(chat.id, chat.title)}

@@ -280,12 +280,19 @@ def get_relevant_memory(
     chat_id: Optional[str] = None,
     max_hits: int = 30,
     exclude_message_uuid: Optional[str] = None,
+    **kwargs
 ) -> List[MemoryHit]:
     """
     High-level helper used by chat_with_smart_search.
     
     Calls the existing Memory Service search, applies Librarian ranking/deduplication,
     retrieves current facts, and returns clean, ordered MemoryHit instances.
+    
+    RECALL IS ALWAYS ACTIVE-ONLY:
+    - Archived chats are NEVER included in recall
+    - Trashed chats are NEVER included in recall
+    - Archived projects are NEVER used for recall
+    - This is enforced server-side, independent of UI search scope
     
     Args:
         project_id: The project ID to search
@@ -367,10 +374,19 @@ def get_relevant_memory(
     # 2) Call existing memory search
     # Request more results than we need so we can re-rank and filter
     client = memory_service_client.get_memory_client()
+    
+    # Check if project is archived - archived projects are never used for recall
+    from server.services import projects_config
+    project = projects_config.get_project(project_id)
+    if project and (project.get("archived", False) or project.get("trashed", False)):
+        logger.info(f"[RECALL] Project {project_id} is archived or trashed - excluding from recall")
+        return fact_hits  # Return only fact hits, no chat memory
+    
     source_ids = memory_service_client.get_memory_sources_for_project(project_id)
     
-    # Get trashed chat_ids to exclude from search
-    exclude_chat_ids = memory_service_client.get_trashed_chat_ids_for_project(project_id)
+    # Get chat_ids to exclude from recall (ALWAYS excludes trashed + archived)
+    # RECALL IS ALWAYS ACTIVE-ONLY - no way to include archived in recall
+    exclude_chat_ids = memory_service_client.get_excluded_chat_ids_for_recall(project_id)
     
     # Request 3x the limit to have enough candidates for re-ranking
     raw_results = client.search(
@@ -379,7 +395,7 @@ def get_relevant_memory(
         limit=max_hits * 3,
         source_ids=source_ids,
         chat_id=None,  # Include all chats for cross-chat memory
-        exclude_chat_ids=exclude_chat_ids  # Exclude trashed chats
+        exclude_chat_ids=exclude_chat_ids  # ALWAYS excludes trashed and archived chats
     )
     
     logger.info(f"[LIBRARIAN] raw_results={len(raw_results)}, fact_hits={len(fact_hits)}")

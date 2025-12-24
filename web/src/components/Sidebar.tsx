@@ -208,6 +208,24 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
             Connect Project
           </button>
           <button
+            onClick={async () => {
+              setOpenMenuId(null);
+              try {
+                const axios = (await import('axios')).default;
+                await axios.post(`http://localhost:8000/api/projects/${project.id}/${project.archived ? 'unarchive' : 'archive'}`);
+                // Reload projects - projects are loaded via useChatStore
+                window.location.reload(); // Simple reload to refresh project list
+              } catch (error) {
+                console.error('Failed to archive/unarchive project:', error);
+                alert('Failed to archive/unarchive project. Please try again.');
+              }
+            }}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg-tertiary)] transition-colors"
+            style={{ color: sidebarTextColor }}
+          >
+            {project.archived ? 'Unarchive Project' : 'Archive Project'}
+          </button>
+          <button
             onClick={() => {
               handleDeleteProject(project.id, project.name);
               setOpenMenuId(null);
@@ -241,6 +259,8 @@ const Sidebar: React.FC = () => {
     searchChats,
     setSearchQuery,
     searchQuery,
+    searchScope,
+    setSearchScope,
     createNewChatInProject
   } = useChatStore();
   
@@ -278,17 +298,19 @@ const Sidebar: React.FC = () => {
 
     // Get active (non-trashed) project IDs
     const activeProjectIds = new Set(
-      projects.filter(p => !p.trashed).map(p => p.id)
+      projects.filter(p => !p.trashed && !p.archived).map(p => p.id)
     );
 
     // Filter to only chats that:
     // - Have a projectId
     // - Are not trashed
-    // - Belong to an active (non-trashed) project
+    // - Are not archived (default lists exclude archived)
+    // - Belong to an active (non-trashed, non-archived) project
     // - Are not from Bullet Workspace
     const valid = allConversations.filter((c) => 
       !!c.projectId && 
       !c.trashed && 
+      !c.archived &&
       activeProjectIds.has(c.projectId) &&
       !bulletWorkspaceProjectIds.has(c.projectId)
     );
@@ -361,7 +383,7 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
-        searchChats(searchQuery);
+        searchChats(searchQuery, searchScope);
       }
       // If search is cleared, setSearchQuery will handle clearing the view
     }, 300); // 300ms debounce
@@ -381,7 +403,7 @@ const Sidebar: React.FC = () => {
   const handleNewChat = async () => {
     if (!currentProject) {
       // If no project is selected, try to use the first available project
-      const firstProject = projects.find(p => !p.trashed && p.name !== "Bullet Workspace");
+      const firstProject = projects.find(p => !p.trashed && !p.archived && p.name !== "Bullet Workspace");
       if (!firstProject) {
         console.warn('No project available to create chat in');
         return;
@@ -459,7 +481,7 @@ const Sidebar: React.FC = () => {
       style={{ color: sidebarTextColor }}
     >
       {/* Search Field */}
-      <div className="p-2 flex-shrink-0">
+      <div className="p-2 flex-shrink-0 space-y-2">
         <div className="relative">
           <svg
             className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4"
@@ -499,6 +521,20 @@ const Sidebar: React.FC = () => {
             }}
           />
         </div>
+        {/* Scope Selector */}
+        <select
+          value={searchScope}
+          onChange={(e) => setSearchScope(e.target.value)}
+          className="w-full px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md focus:outline-none transition-colors"
+          style={{ 
+            color: sidebarTextColor
+          }}
+        >
+          <option value="all">All (Active + Archive)</option>
+          <option value="active">Active</option>
+          <option value="archived">Archive</option>
+          <option value="trash">Trash</option>
+        </select>
       </div>
 
       {/* Projects List */}
@@ -672,16 +708,16 @@ const Sidebar: React.FC = () => {
           </button>
         <button
           onClick={() => {
-            setViewMode('trashList');
+            setViewMode('library');
             setCurrentProject(null);
           }}
           className={`p-2 rounded transition-colors flex-shrink-0 ${
-            viewMode === 'trashList'
+            viewMode === 'library'
               ? 'bg-[var(--bg-primary)]'
               : 'hover:bg-[var(--bg-primary)]'
           }`}
           style={{ color: sidebarTextColor }}
-          title="Trash"
+          title="Library (Archived & Trash)"
         >
           <svg
             className="w-5 h-5"
@@ -693,7 +729,7 @@ const Sidebar: React.FC = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
             />
           </svg>
         </button>
