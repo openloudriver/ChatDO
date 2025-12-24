@@ -6,6 +6,7 @@ type RenameProjectModalProps = {
   currentName: string;
   onClose: () => void;
   onRename: (newName: string) => Promise<void>;
+  isCreating?: boolean;
 };
 
 const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
@@ -13,6 +14,7 @@ const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
   currentName,
   onClose,
   onRename,
+  isCreating = false,
 }) => {
   const { theme } = useTheme();
   const [newName, setNewName] = useState(currentName);
@@ -53,7 +55,7 @@ const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
       await onRename(newName.trim());
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to rename project. Please try again.');
+      setError(err.message || (isCreating ? 'Failed to create project. Please try again.' : 'Failed to rename project. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +75,9 @@ const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg w-full max-w-md p-6 transition-colors">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Rename Project</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+            {isCreating ? 'Create Project' : 'Rename Project'}
+          </h2>
           <button
             onClick={handleClose}
             disabled={isLoading}
@@ -116,14 +120,14 @@ const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isLoading || !newName.trim() || newName.trim() === currentName}
+              disabled={isLoading || !newName.trim() || (!isCreating && newName.trim() === currentName)}
               className="px-4 py-2 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ 
                 backgroundColor: 'var(--user-bubble-bg)',
                 color: 'var(--user-bubble-text)'
               }}
               onMouseEnter={(e) => {
-                if (!isLoading && newName.trim() && newName.trim() !== currentName) {
+                if (!isLoading && newName.trim() && (isCreating || newName.trim() !== currentName)) {
                   e.currentTarget.style.opacity = '0.9';
                 }
               }}
@@ -131,7 +135,7 @@ const RenameProjectModal: React.FC<RenameProjectModalProps> = ({
                 e.currentTarget.style.opacity = '';
               }}
             >
-              {isLoading ? 'Renaming...' : 'Rename'}
+              {isLoading ? (isCreating ? 'Creating...' : 'Renaming...') : (isCreating ? 'Create' : 'Rename')}
             </button>
           </div>
         </form>

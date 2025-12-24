@@ -617,6 +617,7 @@ const Sidebar: React.FC = () => {
             className="rounded-md p-1 hover:bg-[var(--bg-primary)] transition-colors"
             style={{ color: sidebarTextColor }}
             aria-label="New project"
+            title="New project"
           >
             <NewProjectIcon />
           </button>
@@ -757,6 +758,7 @@ const Sidebar: React.FC = () => {
       <RenameProjectModal
         isOpen={renameModalOpen}
         currentName={renameProjectName}
+        isCreating={!renameProjectId}
         onClose={() => {
           setRenameModalOpen(false);
           setRenameProjectId(null);
