@@ -593,8 +593,10 @@ async def chat_with_smart_search(
                 
                 # Index-P = pipeline operational, job accepted/queued
                 # Index-F = pipeline failed to accept/queue job
+                user_index_job_id = None  # Track job ID for metadata
                 if success:
                     index_status = "P"
+                    user_index_job_id = job_id
                     logger.info(f"[MEMORY] ✅ Enqueued indexing job {job_id} for user message {user_message_id}")
                 else:
                     index_status = "F"
@@ -607,6 +609,7 @@ async def chat_with_smart_search(
             
         except Exception as e:
             index_status = "F"
+            user_index_job_id = None
             logger.warning(f"[MEMORY] ❌ Exception setting up async indexing: {e}", exc_info=True)
             # Don't block response - Facts already persisted, indexing is best-effort
     
@@ -638,234 +641,119 @@ async def chat_with_smart_search(
         # REMOVED: Clarification question logic - all queries go through GPT-5 now
         logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
         
-        # REMOVED: get_facts() - use /search-facts endpoint instead
-        # Facts are now retrieved via librarian's /search-facts which uses project_facts table
-        facts = []  # Disabled: facts retrieval now handled by librarian via project_facts table
-        
-        # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
+        # Fast list query handler: "list/show/what are my favorite X"
+        # Uses DB-backed path (not Memory Service HTTP) for speed and reliability
         if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
-            # Determine topic_key STRICTLY
-            # If query includes topic noun → use that topic_key only
+            # Extract topic from query
             topic_key = extract_topic_from_query(user_message)
             
-            # REMOVED: get_most_recent_topic_key_in_chat() - function was removed with NEW system
-            # If topic_key is None, we'll just proceed without it (GPT-5 will handle the query)
             if not topic_key:
-                logger.debug(f"[FACTS] No topic_key found for list query, proceeding with GPT-5")
-            
-            # If topic_key still None → return clarification question (no GPT-5 Mini)
-            if not topic_key:
-                clarification = "Which category (colors/cryptos/tv/candies)?"
-                logger.info(f"[FACTS] Topic key is None for list query - returning clarification question")
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        model_label = "Model: Memory"
-                        # Use constructed message_id to match indexing (enables UUID lookup)
-                        message_index = len(history)
-                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                        history.append({
-                            "id": assistant_message_id,  # Use constructed ID to match indexing
-                            "role": "assistant",
-                            "content": clarification,
-                            "model": "Memory",
-                            "model_label": model_label,
-                            "provider": "memory",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save clarification to history: {e}")
+                # No topic found - let GPT-5 handle it
+                logger.debug(f"[FACTS-LIST] No topic_key found for list query, proceeding with GPT-5")
+            elif project_id:
+                # Search ranked facts directly from DB (fast, deterministic, no Memory Service dependency)
+                ranked_facts = librarian.search_facts_ranked_list(
+                    project_id=project_id,
+                    topic_key=topic_key,
+                    limit=50,
+                    exclude_message_uuid=current_message_uuid  # Exclude facts from current message
+                )
                 
-                return {
-                    "type": "assistant_message",
-                    "content": clarification,
-                    "meta": {"usedFacts": True, "clarification": True},
-                    "model": "Memory",
-                    "model_label": "Model: Memory",
-                    "provider": "memory",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
-            
-            logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
-            
-            # Actually search for facts using the Memory Service /search-facts endpoint
-            facts = []
-            if project_id and topic_key:
-                try:
-                    import requests
-                    memory_service_url = "http://127.0.0.1:5858"
-                    search_query = user_message  # Use the full user message as the search query
-                    response = requests.post(
-                        f"{memory_service_url}/search-facts",
-                        json={
-                            "project_id": project_id,
-                            "query": search_query,
-                            "limit": 50  # Get enough facts to find ranked lists
-                        },
-                        timeout=5
-                    )
-                    if response.status_code == 200:
-                        data = response.json()
-                        facts = data.get("facts", [])
-                        logger.info(f"[FACTS] Found {len(facts)} facts for query '{search_query}'")
-                    else:
-                        logger.warning(f"[FACTS] Search failed with status {response.status_code}")
-                except Exception as e:
-                    logger.warning(f"[FACTS] Failed to search facts: {e}", exc_info=True)
-            
-            # Filter to only ranked facts (facts with rank in fact_key, e.g., "user.favorite_crypto.1", "user.favorite_crypto.2")
-            # Ranked facts have fact_key pattern: user.{topic}.{rank}
-            # IMPORTANT: Only include facts from the SAME topic as the query
-            ranked_facts = []
-            for fact in facts:
-                fact_key = fact.get("fact_key", "")
-                # Check if fact_key matches pattern user.{topic}.{rank} where rank is a number
-                if re.match(r'^user\.(.+)\.\d+$', fact_key):
-                    # Extract the topic part (everything before the rank)
-                    topic_match = re.match(r'^user\.(.+)\.\d+$', fact_key)
-                    if topic_match:
-                        fact_topic = topic_match.group(1)
-                        
-                        # CRITICAL: Only include facts that match the query topic
-                        # Use the same topic normalization as fact_extractor for consistency
-                        if topic_key:
-                            # Normalize the topic_key to match fact_extractor's normalization
-                            from memory_service.fact_extractor import get_fact_extractor
-                            extractor = get_fact_extractor()
-                            normalized_topic_key = extractor._normalize_topic(topic_key.replace('_', ' '))
-                            
-                            # Extract the base topic from fact_key (e.g., "favorite_crypto" from "user.favorite_crypto.1")
-                            fact_topic_base = fact_topic.lower()
-                            
-                            # Check if the normalized topic_key matches the fact topic
-                            # Handle both "favorite_crypto" and "crypto" variations
-                            topics_match = (
-                                fact_topic_base == normalized_topic_key or
-                                fact_topic_base.replace('favorite_', '') == normalized_topic_key.replace('favorite_', '') or
-                                # Handle plurals (crypto vs cryptos)
-                                fact_topic_base.replace('favorite_', '').rstrip('s') == normalized_topic_key.replace('favorite_', '').rstrip('s') or
-                                # Check if one contains the other (for multi-word topics)
-                                (normalized_topic_key.replace('favorite_', '') in fact_topic_base.replace('favorite_', '')) or
-                                (fact_topic_base.replace('favorite_', '') in normalized_topic_key.replace('favorite_', ''))
-                            )
-                            
-                            if not topics_match:
-                                # Skip facts from different topics
-                                logger.debug(f"[FACTS] Skipping fact {fact_key} - topic mismatch: fact_topic='{fact_topic_base}' vs query_topic='{normalized_topic_key}'")
-                                continue
-                        
-                        # Extract rank from fact_key (last number after final dot)
-                        rank_match = re.search(r'\.(\d+)$', fact_key)
-                        if rank_match:
-                            rank = int(rank_match.group(1))
-                            ranked_facts.append({
-                                "rank": rank,
-                                "value": fact.get("value_text", ""),
-                                "fact_key": fact_key,
-                                "source_message_uuid": fact.get("source_message_uuid"),
-                                "chat_id": None  # Will be extracted from message_uuid if needed
-                            })
-            
-            if ranked_facts:
-                # Sort by rank
-                ranked_facts.sort(key=lambda f: f.get("rank", 0))
-                
-                # Format: Output exactly "1) <value>\n2) <value>\n3) <value>" - NO markdown headings, NO ##, NO M1
-                list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value')}" for f in ranked_facts])
-                list_text = list_items
-                
-                # Build sources array for UI to display source tags (one source per unique chat)
-                chat_sources = {}
-                for idx, fact in enumerate(ranked_facts):
-                    fact_chat_id = fact.get("chat_id")
-                    if fact_chat_id and fact_chat_id not in chat_sources:
-                        chat_sources[fact_chat_id] = {
-                            "id": f"memory-fact-{len(chat_sources) + 1}",
-                            "title": f"Stored Facts (Chat {fact_chat_id[:8]}...)",
-                            "siteName": "Memory",
-                            "description": f"Ranked list from chat {fact_chat_id[:8]}...",
-                            "rank": len(chat_sources),
-                            "sourceType": "memory",
-                            "citationPrefix": "M",
-                            "meta": {
-                                "chat_id": fact_chat_id,
-                                "topic_key": topic_key,
-                                "fact_count": len([f for f in ranked_facts if f.get("chat_id") == fact_chat_id])
+                if ranked_facts:
+                    # Sort by rank (already sorted in helper, but ensure)
+                    ranked_facts.sort(key=lambda f: f.get("rank", 0))
+                    
+                    # Format: "1) X\n2) Y\n3) Z"
+                    list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in ranked_facts])
+                    
+                    # Build sources array with source_message_uuid for deep linking
+                    # Group by unique source_message_uuid to avoid duplicates
+                    sources_by_uuid = {}
+                    for fact in ranked_facts:
+                        msg_uuid = fact.get("source_message_uuid")
+                        if msg_uuid and msg_uuid not in sources_by_uuid:
+                            sources_by_uuid[msg_uuid] = {
+                                "id": f"fact-{msg_uuid[:8]}",
+                                "title": f"Stored Facts",
+                                "siteName": "Facts",
+                                "description": f"Ranked list: {topic_key}",
+                                "rank": len(sources_by_uuid),
+                                "sourceType": "memory",
+                                "citationPrefix": "M",
+                                "meta": {
+                                    "source_message_uuid": msg_uuid,  # For deep linking
+                                    "topic_key": topic_key,
+                                    "fact_count": len([f for f in ranked_facts if f.get("source_message_uuid") == msg_uuid])
+                                }
                             }
-                        }
-                
-                sources = list(chat_sources.values())
-                logger.info(f"[FACTS] ✅ Returning full ranked list from facts DB: topic_key={topic_key}, items={len(ranked_facts)}, sources={len(sources)}")
-                
-                # Save to history
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        model_label = "Model: Memory"
-                        # Use constructed message_id to match indexing (enables UUID lookup)
-                        message_index = len(history)
-                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                        history.append({
-                            "id": assistant_message_id,  # Use constructed ID to match indexing
-                            "role": "assistant",
-                            "content": list_text,
-                            "model": "Memory",
-                            "model_label": model_label,
-                            "provider": "memory",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save list answer to history: {e}")
-                
-                # Return direct answer WITHOUT calling Llama
-                return {
-                    "type": "assistant_message",
-                    "content": list_text,
-                    "meta": {"usedFacts": True},
-                    "sources": sources,
-                    "model": "Memory",
-                    "model_label": "Model: Memory",
-                    "provider": "memory",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
-            else:
-                logger.info(f"[FACTS] Full list query detected but no ranked facts found: topic_key={topic_key}")
-                # Return "I don't have that stored yet" - do NOT call Llama
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        model_label = "Model: Memory"
-                        response_text = "I don't have that stored yet."
-                        # Use constructed message_id to match indexing (enables UUID lookup)
-                        message_index = len(history)
-                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                        history.append({
-                            "id": assistant_message_id,  # Use constructed ID to match indexing
-                            "role": "assistant",
-                            "content": response_text,
-                            "model": "Memory",
-                            "model_label": model_label,
-                            "provider": "memory",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save 'not found' answer to history: {e}")
-                
-                return {
-                    "type": "assistant_message",
-                    "content": "I don't have that stored yet.",
-                    "meta": {"usedFacts": True, "factNotFound": True},
-                    "model": "Memory",
-                    "model_label": "Model: Memory",
-                    "provider": "memory",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
+                    
+                    sources = list(sources_by_uuid.values())
+                    logger.info(f"[FACTS-LIST] ✅ Returning ranked list: topic_key={topic_key}, items={len(ranked_facts)}, sources={len(sources)}")
+                    
+                    # Save to history
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            message_index = len(history)
+                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            history.append({
+                                "id": assistant_message_id,
+                                "role": "assistant",
+                                "content": list_items,
+                                "model": "Facts",
+                                "model_label": "Model: Facts",
+                                "provider": "facts",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to save list answer to history: {e}")
+                    
+                    # Return direct answer (fast path, no GPT-5)
+                    # NOTE: Do NOT set Facts-R here - list queries are not "recall context to GPT-5"
+                    return {
+                        "type": "assistant_message",
+                        "content": list_items,
+                        "meta": {"usedFacts": True, "fastPath": "facts_list"},
+                        "sources": sources,
+                        "model": "Facts",
+                        "model_label": "Model: Facts",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                else:
+                    # No ranked facts found
+                    logger.info(f"[FACTS-LIST] No ranked facts found for topic_key={topic_key}")
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            message_index = len(history)
+                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            response_text = "I don't have that stored yet."
+                            history.append({
+                                "id": assistant_message_id,
+                                "role": "assistant",
+                                "content": response_text,
+                                "model": "Facts",
+                                "model_label": "Model: Facts",
+                                "provider": "facts",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to save 'not found' answer to history: {e}")
+                    
+                    return {
+                        "type": "assistant_message",
+                        "content": "I don't have that stored yet.",
+                        "meta": {"usedFacts": True, "factNotFound": True, "fastPath": "facts_list"},
+                        "model": "Facts",
+                        "model_label": "Model: Facts",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
     
     # 0. Get memory context if project_id is available
     memory_context = ""
@@ -1624,7 +1512,8 @@ async def chat_with_smart_search(
             "usedWebSearch": True,
             "usedMemory": has_memory or memory_stored,  # Memory was stored or retrieved
             "webResultsPreview": web_results[:5],  # Top 5 for sources display
-            "memory_actions": memory_actions
+            "facts_actions": facts_actions,
+            "files_actions": files_actions
         },
         "model": model_label.replace("Model: ", ""),  # Return without "Model: " prefix for backward compatibility
         "model_label": model_label,

@@ -436,6 +436,39 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ChatDO API", version="1.5.0", lifespan=lifespan)
 
+# Register discovery router
+from server.routes import discovery
+app.include_router(discovery.router)
+
+# File content endpoint for Discovery file viewer
+@app.get("/api/files/content")
+async def get_file_content(path: str):
+    """
+    Get file content for Discovery file viewer.
+    Uses Memory Service filetree_read to read files from tracked sources.
+    
+    Path format: <source_id>/<relative_path>
+    Example: "coin-dir/path/to/file.txt"
+    """
+    from server.services.memory_service_client import get_memory_client
+    
+    # Extract source_id and relative path from full path
+    if '/' not in path:
+        raise HTTPException(status_code=400, detail="Invalid file path format")
+    
+    source_id, relative_path = path.split('/', 1)
+    
+    client = get_memory_client()
+    # filetree_read is async
+    result = await client.filetree_read(source_id, relative_path, max_bytes=512000)
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result.get("error", "File not found"))
+    
+    # Return file content as text
+    content = result.get("content", "")
+    return {"content": content, "path": path}
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,

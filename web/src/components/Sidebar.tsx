@@ -257,6 +257,7 @@ const Sidebar: React.FC = () => {
     setViewMode,
     viewMode,
     searchChats,
+    searchDiscovery,
     setSearchQuery,
     searchQuery,
     searchScope,
@@ -383,13 +384,14 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
-        searchChats(searchQuery, searchScope);
+        // Use new unified discovery search
+        searchDiscovery(searchQuery, currentProject?.id, ["facts", "index", "files"]);
       }
       // If search is cleared, setSearchQuery will handle clearing the view
     }, 300); // 300ms debounce
     
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, searchChats]);
+  }, [searchQuery, searchDiscovery, currentProject]);
   
   // Filter projects based on search query (only if not in search mode)
   const filteredProjects = projects;
@@ -502,18 +504,16 @@ const Sidebar: React.FC = () => {
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              // If search is active, ensure we're in search mode
-              if (searchQuery.trim()) {
-                setViewMode('search');
-              }
-            }}
             className="w-full pl-8 pr-3 py-2 text-sm bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md focus:outline-none transition-colors"
             style={{ 
               color: sidebarTextColor,
               '--tw-placeholder-color': sidebarTextColor
             } as React.CSSProperties & { '--tw-placeholder-color': string }}
             onFocus={(e) => {
+              // If search is active, ensure we're in search mode
+              if (searchQuery.trim()) {
+                setViewMode('search');
+              }
               e.currentTarget.style.borderColor = sidebarTextColor;
             }}
             onBlur={(e) => {

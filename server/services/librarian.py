@@ -824,3 +824,98 @@ def _detect_multi_claim(response: str) -> bool:
     
     return False
 
+
+def search_facts_ranked_list(
+    project_id: str,
+    topic_key: str,
+    limit: int = 50,
+    exclude_message_uuid: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Search for ranked facts (facts with rank in fact_key) for a given topic.
+    
+    This function reads directly from the project_facts DB (not via Memory Service HTTP),
+    making it fast, deterministic, and independent of Memory Service availability.
+    
+    Args:
+        project_id: Project ID
+        topic_key: Topic key (e.g., "favorite_crypto", "favorite_color")
+        limit: Maximum number of facts to return
+        exclude_message_uuid: Optional message UUID to exclude from results
+        
+    Returns:
+        List of fact dicts with:
+        - fact_key: Full fact key (e.g., "user.favorite_crypto.1")
+        - value_text: Fact value
+        - source_message_uuid: UUID of the message that stored this fact (for deep linking)
+        - rank: Rank number extracted from fact_key
+    """
+    try:
+        from memory_service.memory_dashboard import db
+        from memory_service.fact_extractor import get_fact_extractor
+        import re
+        
+        # Normalize topic_key to match fact_extractor's normalization
+        extractor = get_fact_extractor()
+        normalized_topic_key = extractor._normalize_topic(topic_key.replace('_', ' '))
+        
+        # Search facts using the topic as query (searches fact_key and value_text)
+        # This will find facts like "user.favorite_crypto.1", "user.favorite_crypto.2", etc.
+        source_id = f"project-{project_id}"
+        facts = db.search_current_facts(
+            project_id=project_id,
+            query=normalized_topic_key,  # Search for the topic
+            limit=limit,
+            source_id=source_id,
+            exclude_message_uuid=exclude_message_uuid
+        )
+        
+        # Filter to only ranked facts (facts with rank in fact_key, e.g., "user.favorite_crypto.1")
+        ranked_facts = []
+        for fact in facts:
+            fact_key = fact.get("fact_key", "")
+            # Check if fact_key matches pattern user.{topic}.{rank} where rank is a number
+            if re.match(r'^user\.(.+)\.\d+$', fact_key):
+                # Extract the topic part (everything before the rank)
+                topic_match = re.match(r'^user\.(.+)\.\d+$', fact_key)
+                if topic_match:
+                    fact_topic = topic_match.group(1)
+                    fact_topic_base = fact_topic.lower()
+                    
+                    # Check if the normalized topic_key matches the fact topic
+                    topics_match = (
+                        fact_topic_base == normalized_topic_key or
+                        fact_topic_base.replace('favorite_', '') == normalized_topic_key.replace('favorite_', '') or
+                        # Handle plurals (crypto vs cryptos)
+                        fact_topic_base.replace('favorite_', '').rstrip('s') == normalized_topic_key.replace('favorite_', '').rstrip('s') or
+                        # Check if one contains the other (for multi-word topics)
+                        (normalized_topic_key.replace('favorite_', '') in fact_topic_base.replace('favorite_', '')) or
+                        (fact_topic_base.replace('favorite_', '') in normalized_topic_key.replace('favorite_', ''))
+                    )
+                    
+                    if topics_match:
+                        # Extract rank from fact_key (last number after final dot)
+                        rank_match = re.search(r'\.(\d+)$', fact_key)
+                        if rank_match:
+                            rank = int(rank_match.group(1))
+                            ranked_facts.append({
+                                "fact_key": fact_key,
+                                "value_text": fact.get("value_text", ""),
+                                "source_message_uuid": fact.get("source_message_uuid"),
+                                "rank": rank
+                            })
+        
+        # Sort by rank
+        ranked_facts.sort(key=lambda f: f.get("rank", 0))
+        
+        logger.info(
+            f"[LIBRARIAN] Found {len(ranked_facts)} ranked facts for topic_key={topic_key} "
+            f"(normalized={normalized_topic_key})"
+        )
+        
+        return ranked_facts
+        
+    except Exception as e:
+        logger.error(f"[LIBRARIAN] Failed to search ranked facts: {e}", exc_info=True)
+        return []
+

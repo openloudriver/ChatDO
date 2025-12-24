@@ -132,8 +132,10 @@ interface ChatStore {
   summarizingConversations: Set<string>;  // Track which conversations are currently summarizing
   isRagTrayOpen: boolean;  // Whether RAG context tray is open
   viewMode: ViewMode;
-  searchResults: Conversation[];
+  searchResults: Conversation[];  // Legacy: kept for backward compatibility
   searchQuery: string;
+  discoveryResults: any;  // DiscoveryResponse from /discovery/search
+  discoveryLoading: boolean;  // Loading state for discovery search
   sources: Source[];  // Sources for current conversation
   ragFileIds: string[];  // RAG file IDs for current conversation (deprecated - use ragFilesByConversationId)
   ragFilesByConversationId: Record<string, RagFile[]>;  // RAG files scoped per conversation
@@ -162,9 +164,10 @@ interface ChatStore {
   restoreChat: (id: string) => Promise<void>;
   purgeChat: (id: string) => Promise<void>;
   purgeAllTrashedChats: () => Promise<void>;
-  searchChats: (query: string, scope?: string) => Promise<void>;
+  searchChats: (query: string, scope?: string) => Promise<void>;  // Legacy: kept for backward compatibility
+  searchDiscovery: (query: string, projectId?: string, scope?: string[]) => Promise<void>;  // New unified discovery search
   setSearchQuery: (query: string) => void;
-  searchScope: string;  // 'all', 'active', 'archived', 'trash'
+  searchScope: string;  // 'all', 'active', 'archived', 'trash' (for chat/project filtering only, not recall)
   setSearchScope: (scope: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   openConnectProjectModal: (projectId: string, projectName: string) => void;
@@ -215,6 +218,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   })(),
   searchQuery: '',
   searchResults: [],
+  discoveryResults: null,
+  discoveryLoading: false,
   searchScope: 'all',  // Default: search all (active + archived)
   sources: [],
   ragFileIds: [],
@@ -1512,6 +1517,42 @@ export const useChatStore = create<ChatStore>((set) => ({
     } catch (error) {
       console.error('Failed to search chats:', error);
       set({ searchResults: [] });
+    }
+  },
+  
+  searchDiscovery: async (query: string, projectId?: string, scope?: string[]) => {
+    if (!query.trim()) {
+      set({ 
+        discoveryResults: null,
+        discoveryLoading: false,
+        viewMode: useChatStore.getState().viewMode === 'search' ? 'projectList' : useChatStore.getState().viewMode
+      });
+      return;
+    }
+    
+    set({ discoveryLoading: true });
+    
+    try {
+      const { searchDiscovery: searchDiscoveryApi } = await import('../api/discovery');
+      const response = await searchDiscoveryApi({
+        query: query.trim(),
+        project_id: projectId || useChatStore.getState().currentProject?.id,
+        scope: scope || ["facts", "index", "files"],
+        limit: 50,  // Get more results for better UX
+      });
+      
+      set({ 
+        discoveryResults: response,
+        discoveryLoading: false,
+        searchQuery: query,
+        viewMode: 'search'
+      });
+    } catch (error) {
+      console.error('Failed to search discovery:', error);
+      set({ 
+        discoveryResults: null,
+        discoveryLoading: false
+      });
     }
   },
   
