@@ -184,21 +184,8 @@ class FactExtractor:
                 "confidence": 0.9
             })
         
-        # 6. Use spaCy for entity extraction (if available)
-        if self.nlp:
-            doc = self.nlp(content)
-            # Extract named entities
-            for ent in doc.ents:
-                if ent.label_ in ["PERSON", "ORG", "GPE"]:  # Person, Organization, Geopolitical
-                    fact_key = f"user.mentioned_{ent.label_.lower()}"
-                    facts.append({
-                        "fact_key": fact_key,
-                        "value_text": ent.text,
-                        "value_type": "string",
-                        "confidence": 0.7
-                    })
-        
-        # 7. Extract ranked lists (e.g., "My favorite colors are 1) Blue, 2) Green" or "My favorite cryptos are XMR, BTC, XLM")
+        # 6. Extract ranked lists FIRST (e.g., "My favorite colors are 1) Blue, 2) Green" or "My favorite cryptos are XMR, BTC, XLM")
+        # We need to do this before entity extraction to avoid double-counting entities that are part of ranked lists
         # Schema convention: user.favorites.<topic>.<rank>
         # Emit facts for explicit topics, candidates for implicit topics
         ranked_facts = self._extract_ranked_lists(content)
@@ -231,6 +218,37 @@ class FactExtractor:
                     "explicit_topic": None,  # No explicit topic found
                     "raw_text": content  # For debugging
                 })
+        
+        # 7. Use spaCy for entity extraction (if available)
+        # Only extract entities that are NOT part of ranked lists to avoid double-counting
+        if self.nlp:
+            # Collect all values from ranked lists to exclude them from entity extraction
+            ranked_list_values = set()
+            for rank, value, topic in ranked_facts:
+                # Normalize value for comparison (case-insensitive, strip whitespace)
+                ranked_list_values.add(value.strip().lower())
+                # Also check if value contains the entity (for cases like "Reese's" vs "Reese")
+                for word in value.split():
+                    ranked_list_values.add(word.strip().lower().rstrip("'s"))
+            
+            doc = self.nlp(content)
+            # Extract named entities
+            for ent in doc.ents:
+                # Skip entities that are part of ranked lists
+                ent_text_lower = ent.text.strip().lower()
+                ent_text_normalized = ent_text_lower.rstrip("'s")  # Handle "Reese's" -> "Reese"
+                
+                if ent_text_lower in ranked_list_values or ent_text_normalized in ranked_list_values:
+                    continue  # Skip - this entity is already in a ranked list
+                
+                if ent.label_ in ["PERSON", "ORG", "GPE"]:  # Person, Organization, Geopolitical
+                    fact_key = f"user.mentioned_{ent.label_.lower()}"
+                    facts.append({
+                        "fact_key": fact_key,
+                        "value_text": ent.text,
+                        "value_type": "string",
+                        "confidence": 0.7
+                    })
         
         # Deduplicate facts by fact_key (keep highest confidence)
         seen_keys = {}
@@ -381,19 +399,22 @@ class FactExtractor:
             items = re.split(r',\s*', list_text)
             items = [item.strip() for item in items if item.strip()]
             
-            # If the last item contains " and " (not at start/end), split it
-            # Only split once to avoid infinite recursion with items like "a and b and c"
-            if items and ' and ' in items[-1]:
+            # If the last item contains " and " or starts with "and ", split it
+            # Handle both "A, B, and C" and "A, B and C" patterns
+            if items and (' and ' in items[-1] or items[-1].strip().lower().startswith('and ')):
                 last_item = items[-1]
-                # Split on " and " but be careful - only split if it looks like a list separator
-                # Pattern: word(s) + " and " + word(s) at the end
-                # Use a more specific pattern to avoid matching compound items like "rock and roll"
-                # Only split if "and" is surrounded by word boundaries (not part of a compound noun)
-                and_match = re.search(r'^(.+?)\s+and\s+(\w+)$', last_item, re.IGNORECASE)
-                if and_match:
-                    # Split the last item (only once)
-                    items[-1] = and_match.group(1).strip()
-                    items.append(and_match.group(2).strip())
+                # Pattern 1: "and X" (when "and" is at the start, e.g., from comma-split like "and Twix")
+                and_match2 = re.search(r'^and\s+(\w+)$', last_item, re.IGNORECASE)
+                if and_match2:
+                    # Replace the last item with just the value (remove "and")
+                    items[-1] = and_match2.group(1).strip()
+                else:
+                    # Pattern 2: "X and Y" (normal case like "rock and roll" or "A and B")
+                    and_match = re.search(r'^(.+?)\s+and\s+(\w+)$', last_item, re.IGNORECASE)
+                    if and_match:
+                        # Split the last item (only once)
+                        items[-1] = and_match.group(1).strip()
+                        items.append(and_match.group(2).strip())
             
             # Clean up: remove any trailing "and" from items (shouldn't happen, but safety check)
             items = [re.sub(r'\s+and\s*$', '', item, flags=re.IGNORECASE).strip() for item in items]

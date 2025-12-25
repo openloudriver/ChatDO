@@ -544,8 +544,19 @@
     "default_target": "general",
     "sort_index": 49,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null,
+    "trashed": true,
+    "trashed_at": "2025-12-25T03:39:51.281906+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "86be8267-4396-44eb-bc8d-9a247bd51fc5",
+    "name": "v11",
+    "default_target": "general",
+    "sort_index": 50,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-25T03:51:44.824441+00:00",
     "archived": false,
     "archived_at": null
   }
