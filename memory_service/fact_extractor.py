@@ -411,6 +411,13 @@ class FactExtractor:
             r'(?:my\s+)?favorite\s+((?:\w+\s+)*\w+)\s+are\s+([^\.\?\!]+)',
             re.IGNORECASE
         )
+        
+        # Pattern 4b: Comma-separated list after "favorite X is" (singular, implicit ranks)
+        # "My favorite crypto in order is SHIB, BCH, PEPE..."
+        pattern4b = re.compile(
+            r'(?:my\s+)?favorite\s+((?:\w+\s+)*\w+)\s+is\s+([^\.\?\!]+)',
+            re.IGNORECASE
+        )
         for match in pattern4.finditer(cleaned):
             topic_part = match.group(1).strip()
             list_text = match.group(2).strip()
@@ -432,6 +439,62 @@ class FactExtractor:
             
             # If the last item contains " and " or starts with "and ", split it
             # Handle both "A, B, and C" and "A, B and C" patterns
+            if items and (' and ' in items[-1] or items[-1].strip().lower().startswith('and ')):
+                last_item = items[-1]
+                # Pattern 1: "and X" (when "and" is at the start, e.g., from comma-split like "and Twix")
+                and_match2 = re.search(r'^and\s+(\w+)$', last_item, re.IGNORECASE)
+                if and_match2:
+                    # Replace the last item with just the value (remove "and")
+                    items[-1] = and_match2.group(1).strip()
+                # Pattern 1b: "and then X" (when "and then" is at the start)
+                elif last_item.strip().lower().startswith('and then '):
+                    and_then_match = re.search(r'^and\s+then\s+(\w+)$', last_item, re.IGNORECASE)
+                    if and_then_match:
+                        items[-1] = and_then_match.group(1).strip()
+                # Pattern 2: "X and then Y" (handle "and then" as separator)
+                elif ' and then ' in last_item.lower():
+                    and_then_match = re.search(r'^(.+?)\s+and\s+then\s+(\w+)$', last_item, re.IGNORECASE)
+                    if and_then_match:
+                        # Split the last item (only once)
+                        items[-1] = and_then_match.group(1).strip()
+                        items.append(and_then_match.group(2).strip())
+                else:
+                    # Pattern 3: "X and Y" (normal case like "rock and roll" or "A and B")
+                    and_match = re.search(r'^(.+?)\s+and\s+(\w+)$', last_item, re.IGNORECASE)
+                    if and_match:
+                        # Split the last item (only once)
+                        items[-1] = and_match.group(1).strip()
+                        items.append(and_match.group(2).strip())
+            
+            # Clean up: remove any trailing "and" from items (shouldn't happen, but safety check)
+            items = [re.sub(r'\s+and\s*$', '', item, flags=re.IGNORECASE).strip() for item in items]
+            items = [item for item in items if item]  # Remove empty items
+            
+            # Only process if we have 2+ items and no explicit ranks found
+            if len(items) >= 2 and not ranked_facts:
+                for idx, item in enumerate(items, start=1):
+                    if item and len(item) < 200:
+                        ranked_facts.append((idx, item, topic))
+                break  # Only process first match
+        
+        # Process Pattern 4b: "favorite X is" (singular)
+        for match in pattern4b.finditer(cleaned):
+            topic_part = match.group(1).strip()
+            list_text = match.group(2).strip()
+            # Normalize topic (remove "favorite" prefix if present, as it's already in the schema)
+            topic_part_clean = topic_part.lower().strip()
+            # Remove "favorite" prefix if present (e.g., "favorite cryptos" -> "cryptos")
+            if topic_part_clean.startswith("favorite "):
+                topic_part_clean = topic_part_clean[9:].strip()  # Remove "favorite "
+            # Remove phrases like "in order" that don't affect the topic
+            topic_part_clean = re.sub(r'\s+in\s+order\s*$', '', topic_part_clean, flags=re.IGNORECASE)
+            topic = self._normalize_topic(topic_part_clean)
+            
+            # Split by comma and "and" - same logic as Pattern 4
+            items = re.split(r',\s*', list_text)
+            items = [item.strip() for item in items if item.strip()]
+            
+            # If the last item contains " and " or starts with "and ", split it
             if items and (' and ' in items[-1] or items[-1].strip().lower().startswith('and ')):
                 last_item = items[-1]
                 # Pattern 1: "and X" (when "and" is at the start, e.g., from comma-split like "and Twix")

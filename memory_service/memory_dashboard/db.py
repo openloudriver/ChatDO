@@ -1003,7 +1003,7 @@ def upsert_chat_message(
 def delete_chat_messages_by_chat_id(project_id: str, chat_id: str) -> int:
     """
     Delete all chat messages for a specific chat_id from memory_service.
-    Also deletes associated chunks and embeddings.
+    Also deletes associated chunks, embeddings, and facts.
     
     Args:
         project_id: Project ID
@@ -1019,14 +1019,27 @@ def delete_chat_messages_by_chat_id(project_id: str, chat_id: str) -> int:
         conn = get_db_connection(source_id, project_id=project_id)
         cursor = conn.cursor()
         
-        # Get all chat_message_ids for this chat_id
-        cursor.execute("SELECT id FROM chat_messages WHERE chat_id = ?", (chat_id,))
+        # Get all chat_message_ids and message_uuids for this chat_id
+        cursor.execute("SELECT id, message_uuid FROM chat_messages WHERE chat_id = ?", (chat_id,))
         chat_message_rows = cursor.fetchall()
         chat_message_ids = [row["id"] for row in chat_message_rows]
+        message_uuids = [row["message_uuid"] for row in chat_message_rows if row["message_uuid"]]
         
         if not chat_message_ids:
             conn.close()
             return 0
+        
+        # Delete facts that reference messages from this chat
+        # Facts store source_message_uuid which references chat_messages.message_uuid
+        if message_uuids:
+            fact_placeholders = ",".join("?" * len(message_uuids))
+            cursor.execute(f"""
+                DELETE FROM project_facts 
+                WHERE project_id = ? AND source_message_uuid IN ({fact_placeholders})
+            """, [project_id] + message_uuids)
+            facts_deleted = cursor.rowcount
+            if facts_deleted > 0:
+                logger.info(f"Deleted {facts_deleted} facts for chat_id={chat_id} in project_id={project_id}")
         
         # Get all chunk_ids for these chat messages (for ANN index removal)
         placeholders = ",".join("?" * len(chat_message_ids))

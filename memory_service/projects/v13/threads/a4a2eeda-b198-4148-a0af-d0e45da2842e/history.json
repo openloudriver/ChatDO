@@ -1,0 +1,58 @@
+[
+  {
+    "id": "a4a2eeda-b198-4148-a0af-d0e45da2842e-user-0",
+    "role": "user",
+    "content": "My favorite crypto in order is SHIB, BCH, PEPE, LTC, AAVE, SOL, XMR, FIL, AND BTC.",
+    "created_at": "2025-12-25T15:06:28.694033+00:00"
+  },
+  {
+    "id": "a4a2eeda-b198-4148-a0af-d0e45da2842e-assistant-1",
+    "role": "assistant",
+    "content": "Got it—your ranked favorites are SHIB, BCH, PEPE, LTC, AAVE, SOL, XMR, FIL, and BTC. [M1]\n\n## ✅ Saved\n- I’ll treat this as your canonical crypto preference order and use it when ranking news, watchlists, and recommendations. [M1]\n\n## How would you like me to use this? 🔧\n- Prioritize news and on-chain updates by your ranking.\n- Create a watchlist with tiered price/volume alerts (higher rank = tighter alerts).\n- Propose a sample allocation template that respects your order.\n- Track exchange listings/liquidity routes for these tickers.\n- Summarize weekly performance in rank order.\n\n## Quick note\n- I won’t reorder this list unless you tell me to. If your preferences change, just paste the new order and I’ll update it. [M1]",
+    "model": "Facts-S(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-a8fdb86c-1c7d-4a89-b903-ea59e92523ee-0",
+        "title": "My favorite crypto in order is SHIB, BCH, PEPE, LTC, AAVE, S...",
+        "description": "My favorite crypto in order is SHIB, BCH, PEPE, LTC, AAVE, SOL, XMR, FIL, AND BTC.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "a4a2eeda-b198-4148-a0af-d0e45da2842e",
+          "message_id": "a4a2eeda-b198-4148-a0af-d0e45da2842e-user-0",
+          "message_uuid": "19127b55-c4c8-40b4-919b-2d75c271b622",
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-a8fdb86c-1c7d-4a89-b903-ea59e92523ee",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite crypto in order is SHIB, BCH, PEPE, LTC, AAVE, SOL, XMR, FIL, AND BTC."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 1,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "a4a2eeda-b198-4148-a0af-d0e45da2842e:a4a2eeda-b198-4148-a0af-d0e45da2842e-user-0:1766675158992",
+        "assistant_job_id": "a4a2eeda-b198-4148-a0af-d0e45da2842e:a4a2eeda-b198-4148-a0af-d0e45da2842e-assistant-1:1766675188728"
+      }
+    },
+    "created_at": "2025-12-25T15:06:28.691735+00:00"
+  }
+]
