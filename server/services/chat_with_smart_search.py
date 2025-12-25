@@ -531,15 +531,40 @@ async def chat_with_smart_search(
             user_message_id = f"{thread_id}-user-{message_index}"
             
             # Persist facts synchronously (does NOT require Memory Service)
-            store_count, update_count, stored_fact_keys, message_uuid = persist_facts_synchronously(
+            # Note: retrieved_facts not available yet (retrieved later), but DB recency fallback will work
+            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
                 chat_id=thread_id,
                 message_id=user_message_id,
                 timestamp=user_msg_created_at,
-                message_index=message_index
+                message_index=message_index,
+                retrieved_facts=None  # Will be enhanced later to pass retrieved facts for schema-hint resolution
             )
+            
+            # Check for topic ambiguity - if ambiguous, return fast-path clarification response
+            if ambiguous_topics:
+                logger.info(f"[MEMORY] Topic ambiguity detected: {ambiguous_topics} - returning clarification")
+                # Format candidate topics for user-friendly display
+                topic_display = " / ".join(ambiguous_topics)
+                clarification_message = (
+                    f"Which favorites list is this for? ({topic_display})\n\n"
+                    f"Please specify the topic (e.g., 'crypto', 'colors', 'candies') so I can update the correct list."
+                )
+                
+                # Return fast-path response with zero fact counts
+                return {
+                    "response": clarification_message,
+                    "model": "Facts",
+                    "provider": "facts",
+                    "meta": {
+                        "fastPath": "topic_ambiguity",
+                        "ambiguous_topics": ambiguous_topics,
+                        "facts_actions": {"S": 0, "U": 0, "R": 0}
+                    },
+                    "sources": []
+                }
             
             # Set counts from actual DB writes (truthful, not optimistic)
             facts_actions["S"] = store_count
@@ -551,7 +576,7 @@ async def chat_with_smart_search(
                 logger.info(f"[MEMORY] Got message_uuid={current_message_uuid} for fact exclusion")
             
             logger.info(
-                f"[MEMORY] ✅ Facts persisted synchronously: S={store_count} U={update_count} "
+                f"[MEMORY] ✅ Facts persisted: S={store_count} U={update_count} "
                 f"keys={stored_fact_keys} (message_uuid={current_message_uuid})"
             )
             

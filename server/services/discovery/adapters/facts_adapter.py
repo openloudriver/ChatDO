@@ -73,6 +73,30 @@ def search(query: DiscoveryQuery) -> Tuple[List[DiscoveryHit], Dict[str, any]]:
                 else:
                     created_at_str = str(created_at)
             
+            # Include schema_hint if available (for ranked lists: user.favorites.*)
+            source_meta = {
+                "fact_key": fact_key,
+                "value_type": fact.get("value_type", "string"),
+                "confidence": fact.get("confidence", 1.0),
+                "is_current": fact.get("is_current", True)
+            }
+            
+            schema_hint = fact.get("schema_hint")
+            if schema_hint:
+                source_meta["schema_hint"] = schema_hint
+            elif fact_key.startswith("user.favorites."):
+                # Derive schema_hint from fact_key if not provided
+                import re
+                match = re.match(r'^user\.favorites\.([^.]+)\.(\d+)$', fact_key)
+                if match:
+                    topic = match.group(1)
+                    source_meta["schema_hint"] = {
+                        "domain": "ranked_list",
+                        "topic": topic,
+                        "key": fact_key,
+                        "key_prefix": f"user.favorites.{topic}"  # For aggregation queries
+                    }
+            
             # Create source for deep linking
             source = DiscoverySource(
                 kind="chat_message",
@@ -80,15 +104,10 @@ def search(query: DiscoveryQuery) -> Tuple[List[DiscoveryHit], Dict[str, any]]:
                 source_fact_id=fact_id,
                 snippet=value_text[:100] if len(value_text) > 100 else value_text,
                 created_at=created_at_str,
-                meta={
-                    "fact_key": fact_key,
-                    "value_type": fact.get("value_type", "string"),
-                    "confidence": fact.get("confidence", 1.0),
-                    "is_current": fact.get("is_current", True)
-                }
+                meta=source_meta
             )
             
-            # Extract rank if fact_key has rank pattern (e.g., "user.favorite_color.1")
+            # Extract rank if fact_key has rank pattern (e.g., "user.favorites.crypto.1")
             rank = None
             import re
             rank_match = re.search(r'\.(\d+)$', fact_key)

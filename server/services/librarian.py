@@ -343,6 +343,32 @@ def get_relevant_memory(
                         else:
                             content = f"Your {readable_key}: {value_text}"
                         
+                        # Include schema_hint in metadata for ranked lists
+                        metadata = {
+                            "fact_id": fact.get("fact_id"),
+                            "fact_key": fact.get("fact_key"),
+                            "value_text": fact.get("value_text"),
+                            "value_type": fact.get("value_type"),
+                            "source_message_uuid": fact.get("source_message_uuid"),
+                            "is_fact": True
+                        }
+                        
+                        # Add schema_hint if available (for ranked lists: user.favorites.*)
+                        schema_hint = fact.get("schema_hint")
+                        if schema_hint:
+                            metadata["schema_hint"] = schema_hint
+                        elif fact_key.startswith("user.favorites."):
+                            # Derive schema_hint from fact_key if not provided
+                            parts = fact_key.split(".")
+                            if len(parts) >= 3:
+                                topic = parts[2]
+                                metadata["schema_hint"] = {
+                                    "domain": "ranked_list",
+                                    "topic": topic,
+                                    "key": fact_key,
+                                    "key_prefix": f"user.favorites.{topic}"  # For aggregation queries
+                                }
+                        
                         fact_hit = MemoryHit(
                             source_id=f"project-{project_id}",
                             message_id=fact.get("source_message_uuid", ""),  # Use source_message_uuid for citation
@@ -353,14 +379,7 @@ def get_relevant_memory(
                             source_type="fact",
                             file_path=None,
                             created_at=fact.get("created_at"),
-                            metadata={
-                                "fact_id": fact.get("fact_id"),
-                                "fact_key": fact.get("fact_key"),
-                                "value_text": fact.get("value_text"),
-                                "value_type": fact.get("value_type"),
-                                "source_message_uuid": fact.get("source_message_uuid"),
-                                "is_fact": True
-                            },
+                            metadata=metadata,
                             message_uuid=fact.get("source_message_uuid")  # For deep linking - stored in metadata too
                         )
                         fact_hits.append(fact_hit)
@@ -834,21 +853,23 @@ def search_facts_ranked_list(
     """
     Search for ranked facts (facts with rank in fact_key) for a given topic.
     
+    Schema convention: user.favorites.<topic>.<rank>
     This function reads directly from the project_facts DB (not via Memory Service HTTP),
     making it fast, deterministic, and independent of Memory Service availability.
     
     Args:
         project_id: Project ID
-        topic_key: Topic key (e.g., "favorite_crypto", "favorite_color")
+        topic_key: Topic key (e.g., "crypto", "colors") - will be normalized
         limit: Maximum number of facts to return
         exclude_message_uuid: Optional message UUID to exclude from results
         
     Returns:
         List of fact dicts with:
-        - fact_key: Full fact key (e.g., "user.favorite_crypto.1")
+        - fact_key: Full fact key (e.g., "user.favorites.crypto.1")
         - value_text: Fact value
         - source_message_uuid: UUID of the message that stored this fact (for deep linking)
         - rank: Rank number extracted from fact_key
+        - schema_hint: Schema hint metadata for topic resolution
     """
     try:
         from memory_service.memory_dashboard import db
@@ -860,7 +881,7 @@ def search_facts_ranked_list(
         normalized_topic_key = extractor._normalize_topic(topic_key.replace('_', ' '))
         
         # Search facts using the topic as query (searches fact_key and value_text)
-        # This will find facts like "user.favorite_crypto.1", "user.favorite_crypto.2", etc.
+        # This will find facts like "user.favorites.crypto.1", "user.favorites.crypto.2", etc.
         source_id = f"project-{project_id}"
         facts = db.search_current_facts(
             project_id=project_id,
@@ -870,40 +891,37 @@ def search_facts_ranked_list(
             exclude_message_uuid=exclude_message_uuid
         )
         
-        # Filter to only ranked facts (facts with rank in fact_key, e.g., "user.favorite_crypto.1")
+        # Filter to only ranked facts matching schema convention: user.favorites.<topic>.<rank>
         ranked_facts = []
         for fact in facts:
             fact_key = fact.get("fact_key", "")
-            # Check if fact_key matches pattern user.{topic}.{rank} where rank is a number
-            if re.match(r'^user\.(.+)\.\d+$', fact_key):
-                # Extract the topic part (everything before the rank)
-                topic_match = re.match(r'^user\.(.+)\.\d+$', fact_key)
+            # Check if fact_key matches pattern user.favorites.<topic>.<rank>
+            if re.match(r'^user\.favorites\.(.+)\.\d+$', fact_key):
+                # Extract the topic part
+                topic_match = re.match(r'^user\.favorites\.(.+)\.(\d+)$', fact_key)
                 if topic_match:
                     fact_topic = topic_match.group(1)
+                    rank = int(topic_match.group(2))
                     fact_topic_base = fact_topic.lower()
                     
                     # Check if the normalized topic_key matches the fact topic
                     topics_match = (
                         fact_topic_base == normalized_topic_key or
-                        fact_topic_base.replace('favorite_', '') == normalized_topic_key.replace('favorite_', '') or
                         # Handle plurals (crypto vs cryptos)
-                        fact_topic_base.replace('favorite_', '').rstrip('s') == normalized_topic_key.replace('favorite_', '').rstrip('s') or
+                        fact_topic_base.rstrip('s') == normalized_topic_key.rstrip('s') or
                         # Check if one contains the other (for multi-word topics)
-                        (normalized_topic_key.replace('favorite_', '') in fact_topic_base.replace('favorite_', '')) or
-                        (fact_topic_base.replace('favorite_', '') in normalized_topic_key.replace('favorite_', ''))
+                        (normalized_topic_key in fact_topic_base) or
+                        (fact_topic_base in normalized_topic_key)
                     )
                     
                     if topics_match:
-                        # Extract rank from fact_key (last number after final dot)
-                        rank_match = re.search(r'\.(\d+)$', fact_key)
-                        if rank_match:
-                            rank = int(rank_match.group(1))
-                            ranked_facts.append({
-                                "fact_key": fact_key,
-                                "value_text": fact.get("value_text", ""),
-                                "source_message_uuid": fact.get("source_message_uuid"),
-                                "rank": rank
-                            })
+                        ranked_facts.append({
+                            "fact_key": fact_key,
+                            "value_text": fact.get("value_text", ""),
+                            "source_message_uuid": fact.get("source_message_uuid"),
+                            "rank": rank,
+                            "schema_hint": fact.get("schema_hint")  # Include schema_hint
+                        })
         
         # Sort by rank
         ranked_facts.sort(key=lambda f: f.get("rank", 0))
@@ -914,6 +932,69 @@ def search_facts_ranked_list(
         )
         
         return ranked_facts
+
+
+def get_recent_ranked_list_keys(
+    project_id: str,
+    limit: int = 5,
+    source_id: Optional[str] = None
+) -> List[str]:
+    """
+    Get recent ranked list keys (user.favorites.*) for a project.
+    
+    Used as a fallback for topic resolution when no schema hints are available.
+    Only returns keys matching user.favorites.* schema convention.
+    
+    Args:
+        project_id: Project ID
+        limit: Maximum number of distinct keys to return
+        source_id: Optional source ID (uses project-based source if not provided)
+        
+    Returns:
+        List of fact keys (e.g., ["user.favorites.crypto", "user.favorites.colors"])
+        Returns base keys without rank (user.favorites.<topic>), not full keys with rank
+    """
+    try:
+        from memory_service.memory_dashboard import db
+        import re
+        
+        if source_id is None:
+            source_id = f"project-{project_id}"
+        
+        db.init_db(source_id, project_id=project_id)
+        conn = db.get_db_connection(source_id, project_id=project_id)
+        cursor = conn.cursor()
+        
+        # Get recent facts matching user.favorites.* pattern
+        cursor.execute("""
+            SELECT DISTINCT fact_key
+            FROM project_facts
+            WHERE project_id = ? AND is_current = 1
+              AND fact_key LIKE 'user.favorites.%.%'
+            ORDER BY effective_at DESC, created_at DESC
+            LIMIT ?
+        """, (project_id, limit * 10))  # Get more to account for multiple ranks per topic
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Extract base keys (user.favorites.<topic>) without rank
+        base_keys = set()
+        for row in rows:
+            fact_key = row["fact_key"]
+            # Extract base key: user.favorites.<topic> from user.favorites.<topic>.<rank>
+            match = re.match(r'^(user\.favorites\.[^.]+)', fact_key)
+            if match:
+                base_keys.add(match.group(1))
+        
+        # Return up to limit distinct base keys
+        result = list(base_keys)[:limit]
+        logger.debug(f"[LIBRARIAN] Found {len(result)} recent ranked list keys: {result}")
+        return result
+        
+    except Exception as e:
+        logger.warning(f"[LIBRARIAN] Failed to get recent ranked list keys: {e}")
+        return []
         
     except Exception as e:
         logger.error(f"[LIBRARIAN] Failed to search ranked facts: {e}", exc_info=True)

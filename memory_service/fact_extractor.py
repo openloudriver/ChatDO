@@ -93,7 +93,7 @@ class FactExtractor:
             [{"LOWER": "i"}, {"LOWER": {"IN": ["am", "'m"]}}, {"POS": {"IN": ["NOUN", "ADJ", "PROPN"]}}]
         ])
     
-    def extract_facts(self, content: str, role: str = "user") -> List[Dict[str, any]]:
+    def extract_facts(self, content: str, role: str = "user") -> Tuple[List[Dict[str, any]], List[Dict[str, any]]]:
         """
         Extract facts from message content.
         
@@ -102,13 +102,17 @@ class FactExtractor:
             role: Message role ("user" or "assistant")
             
         Returns:
-            List of fact dicts with keys: fact_key, value_text, value_type, confidence
+            Tuple of (facts, ranked_list_candidates):
+            - facts: List of fact dicts with resolved topics (keys: fact_key, value_text, value_type, confidence)
+            - ranked_list_candidates: List of ranked-list candidates that need topic resolution
+                Each candidate has: rank, value_text, explicit_topic (optional), raw_text
         """
         facts = []
+        ranked_list_candidates = []  # Candidates that need topic resolution
         
         # Only extract from user messages (assistants might repeat facts)
         if role != "user":
-            return facts
+            return facts, ranked_list_candidates
         
         content_lower = content.lower().strip()
         
@@ -195,18 +199,38 @@ class FactExtractor:
                     })
         
         # 7. Extract ranked lists (e.g., "My favorite colors are 1) Blue, 2) Green" or "My favorite cryptos are XMR, BTC, XLM")
+        # Schema convention: user.favorites.<topic>.<rank>
+        # Emit facts for explicit topics, candidates for implicit topics
         ranked_facts = self._extract_ranked_lists(content)
         for rank, value, topic in ranked_facts:
-            # Create fact_key with rank: "user.favorite_color.1", "user.favorite_color.2", etc.
-            fact_key = f"user.{topic}.{rank}" if topic else f"user.ranked_item.{rank}"
-            facts.append({
-                "fact_key": fact_key,
-                "value_text": value,
-                "value_type": "string",
-                "confidence": 0.9,
-                "rank": rank,  # Store rank for reference
-                "topic": topic  # Store topic for reference
-            })
+            if topic:
+                # Topic is explicit - emit as fact immediately
+                # Schema convention: user.favorites.<topic>.<rank>
+                fact_key = f"user.favorites.{topic}.{rank}"
+                schema_hint = {
+                    "domain": "ranked_list",
+                    "topic": topic,
+                    "key": fact_key,
+                    "key_prefix": f"user.favorites.{topic}"  # For aggregation queries
+                }
+                
+                facts.append({
+                    "fact_key": fact_key,  # Always set - no placeholders
+                    "value_text": value,
+                    "value_type": "string",
+                    "confidence": 0.9,
+                    "rank": rank,  # Store rank for reference
+                    "topic": topic,  # Store topic for reference
+                    "schema_hint": schema_hint
+                })
+            else:
+                # Topic is implicit - emit as candidate for topic resolution
+                ranked_list_candidates.append({
+                    "rank": rank,
+                    "value_text": value,
+                    "explicit_topic": None,  # No explicit topic found
+                    "raw_text": content  # For debugging
+                })
         
         # Deduplicate facts by fact_key (keep highest confidence)
         seen_keys = {}
@@ -215,7 +239,7 @@ class FactExtractor:
             if key not in seen_keys or fact["confidence"] > seen_keys[key]["confidence"]:
                 seen_keys[key] = fact
         
-        return list(seen_keys.values())
+        return list(seen_keys.values()), ranked_list_candidates
     
     def _extract_ranked_lists(self, content: str) -> List[Tuple[int, str, Optional[str]]]:
         """
@@ -248,26 +272,75 @@ class FactExtractor:
                 topic = self._extract_topic_from_context(cleaned, match.start())
                 ranked_facts.append((rank, value, topic))
         
-        # Pattern 2: Hash-prefixed: "#1 XMR, #2 BTC"
-        pattern2 = re.compile(r'#(\d+)\s+([^,\n#]+)', re.IGNORECASE)
-        for match in pattern2.finditer(cleaned):
-            rank_str, value = match.groups()
-            rank = int(rank_str)
-            value = value.strip().rstrip(',').strip()
+        # Pattern 2: Hash-prefixed: "#1 XMR, #2 BTC" or "#1 favorite" (value comes before/after)
+        # First, handle "XMR is my #1 favorite" pattern (value before)
+        pattern2a = re.compile(r'([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)\s+is\s+my\s+#(\d+)\s+favorite', re.IGNORECASE)
+        for match in pattern2a.finditer(cleaned):
+            value = match.group(1).strip()
+            rank = int(match.group(2))
             if rank >= 1 and value and len(value) < 200:
                 if not any(r == rank for r, _, _ in ranked_facts):
                     topic = self._extract_topic_from_context(cleaned, match.start())
                     ranked_facts.append((rank, value, topic))
         
-        # Pattern 3: Ordinal words: "first: Blue, second: Green"
-        ordinal_map = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5}
-        pattern3 = re.compile(r'\b(first|second|third|fourth|fifth)\s*[:]\s*([^,\n]+)', re.IGNORECASE)
-        for match in pattern3.finditer(cleaned):
+        # Pattern 2a-alt: "Make X my #N" or "Make X my #N favorite"
+        pattern2a_alt = re.compile(r'make\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)\s+my\s+#(\d+)(?:\s+favorite)?', re.IGNORECASE)
+        for match in pattern2a_alt.finditer(cleaned):
+            value = match.group(1).strip()
+            rank = int(match.group(2))
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
+        # Then handle "#1 XMR" or "#1 favorite XMR" patterns (value after)
+        pattern2b = re.compile(r'#(\d+)\s+([^,\n#]+)', re.IGNORECASE)
+        for match in pattern2b.finditer(cleaned):
+            rank_str, value_part = match.groups()
+            rank = int(rank_str)
+            value_part = value_part.strip().rstrip(',').strip()
+            
+            # If value_part is just "favorite", look ahead for the actual value
+            if value_part.lower() in ['favorite', 'favorites']:
+                lookahead = cleaned[match.end():match.end()+50]
+                value_match = re.search(r'(?:is\s+)?([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', lookahead, re.IGNORECASE)
+                if value_match:
+                    value = value_match.group(1).strip()
+                else:
+                    continue  # Skip if we can't find the actual value
+            else:
+                value = value_part
+            
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
+        # Pattern 3: Ordinal words: "first: Blue, second: Green" or "9th favorite", "10th favorite"
+        ordinal_map = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5,
+                      'sixth': 6, 'seventh': 7, 'eighth': 8, 'ninth': 9, 'tenth': 10,
+                      'eleventh': 11, 'twelfth': 12, 'thirteenth': 13, 'fourteenth': 14, 'fifteenth': 15}
+        pattern3a = re.compile(r'\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth)\s*[:]\s*([^,\n]+)', re.IGNORECASE)
+        for match in pattern3a.finditer(cleaned):
             ordinal_str, value = match.groups()
             rank = ordinal_map.get(ordinal_str.lower())
             if rank and value:
                 value = value.strip().rstrip(',').strip()
                 if value and len(value) < 200:
+                    if not any(r == rank for r, _, _ in ranked_facts):
+                        topic = self._extract_topic_from_context(cleaned, match.start())
+                        ranked_facts.append((rank, value, topic))
+        
+        # Pattern 3b: Numeric ordinals: "9th favorite", "10th favorite" (e.g., "LTC is my 9th favorite")
+        pattern3b = re.compile(r'(\d+)(?:st|nd|rd|th)\s+(?:favorite|favorites)', re.IGNORECASE)
+        for match in pattern3b.finditer(cleaned):
+            rank = int(match.group(1))
+            # Look back for the value: "LTC is my 9th favorite"
+            lookback = cleaned[max(0, match.start()-30):match.start()]
+            value_match = re.search(r'([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)\s+is\s+my\s+', lookback, re.IGNORECASE)
+            if value_match:
+                value = value_match.group(1).strip()
+                if rank >= 1 and value and len(value) < 200:
                     if not any(r == rank for r, _, _ in ranked_facts):
                         topic = self._extract_topic_from_context(cleaned, match.start())
                         ranked_facts.append((rank, value, topic))
@@ -282,8 +355,12 @@ class FactExtractor:
         for match in pattern4.finditer(cleaned):
             topic_part = match.group(1).strip()
             list_text = match.group(2).strip()
-            # Normalize topic
-            topic = self._normalize_topic(topic_part)
+            # Normalize topic (remove "favorite" prefix if present, as it's already in the schema)
+            topic_part_clean = topic_part.lower().strip()
+            # Remove "favorite" prefix if present (e.g., "favorite cryptos" -> "cryptos")
+            if topic_part_clean.startswith("favorite "):
+                topic_part_clean = topic_part_clean[9:].strip()  # Remove "favorite "
+            topic = self._normalize_topic(topic_part_clean)
             
             # Split by comma and "and" - handle both "A, B, C and D" and "A, B, C, and D" (Oxford comma)
             # First, normalize: replace " and " with ", " to make splitting consistent
@@ -323,32 +400,56 @@ class FactExtractor:
     
     def _extract_topic_from_context(self, content: str, position: int) -> Optional[str]:
         """Extract topic from context before the ranked list."""
-        # Look back up to 100 chars for "favorite X" pattern
-        context = content[max(0, position-100):position].lower()
+        # Look back up to 200 chars for "favorite X" pattern (increased from 100)
+        context = content[max(0, position-200):position].lower()
+        
+        # First, try to find "favorite X" pattern
         match = re.search(r'(?:my\s+)?favorite\s+(\w+(?:\s+\w+)?)', context)
         if match:
             topic_part = match.group(1).strip()
             return self._normalize_topic(topic_part)
+        
+        # If no "favorite" found, look for topic keywords directly (e.g., "my #1 crypto")
+        # This handles cases like "Wait, my #1 crypto is actually XMR"
+        topic_keywords = ['crypto', 'cryptos', 'cryptocurrency', 'cryptocurrencies', 
+                         'color', 'colors', 'candy', 'candies', 'pie', 'pies',
+                         'tv', 'show', 'television', 'food', 'textile', 'textiles']
+        for keyword in topic_keywords:
+            # Look for the keyword in the context (with word boundaries)
+            if re.search(r'\b' + re.escape(keyword) + r'\b', context):
+                return self._normalize_topic(keyword)
+        
+        # No value-shape inference (no ticker-like guessing)
+        # Topic must be explicit in message or provided via schema hints
         return None
     
     def _normalize_topic(self, topic: str) -> str:
-        """Normalize topic to canonical form."""
+        """
+        Normalize topic to canonical form.
+        
+        Returns just the topic name (e.g., "crypto", "colors") since the schema
+        convention is user.favorites.<topic>, so "favorite" is already in the path.
+        """
         topic = topic.lower().strip()
-        # Map common variations to canonical forms
+        # Remove "favorite" prefix if present
+        if topic.startswith("favorite "):
+            topic = topic[9:].strip()
+        
+        # Map common variations to canonical forms (without "favorite_" prefix)
         topic_map = {
-            'color': 'favorite_color',
-            'colors': 'favorite_color',
-            'crypto': 'favorite_crypto',
-            'cryptos': 'favorite_crypto',
-            'cryptocurrency': 'favorite_crypto',
-            'cryptocurrencies': 'favorite_crypto',
-            'candy': 'favorite_candy',
-            'candies': 'favorite_candy',
-            'chocolate': 'favorite_candy',
-            'tv show': 'favorite_tv',
-            'tv': 'favorite_tv',
-            'show': 'favorite_tv',
-            'television show': 'favorite_tv',
+            'color': 'colors',
+            'colors': 'colors',
+            'crypto': 'crypto',
+            'cryptos': 'crypto',
+            'cryptocurrency': 'crypto',
+            'cryptocurrencies': 'crypto',
+            'candy': 'candies',
+            'candies': 'candies',
+            'chocolate': 'candies',
+            'tv show': 'tv',
+            'tv': 'tv',
+            'show': 'tv',
+            'television show': 'tv',
         }
         return topic_map.get(topic, topic.replace(' ', '_'))
     

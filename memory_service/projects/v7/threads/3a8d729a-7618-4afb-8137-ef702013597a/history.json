@@ -1,0 +1,597 @@
+[
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-user-0",
+    "role": "user",
+    "content": "My favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish.",
+    "created_at": "2025-12-24T23:03:47.033146+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-1",
+    "role": "assistant",
+    "content": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n## 🔍 Summary\n- I’ve got this saved in your profile and can use it for recommendations, shopping lists, or gift ideas [M1].\n\n## Want me to use this preference for anything?\n- Curate snack recommendations or swaps\n- Auto-add favorites to a shopping list\n- Suggest candy gift bundles\n- Find deals or seasonal releases for these brands",
+    "model": "Facts-S(11) + Index-P + GPT-5",
+    "model_label": "Facts-S(11) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-0",
+        "title": "My favorite candies are Snickers, 3 Musketeers, Milky Way, T...",
+        "description": "My favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 11,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-user-0:1766617391855",
+        "assistant_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-assistant-1:1766617427075"
+      }
+    },
+    "created_at": "2025-12-24T23:03:47.032057+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-user-2",
+    "role": "user",
+    "content": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT.",
+    "created_at": "2025-12-24T23:04:46.211787+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-3",
+    "role": "assistant",
+    "content": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?\n- Create a watchlist with live prices and market caps\n- Set price alerts (absolute or % moves)\n- Curate news and on-chain updates for just these tickers\n- Compare fees/liquidity across your preferred exchanges\n- Build simple DCA or allocation templates\n- Surface notable events (airdrops, upgrades, unlocks)\n\nIf you want, tell me your exchange(s), alert thresholds, and whether you prefer daily or real-time updates.",
+    "model": "Facts-S(12) + Index-P + GPT-5",
+    "model_label": "Facts-S(12) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-0",
+        "title": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, D...",
+        "description": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-1",
+        "title": "Noted—your favorite candies are Snickers, 3 Musketeers, Milk...",
+        "description": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n#...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n## 🔍 Summary\n- I’ve got this saved in your profile and can use it for recommendations, shopping lists, or gift ideas [M1].\n\n## Want me to use this preference for anything?\n- Curate snack recommendations or swaps\n- Auto-add favorites to a shopping list\n- Suggest candy gift bundles\n- Find deals or seasonal releases for these brands"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 12,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-user-0:1766617461793",
+        "assistant_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-assistant-3:1766617486253"
+      }
+    },
+    "created_at": "2025-12-24T23:04:46.210556+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-user-4",
+    "role": "user",
+    "content": "But XMR is my #1 favorite",
+    "created_at": "2025-12-24T23:05:44.545374+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-5",
+    "role": "assistant",
+    "content": "Noted—XMR (Monero) is now set as your #1 favorite and added to your crypto favorites.\n\n## Updated favorites\n- XMR (Monero) — #1\n- XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, GRT [M1, M2]\n\n## Want me to use this?\n- Add XMR to your watchlist with live price/market cap\n- Set XMR price alerts (absolute or %)\n- Curate XMR-focused news/on-chain updates\n- Surface notable events for XMR (releases, network updates) [M2]\n\nTell me:\n- Exchanges you use\n- Alert thresholds (e.g., ±5%, specific prices)\n- Update cadence (real-time vs daily)\n\nDo you want me to reorder the rest of your favorites or keep them as-is under XMR?",
+    "model": "Facts-S(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-0",
+        "title": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, D...",
+        "description": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-1",
+        "title": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC...",
+        "description": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?\n- Create a watchlist with live prices and market caps\n- Set price alerts (absolute or % moves)\n- Curate news and on-chain updates for just these tickers\n- Compare fees/liquidity across your preferred exchanges\n- Build simple DCA or allocation templates\n- Surface notable events (airdrops, upgrades, unlocks)\n\nIf you want, tell me your exchange(s), alert thresholds, and whether you prefer daily or real-time updates."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-2",
+        "title": "Noted—your favorite candies are Snickers, 3 Musketeers, Milk...",
+        "description": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n#...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n## 🔍 Summary\n- I’ve got this saved in your profile and can use it for recommendations, shopping lists, or gift ideas [M1].\n\n## Want me to use this preference for anything?\n- Curate snack recommendations or swaps\n- Auto-add favorites to a shopping list\n- Suggest candy gift bundles\n- Find deals or seasonal releases for these brands"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 1,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-user-0:1766617501047",
+        "assistant_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-assistant-5:1766617544580"
+      }
+    },
+    "created_at": "2025-12-24T23:05:44.544332+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-user-6",
+    "role": "user",
+    "content": "Yes, please reorder the rest as my favorites",
+    "created_at": "2025-12-24T23:07:08.182887+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-7",
+    "role": "assistant",
+    "content": "Done—I've reordered your crypto favorites with XMR at #1 and the rest in your stated preference order. [M3, M6]\n\n## 📊 Updated ranking\n1) XMR (Monero)\n2) XRP\n3) UNI\n4) SHIB\n5) BTC\n6) ETH\n7) DOGE\n8) DOT\n9) SOL\n10) LTC\n11) PEPE\n12) BCH\n13) GRT [M3, M6]\n\n## ✅ Want me to use this?\n- Create a watchlist with live prices/market caps\n- Set price alerts (e.g., ±5% or specific targets)\n- Curate news/on-chain updates for just these\n- Surface notable events (releases, upgrades, unlocks)\n\nTell me your exchange(s), alert thresholds, and update cadence (real-time vs daily). If you meant to reorder candies instead, I can do that too. [M2]",
+    "model": "Index-P + GPT-5",
+    "model_label": "Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-0",
+        "title": "Yes, please reorder the rest as my favorites",
+        "description": "Yes, please reorder the rest as my favorites",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Yes, please reorder the rest as my favorites"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-1",
+        "title": "Noted—your favorite candies are Snickers, 3 Musketeers, Milk...",
+        "description": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n#...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n## 🔍 Summary\n- I’ve got this saved in your profile and can use it for recommendations, shopping lists, or gift ideas [M1].\n\n## Want me to use this preference for anything?\n- Curate snack recommendations or swaps\n- Auto-add favorites to a shopping list\n- Suggest candy gift bundles\n- Find deals or seasonal releases for these brands"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-2",
+        "title": "Noted—XMR (Monero) is now set as your #1 favorite and added ...",
+        "description": "Noted—XMR (Monero) is now set as your #1 favorite and added to your crypto favorites.\n\n## Updated favorites\n- XMR (Monero) — #1\n- XRP, UNI, SHIB, BTC,...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—XMR (Monero) is now set as your #1 favorite and added to your crypto favorites.\n\n## Updated favorites\n- XMR (Monero) — #1\n- XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, GRT [M1, M2]\n\n## Want me to use this?\n- Add XMR to your watchlist with live price/market cap\n- Set XMR price alerts (absolute or %)\n- Curate XMR-focused news/on-chain updates\n- Surface notable events for XMR (releases, network updates) [M2]\n\nTell me:\n- Exchanges you use\n- Alert thresholds (e.g., ±5%, specific prices)\n- Update cadence (real-time vs daily)\n\nDo you want me to reorder the rest of your favorites or keep them as-is under XMR?"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-3",
+        "title": "But XMR is my #1 favorite",
+        "description": "But XMR is my #1 favorite",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "But XMR is my #1 favorite"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-4",
+        "title": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, D...",
+        "description": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-5",
+        "title": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC...",
+        "description": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?\n- Create a watchlist with live prices and market caps\n- Set price alerts (absolute or % moves)\n- Curate news and on-chain updates for just these tickers\n- Compare fees/liquidity across your preferred exchanges\n- Build simple DCA or allocation templates\n- Surface notable events (airdrops, upgrades, unlocks)\n\nIf you want, tell me your exchange(s), alert thresholds, and whether you prefer daily or real-time updates."
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-user-0:1766617565059",
+        "assistant_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-assistant-7:1766617628228"
+      }
+    },
+    "created_at": "2025-12-24T23:07:08.181868+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-user-8",
+    "role": "user",
+    "content": "Yeah, that looks good. Wait! Sorry, please flip SOL and LTC. LTC is my 9th favorite",
+    "created_at": "2025-12-24T23:08:43.678971+00:00"
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-9",
+    "role": "assistant",
+    "content": "Done—I’ve flipped SOL and LTC so LTC is now #9 and SOL is #10 [M1]. XMR remains #1, and the rest stay in your previously stated order [M3, M2].\n\n## 📊 Updated ranking\n1) XMR (Monero)  \n2) XRP  \n3) UNI  \n4) SHIB  \n5) BTC  \n6) ETH  \n7) DOGE  \n8) DOT  \n9) LTC  \n10) SOL  \n11) PEPE  \n12) BCH  \n13) GRT\n\n## Next steps\n- Set up a watchlist and price alerts for just these\n- Curate news/on-chain updates for this list\n- Surface notable events (upgrades, unlocks)\n\nTell me your exchange(s), alert thresholds, and update cadence (real-time vs daily).",
+    "model": "Index-P + GPT-5",
+    "model_label": "Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-0",
+        "title": "Yeah, that looks good. Wait! Sorry, please flip SOL and LTC....",
+        "description": "Yeah, that looks good. Wait! Sorry, please flip SOL and LTC. LTC is my 9th favorite",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Yeah, that looks good. Wait! Sorry, please flip SOL and LTC. LTC is my 9th favorite"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-1",
+        "title": "Done—I've reordered your crypto favorites with XMR at #1 and...",
+        "description": "Done—I've reordered your crypto favorites with XMR at #1 and the rest in your stated preference order. [M3, M6]\n\n## 📊 Updated ranking\n1) XMR (Monero)\n...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-7",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Done—I've reordered your crypto favorites with XMR at #1 and the rest in your stated preference order. [M3, M6]\n\n## 📊 Updated ranking\n1) XMR (Monero)\n2) XRP\n3) UNI\n4) SHIB\n5) BTC\n6) ETH\n7) DOGE\n8) DOT\n9) SOL\n10) LTC\n11) PEPE\n12) BCH\n13) GRT [M3, M6]\n\n## ✅ Want me to use this?\n- Create a watchlist with live prices/market caps\n- Set price alerts (e.g., ±5% or specific targets)\n- Curate news/on-chain updates for just these\n- Surface notable events (releases, upgrades, unlocks)\n\nTell me your exchange(s), alert thresholds, and update cadence (real-time vs daily). If you meant to reorder candies instead, I can do that too. [M2]"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-2",
+        "title": "Noted—XMR (Monero) is now set as your #1 favorite and added ...",
+        "description": "Noted—XMR (Monero) is now set as your #1 favorite and added to your crypto favorites.\n\n## Updated favorites\n- XMR (Monero) — #1\n- XRP, UNI, SHIB, BTC,...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 2,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-5",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—XMR (Monero) is now set as your #1 favorite and added to your crypto favorites.\n\n## Updated favorites\n- XMR (Monero) — #1\n- XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, GRT [M1, M2]\n\n## Want me to use this?\n- Add XMR to your watchlist with live price/market cap\n- Set XMR price alerts (absolute or %)\n- Curate XMR-focused news/on-chain updates\n- Surface notable events for XMR (releases, network updates) [M2]\n\nTell me:\n- Exchanges you use\n- Alert thresholds (e.g., ±5%, specific prices)\n- Update cadence (real-time vs daily)\n\nDo you want me to reorder the rest of your favorites or keep them as-is under XMR?"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-3",
+        "title": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC...",
+        "description": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 3,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-3",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Saved—your favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT [M1].\n\n## Want me to use this for anything?\n- Create a watchlist with live prices and market caps\n- Set price alerts (absolute or % moves)\n- Curate news and on-chain updates for just these tickers\n- Compare fees/liquidity across your preferred exchanges\n- Build simple DCA or allocation templates\n- Surface notable events (airdrops, upgrades, unlocks)\n\nIf you want, tell me your exchange(s), alert thresholds, and whether you prefer daily or real-time updates."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-4",
+        "title": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, D...",
+        "description": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT.",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 4,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-2",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies are XRP, UNI, SHIB, BTC, ETH, DOGE, DOT, SOL, LTC, PEPE, BCH, and GRT."
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-5",
+        "title": "Noted—your favorite candies are Snickers, 3 Musketeers, Milk...",
+        "description": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n#...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 5,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your favorite candies are Snickers, 3 Musketeers, Milky Way, Twix, Reese's, KitKat, Hershey's, York, Almond Joy, Oreo, and Swedish Fish [M1].\n\n## 🔍 Summary\n- I’ve got this saved in your profile and can use it for recommendations, shopping lists, or gift ideas [M1].\n\n## Want me to use this preference for anything?\n- Curate snack recommendations or swaps\n- Auto-add favorites to a shopping list\n- Suggest candy gift bundles\n- Find deals or seasonal releases for these brands"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-6",
+        "title": "But XMR is my #1 favorite",
+        "description": "But XMR is my #1 favorite",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 6,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-4",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "But XMR is my #1 favorite"
+        }
+      },
+      {
+        "id": "memory-project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3-7",
+        "title": "Yes, please reorder the rest as my favorites",
+        "description": "Yes, please reorder the rest as my favorites",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 7,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+          "message_id": "3a8d729a-7618-4afb-8137-ef702013597a-user-6",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+          "source_type": "chat",
+          "role": "user",
+          "content": "Yes, please reorder the rest as my favorites"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-user-0:1766617666443",
+        "assistant_job_id": "3a8d729a-7618-4afb-8137-ef702013597a:3a8d729a-7618-4afb-8137-ef702013597a-assistant-9:1766617723721"
+      }
+    },
+    "created_at": "2025-12-24T23:08:43.677520+00:00"
+  }
+]

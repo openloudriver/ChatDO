@@ -493,5 +493,27 @@
     "trashed_at": "2025-12-24T22:50:47.078371+00:00",
     "archived": false,
     "archived_at": null
+  },
+  {
+    "id": "e287caf5-5a94-4224-bd29-654f3d7db42a",
+    "name": "v6",
+    "default_target": "general",
+    "sort_index": 45,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-24T23:00:54.936871+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+    "name": "v7",
+    "default_target": "general",
+    "sort_index": 46,
+    "memory_sources": [],
+    "trashed": false,
+    "trashed_at": null,
+    "archived": false,
+    "archived_at": null
   }
 ]

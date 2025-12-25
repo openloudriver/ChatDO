@@ -96,14 +96,26 @@
     "archived_at": null
   },
   {
-    "id": "ce3bfa3e-14a7-4bb1-ae45-b8fc335bac6a",
-    "project_id": "a380194a-da75-4555-be20-ce6fa06d0f1d",
-    "title": "My favorite pies are lemon, Oreo, cherry, and a...",
-    "thread_id": "ce3bfa3e-14a7-4bb1-ae45-b8fc335bac6a",
-    "created_at": "2025-12-24T19:16:30.594811+00:00",
-    "updated_at": "2025-12-24T22:50:47.080735+00:00",
+    "id": "bb7d9bd5-1053-4104-beac-91cdebb5534d",
+    "project_id": "e287caf5-5a94-4224-bd29-654f3d7db42a",
+    "title": "My favorite cryptocurrencies in order are SOL, ...",
+    "thread_id": "bb7d9bd5-1053-4104-beac-91cdebb5534d",
+    "created_at": "2025-12-24T22:51:16.886622+00:00",
+    "updated_at": "2025-12-24T23:00:54.939677+00:00",
     "trashed": true,
-    "trashed_at": "2025-12-24T22:50:47.080719+00:00",
+    "trashed_at": "2025-12-24T23:00:54.939658+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "3a8d729a-7618-4afb-8137-ef702013597a",
+    "project_id": "ceb5d42c-e2b8-49ed-a9fb-620045f4f5b3",
+    "title": "My favorite candies are Snickers, 3 Musketeers,...",
+    "thread_id": "3a8d729a-7618-4afb-8137-ef702013597a",
+    "created_at": "2025-12-24T23:01:04.385048+00:00",
+    "updated_at": "2025-12-24T23:03:10.854925+00:00",
+    "trashed": false,
+    "trashed_at": null,
     "archived": false,
     "archived_at": null
   }

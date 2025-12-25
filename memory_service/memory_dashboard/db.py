@@ -1391,8 +1391,10 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
     rows = cursor.fetchall()
     conn.close()
     
-    return [
-        {
+    # Build results with schema_hint derived from fact_key for ranked lists
+    results = []
+    for row in rows:
+        fact_dict = {
             "fact_id": row["fact_id"],
             "project_id": row["project_id"],
             "fact_key": row["fact_key"],
@@ -1405,5 +1407,21 @@ def search_current_facts(project_id: str, query: str, limit: int = 10, source_id
             "supersedes_fact_id": row["supersedes_fact_id"],
             "is_current": bool(row["is_current"])
         }
-        for row in rows
-    ]
+        
+        # Derive schema_hint from fact_key for ranked lists (user.favorites.*)
+        fact_key = row["fact_key"]
+        if fact_key.startswith("user.favorites."):
+            # Parse: user.favorites.<topic>.<rank>
+            parts = fact_key.split(".")
+            if len(parts) >= 3:
+                topic = parts[2]  # Extract topic
+                fact_dict["schema_hint"] = {
+                    "domain": "ranked_list",
+                    "topic": topic,
+                    "key": fact_key,
+                    "key_prefix": f"user.favorites.{topic}"  # For aggregation queries
+                }
+        
+        results.append(fact_dict)
+    
+    return results
