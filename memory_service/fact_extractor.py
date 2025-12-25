@@ -293,6 +293,16 @@ class FactExtractor:
                     topic = self._extract_topic_from_context(cleaned, match.start())
                     ranked_facts.append((rank, value, topic))
         
+        # Pattern 2a-alt2: "my #N favorite is X" (rank before value, with "is")
+        pattern2a_alt2 = re.compile(r'my\s+#(\d+)\s+favorite\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
+        for match in pattern2a_alt2.finditer(cleaned):
+            rank = int(match.group(1))
+            value = match.group(2).strip()
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
         # Then handle "#1 XMR" or "#1 favorite XMR" patterns (value after)
         pattern2b = re.compile(r'#(\d+)\s+([^,\n#]+)', re.IGNORECASE)
         for match in pattern2b.finditer(cleaned):
@@ -360,6 +370,8 @@ class FactExtractor:
             # Remove "favorite" prefix if present (e.g., "favorite cryptos" -> "cryptos")
             if topic_part_clean.startswith("favorite "):
                 topic_part_clean = topic_part_clean[9:].strip()  # Remove "favorite "
+            # Remove phrases like "in order" that don't affect the topic
+            topic_part_clean = re.sub(r'\s+in\s+order\s*$', '', topic_part_clean, flags=re.IGNORECASE)
             topic = self._normalize_topic(topic_part_clean)
             
             # Split by comma and "and" - handle both "A, B, C and D" and "A, B, C, and D" (Oxford comma)
@@ -403,11 +415,15 @@ class FactExtractor:
         # Look back up to 200 chars for "favorite X" pattern (increased from 100)
         context = content[max(0, position-200):position].lower()
         
-        # First, try to find "favorite X" pattern
-        match = re.search(r'(?:my\s+)?favorite\s+(\w+(?:\s+\w+)?)', context)
+        # First, try to find "favorite X" pattern (but not "favorite is X" or "favorite are X")
+        # Exclude common verbs that come after "favorite"
+        match = re.search(r'(?:my\s+)?favorite\s+(?!is\s|are\s|was\s|were\s)(\w+(?:\s+\w+)?)', context)
         if match:
             topic_part = match.group(1).strip()
-            return self._normalize_topic(topic_part)
+            # Double-check: if topic_part is a verb, skip it
+            verbs = {'is', 'are', 'was', 'were', 'be', 'been', 'being'}
+            if topic_part.lower() not in verbs:
+                return self._normalize_topic(topic_part)
         
         # If no "favorite" found, look for topic keywords directly (e.g., "my #1 crypto")
         # This handles cases like "Wait, my #1 crypto is actually XMR"
@@ -435,6 +451,9 @@ class FactExtractor:
         if topic.startswith("favorite "):
             topic = topic[9:].strip()
         
+        # Remove phrases like "in order" that don't affect the topic
+        topic = re.sub(r'\s+in\s+order\s*$', '', topic, flags=re.IGNORECASE)
+        
         # Map common variations to canonical forms (without "favorite_" prefix)
         topic_map = {
             'color': 'colors',
@@ -443,6 +462,7 @@ class FactExtractor:
             'cryptos': 'crypto',
             'cryptocurrency': 'crypto',
             'cryptocurrencies': 'crypto',
+            'cryptocurrencies_in_order': 'crypto',  # Handle "cryptocurrencies in order"
             'candy': 'candies',
             'candies': 'candies',
             'chocolate': 'candies',
@@ -451,7 +471,18 @@ class FactExtractor:
             'show': 'tv',
             'television show': 'tv',
         }
-        return topic_map.get(topic, topic.replace(' ', '_'))
+        # First try exact match, then try with underscores replaced
+        if topic in topic_map:
+            return topic_map[topic]
+        topic_with_underscores = topic.replace(' ', '_')
+        if topic_with_underscores in topic_map:
+            return topic_map[topic_with_underscores]
+        # Extract the main noun (first word) and try to match it
+        first_word = topic.split()[0] if topic.split() else topic
+        if first_word in topic_map:
+            return topic_map[first_word]
+        # Fallback: return first word or topic with underscores
+        return first_word if first_word != topic else topic.replace(' ', '_')
     
     def _infer_key_from_context(self, content: str, match_start: int) -> str:
         """Infer fact key from surrounding context."""

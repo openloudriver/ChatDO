@@ -1,0 +1,122 @@
+[
+  {
+    "id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-user-0",
+    "role": "user",
+    "content": "My favorite cryptocurrencies in order are BTC, XMR, XLM, USDT",
+    "created_at": "2025-12-25T01:46:19.711570+00:00"
+  },
+  {
+    "id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-1",
+    "role": "assistant",
+    "content": "Noted—your ranked favorites are: 1) BTC, 2) XMR, 3) XLM, 4) USDT.\n\n## 🔍 Summary\n- Favorite cryptocurrencies in order: BTC > XMR > XLM > USDT.\n- I’ll treat this as your preference for future crypto-related answers.\n\n## 💾 Save to memory?\n- Do you want me to save this as a persistent preference so I prioritize these coins going forward?\n\n## ✅ Optional next steps\n- Set up a watchlist or price alerts for these four.\n- Get a concise weekly brief focused on them.\n- Compare fees/liquidity/privacy trade-offs among the four.\n- Build a simple DCA or allocation plan aligned to this ranking.",
+    "model": "Facts-S(4) + Index-P + GPT-5",
+    "model_label": "Facts-S(4) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 4,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027:da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-user-0:1766627165316",
+        "assistant_job_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027:da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-1:1766627179759"
+      }
+    },
+    "created_at": "2025-12-25T01:46:19.709666+00:00"
+  },
+  {
+    "id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-user-2",
+    "role": "user",
+    "content": "Wait, sorry, my #1 favorite is XMR and then BTC.",
+    "created_at": "2025-12-25T01:47:18.688440+00:00"
+  },
+  {
+    "id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-3",
+    "role": "assistant",
+    "content": "Acknowledged—your top favorite is now XMR, followed by BTC.\n\n## 🔄 Update noted\n- Previously saved ranking: BTC > XMR > XLM > USDT [M1, M2].\n- I’ll prioritize XMR first, then BTC in crypto-related answers going forward.\n\n## ✅ Confirm full order?\n- Should I update the full list to: XMR > BTC > XLM > USDT?\n- If different, tell me the exact order and I’ll save it.\n\n## 💡 Optional next steps\n- Set up a focused watchlist and price alerts for XMR/BTC.\n- Weekly brief centered on XMR and BTC.\n- Quick comparison: privacy (XMR) vs liquidity (BTC), plus fee/timing trade-offs.\n- Simple DCA split favoring XMR over BTC.",
+    "model": "Facts-S(1) + Index-P + GPT-5",
+    "model_label": "Facts-S(1) + Index-P + GPT-5",
+    "provider": "openai-gpt5",
+    "sources": [
+      {
+        "id": "memory-project-946de513-119d-47af-9f59-cd7ba62c3253-0",
+        "title": "Noted—your ranked favorites are: 1) BTC, 2) XMR, 3) XLM, 4) ...",
+        "description": "Noted—your ranked favorites are: 1) BTC, 2) XMR, 3) XLM, 4) USDT.\n\n## 🔍 Summary\n- Favorite cryptocurrencies in order: BTC > XMR > XLM > USDT.\n- I’ll t...",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 0,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027",
+          "message_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-1",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-946de513-119d-47af-9f59-cd7ba62c3253",
+          "source_type": "chat",
+          "role": "assistant",
+          "content": "Noted—your ranked favorites are: 1) BTC, 2) XMR, 3) XLM, 4) USDT.\n\n## 🔍 Summary\n- Favorite cryptocurrencies in order: BTC > XMR > XLM > USDT.\n- I’ll treat this as your preference for future crypto-related answers.\n\n## 💾 Save to memory?\n- Do you want me to save this as a persistent preference so I prioritize these coins going forward?\n\n## ✅ Optional next steps\n- Set up a watchlist or price alerts for these four.\n- Get a concise weekly brief focused on them.\n- Compare fees/liquidity/privacy trade-offs among the four.\n- Build a simple DCA or allocation plan aligned to this ranking."
+        }
+      },
+      {
+        "id": "memory-project-946de513-119d-47af-9f59-cd7ba62c3253-1",
+        "title": "My favorite cryptocurrencies in order are BTC, XMR, XLM, USD...",
+        "description": "My favorite cryptocurrencies in order are BTC, XMR, XLM, USDT",
+        "sourceType": "memory",
+        "citationPrefix": "M",
+        "rank": 1,
+        "siteName": "Memory",
+        "meta": {
+          "kind": "chat",
+          "chat_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027",
+          "message_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-user-0",
+          "message_uuid": null,
+          "file_path": null,
+          "file_id": null,
+          "source_id": "project-946de513-119d-47af-9f59-cd7ba62c3253",
+          "source_type": "chat",
+          "role": "user",
+          "content": "My favorite cryptocurrencies in order are BTC, XMR, XLM, USDT"
+        }
+      }
+    ],
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": true,
+      "facts_actions": {
+        "S": 1,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027:da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-user-0:1766627217780",
+        "assistant_job_id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027:da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-3:1766627238730"
+      }
+    },
+    "created_at": "2025-12-25T01:47:18.687038+00:00"
+  },
+  {
+    "id": "da88a4ea-dad5-4d9e-ab2d-13ad3f8cf027-assistant-4",
+    "role": "assistant",
+    "content": "I don't have that stored yet.",
+    "model": "Facts",
+    "model_label": "Model: Facts",
+    "provider": "facts",
+    "created_at": "2025-12-25T01:47:49.838967+00:00"
+  }
+]

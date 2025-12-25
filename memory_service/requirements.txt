@@ -16,7 +16,7 @@ faiss-cpu
 # This includes all dependencies needed for PDF, Word, Excel, PowerPoint, images, HTML, etc.
 unstructured[all-docs]
 # Fact extraction dependencies
-spacy==3.7.0
+spacy>=3.7.0
 dateparser>=1.2.0
 quantulum3>=0.9.0
 

@@ -6,6 +6,7 @@ depend on the Memory Service indexing pipeline. Facts are stored immediately
 and deterministically, ensuring Facts-S/U counts are always truthful.
 """
 import logging
+import re
 from typing import Dict, Optional, Tuple, List
 from datetime import datetime
 
@@ -50,11 +51,15 @@ def resolve_ranked_list_topic(
         logger.debug(f"[TOPIC-RESOLVE] Found explicit topic in candidate: {explicit_topic}")
         return explicit_topic, None
     
-    # Look for "favorite X" pattern in message
+    # Look for "favorite X" pattern in message (but not "favorite is X")
+    # Only extract if it's not a verb
     match = extractor._extract_topic_from_context(message_content, len(message_content))
     if match:
-        logger.debug(f"[TOPIC-RESOLVE] Found explicit topic in message: {match}")
-        return match, None
+        # Double-check: don't use verbs as topics
+        verbs = {'is', 'are', 'was', 'were', 'be', 'been', 'being'}
+        if match.lower() not in verbs:
+            logger.debug(f"[TOPIC-RESOLVE] Found explicit topic in message: {match}")
+            return match, None
     
     # 2. Schema-hint anchoring (preferred for follow-ups)
     if retrieved_facts:

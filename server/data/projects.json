@@ -522,6 +522,28 @@
     "default_target": "general",
     "sort_index": 47,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-25T01:17:28.829875+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "15a99409-6057-4df3-9a49-96a8f3fd4ff5",
+    "name": "v9",
+    "default_target": "general",
+    "sort_index": 48,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-25T01:45:39.616490+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "946de513-119d-47af-9f59-cd7ba62c3253",
+    "name": "v10",
+    "default_target": "general",
+    "sort_index": 49,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,
