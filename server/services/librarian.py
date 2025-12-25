@@ -932,6 +932,10 @@ def search_facts_ranked_list(
         )
         
         return ranked_facts
+        
+    except Exception as e:
+        logger.error(f"[LIBRARIAN] Failed to search ranked facts: {e}", exc_info=True)
+        return []
 
 
 def get_recent_ranked_list_keys(

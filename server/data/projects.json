@@ -511,6 +511,17 @@
     "default_target": "general",
     "sort_index": 46,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-25T01:12:16.192440+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "f2e12121-a1b3-4a67-9db1-cabf546dbe04",
+    "name": "v8",
+    "default_target": "general",
+    "sort_index": 47,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,
