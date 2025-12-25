@@ -680,11 +680,13 @@ async def chat_with_smart_search(
                 logger.debug(f"[FACTS-LIST] No topic_key found for list query, proceeding with GPT-5")
             elif project_id:
                 # Search ranked facts directly from DB (fast, deterministic, no Memory Service dependency)
+                # For list queries, don't exclude current message UUID - we want to see all stored facts
+                # List queries don't store new facts, so exclusion isn't needed
                 ranked_facts = librarian.search_facts_ranked_list(
                     project_id=project_id,
                     topic_key=topic_key,
                     limit=50,
-                    exclude_message_uuid=current_message_uuid  # Exclude facts from current message
+                    exclude_message_uuid=None  # Don't exclude for list queries - show all stored facts
                 )
             
             if ranked_facts:

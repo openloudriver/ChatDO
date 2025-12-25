@@ -311,9 +311,40 @@ class FactExtractor:
                     topic = self._extract_topic_from_context(cleaned, match.start())
                     ranked_facts.append((rank, value, topic))
         
-        # Pattern 2a-alt2: "my #N favorite is X" (rank before value, with "is")
-        pattern2a_alt2 = re.compile(r'my\s+#(\d+)\s+favorite\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
+        # Pattern 2a-alt3: "My favorite #N is X" (alternative word order)
+        pattern2a_alt3 = re.compile(r'my\s+favorite\s+#(\d+)\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
+        for match in pattern2a_alt3.finditer(cleaned):
+            rank = int(match.group(1))
+            value = match.group(2).strip()
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
+        # Pattern 2a-alt2: "my #N favorite [topic] is X" (rank before value, with "is")
+        # Need to handle "my #1 favorite crypto is XMR and my #2 is BTC" - stop at "and" if followed by another rank
+        # Use a more restrictive pattern that stops at word boundaries
+        pattern2a_alt2 = re.compile(r'my\s+#(\d+)\s+favorite(?:\s+\w+)?\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)(?:\s+and\s+my\s+#\d+)?', re.IGNORECASE)
         for match in pattern2a_alt2.finditer(cleaned):
+            rank = int(match.group(1))
+            value = match.group(2).strip()
+            # Stop at "and" if it's followed by another rank statement
+            if ' and ' in value.lower():
+                # Check if "and" is followed by "my #" pattern - if so, truncate value
+                and_pos = value.lower().find(' and ')
+                if and_pos > 0:
+                    # Check if what follows "and" looks like another rank statement
+                    after_and = value[and_pos + 5:].strip().lower()
+                    if after_and.startswith('my #') or (after_and.startswith('is ') and len(after_and.split()) <= 3):
+                        value = value[:and_pos].strip()
+            if rank >= 1 and value and len(value) < 200:
+                if not any(r == rank for r, _, _ in ranked_facts):
+                    topic = self._extract_topic_from_context(cleaned, match.start())
+                    ranked_facts.append((rank, value, topic))
+        
+        # Pattern 2a-alt4: "my #N is X" (simpler pattern for "my #2 is BTC")
+        pattern2a_alt4 = re.compile(r'my\s+#(\d+)\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
+        for match in pattern2a_alt4.finditer(cleaned):
             rank = int(match.group(1))
             value = match.group(2).strip()
             if rank >= 1 and value and len(value) < 200:
