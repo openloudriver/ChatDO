@@ -291,8 +291,8 @@ class FactExtractor:
                 ranked_facts.append((rank, value, topic))
         
         # Pattern 2: Hash-prefixed: "#1 XMR, #2 BTC" or "#1 favorite" (value comes before/after)
-        # First, handle "XMR is my #1 favorite" pattern (value before)
-        pattern2a = re.compile(r'([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)\s+is\s+my\s+#(\d+)\s+favorite', re.IGNORECASE)
+        # First, handle "XMR is my #1 favorite" or "XMR is actually my #1 favorite" pattern (value before)
+        pattern2a = re.compile(r'([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)\s+is\s+(?:actually\s+)?my\s+#(\d+)\s+favorite', re.IGNORECASE)
         for match in pattern2a.finditer(cleaned):
             value = match.group(1).strip()
             rank = int(match.group(2))
@@ -535,16 +535,18 @@ class FactExtractor:
         match = re.search(r'(?:my\s+)?favorite\s+(?!is\s|are\s|was\s|were\s)(\w+(?:\s+\w+)?)', context)
         if match:
             topic_part = match.group(1).strip()
-            # Double-check: if topic_part is a verb, skip it
+            # Double-check: if topic_part is a verb or conjunction, skip it
             verbs = {'is', 'are', 'was', 'were', 'be', 'been', 'being'}
-            if topic_part.lower() not in verbs:
+            conjunctions = {'and', 'or', 'but', 'yet', 'so', 'for', 'nor'}
+            if topic_part.lower() not in verbs and topic_part.lower() not in conjunctions:
                 return self._normalize_topic(topic_part)
         
         # If no "favorite" found, look for topic keywords directly (e.g., "my #1 crypto")
         # This handles cases like "Wait, my #1 crypto is actually XMR"
         topic_keywords = ['crypto', 'cryptos', 'cryptocurrency', 'cryptocurrencies', 
                          'color', 'colors', 'candy', 'candies', 'pie', 'pies',
-                         'tv', 'show', 'television', 'food', 'textile', 'textiles']
+                         'tv', 'show', 'television', 'food', 'textile', 'textiles',
+                         'cookie', 'cookies']
         for keyword in topic_keywords:
             # Look for the keyword in the context (with word boundaries)
             if re.search(r'\b' + re.escape(keyword) + r'\b', context):
