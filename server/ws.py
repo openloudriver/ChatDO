@@ -383,6 +383,21 @@ Keep it concise, neutral, and factual."""
             else:
                 print(f"[RAG] Warning: No context was built despite {len(rag_file_ids)} file IDs provided")
         
+        # Resolve project_id to UUID (Facts DB contract: must use UUID, never name)
+        project_uuid = project_id
+        if project_id:
+            try:
+                from server.services.projects.project_resolver import resolve_project_uuid
+                # Get project dict for resolution
+                projects = load_projects()
+                project = next((p for p in projects if p.get("id") == project_id or p.get("name") == project_id), None)
+                project_uuid = resolve_project_uuid(project, project_id=project_id)
+                logger.info(f"[PROJECT] Using project_uuid={project_uuid} project_name={project.get('name') if project else 'unknown'}")
+            except Exception as e:
+                logger.error(f"[PROJECT] Failed to resolve project UUID for project_id={project_id}: {e}", exc_info=True)
+                # Continue with original project_id - validation will catch it if invalid
+                project_uuid = project_id
+        
         # Load target configuration
         target_cfg = load_target(target_name)
         
@@ -541,13 +556,13 @@ Keep it concise, neutral, and factual."""
             if conversation_id:
                 conversation_history = load_thread_history(target_cfg.name, conversation_id)
             
-            # Call smart chat service
+            # Call smart chat service (use resolved project_uuid)
             result = await chat_with_smart_search(
                 user_message=message,
                 target_name=target_cfg.name,
                 thread_id=conversation_id if conversation_id else None,
                 conversation_history=conversation_history,
-                project_id=project_id
+                project_id=project_uuid  # Use resolved UUID, not original project_id
             )
             
             # Extract response content
@@ -930,9 +945,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
             
             # Determine target_name from project_id (don't trust client)
+            # Resolve project_id to UUID (Facts DB contract: must use UUID, never name)
             from server.main import load_projects, get_target_name_from_project
+            from server.services.projects.project_resolver import resolve_project_uuid
             projects = load_projects()
-            project = next((p for p in projects if p.get("id") == project_id), None)
+            project = next((p for p in projects if p.get("id") == project_id or p.get("name") == project_id), None)
             if not project:
                 await websocket.send_json({
                     "type": "error",
@@ -940,12 +957,26 @@ async def websocket_endpoint(websocket: WebSocket):
                     "done": True
                 })
                 continue
+            
+            # Resolve to UUID
+            try:
+                project_uuid = resolve_project_uuid(project, project_id=project_id)
+                logger.info(f"[PROJECT] Using project_uuid={project_uuid} project_name={project.get('name', 'unknown')}")
+            except Exception as e:
+                logger.error(f"[PROJECT] Failed to resolve project UUID: {e}", exc_info=True)
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"Cannot resolve project UUID: {e}",
+                    "done": True
+                })
+                continue
+            
             target_name = get_target_name_from_project(project)
             
-            # Stream response
+            # Stream response (use resolved project_uuid)
             await stream_chat_response(
                 websocket,
-                project_id,
+                project_uuid,  # Use resolved UUID, not original project_id
                 conversation_id,
                 target_name,
                 message,

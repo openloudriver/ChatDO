@@ -466,6 +466,21 @@ async def chat_with_smart_search(
     conversation_history: Optional[List[Dict[str, str]]] = None,
     project_id: Optional[str] = None
 ) -> Dict[str, Any]:
+    """
+    Chat with smart search and Facts persistence.
+    
+    Facts DB contract: project_id must be UUID, never project name/slug.
+    This should be resolved at the entry point (WS handler, HTTP handler) before calling this function.
+    """
+    # Validate project_id is UUID if provided (should already be resolved at entry point)
+    if project_id:
+        from server.services.projects.project_resolver import validate_project_uuid
+        try:
+            validate_project_uuid(project_id)
+        except ValueError as e:
+            logger.error(f"[CHAT] Invalid project_id format: {e}")
+            # Don't fail completely, but log error - validation will catch at Facts persistence
+    
     # Initialize action tracking at the very beginning
     facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
     files_actions = {"R": 0}  # Files retrieved count

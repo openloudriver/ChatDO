@@ -4,6 +4,9 @@ Synchronous Facts persistence module.
 This module provides a direct, synchronous path for storing facts that does NOT
 depend on the Memory Service indexing pipeline. Facts are stored immediately
 and deterministically, ensuring Facts-S/U counts are always truthful.
+
+Facts DB contract: project_facts.project_id must always be the project UUID string.
+Never use project name/slug for DB access.
 """
 import logging
 import re
@@ -88,6 +91,7 @@ def resolve_ranked_list_topic(
     # 3. DB-backed recency fallback
     if project_id:
         try:
+            # project_id must be UUID (validated in persist_facts_synchronously)
             recent_keys = get_recent_ranked_list_keys(project_id, limit=5)
             if recent_keys:
                 # Extract topics from keys: user.favorites.<topic>
@@ -239,6 +243,14 @@ def persist_facts_synchronously(
     if not project_id:
         logger.warning(f"[FACTS-PERSIST] Skipping fact persistence: project_id is missing")
         return store_count, update_count, stored_fact_keys, None, None
+    
+    # Enforce Facts DB contract: project_id must be UUID
+    from server.services.projects.project_resolver import validate_project_uuid
+    try:
+        validate_project_uuid(project_id)
+    except ValueError as e:
+        logger.error(f"[FACTS-PERSIST] ❌ Invalid project_id format: {e}")
+        raise ValueError(f"Cannot persist facts: {e}") from e
     
     # Get or create message_uuid if not provided
     if not message_uuid:

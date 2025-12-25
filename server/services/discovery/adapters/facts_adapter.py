@@ -39,6 +39,10 @@ def search(query: DiscoveryQuery) -> Tuple[List[DiscoveryHit], Dict[str, any]]:
     
     try:
         from memory_service.memory_dashboard import db
+        from server.services.projects.project_resolver import validate_project_uuid
+        
+        # Enforce Facts DB contract: project_id must be UUID
+        validate_project_uuid(query.project_id)
         
         source_id = f"project-{query.project_id}"
         

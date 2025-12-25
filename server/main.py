@@ -1040,13 +1040,25 @@ async def chat(request: ChatRequest):
         else:
             # Use smart chat with auto-search for normal chat
             from server.services.chat_with_smart_search import chat_with_smart_search
+            from server.services.projects.project_resolver import resolve_project_uuid
+            
+            # Resolve project_id to UUID (Facts DB contract: must use UUID, never name)
+            project_uuid = None
+            if project:
+                try:
+                    project_uuid = resolve_project_uuid(project)
+                    logger.info(f"[PROJECT] Using project_uuid={project_uuid} project_name={project.get('name', 'unknown')}")
+                except Exception as e:
+                    logger.error(f"[PROJECT] Failed to resolve project UUID: {e}", exc_info=True)
+                    # If resolution fails, still try to use project.get("id") - validation will catch if invalid
+                    project_uuid = project.get("id")
             
             # Use the project-based target_name we determined above
             result = await chat_with_smart_search(
                 user_message=request.message,
                 target_name=target_name,  # Use project-based target_name, not from client
                 thread_id=request.conversation_id if request.conversation_id else None,
-                project_id=project.get("id") if project else None
+                project_id=project_uuid  # Use resolved UUID
             )
             
             # If result has tasks or needs special handling, route to run_agent

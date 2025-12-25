@@ -1041,8 +1041,14 @@ async def search_facts(request: SearchFactsRequest):
     
     Returns facts matching the query in fact_key or value_text.
     Only returns current facts (is_current=1).
+    
+    Facts DB contract: project_id must be UUID, never project name/slug.
     """
     try:
+        # Enforce Facts DB contract: project_id must be UUID
+        from server.services.projects.project_resolver import validate_project_uuid
+        validate_project_uuid(request.project_id)
+        
         source_id = f"project-{request.project_id}"
         logger.info(f"[FACTS-API] Searching facts for project_id={request.project_id}, query='{request.query}', source_id={source_id}, exclude_message_uuid={request.exclude_message_uuid}")
         facts = db.search_current_facts(

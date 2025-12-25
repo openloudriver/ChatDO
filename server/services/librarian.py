@@ -294,8 +294,10 @@ def get_relevant_memory(
     - Archived projects are NEVER used for recall
     - This is enforced server-side, independent of UI search scope
     
+    Facts DB contract: project_id must be UUID, never project name/slug.
+    
     Args:
-        project_id: The project ID to search
+        project_id: Project UUID (must be UUID format, validated)
         query: The search query (typically the user's message)
         chat_id: Optional chat ID (deprecated, kept for compatibility)
         max_hits: Maximum number of hits to return (default: 30)
@@ -305,6 +307,11 @@ def get_relevant_memory(
     Returns:
         List of MemoryHit instances, sorted by score (descending)
     """
+    from server.services.projects.project_resolver import validate_project_uuid
+    
+    # Enforce Facts DB contract: project_id must be UUID
+    validate_project_uuid(project_id)
+    
     from . import memory_service_client
     
     # 1) Retrieve current facts first (fast path)
@@ -857,8 +864,10 @@ def search_facts_ranked_list(
     This function reads directly from the project_facts DB (not via Memory Service HTTP),
     making it fast, deterministic, and independent of Memory Service availability.
     
+    Facts DB contract: project_id must be UUID, never project name/slug.
+    
     Args:
-        project_id: Project ID
+        project_id: Project UUID (must be UUID format, validated)
         topic_key: Topic key (e.g., "crypto", "colors") - will be normalized
         limit: Maximum number of facts to return
         exclude_message_uuid: Optional message UUID to exclude from results
@@ -874,7 +883,11 @@ def search_facts_ranked_list(
     try:
         from memory_service.memory_dashboard import db
         from memory_service.fact_extractor import get_fact_extractor
+        from server.services.projects.project_resolver import validate_project_uuid
         import re
+        
+        # Enforce Facts DB contract: project_id must be UUID
+        validate_project_uuid(project_id)
         
         # Normalize topic_key to match fact_extractor's normalization
         extractor = get_fact_extractor()
@@ -949,8 +962,10 @@ def get_recent_ranked_list_keys(
     Used as a fallback for topic resolution when no schema hints are available.
     Only returns keys matching user.favorites.* schema convention.
     
+    Facts DB contract: project_id must be UUID, never project name/slug.
+    
     Args:
-        project_id: Project ID
+        project_id: Project UUID (must be UUID format, validated)
         limit: Maximum number of distinct keys to return
         source_id: Optional source ID (uses project-based source if not provided)
         
@@ -960,7 +975,11 @@ def get_recent_ranked_list_keys(
     """
     try:
         from memory_service.memory_dashboard import db
+        from server.services.projects.project_resolver import validate_project_uuid
         import re
+        
+        # Enforce Facts DB contract: project_id must be UUID
+        validate_project_uuid(project_id)
         
         if source_id is None:
             source_id = f"project-{project_id}"
