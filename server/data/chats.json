@@ -101,9 +101,9 @@
     "title": "My favorite cookies are chocolate chip, snicker...",
     "thread_id": "e7e56cce-f334-4609-a734-8d904ba70f6c",
     "created_at": "2025-12-25T15:34:41.855290+00:00",
-    "updated_at": "2025-12-25T15:36:30.977334+00:00",
-    "trashed": false,
-    "trashed_at": null,
+    "updated_at": "2025-12-25T16:18:29.667968+00:00",
+    "trashed": true,
+    "trashed_at": "2025-12-25T16:18:29.667965+00:00",
     "archived": false,
     "archived_at": null
   }

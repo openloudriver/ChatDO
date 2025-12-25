@@ -588,8 +588,8 @@
     "default_target": "general",
     "sort_index": 53,
     "memory_sources": [],
-    "trashed": false,
-    "trashed_at": null,
+    "trashed": true,
+    "trashed_at": "2025-12-25T16:18:29.666505+00:00",
     "archived": false,
     "archived_at": null
   }
