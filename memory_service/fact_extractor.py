@@ -343,7 +343,8 @@ class FactExtractor:
                     ranked_facts.append((rank, value, topic))
         
         # Pattern 2a-alt4: "my #N is X" (simpler pattern for "my #2 is BTC")
-        pattern2a_alt4 = re.compile(r'my\s+#(\d+)\s+is\s+([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
+        # Also handle "my #N is actually X" - skip "actually" and capture the value
+        pattern2a_alt4 = re.compile(r'my\s+#(\d+)\s+is\s+(?:actually\s+)?([A-Z][A-Z0-9]+(?:\s+\([^)]+\))?)', re.IGNORECASE)
         for match in pattern2a_alt4.finditer(cleaned):
             rank = int(match.group(1))
             value = match.group(2).strip()
@@ -353,11 +354,16 @@ class FactExtractor:
                     ranked_facts.append((rank, value, topic))
         
         # Then handle "#1 XMR" or "#1 favorite XMR" patterns (value after)
+        # But skip if it looks like "is actually" or other verb phrases
         pattern2b = re.compile(r'#(\d+)\s+([^,\n#]+)', re.IGNORECASE)
         for match in pattern2b.finditer(cleaned):
             rank_str, value_part = match.groups()
             rank = int(rank_str)
             value_part = value_part.strip().rstrip(',').strip()
+            
+            # Skip if value_part starts with "is" or "are" (likely part of a sentence structure we've already handled)
+            if value_part.lower().startswith(('is ', 'are ', 'was ', 'were ')):
+                continue
             
             # If value_part is just "favorite", look ahead for the actual value
             if value_part.lower() in ['favorite', 'favorites']:
@@ -368,7 +374,11 @@ class FactExtractor:
                 else:
                     continue  # Skip if we can't find the actual value
             else:
-                value = value_part
+                # Only accept if value_part looks like a ticker/crypto symbol (starts with uppercase letter)
+                # This prevents capturing phrases like "is actually FIL" or "and FIL at"
+                if not re.match(r'^[A-Z][A-Z0-9]+(?:\s+\([^)]+\))?$', value_part.strip()):
+                    continue
+                value = value_part.strip()
             
             if rank >= 1 and value and len(value) < 200:
                 if not any(r == rank for r, _, _ in ranked_facts):

@@ -6,9 +6,12 @@ from fastapi import WebSocket, WebSocketDisconnect
 from typing import Optional, List, Dict, Any
 import sys
 import re
+import logging
 from pathlib import Path
 from datetime import datetime, timezone
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

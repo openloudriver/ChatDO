@@ -436,13 +436,19 @@ def build_model_label(
         s_count = facts_actions.get("S", 0)
         u_count = facts_actions.get("U", 0)
         r_count = facts_actions.get("R", 0)
+        f_flag = facts_actions.get("F", False)
         
-        if s_count > 0:
-            parts.append(f"Facts-S({s_count})")
-        if u_count > 0:
-            parts.append(f"Facts-U({u_count})")
-        if r_count > 0:
-            parts.append(f"Facts-R({r_count})")
+        # Check for Facts failure first (hard failure)
+        if f_flag:
+            parts.append("Facts-F")
+        else:
+            # Only show S/U/R if no failure
+            if s_count > 0:
+                parts.append(f"Facts-S({s_count})")
+            if u_count > 0:
+                parts.append(f"Facts-U({u_count})")
+            if r_count > 0:
+                parts.append(f"Facts-R({r_count})")
     
     # 2. Files token (only if R > 0)
     if files_actions:
@@ -546,7 +552,8 @@ async def chat_with_smart_search(
             user_message_id = f"{thread_id}-user-{message_index}"
             
             # Persist facts synchronously (does NOT require Memory Service)
-            # Note: retrieved_facts not available yet (retrieved later), but DB recency fallback will work
+            # NEW: Uses Qwen LLM to produce JSON operations, then applies deterministically
+            # Note: retrieved_facts not available yet (retrieved later), but schema hints will be passed if available
             store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
@@ -557,6 +564,30 @@ async def chat_with_smart_search(
                 message_index=message_index,
                 retrieved_facts=None  # Will be enhanced later to pass retrieved facts for schema-hint resolution
             )
+            
+            # Check for Facts LLM failure (negative counts indicate error)
+            if store_count < 0 or update_count < 0:
+                logger.error(f"[FACTS] Facts LLM failed - returning hard failure")
+                facts_actions["F"] = True  # Set failure flag
+                facts_actions["S"] = 0
+                facts_actions["U"] = 0
+                
+                # Return explicit error message (hard failure UX)
+                error_message = (
+                    "Facts system failed: The Facts LLM (Qwen) is unavailable or returned invalid JSON. "
+                    "Facts were not updated. Please try again or check that Ollama is running."
+                )
+                return {
+                    "response": error_message,
+                    "model": "Facts-F",
+                    "provider": "facts",
+                    "meta": {
+                        "fastPath": "facts_error",
+                        "facts_error": True,
+                        "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True}
+                    },
+                    "sources": []
+                }
             
             # Check for topic ambiguity - if ambiguous, return fast-path clarification response
             if ambiguous_topics:
@@ -576,7 +607,7 @@ async def chat_with_smart_search(
                     "meta": {
                         "fastPath": "topic_ambiguity",
                         "ambiguous_topics": ambiguous_topics,
-                        "facts_actions": {"S": 0, "U": 0, "R": 0}
+                        "facts_actions": {"S": 0, "U": 0, "R": 0, "F": False}
                     },
                     "sources": []
                 }
@@ -809,89 +840,108 @@ async def chat_with_smart_search(
     hits = []  # Initialize hits to empty list so it's always defined
     if project_id:
         try:
-            # Use Librarian for smarter ranking and deduplication
-            # Librarian handles cross-chat memory and boosts answers over questions
-            # Exclude facts from current message to prevent Facts-R from counting facts just stored
-            hits = librarian.get_relevant_memory(
-                project_id=project_id,
-                query=user_message,
-                chat_id=None,  # Include all chats for cross-chat memory
-                max_hits=30,
-                exclude_message_uuid=current_message_uuid  # Exclude facts from current message
-            )
-            searched_memory = True  # We attempted to search, regardless of results
-            if hits:
-                # Format hits into context string for GPT-5
-                memory_context = librarian.format_hits_as_context(hits)
-                has_memory = True
-                logger.info(f"[MEMORY] Retrieved memory context for project_id={project_id}, chat_id={thread_id} ({len(hits)} hits)")
-                logger.info(f"[MEMORY] Will pass Memory context to GPT-5: has_memory={has_memory}, hits_count={len(hits)}")
+            # NEW: Use Qwen query-to-plan for Facts-R (deterministic retrieval)
+            # This replaces the old embedding-based search for facts
+            try:
+                from server.services.facts_query_planner import plan_facts_query
+                from server.services.facts_retrieval import execute_facts_plan
+                from server.services.facts_llm.client import FactsLLMError
                 
-                # Count distinct canonical topic keys from fact hits (for R count)
-                # IMPORTANT: Only count facts that are RELEVANT to the current query
-                # Filter fact hits to only include those that match the query topic
-                # Fact keys are like "user.favorite_color" or "user.favorite_color.1" (ranked)
-                # Canonical topic key is without the rank suffix (e.g., "user.favorite_color")
-                retrieved_topic_keys = set()
-                query_lower = user_message.lower()
+                # Plan query using Qwen
+                try:
+                    query_plan = plan_facts_query(user_message)
+                    
+                    # Execute plan deterministically
+                    facts_answer = execute_facts_plan(
+                        project_uuid=project_id,
+                        plan=query_plan,
+                        exclude_message_uuid=current_message_uuid
+                    )
+                    
+                    # Count distinct canonical keys for Facts-R
+                    facts_actions["R"] = len(facts_answer.canonical_keys)
+                    if facts_actions["R"] > 0:
+                        logger.info(f"[FACTS-R] Retrieved {facts_actions['R']} distinct canonical keys: {facts_answer.canonical_keys}")
+                    
+                    # Convert facts to memory hits format for GPT-5 context
+                    fact_hits = []
+                    for fact in facts_answer.facts:
+                        fact_hits.append({
+                            "content": f"{fact.get('fact_key', '')} = {fact.get('value_text', '')}",
+                            "score": 1.0,
+                            "metadata": {
+                                "is_fact": True,
+                                "fact_key": fact.get("fact_key"),
+                                "value_text": fact.get("value_text"),
+                                "source_message_uuid": fact.get("source_message_uuid")
+                            }
+                        })
+                    
+                    # Also get non-fact memory hits from librarian (for Index domain)
+                    # This provides semantic search results alongside facts
+                    # Note: librarian.get_relevant_memory includes both facts and index hits
+                    # We'll filter out fact hits and only use index hits
+                    all_hits = librarian.get_relevant_memory(
+                        project_id=project_id,
+                        query=user_message,
+                        chat_id=None,
+                        max_hits=30,
+                        exclude_message_uuid=current_message_uuid
+                    )
+                    
+                    # Filter to only index hits (non-fact hits)
+                    index_hits = [
+                        hit for hit in all_hits 
+                        if not (hit.metadata and hit.metadata.get("is_fact"))
+                    ]
+                    
+                    # Combine fact hits (from query planner) and index hits
+                    hits = fact_hits + index_hits
+                    searched_memory = True
+                    has_memory = len(hits) > 0
+                    
+                    if has_memory:
+                        # Format hits into context string for GPT-5
+                        memory_context = librarian.format_hits_as_context(hits)
+                        logger.info(f"[MEMORY] Retrieved memory context: {len(fact_hits)} facts + {len(index_hits)} index hits")
+                    
+                except FactsLLMError as e:
+                    # Facts-R query planner failed - hard fail Facts-R but continue with Index
+                    logger.error(f"[FACTS-R] Query planner failed: {e}")
+                    facts_actions["R"] = 0
+                    facts_actions["F"] = True  # Mark Facts as failed
+                    
+                    # Fallback to Index-only memory retrieval
+                    hits = librarian.get_relevant_memory(
+                        project_id=project_id,
+                        query=user_message,
+                        chat_id=None,
+                        max_hits=30,
+                        exclude_message_uuid=current_message_uuid
+                    )
+                    searched_memory = True
+                    has_memory = len(hits) > 0
+                    if has_memory:
+                        memory_context = librarian.format_hits_as_context(hits)
+                    
+            except Exception as e:
+                # Hard fail Facts-R if new system fails (no fallback)
+                logger.error(f"[FACTS-R] Query planner failed with unexpected error: {e}", exc_info=True)
+                facts_actions["R"] = 0
+                facts_actions["F"] = True  # Mark Facts as failed
                 
-                # Extract topic keywords from query (remove stop words)
-                # Note: 're' is already imported at module level
-                stop_words = {'what', 'is', 'my', 'your', 'the', 'a', 'an', 'do', 'you', 'remember', 'know', 'tell', 'me', 'about', 'are', 'favorite', 'favorites', 'and', 'or', 'but', 'with', 'for', 'from', 'to', 'of', 'in', 'on', 'at', 'by'}
-                query_words = set(re.findall(r'\b\w+\b', query_lower))
-                topic_keywords = [w for w in query_words if w not in stop_words and len(w) > 2]
-                
-                # Extract the main topic noun from the query (e.g., "food", "pies", "candies" from "My favorite X are...")
-                # This is more reliable than matching any keyword
-                main_topic = None
-                topic_match = re.search(r'favorite\s+(\w+(?:\s+\w+)?)', query_lower)
-                if topic_match:
-                    main_topic = topic_match.group(1).strip()
-                    # Remove common suffixes
-                    main_topic = re.sub(r'\s+(are|is|was|were)$', '', main_topic)
-                
-                for hit in hits:
-                    if hit.metadata and hit.metadata.get("is_fact"):
-                        fact_key = hit.metadata.get("fact_key", "")
-                        value_text = hit.metadata.get("value_text", "").lower()
-                        
-                        if fact_key:
-                            # Extract canonical topic key (remove rank suffix if present)
-                            # e.g., "user.favorite_color.1" -> "user.favorite_color"
-                            canonical_key = fact_key.rsplit(".", 1)[0] if "." in fact_key and fact_key.split(".")[-1].isdigit() else fact_key
-                            
-                            # Only count this fact if it's relevant to the query
-                            is_relevant = False
-                            
-                            # Primary check: main topic must match fact key
-                            if main_topic:
-                                fact_key_lower = canonical_key.lower()
-                                # Check if main topic appears in fact key (e.g., "food" in "user.food" or "user.favorite_food")
-                                if main_topic in fact_key_lower:
-                                    is_relevant = True
-                                # Also check if main topic appears in value_text (for cases like "favorite food" stored as "food")
-                                elif main_topic in value_text:
-                                    is_relevant = True
-                            
-                            # Fallback: if no main topic extracted, use keyword matching (but stricter)
-                            if not is_relevant and topic_keywords:
-                                fact_key_lower = canonical_key.lower()
-                                # Require at least 2 keywords to match (to avoid false positives)
-                                matching_keywords = [kw for kw in topic_keywords if kw in fact_key_lower or kw in value_text]
-                                if len(matching_keywords) >= 2:
-                                    is_relevant = True
-                            
-                            # If no keywords at all, don't count (safer than counting everything)
-                            
-                            if is_relevant:
-                                retrieved_topic_keys.add(canonical_key)
-                
-                facts_actions["R"] = len(retrieved_topic_keys)
-                if facts_actions["R"] > 0:
-                    logger.info(f"[MEMORY] Retrieved {facts_actions['R']} distinct topic keys (filtered for relevance): {sorted(retrieved_topic_keys)}")
-            else:
-                logger.info(f"[MEMORY] Searched memory for project_id={project_id} but found no results")
-                logger.info(f"[MEMORY] No Memory context to pass to GPT-5: has_memory={has_memory}, hits_count=0")
+                # Still get Index hits for GPT-5 context (Facts failure doesn't block Index)
+                hits = librarian.get_relevant_memory(
+                    project_id=project_id,
+                    query=user_message,
+                    chat_id=None,
+                    max_hits=30,
+                    exclude_message_uuid=current_message_uuid
+                )
+                searched_memory = True
+                has_memory = len(hits) > 0
+                if has_memory:
+                    memory_context = librarian.format_hits_as_context(hits)
             
             # Also retrieve structured facts for detected topics (cross-chat)
             # NOTE: Disabled NEW facts table retrieval - using OLD project_facts table via librarian instead

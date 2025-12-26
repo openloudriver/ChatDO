@@ -7,8 +7,12 @@ and deterministically, ensuring Facts-S/U counts are always truthful.
 
 Facts DB contract: project_facts.project_id must always be the project UUID string.
 Never use project name/slug for DB access.
+
+NEW ARCHITECTURE: Uses Qwen LLM to produce JSON operations, then applies them deterministically.
+No regex/spaCy extraction - single path only.
 """
 import logging
+import json
 import re
 from typing import Dict, Optional, Tuple, List
 from datetime import datetime
@@ -272,136 +276,118 @@ def persist_facts_synchronously(
             logger.warning(f"[FACTS-PERSIST] Failed to get/create message_uuid, skipping fact persistence")
             return store_count, update_count, stored_fact_keys, None
     
-    # Only extract facts from user messages (for now)
+    # Only extract facts from user messages
     if role != "user":
         logger.debug(f"[FACTS-PERSIST] Skipping fact extraction for role={role} (only user messages)")
         return store_count, update_count, stored_fact_keys, message_uuid, None
     
+    # NEW ARCHITECTURE: Use Qwen LLM to produce JSON operations
     try:
-        # Import here to avoid circular dependencies
-        from memory_service.fact_extractor import get_fact_extractor
-        from memory_service.memory_dashboard import db
+        from server.services.facts_llm.client import run_facts_llm, FactsLLMError
+        from server.services.facts_llm.prompts import build_facts_extraction_prompt
+        from server.contracts.facts_ops import FactsOpsResponse
+        from server.services.facts_apply import apply_facts_ops
         
-        # Extract facts and ranked-list candidates
-        extractor = get_fact_extractor()
-        extracted_facts, ranked_list_candidates = extractor.extract_facts(message_content, role=role)
-        
-        # Resolve topics for ranked-list candidates using strict inference order
-        if ranked_list_candidates:
-            # Try to resolve topic for all candidates (they should all resolve to the same topic)
-            # Use the first candidate for topic resolution (all should resolve to same topic)
-            first_candidate = ranked_list_candidates[0] if ranked_list_candidates else None
-            resolved_topic, ambiguous_candidates = resolve_ranked_list_topic(
-                message_content,
-                retrieved_facts=retrieved_facts,
-                project_id=project_id,
-                candidate=first_candidate
-            )
-            
-            if ambiguous_candidates:
-                # Topic resolution is ambiguous - return ambiguity info, don't persist any ranked list facts
-                ambiguous_topics = ambiguous_candidates
-                logger.warning(f"[FACTS-PERSIST] Ambiguous topic resolution: {ambiguous_candidates} - user must choose")
-                # Don't persist any ranked-list candidates when ambiguous
-            elif resolved_topic:
-                # Topic resolved - convert candidates to facts with resolved topic
-                for candidate in ranked_list_candidates:
-                    rank = candidate.get("rank")
-                    value_text = candidate.get("value_text")
-                    
-                    # Build fact with resolved topic
-                    fact_key = f"user.favorites.{resolved_topic}.{rank}"
-                    schema_hint = {
-                        "domain": "ranked_list",
-                        "topic": resolved_topic,
-                        "key": fact_key,
-                        "key_prefix": f"user.favorites.{resolved_topic}"
-                    }
-                    
-                    # Add to extracted_facts for persistence
-                    extracted_facts.append({
-                        "fact_key": fact_key,
-                        "value_text": value_text,
-                        "value_type": "string",
-                        "confidence": 0.9,
-                        "rank": rank,
-                        "topic": resolved_topic,
-                        "schema_hint": schema_hint
+        # Build prompt for Qwen
+        # Convert retrieved_facts to a simple format for prompt
+        retrieved_facts_simple = None
+        if retrieved_facts:
+            retrieved_facts_simple = []
+            for fact in retrieved_facts:
+                if isinstance(fact, dict):
+                    metadata = fact.get("metadata", {})
+                    retrieved_facts_simple.append({
+                        "fact_key": metadata.get("fact_key", ""),
+                        "value_text": metadata.get("value_text", ""),
+                        "metadata": metadata
                     })
-                    logger.debug(f"[FACTS-PERSIST] Resolved topic for ranked-list candidate: {fact_key}")
-            else:
-                # No topic resolved and not ambiguous - candidates are unresolvable
-                logger.warning(f"[FACTS-PERSIST] Could not resolve topic for ranked-list candidates - skipping")
-                # Don't persist unresolvable candidates
         
-        # If we have ambiguous topics, return early without persisting any facts
-        if ambiguous_topics:
-            logger.info(f"[FACTS-PERSIST] Topic ambiguity detected: {ambiguous_topics} - returning without persistence")
+        prompt = build_facts_extraction_prompt(
+            user_message=message_content,
+            recent_context=None,  # Could add recent context if needed
+            retrieved_facts=retrieved_facts_simple
+        )
+        
+        # Call Qwen LLM (hard fail if unavailable)
+        try:
+            logger.debug(f"[FACTS-PERSIST] Calling Facts LLM for message (message_uuid={message_uuid})")
+            llm_response = run_facts_llm(prompt)
+        except FactsLLMError as e:
+            # Hard fail - return error indicator
+            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
+            # Return special error indicator (will be handled by caller)
+            return -1, -1, [], message_uuid, None  # Negative counts indicate error
+        
+        # Parse JSON response (strict parsing, hard fail if invalid)
+        try:
+            # Try to extract JSON from markdown code blocks if present
+            json_text = llm_response.strip()
+            if json_text.startswith("```"):
+                # Extract JSON from code block
+                lines = json_text.split("\n")
+                json_lines = []
+                in_code_block = False
+                for line in lines:
+                    if line.strip().startswith("```"):
+                        in_code_block = not in_code_block
+                        continue
+                    if in_code_block:
+                        json_lines.append(line)
+                json_text = "\n".join(json_lines).strip()
+            
+            # Parse JSON
+            ops_data = json.loads(json_text)
+            ops_response = FactsOpsResponse(**ops_data)
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
+            logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500]}")
+            # Hard fail - return error indicator
+            return -1, -1, [], message_uuid, None
+        except Exception as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
+            logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
+            # Hard fail - return error indicator
+            return -1, -1, [], message_uuid, None
+        
+        # Check for clarification needed
+        if ops_response.needs_clarification:
+            ambiguous_topics = ops_response.needs_clarification
+            logger.info(f"[FACTS-PERSIST] Clarification needed: {ambiguous_topics}")
             return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
         
-        if not extracted_facts:
-            logger.debug(f"[FACTS-PERSIST] No facts extracted from message (message_uuid={message_uuid})")
-            return store_count, update_count, stored_fact_keys, message_uuid, None
+        # Apply operations deterministically
+        apply_result = apply_facts_ops(
+            project_uuid=project_id,
+            message_uuid=message_uuid,
+            ops_response=ops_response,
+            source_id=source_id
+        )
         
-        logger.info(f"[FACTS-PERSIST] Extracted {len(extracted_facts)} facts from message (message_uuid={message_uuid})")
+        # Return counts from apply result
+        store_count = apply_result.store_count
+        update_count = apply_result.update_count
+        stored_fact_keys = apply_result.stored_fact_keys
         
-        # Store each fact synchronously
-        for idx, fact in enumerate(extracted_facts, 1):
-            fact_key = fact.get("fact_key")
-            value_text = fact.get("value_text")
-            value_type = fact.get("value_type", "string")
-            confidence = fact.get("confidence", 1.0)
-            schema_hint = fact.get("schema_hint")  # Schema hint from extractor
-            
-            if not fact_key:
-                logger.warning(f"[FACTS-PERSIST] Fact {idx}/{len(extracted_facts)} missing fact_key, skipping")
-                continue
-            
-            # For ranked lists matching user.favorites.*, ensure schema_hint is set
-            if fact_key.startswith("user.favorites.") and not schema_hint:
-                # Derive schema_hint from fact_key: user.favorites.<topic>.<rank>
-                parts = fact_key.split(".")
-                if len(parts) >= 3:
-                    topic = parts[2]  # Extract topic from user.favorites.<topic>.<rank>
-                    schema_hint = {
-                        "domain": "ranked_list",
-                        "topic": topic,
-                        "key": fact_key
-                    }
-            
-            try:
-                # Store fact directly (synchronous DB write)
-                fact_id, action_type = db.store_project_fact(
-                    project_id=project_id,
-                    fact_key=fact_key,
-                    value_text=value_text,
-                    value_type=value_type,
-                    source_message_uuid=message_uuid,
-                    confidence=confidence,
-                    source_id=source_id
-                )
-                
-                # Count based on actual DB write result
-                if action_type == "store":
-                    store_count += 1
-                    logger.debug(f"[FACTS-PERSIST] ✅ STORE fact {idx}/{len(extracted_facts)}: {fact_key} = {value_text} (fact_id={fact_id})")
-                elif action_type == "update":
-                    update_count += 1
-                    logger.debug(f"[FACTS-PERSIST] ✅ UPDATE fact {idx}/{len(extracted_facts)}: {fact_key} = {value_text} (fact_id={fact_id})")
-                
-                stored_fact_keys.append(fact_key)
-                
-            except Exception as e:
-                logger.error(f"[FACTS-PERSIST] ❌ Failed to store fact {fact_key}: {e}", exc_info=True)
-                # Continue with other facts even if one fails
+        # Log warnings/errors
+        if apply_result.warnings:
+            for warning in apply_result.warnings:
+                logger.warning(f"[FACTS-PERSIST] {warning}")
+        if apply_result.errors:
+            for error in apply_result.errors:
+                logger.error(f"[FACTS-PERSIST] {error}")
+            # If there are errors, we still return counts but log them
+            # The caller can decide if errors should be treated as hard failures
         
         logger.info(
             f"[FACTS-PERSIST] ✅ Persisted facts: S={store_count} U={update_count} "
-            f"keys={stored_fact_keys} (message_uuid={message_uuid})"
+            f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
         )
         
     except Exception as e:
         logger.error(f"[FACTS-PERSIST] ❌ Exception during fact persistence: {e}", exc_info=True)
+        # Hard fail on unexpected exceptions
+        return -1, -1, [], message_uuid, None
     
     return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
 
