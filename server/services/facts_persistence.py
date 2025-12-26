@@ -13,125 +13,18 @@ No regex/spaCy extraction - single path only.
 """
 import logging
 import json
-import re
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Any
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# In-memory store for raw LLM responses (keyed by message_uuid) for quick inspection
+_raw_llm_responses: Dict[str, Dict[str, Any]] = {}
 
-def resolve_ranked_list_topic(
-    message_content: str,
-    retrieved_facts: Optional[List[Dict]] = None,
-    project_id: Optional[str] = None,
-    candidate: Optional[Dict] = None
-) -> Tuple[Optional[str], Optional[List[str]]]:
-    """
-    Resolve topic for ranked list mutations using strict inference order.
-    
-    Order:
-    1. Explicit topic in user message ("My favorite cryptos are...") OR candidate.explicit_topic
-    2. Schema-hint anchoring (from retrieved facts with schema_hint.domain == "ranked_list")
-    3. DB-backed recency fallback (get_recent_ranked_list_keys) - most recently updated list
-    4. Optional small keyword map (only for obvious nouns like colors/candies)
-    
-    Args:
-        message_content: User message content
-        retrieved_facts: Optional list of retrieved facts (from current conversation context)
-        project_id: Optional project ID for DB recency lookup
-        candidate: Optional ranked-list candidate with explicit_topic field
-        
-    Returns:
-        Tuple of (resolved_topic, ambiguous_candidates):
-        - resolved_topic: Resolved topic (e.g., "crypto", "colors") or None if ambiguous/unresolvable
-        - ambiguous_candidates: List of candidate topics if ambiguous, None if resolved or unresolvable
-    """
-    from memory_service.fact_extractor import get_fact_extractor
-    from server.services.librarian import get_recent_ranked_list_keys
-    
-    extractor = get_fact_extractor()
-    message_lower = message_content.lower()
-    
-    # 1. Explicit topic in user message OR candidate.explicit_topic
-    if candidate and candidate.get("explicit_topic"):
-        explicit_topic = candidate.get("explicit_topic")
-        logger.debug(f"[TOPIC-RESOLVE] Found explicit topic in candidate: {explicit_topic}")
-        return explicit_topic, None
-    
-    # Look for "favorite X" pattern in message (but not "favorite is X")
-    # Only extract if it's not a verb
-    match = extractor._extract_topic_from_context(message_content, len(message_content))
-    if match:
-        # Double-check: don't use verbs as topics
-        verbs = {'is', 'are', 'was', 'were', 'be', 'been', 'being'}
-        if match.lower() not in verbs:
-            logger.debug(f"[TOPIC-RESOLVE] Found explicit topic in message: {match}")
-            return match, None
-    
-    # 2. Schema-hint anchoring (preferred for follow-ups)
-    if retrieved_facts:
-        schema_hints = []
-        for fact in retrieved_facts:
-            metadata = fact.get("metadata", {}) if isinstance(fact, dict) else getattr(fact, "metadata", {})
-            schema_hint = metadata.get("schema_hint") if isinstance(metadata, dict) else None
-            if schema_hint and schema_hint.get("domain") == "ranked_list":
-                key = schema_hint.get("key", "")
-                # Extract base key: user.favorites.<topic> from user.favorites.<topic>.<rank>
-                import re
-                base_match = re.match(r'^user\.favorites\.([^.]+)', key)
-                if base_match:
-                    topic = base_match.group(1)
-                    schema_hints.append(topic)
-        
-        if schema_hints:
-            distinct_topics = list(set(schema_hints))
-            if len(distinct_topics) == 1:
-                logger.debug(f"[TOPIC-RESOLVE] Resolved via schema hint: {distinct_topics[0]}")
-                return distinct_topics[0], None
-            elif len(distinct_topics) > 1:
-                logger.warning(f"[TOPIC-RESOLVE] Ambiguous schema hints: {distinct_topics} - user must choose")
-                return None, distinct_topics  # Ambiguous - return candidates
-    
-    # 3. DB-backed recency fallback
-    if project_id:
-        try:
-            # project_id must be UUID (validated in persist_facts_synchronously)
-            recent_keys = get_recent_ranked_list_keys(project_id, limit=5)
-            if recent_keys:
-                # Extract topics from keys: user.favorites.<topic>
-                import re
-                topics = []
-                for key in recent_keys:
-                    match = re.match(r'^user\.favorites\.([^.]+)', key)
-                    if match:
-                        topics.append(match.group(1))
-                
-                distinct_topics = list(set(topics))
-                if len(distinct_topics) == 1:
-                    logger.debug(f"[TOPIC-RESOLVE] Resolved via DB recency: {distinct_topics[0]}")
-                    return distinct_topics[0], None
-                elif len(distinct_topics) > 1:
-                    logger.warning(f"[TOPIC-RESOLVE] Ambiguous recent topics: {distinct_topics} - user must choose")
-                    return None, distinct_topics  # Ambiguous - return candidates
-        except Exception as e:
-            logger.debug(f"[TOPIC-RESOLVE] DB recency lookup failed: {e}")
-    
-    # 4. Optional small keyword map (only for obvious nouns)
-    topic_keywords = {
-        'crypto': 'crypto', 'cryptos': 'crypto', 'cryptocurrency': 'crypto', 'cryptocurrencies': 'crypto',
-        'color': 'colors', 'colors': 'colors',
-        'candy': 'candies', 'candies': 'candies',
-        'pie': 'pies', 'pies': 'pies',
-        'tv': 'tv', 'show': 'tv', 'television': 'tv',
-        'food': 'food', 'textile': 'textiles', 'textiles': 'textiles'
-    }
-    for keyword, topic in topic_keywords.items():
-        if re.search(r'\b' + re.escape(keyword) + r'\b', message_lower):
-            logger.debug(f"[TOPIC-RESOLVE] Resolved via keyword map: {topic}")
-            return topic, None
-    
-    logger.debug("[TOPIC-RESOLVE] No topic resolved - requires explicit topic or schema hint")
-    return None, None
+
+# REMOVED: resolve_ranked_list_topic() - Legacy function no longer used
+# Topic resolution for ranked lists is now handled by Qwen LLM in the Facts extraction prompt
+# This ensures all Facts behavior goes through the unified Qwen → JSON ops → deterministic apply path
 
 
 def get_or_create_message_uuid(
@@ -198,7 +91,7 @@ def get_or_create_message_uuid(
         return None
 
 
-def persist_facts_synchronously(
+async def persist_facts_synchronously(
     project_id: str,
     message_content: str,
     role: str,
@@ -208,7 +101,8 @@ def persist_facts_synchronously(
     timestamp: Optional[datetime] = None,
     message_index: Optional[int] = None,
     source_id: Optional[str] = None,
-    retrieved_facts: Optional[List[Dict]] = None  # For schema-hint topic resolution
+    retrieved_facts: Optional[List[Dict]] = None,  # For schema-hint topic resolution
+    write_intent_detected: bool = False  # Flag to enable enhanced diagnostics
 ) -> Tuple[int, int, list, Optional[str], Optional[List[str]]]:
     """
     Extract and store facts synchronously, returning actual store/update counts.
@@ -260,7 +154,7 @@ def persist_facts_synchronously(
     if not message_uuid:
         if not all([chat_id, message_id, timestamp is not None, message_index is not None]):
             logger.warning(f"[FACTS-PERSIST] Cannot create message_uuid: missing required params")
-            return store_count, update_count, stored_fact_keys, None
+            return store_count, update_count, stored_fact_keys, None, None
         
         message_uuid = get_or_create_message_uuid(
             project_id=project_id,
@@ -274,7 +168,7 @@ def persist_facts_synchronously(
         
         if not message_uuid:
             logger.warning(f"[FACTS-PERSIST] Failed to get/create message_uuid, skipping fact persistence")
-            return store_count, update_count, stored_fact_keys, None
+            return store_count, update_count, stored_fact_keys, None, None
     
     # Only extract facts from user messages
     if role != "user":
@@ -283,7 +177,14 @@ def persist_facts_synchronously(
     
     # NEW ARCHITECTURE: Use Qwen LLM to produce JSON operations
     try:
-        from server.services.facts_llm.client import run_facts_llm, FactsLLMError
+        from server.services.facts_llm.client import (
+            run_facts_llm,
+            FactsLLMError,
+            FactsLLMTimeoutError,
+            FactsLLMUnavailableError,
+            FactsLLMInvalidJSONError,
+            FACTS_LLM_TIMEOUT_S
+        )
         from server.services.facts_llm.prompts import build_facts_extraction_prompt
         from server.contracts.facts_ops import FactsOpsResponse
         from server.services.facts_apply import apply_facts_ops
@@ -308,12 +209,31 @@ def persist_facts_synchronously(
             retrieved_facts=retrieved_facts_simple
         )
         
-        # Call Qwen LLM (hard fail if unavailable)
+        # Call Qwen LLM (hard fail if unavailable, with retry and better error classification)
+        llm_response = None
+        ops_response = None
         try:
-            logger.debug(f"[FACTS-PERSIST] Calling Facts LLM for message (message_uuid={message_uuid})")
-            llm_response = run_facts_llm(prompt)
+            logger.debug(f"[FACTS-PERSIST] Calling Facts LLM for message (message_uuid={message_uuid}, timeout={FACTS_LLM_TIMEOUT_S}s)")
+            llm_response = await run_facts_llm(prompt, max_retries=1)
+        except FactsLLMTimeoutError as e:
+            # Timeout error - include timeout value in log
+            logger.error(
+                f"[FACTS-PERSIST] ❌ Facts LLM timed out after {FACTS_LLM_TIMEOUT_S}s (with retry): {e}"
+            )
+            # Return special error indicator with timeout classification
+            return -1, -1, [], message_uuid, None  # Negative counts indicate error
+        except FactsLLMUnavailableError as e:
+            # Unavailable error - Ollama not reachable
+            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (Ollama) unavailable: {e}")
+            # Return special error indicator with unavailable classification
+            return -1, -1, [], message_uuid, None  # Negative counts indicate error
+        except FactsLLMInvalidJSONError as e:
+            # Invalid JSON error - no retry
+            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
+            # Return special error indicator with invalid JSON classification
+            return -1, -1, [], message_uuid, None  # Negative counts indicate error
         except FactsLLMError as e:
-            # Hard fail - return error indicator
+            # Other Facts LLM errors
             logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
             # Return special error indicator (will be handled by caller)
             return -1, -1, [], message_uuid, None  # Negative counts indicate error
@@ -341,7 +261,7 @@ def persist_facts_synchronously(
             
         except json.JSONDecodeError as e:
             logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
-            logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500]}")
+            logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
             # Hard fail - return error indicator
             return -1, -1, [], message_uuid, None
         except Exception as e:
@@ -350,10 +270,58 @@ def persist_facts_synchronously(
             # Hard fail - return error indicator
             return -1, -1, [], message_uuid, None
         
+        # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
+        if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
+            logger.warning(
+                f"[FACTS-PERSIST] ⚠️ Write-intent message but first pass returned empty ops. "
+                f"Retrying with force-extraction prompt (message_uuid={message_uuid})"
+            )
+            # Build stricter prompt
+            from server.services.facts_llm.prompts import build_facts_extraction_prompt_force
+            force_prompt = build_facts_extraction_prompt_force(
+                user_message=message_content,
+                retrieved_facts=retrieved_facts_simple
+            )
+            try:
+                llm_response = await run_facts_llm(force_prompt, max_retries=1)
+                # Parse JSON again
+                json_text = llm_response.strip()
+                if json_text.startswith("```"):
+                    lines = json_text.split("\n")
+                    json_lines = []
+                    in_code_block = False
+                    for line in lines:
+                        if line.strip().startswith("```"):
+                            in_code_block = not in_code_block
+                            continue
+                        if in_code_block:
+                            json_lines.append(line)
+                    json_text = "\n".join(json_lines).strip()
+                ops_data = json.loads(json_text)
+                ops_response = FactsOpsResponse(**ops_data)
+                logger.info(f"[FACTS-PERSIST] ✅ Force-extraction retry returned {len(ops_response.ops)} ops")
+            except Exception as e:
+                logger.error(f"[FACTS-PERSIST] ❌ Force-extraction retry failed: {e}")
+                # Continue with original empty ops - will be logged below
+        
         # Check for clarification needed
         if ops_response.needs_clarification:
             ambiguous_topics = ops_response.needs_clarification
             logger.info(f"[FACTS-PERSIST] Clarification needed: {ambiguous_topics}")
+            
+            # Store raw response for diagnostics if write-intent
+            if write_intent_detected and message_uuid:
+                _raw_llm_responses[message_uuid] = {
+                    "prompt": prompt,
+                    "raw_response": llm_response,
+                    "parsed_json": ops_data if 'ops_data' in locals() else None,
+                    "needs_clarification": ambiguous_topics,
+                    "ops_count": 0,
+                    "project_id": project_id,
+                    "chat_id": chat_id,
+                    "message_id": message_id
+                }
+            
             return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
         
         # Apply operations deterministically
@@ -368,6 +336,49 @@ def persist_facts_synchronously(
         store_count = apply_result.store_count
         update_count = apply_result.update_count
         stored_fact_keys = apply_result.stored_fact_keys
+        
+        # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
+        if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
+            # Sanitize parsed JSON (remove sensitive data if any)
+            sanitized_json = None
+            if ops_response:
+                sanitized_json = {
+                    "ops": [{"op": op.op, "list_key": getattr(op, "list_key", None), "fact_key": getattr(op, "fact_key", None)} for op in ops_response.ops],
+                    "needs_clarification": ops_response.needs_clarification,
+                    "notes": ops_response.notes
+                }
+            
+            diagnostic_info = {
+                "message_uuid": message_uuid,
+                "project_id": project_id,
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "prompt": prompt,
+                "raw_llm_response": llm_response,
+                "parsed_json": sanitized_json,
+                "ops_count": len(ops_response.ops) if ops_response else 0,
+                "apply_result": {
+                    "store_count": store_count,
+                    "update_count": update_count,
+                    "warnings": apply_result.warnings,
+                    "errors": apply_result.errors
+                }
+            }
+            
+            # Store in memory for quick inspection
+            _raw_llm_responses[message_uuid] = diagnostic_info
+            
+            # Log comprehensive diagnostics
+            logger.error(
+                f"[FACTS-PERSIST] ❌ DIAGNOSTIC: Write-intent message returned 0 ops. "
+                f"message_uuid={message_uuid}, project_id={project_id}, chat_id={chat_id}, "
+                f"ops_count={len(ops_response.ops) if ops_response else 0}, "
+                f"needs_clarification={ops_response.needs_clarification if ops_response else None}, "
+                f"apply_warnings={len(apply_result.warnings)}, apply_errors={len(apply_result.errors)}"
+            )
+            logger.error(f"[FACTS-PERSIST] Raw LLM response (first 500 chars): {llm_response[:500] if llm_response else 'N/A'}")
+            if sanitized_json:
+                logger.error(f"[FACTS-PERSIST] Parsed JSON: {json.dumps(sanitized_json, indent=2)}")
         
         # Log warnings/errors
         if apply_result.warnings:

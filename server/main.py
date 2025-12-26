@@ -950,6 +950,82 @@ def extract_urls(text: str) -> List[str]:
     return urls
 
 
+@app.get("/api/health/ollama")
+async def health_ollama():
+    """
+    Health check endpoint for Ollama/Facts LLM.
+    
+    Returns:
+        - 200 OK: Ollama is healthy and responding
+        - 503 Service Unavailable: Ollama is down or slow
+    """
+    try:
+        from server.services.facts_llm.client import (
+            FACTS_LLM_URL,
+            FACTS_LLM_MODEL,
+            FACTS_LLM_TIMEOUT_S
+        )
+        import requests
+        
+        # Quick health check: ping Ollama API with a minimal request (1-2s timeout)
+        health_timeout = 2  # Fast health check, not full request
+        url = f"{FACTS_LLM_URL}/api/tags"
+        
+        try:
+            response = requests.get(url, timeout=health_timeout)
+            response.raise_for_status()
+            
+            # Check if model is available
+            models = response.json().get("models", [])
+            model_names = [m.get("name", "") for m in models]
+            model_available = any(FACTS_LLM_MODEL in name for name in model_names)
+            
+            if model_available:
+                return {
+                    "status": "healthy",
+                    "ollama_url": FACTS_LLM_URL,
+                    "model": FACTS_LLM_MODEL,
+                    "model_available": True,
+                    "timeout_configured": FACTS_LLM_TIMEOUT_S
+                }
+            else:
+                return {
+                    "status": "unhealthy",
+                    "ollama_url": FACTS_LLM_URL,
+                    "model": FACTS_LLM_MODEL,
+                    "model_available": False,
+                    "error": f"Model {FACTS_LLM_MODEL} not found in available models: {model_names}",
+                    "timeout_configured": FACTS_LLM_TIMEOUT_S
+                }, 503
+                
+        except requests.exceptions.Timeout:
+            return {
+                "status": "unhealthy",
+                "ollama_url": FACTS_LLM_URL,
+                "error": f"Ollama health check timed out after {health_timeout}s",
+                "timeout_configured": FACTS_LLM_TIMEOUT_S
+            }, 503
+        except requests.exceptions.ConnectionError as e:
+            return {
+                "status": "unhealthy",
+                "ollama_url": FACTS_LLM_URL,
+                "error": f"Ollama unreachable: {e}",
+                "timeout_configured": FACTS_LLM_TIMEOUT_S
+            }, 503
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "ollama_url": FACTS_LLM_URL,
+                "error": f"Ollama health check failed: {e}",
+                "timeout_configured": FACTS_LLM_TIMEOUT_S
+            }, 503
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Health check setup failed: {e}"
+        }, 500
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
@@ -1054,11 +1130,25 @@ async def chat(request: ChatRequest):
                     project_uuid = project.get("id")
             
             # Use the project-based target_name we determined above
+            # CRITICAL: Log endpoint and IDs for debugging
+            logger.info(
+                f"[REST] Calling chat_with_smart_search: "
+                f"endpoint=/api/chat, project_uuid={project_uuid}, "
+                f"conversation_id={request.conversation_id}, message_length={len(request.message)}"
+            )
             result = await chat_with_smart_search(
                 user_message=request.message,
                 target_name=target_name,  # Use project-based target_name, not from client
                 thread_id=request.conversation_id if request.conversation_id else None,
                 project_id=project_uuid  # Use resolved UUID
+            )
+            
+            # Log response meta for debugging
+            meta = result.get("meta", {})
+            logger.info(
+                f"[REST] Response meta: facts_gate_entered={meta.get('facts_gate_entered')}, "
+                f"facts_gate_reason={meta.get('facts_gate_reason')}, write_intent={meta.get('write_intent_detected')}, "
+                f"facts_actions={meta.get('facts_actions')}, model={result.get('model')}"
             )
             
             # If result has tasks or needs special handling, route to run_agent

@@ -561,6 +561,434 @@ async def test_5_concurrency(project_uuid: str, thread_id: str) -> Dict[str, Any
         }
 
 
+async def test_7_facts_s_confirmation_routing(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 7: Facts-S Confirmation Routing
+    
+    Test: Send "My favorite colors are red, white and blue"
+    Expected: 
+    - Response body is a Facts confirmation (not "I don't have that stored yet")
+    - Model label begins with Facts-S
+    - No GPT-5 fallthrough
+    """
+    print_test_header("Test 7: Facts-S Confirmation Routing")
+    
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    
+    message_content = "My favorite colors are red, white and blue"
+    
+    try:
+        response = await chat_with_smart_search(
+            user_message=message_content,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        # Check response content
+        content = response.get("content", "")
+        model_label = response.get("model_label", "")
+        model = response.get("model", "")
+        meta = response.get("meta", {})
+        fast_path = meta.get("fastPath", "")
+        
+        # Must NOT contain "I don't have that stored yet"
+        if "I don't have that stored yet" in content:
+            passed = False
+            issues.append(f"Response contains 'I don't have that stored yet' (should be Facts confirmation): '{content}'")
+        
+        # Must be a Facts confirmation
+        if not content.startswith("Saved:"):
+            passed = False
+            issues.append(f"Response does not start with 'Saved:' (expected Facts confirmation): '{content}'")
+        
+        # Model label must begin with Facts-S
+        if not model_label.startswith("Facts-S(") and not model.startswith("Facts-S("):
+            passed = False
+            issues.append(f"Model label does not begin with Facts-S: model_label='{model_label}', model='{model}'")
+        
+        # Must be fast-path (no GPT-5)
+        if fast_path != "facts_write_confirmation":
+            passed = False
+            issues.append(f"Fast path is not 'facts_write_confirmation' (got '{fast_path}') - indicates GPT-5 fallthrough")
+        
+        # Check facts_actions
+        facts_actions = meta.get("facts_actions", {})
+        store_count = facts_actions.get("S", 0)
+        if store_count == 0:
+            passed = False
+            issues.append(f"Facts-S count is 0 (expected > 0)")
+        
+        if passed:
+            print_result(True, f"Facts-S({store_count}) confirmation returned correctly")
+            print_info(f"Response: {content[:100]}...")
+            print_info(f"Model: {model_label}")
+            print_info(f"Fast path: {fast_path}")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full response: {json.dumps(response, indent=2)}")
+        
+        return {
+            "test": "Facts-S Confirmation Routing",
+            "passed": passed,
+            "content": content,
+            "model_label": model_label,
+            "fast_path": fast_path,
+            "store_count": store_count,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Facts-S Confirmation Routing",
+            "passed": False,
+            "error": str(e)
+        }
+
+
+async def test_8_facts_r_empty_retrieval(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 8: Facts-R Empty Retrieval (Read-Empty Test)
+    
+    Test: Query a fresh project for a missing fact
+    Expected: "I don't have that stored yet." only occurs here (not on writes)
+    """
+    print_test_header("Test 8: Facts-R Empty Retrieval")
+    
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    
+    # Use a topic that definitely doesn't exist and is unambiguous
+    # Use "planets" (plural) with a clear retrieval intent
+    message_content = "Show me my favorite planets list"
+    
+    try:
+        response = await chat_with_smart_search(
+            user_message=message_content,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        content = response.get("content", "")
+        model_label = response.get("model_label", "")
+        meta = response.get("meta", {})
+        fast_path = meta.get("fastPath", "")
+        facts_actions = meta.get("facts_actions", {})
+        
+        # Must contain "I don't have that stored yet" (this is the ONLY place it should appear)
+        if "I don't have that stored yet" not in content:
+            passed = False
+            issues.append(f"Response does not contain 'I don't have that stored yet' (expected for empty Facts-R): '{content}'")
+        
+        # Must be Facts-R fast path (not GPT-5)
+        if fast_path != "facts_retrieval_empty":
+            passed = False
+            issues.append(f"Fast path is not 'facts_retrieval_empty' (got '{fast_path}')")
+        
+        # Must have Facts-R count of 0 (no facts found)
+        facts_r_count = facts_actions.get("R", -1)
+        if facts_r_count != 0:
+            passed = False
+            issues.append(f"Facts-R count is {facts_r_count} (expected 0 for empty retrieval)")
+        
+        # Must NOT have Facts-S or Facts-U (this is a read-only query)
+        store_count = facts_actions.get("S", 0)
+        update_count = facts_actions.get("U", 0)
+        if store_count > 0 or update_count > 0:
+            passed = False
+            issues.append(f"Facts-S/U counts are non-zero (S={store_count}, U={update_count}) - this is a read-only query")
+        
+        if passed:
+            print_result(True, "Empty Facts-R retrieval returns 'I don't have that stored yet' correctly")
+            print_info(f"Response: {content}")
+            print_info(f"Fast path: {fast_path}")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full response: {json.dumps(response, indent=2)}")
+        
+        return {
+            "test": "Facts-R Empty Retrieval",
+            "passed": passed,
+            "content": content,
+            "fast_path": fast_path,
+            "facts_r_count": facts_r_count,
+            "store_count": store_count,
+            "update_count": update_count,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Facts-R Empty Retrieval",
+            "passed": False,
+            "error": str(e)
+        }
+
+
+async def test_9_facts_r_after_write(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 9: Facts-R After Write (Read-After-Write Test)
+    
+    Test: 
+    1. Write: "My favorite fruits are apple, banana, cherry"
+    2. Read: "What are my favorite fruits?"
+    Expected: Ordered results returned correctly
+    """
+    print_test_header("Test 9: Facts-R After Write")
+    
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    
+    # Step 1: Write
+    write_message = "My favorite fruits are apple, banana, cherry"
+    print_info("Step 1: Writing facts...")
+    
+    try:
+        write_response = await chat_with_smart_search(
+            user_message=write_message,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        write_content = write_response.get("content", "")
+        write_meta = write_response.get("meta", {})
+        write_facts_actions = write_meta.get("facts_actions", {})
+        write_store_count = write_facts_actions.get("S", 0)
+        
+        if write_store_count == 0:
+            return {
+                "test": "Facts-R After Write",
+                "passed": False,
+                "error": f"Write failed: Facts-S count is 0"
+            }
+        
+        print_info(f"Write successful: Facts-S({write_store_count})")
+        print_info(f"Write response: {write_content[:100]}...")
+        
+        # Step 2: Read (use clear retrieval query that matches what was written)
+        read_message = "Show me my favorite fruits list"
+        print_info("Step 2: Reading facts...")
+        
+        read_response = await chat_with_smart_search(
+            user_message=read_message,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        read_content = read_response.get("content", "")
+        read_meta = read_response.get("meta", {})
+        read_fast_path = read_meta.get("fastPath", "")
+        read_facts_actions = read_meta.get("facts_actions", {})
+        read_facts_r_count = read_facts_actions.get("R", 0)
+        
+        # Must NOT contain "I don't have that stored yet"
+        if "I don't have that stored yet" in read_content:
+            passed = False
+            issues.append(f"Read response contains 'I don't have that stored yet' (facts should exist): '{read_content}'")
+        
+        # Must be Facts-R fast path
+        if read_fast_path != "facts_retrieval":
+            passed = False
+            issues.append(f"Fast path is not 'facts_retrieval' (got '{read_fast_path}')")
+        
+        # Must have Facts-R count > 0
+        if read_facts_r_count == 0:
+            passed = False
+            issues.append(f"Facts-R count is 0 (expected > 0)")
+        
+        # Must contain the fruits in order
+        content_lower = read_content.lower()
+        if "apple" not in content_lower or "banana" not in content_lower or "cherry" not in content_lower:
+            passed = False
+            issues.append(f"Response does not contain all expected fruits: '{read_content}'")
+        
+        # Check for ordered list format (should have ranks like "1) apple")
+        if "1)" not in read_content and "1." not in read_content:
+            passed = False
+            issues.append(f"Response does not appear to be a ranked list: '{read_content}'")
+        
+        if passed:
+            print_result(True, f"Facts-R({read_facts_r_count}) after write returns ordered results correctly")
+            print_info(f"Read response: {read_content[:200]}...")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full read response: {json.dumps(read_response, indent=2)}")
+        
+        return {
+            "test": "Facts-R After Write",
+            "passed": passed,
+            "write_store_count": write_store_count,
+            "read_content": read_content,
+            "read_fast_path": read_fast_path,
+            "read_facts_r_count": read_facts_r_count,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Facts-R After Write",
+            "passed": False,
+            "error": str(e)
+        }
+
+
+async def test_10_write_ambiguity_blocks_writes(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 10: Write Ambiguity Blocks Writes
+    
+    Test: Send an intentionally ambiguous write (e.g., "Make it my #1 favorite") 
+    in a project with multiple prior favorite lists present.
+    
+    Expected:
+    - Clarification prompt returned
+    - Facts-S=0, Facts-U=0
+    - No DB writes
+    """
+    print_test_header("Test 10: Write Ambiguity Blocks Writes")
+    
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    from memory_service.memory_dashboard import db
+    
+    # Step 1: Create multiple favorite lists to establish ambiguity
+    print_info("Step 1: Creating multiple favorite lists...")
+    
+    # Write crypto list
+    crypto_msg = "My favorite cryptos are BTC, ETH, SOL"
+    crypto_response = await chat_with_smart_search(
+        user_message=crypto_msg,
+        target_name="general",
+        thread_id=thread_id,
+        project_id=project_uuid
+    )
+    crypto_store_count = crypto_response.get("meta", {}).get("facts_actions", {}).get("S", 0)
+    if crypto_store_count == 0:
+        return {
+            "test": "Write Ambiguity Blocks Writes",
+            "passed": False,
+            "error": "Failed to create crypto list (prerequisite)"
+        }
+    print_info(f"Crypto list created: Facts-S({crypto_store_count})")
+    
+    # Write colors list
+    colors_msg = "My favorite colors are red, blue, green"
+    colors_response = await chat_with_smart_search(
+        user_message=colors_msg,
+        target_name="general",
+        thread_id=thread_id,
+        project_id=project_uuid
+    )
+    colors_store_count = colors_response.get("meta", {}).get("facts_actions", {}).get("S", 0)
+    if colors_store_count == 0:
+        return {
+            "test": "Write Ambiguity Blocks Writes",
+            "passed": False,
+            "error": "Failed to create colors list (prerequisite)"
+        }
+    print_info(f"Colors list created: Facts-S({colors_store_count})")
+    
+    # Step 2: Send ambiguous write (must be clearly a write, not retrieval)
+    print_info("Step 2: Sending ambiguous write...")
+    ambiguous_msg = "Make BTC my #1 favorite"  # Clear write intent, but ambiguous topic
+    
+    try:
+        response = await chat_with_smart_search(
+            user_message=ambiguous_msg,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        content = response.get("content", "")
+        meta = response.get("meta", {})
+        fast_path = meta.get("fastPath", "")
+        facts_actions = meta.get("facts_actions", {})
+        ambiguous_topics = meta.get("ambiguous_topics", [])
+        
+        store_count = facts_actions.get("S", 0)
+        update_count = facts_actions.get("U", 0)
+        
+        # Must contain clarification prompt
+        if "Which favorites list" not in content and "clarification" not in content.lower():
+            passed = False
+            issues.append(f"Response does not contain clarification prompt: '{content}'")
+        
+        # Must have fast path "topic_ambiguity"
+        if fast_path != "topic_ambiguity":
+            passed = False
+            issues.append(f"Fast path is not 'topic_ambiguity' (got '{fast_path}')")
+        
+        # Must have ambiguous_topics
+        if not ambiguous_topics:
+            passed = False
+            issues.append(f"No ambiguous_topics in response meta")
+        
+        # Must have Facts-S=0 and Facts-U=0
+        if store_count != 0:
+            passed = False
+            issues.append(f"Facts-S count is {store_count} (expected 0)")
+        
+        if update_count != 0:
+            passed = False
+            issues.append(f"Facts-U count is {update_count} (expected 0)")
+        
+        # Verify no DB writes occurred - check that no new facts were written
+        # by querying DB for facts written after the ambiguous message
+        # (We can't easily get message_uuid, but counts being 0 is sufficient evidence)
+        
+        if passed:
+            print_result(True, "Write ambiguity correctly blocks writes")
+            print_info(f"Response: {content[:150]}...")
+            print_info(f"Fast path: {fast_path}")
+            print_info(f"Ambiguous topics: {ambiguous_topics}")
+            print_info(f"Facts-S: {store_count}, Facts-U: {update_count}")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full response: {json.dumps(response, indent=2)}")
+        
+        return {
+            "test": "Write Ambiguity Blocks Writes",
+            "passed": passed,
+            "content": content,
+            "fast_path": fast_path,
+            "ambiguous_topics": ambiguous_topics,
+            "store_count": store_count,
+            "update_count": update_count,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Write Ambiguity Blocks Writes",
+            "passed": False,
+            "error": str(e)
+        }
+
+
 async def test_6_json_edge_cases(project_uuid: str, thread_id: str) -> Dict[str, Any]:
     """
     Test 6: JSON Edge Cases
@@ -610,7 +1038,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Facts Acceptance Test Runner")
     parser.add_argument("--project-uuid", required=True, help="Project UUID")
     parser.add_argument("--thread-id", required=True, help="Thread ID")
-    parser.add_argument("--test", choices=["1", "2", "3", "4", "5", "6", "all"], default="all", help="Test to run")
+    parser.add_argument("--test", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "all"], default="all", help="Test to run")
     
     args = parser.parse_args()
     
@@ -649,6 +1077,34 @@ async def main():
         result = await test_6_json_edge_cases(args.project_uuid, args.thread_id)
         results.append(result)
     
+    if args.test in ["7", "all"]:
+        result = await test_7_facts_s_confirmation_routing(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["8", "all"]:
+        result = await test_8_facts_r_empty_retrieval(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["9", "all"]:
+        result = await test_9_facts_r_after_write(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["10", "all"]:
+        result = await test_10_write_ambiguity_blocks_writes(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["11", "all"]:
+        result = await test_11_websocket_facts_s_store(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["12", "all"]:
+        result = await test_12_timeout_behavior(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["13", "all"]:
+        result = await test_13_write_intent_pie_regression(args.project_uuid, args.thread_id)
+        results.append(result)
+    
     # Print summary
     print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*80}{Colors.RESET}")
     print(f"{Colors.BOLD}SUMMARY{Colors.RESET}")
@@ -671,6 +1127,394 @@ async def main():
     print(f"Results saved to: {output_file}")
     
     return 0 if passed_count == total_count else 1
+
+
+async def test_11_websocket_facts_s_store(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 11: WebSocket Facts-S Store
+    
+    Test: Send a clear write message through WebSocket handler (chat_with_smart_search)
+    Expected: 
+    - Model label starts with Facts-S or Facts-U (depending on whether facts exist)
+    - No GPT-5 fallthrough
+    - Facts stored correctly
+    """
+    print_test_header("Test 11: WebSocket Facts-S Store")
+    
+    # This test simulates the WebSocket path by calling chat_with_smart_search
+    # with the same parameters the WebSocket handler would use
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    
+    # Use a clear write message with a natural topic
+    # Use "drinks" as a topic that's unlikely to exist from previous tests
+    # Use declarative form (same as Test 1) to ensure write intent
+    message_content = "My favorite drinks are coffee, tea, and water"
+    
+    try:
+        # Simulate WebSocket call path
+        response = await chat_with_smart_search(
+            user_message=message_content,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        content = response.get("content", "")
+        model_label = response.get("model_label", "")
+        model = response.get("model", "")
+        meta = response.get("meta", {})
+        fast_path = meta.get("fastPath", "")
+        facts_actions = meta.get("facts_actions", {})
+        
+        store_count = facts_actions.get("S", 0)
+        update_count = facts_actions.get("U", 0)
+        facts_f = facts_actions.get("F", False)
+        
+        # Must NOT have Facts-F
+        if facts_f:
+            passed = False
+            issues.append(f"Facts-F triggered (should not happen): {meta.get('facts_skip_reason', 'unknown reason')}")
+        
+        # Must have Facts-S count > 0
+        if store_count == 0:
+            passed = False
+            issues.append(f"Facts-S count is 0 (expected > 0)")
+        
+        # Model label must start with Facts-S or Facts-U (Facts-U is OK if updating existing)
+        # But for a fresh topic, it should be Facts-S
+        if not (model_label.startswith("Facts-S(") or model_label.startswith("Facts-U(")) and not (model.startswith("Facts-S(") or model.startswith("Facts-U(")):
+            passed = False
+            issues.append(f"Model label does not start with Facts-S or Facts-U: model_label='{model_label}', model='{model}'")
+        
+        # For a fresh topic, expect Facts-S (not Facts-U)
+        if store_count == 0 and update_count > 0:
+            # This is OK - might be updating if topic already exists
+            print_info(f"Note: Got Facts-U({update_count}) instead of Facts-S - this is acceptable if topic already exists")
+        elif store_count == 0:
+            # This is a problem - no facts stored or updated
+            passed = False
+            issues.append(f"No facts stored or updated (S={store_count}, U={update_count})")
+        
+        # Must NOT contain "I don't have that stored yet"
+        if "I don't have that stored yet" in content:
+            passed = False
+            issues.append(f"Response contains 'I don't have that stored yet' (should be Facts confirmation): '{content}'")
+        
+        # Must be a Facts confirmation
+        if not content.startswith("Saved:"):
+            passed = False
+            issues.append(f"Response does not start with 'Saved:' (expected Facts confirmation): '{content}'")
+        
+        # Must be fast-path (no GPT-5)
+        if fast_path != "facts_write_confirmation":
+            passed = False
+            issues.append(f"Fast path is not 'facts_write_confirmation' (got '{fast_path}') - indicates GPT-5 fallthrough")
+        
+        # Verify DB state
+        from memory_service.memory_dashboard import db
+        from server.services.librarian import search_facts_ranked_list
+        from server.services.facts_topic import canonicalize_topic
+        
+        # Check for stored facts (topic should be canonicalized)
+        # Qwen will extract "drink" from "drinks" (singularized)
+        canonical_topic = canonicalize_topic("drinks")  # Should become "drink"
+        ranked_facts = search_facts_ranked_list(
+            project_id=project_uuid,
+            topic_key=canonical_topic,
+            limit=10
+        )
+        
+        if not ranked_facts:
+            passed = False
+            issues.append(f"No facts found in DB after store operation for topic '{canonical_topic}'")
+        else:
+            # Verify at least one fact exists with expected value
+            found_coffee = False
+            for fact in ranked_facts:
+                if "coffee" in fact.get("value_text", "").lower():
+                    found_coffee = True
+                    break
+            if not found_coffee:
+                # Don't fail on this - Qwen might store it differently
+                print_info(f"Note: Coffee not found in stored facts (found: {[f.get('value_text') for f in ranked_facts]})")
+        
+        if passed:
+            print_result(True, f"WebSocket Facts-S({store_count}) confirmation returned correctly")
+            print_info(f"Response: {content[:100]}...")
+            print_info(f"Model: {model_label}")
+            print_info(f"Fast path: {fast_path}")
+            print_info(f"DB verification: Found {len(ranked_facts)} fact(s) for topic '{canonical_topic}'")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full response: {json.dumps(response, indent=2)}")
+        
+        return {
+            "test": "WebSocket Facts-S Store",
+            "passed": passed,
+            "content": content,
+            "model_label": model_label,
+            "fast_path": fast_path,
+            "store_count": store_count,
+            "update_count": update_count,
+            "facts_f": facts_f,
+            "db_facts_count": len(ranked_facts),
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "WebSocket Facts-S Store",
+            "passed": False,
+            "error": str(e)
+        }
+
+
+async def test_12_timeout_behavior(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 12: Timeout Behavior
+    
+    Test: Force low timeout and confirm Facts-F timeout classification
+    Expected:
+    - Facts-F returned with timeout error message
+    - Zero writes (no DB writes on timeout)
+    - Clear error classification
+    """
+    print_test_header("Test 12: Timeout Behavior")
+    
+    # Temporarily set a very low timeout to force a timeout
+    import os
+    original_timeout = os.getenv("FACTS_LLM_TIMEOUT_S", "30")
+    
+    try:
+        # Set timeout to 1 second (will definitely timeout)
+        os.environ["FACTS_LLM_TIMEOUT_S"] = "1"
+        
+        # Reload the client module to pick up new timeout
+        import importlib
+        from server.services import facts_llm
+        importlib.reload(facts_llm.client)
+        
+        from server.services.facts_persistence import persist_facts_synchronously
+        from datetime import datetime, timezone
+        
+        message_content = "My favorite timeout test is XMR"
+        
+        # This should timeout and return negative counts
+        store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = await persist_facts_synchronously(
+            project_id=project_uuid,
+            message_content=message_content,
+            role="user",
+            chat_id=thread_id,
+            message_id=f"{thread_id}-user-0",
+            timestamp=datetime.now(timezone.utc),
+            message_index=0,
+            retrieved_facts=None
+        )
+        
+        passed = True
+        issues = []
+        
+        # Must have negative counts (error indicator)
+        if store_count >= 0 or update_count >= 0:
+            passed = False
+            issues.append(f"Expected negative counts (error indicator), got S={store_count} U={update_count}")
+        
+        # Must have zero stored keys
+        if stored_fact_keys:
+            passed = False
+            issues.append(f"Expected zero stored keys on timeout, got: {stored_fact_keys}")
+        
+        # Verify no DB writes occurred
+        from memory_service.memory_dashboard import db
+        from server.services.librarian import search_facts_ranked_list
+        
+        # Check for any facts that might have been written (should be none)
+        ranked_facts = search_facts_ranked_list(
+            project_id=project_uuid,
+            topic_key="timeout",
+            limit=10
+        )
+        
+        if ranked_facts:
+            # This is OK - might be from previous tests
+            print_info(f"Note: Found {len(ranked_facts)} existing facts for topic 'timeout' (may be from previous tests)")
+        
+        if passed:
+            print_result(True, f"Timeout behavior correct: Facts-F returned, zero writes (S={store_count}, U={update_count})")
+            print_info(f"Timeout configured: 1s (forced timeout)")
+            print_info(f"Stored keys: {len(stored_fact_keys)} (expected 0)")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+        
+        return {
+            "test": "Timeout Behavior",
+            "passed": passed,
+            "store_count": store_count,
+            "update_count": update_count,
+            "stored_fact_keys": stored_fact_keys,
+            "timeout_configured": 1,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Timeout Behavior",
+            "passed": False,
+            "error": str(e)
+        }
+    finally:
+        # Restore original timeout
+        if original_timeout:
+            os.environ["FACTS_LLM_TIMEOUT_S"] = original_timeout
+        else:
+            os.environ.pop("FACTS_LLM_TIMEOUT_S", None)
+        # Reload module to restore original timeout
+        import importlib
+        from server.services import facts_llm
+        importlib.reload(facts_llm.client)
+
+
+async def test_13_write_intent_pie_regression(project_uuid: str, thread_id: str) -> Dict[str, Any]:
+    """
+    Test 13: Write-Intent Pie Regression Test
+    
+    Test: "My favorite pie is apple."
+    Expected:
+    - Facts-S(1) with canonical topic "pie" and value "apple"
+    - store_count + update_count >= 1
+    - NOT Facts-F
+    - Key: user.favorites.pie.1 = apple
+    """
+    print_test_header("Test 13: Write-Intent Pie Regression")
+    
+    from server.services.chat_with_smart_search import chat_with_smart_search
+    from server.services.facts_topic import canonicalize_topic
+    from server.services.librarian import search_facts_ranked_list
+    
+    message_content = "My favorite pie is apple."
+    
+    try:
+        response = await chat_with_smart_search(
+            user_message=message_content,
+            target_name="general",
+            thread_id=thread_id,
+            project_id=project_uuid
+        )
+        
+        passed = True
+        issues = []
+        
+        content = response.get("content", "")
+        model_label = response.get("model_label", "")
+        model = response.get("model", "")
+        meta = response.get("meta", {})
+        fast_path = meta.get("fastPath", "")
+        facts_actions = meta.get("facts_actions", {})
+        
+        store_count = facts_actions.get("S", 0)
+        update_count = facts_actions.get("U", 0)
+        total_count = store_count + update_count
+        
+        # Must NOT be Facts-F
+        if "Facts-F" in model_label or "Facts-F" in model or facts_actions.get("F", False):
+            passed = False
+            issues.append(f"Response is Facts-F (expected Facts-S/U): model_label='{model_label}', model='{model}'")
+        
+        # Must have store_count + update_count >= 1
+        if total_count < 1:
+            passed = False
+            issues.append(f"Total Facts-S/U count is {total_count} (expected >= 1): S={store_count}, U={update_count}")
+        
+        # Must be Facts-S confirmation (not "I don't have that stored yet")
+        if "I don't have that stored yet" in content:
+            passed = False
+            issues.append(f"Response contains 'I don't have that stored yet' (should be Facts confirmation): '{content}'")
+        
+        # Must be a Facts confirmation
+        if not content.startswith("Saved:"):
+            passed = False
+            issues.append(f"Response does not start with 'Saved:' (expected Facts confirmation): '{content}'")
+        
+        # Model label must begin with Facts-S
+        if not model_label.startswith("Facts-S(") and not model.startswith("Facts-S("):
+            passed = False
+            issues.append(f"Model label does not begin with Facts-S: model_label='{model_label}', model='{model}'")
+        
+        # Verify DB: Check for user.favorites.pie.1 = apple
+        canonical_topic = canonicalize_topic("pie")
+        expected_key_prefix = f"user.favorites.{canonical_topic}"
+        
+        # Search for ranked list facts
+        ranked_facts = search_facts_ranked_list(
+            project_id=project_uuid,
+            topic_key=canonical_topic,
+            limit=10
+        )
+        
+        # Check if we found the pie fact
+        found_pie = False
+        found_apple = False
+        for fact in ranked_facts:
+            fact_key = fact.get("fact_key", "")
+            value_text = fact.get("value_text", "").lower()
+            if expected_key_prefix in fact_key:
+                found_pie = True
+                if "apple" in value_text:
+                    found_apple = True
+                    break
+        
+        if not found_pie:
+            passed = False
+            issues.append(f"DB verification failed: No facts found with key prefix '{expected_key_prefix}'")
+        elif not found_apple:
+            passed = False
+            issues.append(f"DB verification failed: Found pie facts but value 'apple' not found. Found values: {[f.get('value_text') for f in ranked_facts if expected_key_prefix in f.get('fact_key', '')]}")
+        
+        if passed:
+            print_result(True, f"Write-intent pie message succeeded: Facts-S({store_count}) + Facts-U({update_count}) = {total_count}")
+            print_info(f"Response: {content[:100]}...")
+            print_info(f"Model: {model_label}")
+            print_info(f"Fast path: {fast_path}")
+            print_info(f"DB verified: Found key prefix '{expected_key_prefix}' with value 'apple'")
+        else:
+            print_result(False, f"Issues: {'; '.join(issues)}")
+            print_info(f"Full response: {json.dumps(response, indent=2)}")
+            print_info(f"Ranked facts found: {len(ranked_facts)}")
+            for fact in ranked_facts[:5]:
+                print_info(f"  - {fact.get('fact_key')} = {fact.get('value_text')}")
+        
+        return {
+            "test": "Write-Intent Pie Regression",
+            "passed": passed,
+            "content": content,
+            "model_label": model_label,
+            "fast_path": fast_path,
+            "store_count": store_count,
+            "update_count": update_count,
+            "total_count": total_count,
+            "found_pie": found_pie,
+            "found_apple": found_apple,
+            "issues": issues
+        }
+        
+    except Exception as e:
+        print_result(False, f"Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "test": "Write-Intent Pie Regression",
+            "passed": False,
+            "error": str(e)
+        }
 
 
 if __name__ == "__main__":

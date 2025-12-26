@@ -465,6 +465,54 @@ def build_model_label(
     return " + ".join(parts)
 
 
+def _is_write_intent(message: str) -> bool:
+    """
+    Lightweight heuristic to detect write-intent messages (fact-like).
+    
+    Returns True if message appears to be a fact write operation.
+    """
+    if not message:
+        return False
+    
+    message_lower = message.lower().strip()
+    
+    # Write-intent patterns
+    write_patterns = [
+        "my favorite",  # "My favorite X is Y"
+        "remember",     # "Remember that..."
+        "my ",          # "My X is Y"
+        "set ",         # "Set X to Y"
+        "update ",      # "Update X to Y"
+        "add ",         # "Add X to my favorites"
+        "store ",       # "Store X"
+        "save ",        # "Save X"
+        "i like",       # "I like X"
+        "i love",       # "I love X"
+        "i prefer",    # "I prefer X"
+        "i have",       # "I have X"
+        "i am",         # "I am X"
+        "i'm ",         # "I'm X"
+        "i was",        # "I was X"
+        "i live",       # "I live in X"
+        "i work",       # "I work at X"
+        "i study",      # "I study X"
+        "i use",        # "I use X"
+    ]
+    
+    # Check if message starts with any write pattern
+    for pattern in write_patterns:
+        if message_lower.startswith(pattern):
+            return True
+    
+    # Check for "is" pattern: "X is Y" or "X are Y"
+    if " is " in message_lower or " are " in message_lower:
+        # Exclude question patterns
+        if not message_lower.startswith(("what", "who", "where", "when", "why", "how", "which", "is ", "are ")):
+            return True
+    
+    return False
+
+
 async def chat_with_smart_search(
     user_message: str,
     target_name: str = "general",
@@ -478,6 +526,20 @@ async def chat_with_smart_search(
     Facts DB contract: project_id must be UUID, never project name/slug.
     This should be resolved at the entry point (WS handler, HTTP handler) before calling this function.
     """
+    # CRITICAL: Detect write-intent BEFORE any processing
+    is_write_intent = _is_write_intent(user_message)
+    
+    # Initialize action tracking at the very beginning
+    facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
+    files_actions = {"R": 0}  # Files retrieved count
+    index_status = "P"  # "P" (passed) or "F" (failed)
+    memory_failure = False
+    
+    # Initialize Facts gate tracking
+    facts_gate_entered = False
+    facts_gate_reason = None
+    facts_provider = "facts"  # Default provider
+    
     # Validate project_id is UUID if provided (should already be resolved at entry point)
     if project_id:
         from server.services.projects.project_resolver import validate_project_uuid
@@ -486,12 +548,6 @@ async def chat_with_smart_search(
         except ValueError as e:
             logger.error(f"[CHAT] Invalid project_id format: {e}")
             # Don't fail completely, but log error - validation will catch at Facts persistence
-    
-    # Initialize action tracking at the very beginning
-    facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
-    files_actions = {"R": 0}  # Files retrieved count
-    index_status = "P"  # "P" (passed) or "F" (failed)
-    memory_failure = False
     """
     Handle chat with smart auto-search.
     
@@ -541,6 +597,109 @@ async def chat_with_smart_search(
     # Phase 1: Synchronous Facts Persistence (does NOT depend on Memory Service)
     # Store facts immediately and deterministically, get actual counts from DB writes
     current_message_uuid = None
+    
+    # Initialize query_plan early (before Facts persistence) so it can be used in ambiguity check
+    # CRITICAL: Must be initialized at function scope before any conditional access
+    # Type: Optional[FactsQueryPlan] - will be None until query planning succeeds
+    from typing import TYPE_CHECKING
+    if TYPE_CHECKING:
+        from server.contracts.facts_ops import FactsQueryPlan
+    query_plan: Optional['FactsQueryPlan'] = None
+    
+    # CRITICAL: Facts persistence requires both thread_id and project_id
+    # HARD-FAIL if either is missing - do not silently skip and fall through to Index/GPT-5
+    facts_skip_reason = None
+    if not thread_id:
+        facts_skip_reason = "thread_id is missing"
+        logger.error(f"[FACTS] ❌ HARD-FAIL: {facts_skip_reason} (project_id={'provided' if project_id else 'missing'})")
+    if not project_id:
+        reason = "project_id is missing"
+        if facts_skip_reason:
+            facts_skip_reason = f"{facts_skip_reason}; {reason}"
+        else:
+            facts_skip_reason = reason
+        logger.error(f"[FACTS] ❌ HARD-FAIL: {reason} (thread_id={'provided' if thread_id else 'missing'})")
+    
+    # Validate project_id is a valid UUID if provided
+    if project_id:
+        from server.services.projects.project_resolver import validate_project_uuid
+        try:
+            validate_project_uuid(project_id)
+        except ValueError as e:
+            reason = f"project_id is not a valid UUID: {e}"
+            if facts_skip_reason:
+                facts_skip_reason = f"{facts_skip_reason}; {reason}"
+            else:
+                facts_skip_reason = reason
+            logger.error(f"[FACTS] ❌ HARD-FAIL: {reason}")
+    
+    # HARD-FAIL: Return Facts-F error if IDs are missing/invalid
+    if facts_skip_reason:
+        facts_actions["F"] = True
+        facts_gate_entered = False
+        facts_gate_reason = f"gate_skipped: {facts_skip_reason}"
+        
+        # CRITICAL: If this is a write-intent message and Facts gate was skipped,
+        # we MUST return Facts-F (no fallthrough to Index/GPT-5)
+        if is_write_intent:
+            error_message = (
+                f"Facts unavailable: {facts_skip_reason}. "
+                "Please ensure you have selected a project and are in a valid conversation."
+            )
+            logger.error(f"[FACTS] WRITE_INTENT_BYPASS_PREVENTED: write-intent message blocked, returning Facts-F (reason: {facts_skip_reason})")
+            return {
+                "type": "assistant_message",
+                "content": error_message,
+                "meta": {
+                    "fastPath": "facts_error",
+                    "facts_error": True,
+                    "facts_skip_reason": facts_skip_reason,
+                    "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True},
+                    "facts_provider": facts_provider,
+                    "project_uuid": project_id,
+                    "thread_id": thread_id,
+                    "facts_gate_entered": facts_gate_entered,
+                    "facts_gate_reason": facts_gate_reason,
+                    "write_intent_detected": True
+                },
+                "sources": [],
+                "model": "Facts-F",
+                "model_label": "Model: Facts-F",
+                "provider": "facts",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            # For non-write-intent messages, still return Facts-F but log it
+            error_message = (
+                f"Facts unavailable: {facts_skip_reason}. "
+                "Please ensure you have selected a project and are in a valid conversation."
+            )
+            logger.error(f"[FACTS] Returning hard-fail response: {error_message}")
+            return {
+                "type": "assistant_message",
+                "content": error_message,
+                "meta": {
+                    "fastPath": "facts_error",
+                    "facts_error": True,
+                    "facts_skip_reason": facts_skip_reason,
+                    "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True},
+                    "facts_provider": facts_provider,
+                    "project_uuid": project_id,
+                    "thread_id": thread_id,
+                    "facts_gate_entered": facts_gate_entered,
+                    "facts_gate_reason": facts_gate_reason,
+                    "write_intent_detected": False
+                },
+                "sources": [],
+                "model": "Facts-F",
+                "model_label": "Model: Facts-F",
+                "provider": "facts",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+    
+    # Both thread_id and project_id are valid - proceed with Facts persistence
+    logger.info(f"[FACTS] ✅ Facts persistence enabled: thread_id={thread_id}, project_id={project_id}")
+    
     if thread_id and project_id:
         try:
             from server.services.facts_persistence import persist_facts_synchronously
@@ -554,7 +713,7 @@ async def chat_with_smart_search(
             # Persist facts synchronously (does NOT require Memory Service)
             # NEW: Uses Qwen LLM to produce JSON operations, then applies deterministically
             # Note: retrieved_facts not available yet (retrieved later), but schema hints will be passed if available
-            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = persist_facts_synchronously(
+            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
@@ -562,7 +721,8 @@ async def chat_with_smart_search(
                 message_id=user_message_id,
                 timestamp=user_msg_created_at,
                 message_index=message_index,
-                retrieved_facts=None  # Will be enhanced later to pass retrieved facts for schema-hint resolution
+                retrieved_facts=None,  # Will be enhanced later to pass retrieved facts for schema-hint resolution
+                write_intent_detected=is_write_intent  # Pass write-intent flag for enhanced diagnostics
             )
             
             # Check for Facts LLM failure (negative counts indicate error)
@@ -571,50 +731,123 @@ async def chat_with_smart_search(
                 facts_actions["F"] = True  # Set failure flag
                 facts_actions["S"] = 0
                 facts_actions["U"] = 0
+                facts_gate_entered = True
+                facts_gate_reason = "facts_llm_failed"
                 
-                # Return explicit error message (hard failure UX)
-                error_message = (
-                    "Facts system failed: The Facts LLM (Qwen) is unavailable or returned invalid JSON. "
-                    "Facts were not updated. Please try again or check that Ollama is running."
+                # Get detailed error information from the exception if available
+                # The error details are logged in facts_persistence.py, but we need to
+                # provide a user-friendly message here
+                from server.services.facts_llm.client import (
+                    FactsLLMTimeoutError,
+                    FactsLLMUnavailableError,
+                    FactsLLMInvalidJSONError,
+                    FACTS_LLM_TIMEOUT_S
                 )
+                
+                # Try to get the last error from the exception context
+                # For now, use a generic message - the actual error type is logged
+                error_message = (
+                    f"Facts system failed: The Facts LLM (Qwen/Ollama) encountered an error. "
+                    f"Facts were not updated. Please check that Ollama is running and responsive "
+                    f"(timeout={FACTS_LLM_TIMEOUT_S}s). Check server logs for details."
+                )
+                
+                # CRITICAL: If this is a write-intent message, we MUST return Facts-F (no fallthrough)
+                if is_write_intent:
+                    logger.error(f"[FACTS] WRITE_INTENT_BYPASS_PREVENTED: write-intent message blocked after Facts LLM failure, returning Facts-F")
+                
                 return {
-                    "response": error_message,
+                    "type": "assistant_message",
+                    "content": error_message,
                     "model": "Facts-F",
+                    "model_label": "Model: Facts-F",
                     "provider": "facts",
                     "meta": {
                         "fastPath": "facts_error",
                         "facts_error": True,
-                        "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True}
+                        "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True},
+                        "facts_provider": facts_provider,
+                        "project_uuid": project_id,
+                        "thread_id": thread_id,
+                        "facts_gate_entered": facts_gate_entered,
+                        "facts_gate_reason": facts_gate_reason,
+                        "write_intent_detected": is_write_intent
                     },
-                    "sources": []
+                    "sources": [],
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
             
             # Check for topic ambiguity - if ambiguous, return fast-path clarification response
+            # BUT: Only block on ambiguity for WRITE operations, not retrieval queries
+            # For retrieval queries, ambiguity should be ignored (we'll try to retrieve what the user asked for)
             if ambiguous_topics:
-                logger.info(f"[MEMORY] Topic ambiguity detected: {ambiguous_topics} - returning clarification")
-                # Format candidate topics for user-friendly display
-                topic_display = " / ".join(ambiguous_topics)
-                clarification_message = (
-                    f"Which favorites list is this for? ({topic_display})\n\n"
-                    f"Please specify the topic (e.g., 'crypto', 'colors', 'candies') so I can update the correct list."
-                )
+                # Use the query plan we already created (if available) to check if this is a retrieval query
+                # If we don't have a query plan yet, check now
+                is_retrieval_query_check = False
+                # query_plan is initialized at line 547, so it's always in scope here
+                # Check if it was set to a non-None value (it starts as None)
+                if query_plan is not None:
+                    is_retrieval_query_check = query_plan.intent in ["facts_get_ranked_list", "facts_get_by_prefix", "facts_get_exact_key"]
+                else:
+                    # Try to plan the query to determine if it's a retrieval query
+                    try:
+                        from server.services.facts_query_planner import plan_facts_query
+                        try:
+                            test_plan = await plan_facts_query(user_message)
+                            is_retrieval_query_check = test_plan.intent in ["facts_get_ranked_list", "facts_get_by_prefix", "facts_get_exact_key"]
+                            # Store the plan for later use
+                            query_plan = test_plan
+                        except Exception:
+                            pass
+                    except Exception:
+                        pass
                 
-                # Return fast-path response with zero fact counts
-                return {
-                    "response": clarification_message,
-                    "model": "Facts",
-                    "provider": "facts",
-                    "meta": {
-                        "fastPath": "topic_ambiguity",
-                        "ambiguous_topics": ambiguous_topics,
-                        "facts_actions": {"S": 0, "U": 0, "R": 0, "F": False}
-                    },
-                    "sources": []
-                }
+                # Only return ambiguity clarification for WRITE operations
+                # For retrieval queries, ignore ambiguity and proceed (will return empty if topic doesn't exist)
+                if not is_retrieval_query_check:
+                    logger.info(f"[MEMORY] Topic ambiguity detected: {ambiguous_topics} - returning clarification")
+                    # Format candidate topics for user-friendly display
+                    topic_display = " / ".join(ambiguous_topics)
+                    clarification_message = (
+                        f"Which favorites list is this for? ({topic_display})\n\n"
+                        f"Please specify the topic (e.g., 'crypto', 'colors', 'candies') so I can update the correct list."
+                    )
+                    
+                    # Return fast-path response with zero fact counts
+                    return {
+                        "response": clarification_message,
+                        "model": "Facts",
+                        "provider": "facts",
+                        "meta": {
+                            "fastPath": "topic_ambiguity",
+                            "ambiguous_topics": ambiguous_topics,
+                            "facts_actions": {"S": 0, "U": 0, "R": 0, "F": False}
+                        },
+                        "sources": []
+                    }
+                else:
+                    # This is a retrieval query - ignore ambiguity and proceed
+                    logger.info(f"[MEMORY] Topic ambiguity detected but this is a retrieval query - ignoring ambiguity and proceeding")
+                    # Clear ambiguous_topics so we proceed with retrieval
+                    ambiguous_topics = None
             
             # Set counts from actual DB writes (truthful, not optimistic)
             facts_actions["S"] = store_count
             facts_actions["U"] = update_count
+            
+            # Log Facts-S/U results for debugging
+            if is_write_intent:
+                logger.info(
+                    f"[FACTS] Write-intent message Facts-S/U results: "
+                    f"store_count={store_count}, update_count={update_count}, "
+                    f"stored_keys={stored_fact_keys[:5] if stored_fact_keys else []} "
+                    f"(showing first 5), message_uuid={message_uuid}"
+                )
+                if store_count == 0 and update_count == 0:
+                    logger.warning(
+                        f"[FACTS] ⚠️ Write-intent message but Facts-S/U returned 0 counts. "
+                        f"This may indicate Qwen didn't extract facts or an error occurred."
+                    )
             
             # Use message_uuid for fact exclusion (needed for Facts-R)
             if message_uuid:
@@ -625,6 +858,132 @@ async def chat_with_smart_search(
                 f"[MEMORY] ✅ Facts persisted: S={store_count} U={update_count} "
                 f"keys={stored_fact_keys} (message_uuid={current_message_uuid})"
             )
+            
+            # STRICT ROUTING INVARIANT: If Facts-S/U succeeded, return confirmation immediately
+            # Do NOT fall through to GPT-5 or show "I don't have that stored yet"
+            # NOTE: Even if the query could be interpreted as a retrieval query, if Facts-S/U
+            # succeeded, we return the confirmation. The user can ask again to retrieve.
+            if store_count > 0 or update_count > 0:
+                    # This is a write operation (Facts-S/U), return confirmation immediately
+                    # Format confirmation message from stored facts
+                    # Query DB to get actual values for the stored fact keys
+                    from memory_service.memory_dashboard import db
+                    
+                    confirmation_parts = []
+                    
+                    # Group facts by topic for ranked lists
+                    ranked_lists = {}
+                    single_facts = []
+                    
+                    # Query DB for current values of stored fact keys
+                    fact_values = {}
+                    if stored_fact_keys and project_id:
+                        try:
+                            # Get current facts for these keys
+                            for fact_key in stored_fact_keys:
+                                fact = db.get_current_fact(
+                                    project_id=project_id,
+                                    fact_key=fact_key
+                                )
+                                if fact:
+                                    fact_values[fact_key] = fact.get("value_text", "")
+                        except Exception as e:
+                            logger.warning(f"Failed to query fact values for confirmation: {e}")
+                    
+                    for fact_key in stored_fact_keys:
+                        # Check if it's a ranked list key (user.favorites.<topic>.<rank>)
+                        import re
+                        match = re.match(r'^user\.favorites\.(.+)\.(\d+)$', fact_key)
+                        if match:
+                            topic = match.group(1)
+                            rank = int(match.group(2))
+                            value = fact_values.get(fact_key, "")
+                            if topic not in ranked_lists:
+                                ranked_lists[topic] = []
+                            ranked_lists[topic].append((rank, value))
+                        else:
+                            value = fact_values.get(fact_key, "")
+                            single_facts.append((fact_key, value))
+                    
+                    # Format ranked lists
+                    for topic, items in ranked_lists.items():
+                        items.sort(key=lambda x: x[0])  # Sort by rank
+                        values = [v for _, v in items if v]  # Extract values, filter empty
+                        if values:
+                            confirmation_parts.append(f"favorite {topic} = [{', '.join(values)}]")
+                    
+                    # Format single facts
+                    for fact_key, value in single_facts:
+                        # Extract readable key name
+                        key_name = fact_key.split('.')[-1] if '.' in fact_key else fact_key
+                        if value:
+                            confirmation_parts.append(f"{key_name} = {value}")
+                        else:
+                            confirmation_parts.append(f"{key_name}")
+                    
+                    # Build confirmation message
+                    if confirmation_parts:
+                        confirmation_text = "Saved: " + ", ".join(confirmation_parts)
+                    else:
+                        # Fallback if we can't format properly
+                        if store_count > 0:
+                            confirmation_text = f"Saved {store_count} fact(s)."
+                        elif update_count > 0:
+                            confirmation_text = f"Updated {update_count} fact(s)."
+                        else:
+                            confirmation_text = "Saved."
+                    
+                    # Log response path
+                    logger.info(
+                        f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=WRITE_FASTPATH "
+                        f"store_count={store_count} update_count={update_count} "
+                        f"message_uuid={current_message_uuid}"
+                    )
+                    
+                    # Save to history
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            message_index = len(history)
+                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            history.append({
+                                "id": assistant_message_id,
+                                "role": "assistant",
+                                "content": confirmation_text,
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "provider": "facts",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to save Facts-S/U confirmation to history: {e}")
+                    
+                    # Return fast-path Facts-S/U confirmation (no GPT-5)
+                    return {
+                        "type": "assistant_message",
+                        "content": confirmation_text,
+                        "meta": {
+                            "usedFacts": True,
+                            "fastPath": "facts_write_confirmation",
+                            "facts_actions": facts_actions,
+                            "files_actions": files_actions,
+                            "index_status": index_status,
+                            "facts_provider": facts_provider,
+                            "project_uuid": project_id,
+                            "thread_id": thread_id,
+                            "facts_gate_entered": facts_gate_entered,
+                            "facts_gate_reason": facts_gate_reason,
+                            "write_intent_detected": is_write_intent
+                        },
+                        "sources": [],
+                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                # Facts-S/U confirmation returned - do not continue to Facts-R section
             
         except Exception as e:
             logger.error(f"[MEMORY] ❌ Exception during synchronous fact persistence: {e}", exc_info=True)
@@ -695,141 +1054,9 @@ async def chat_with_smart_search(
     # The facts DB is still used, but facts are passed as Memory context to GPT-5
     # instead of being returned directly.
     
-    # REMOVED: Disabled ordinal query handling (all queries go through GPT-5)
-    # This code was disabled and has been removed for clarity
-    
-    # Import extract_topic_from_query for list query handling
-    from server.services.facts import extract_topic_from_query
-    
-    # Check if query is asking for full list (e.g., "list my favorite colors", "what are my favorite X")
-    if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
-        # Determine topic_key STRICTLY
-        # If query includes topic noun → use that topic_key only
-        topic_key = extract_topic_from_query(user_message)
-        
-        # REMOVED: get_most_recent_topic_key_in_chat() - function was removed with NEW system
-        # If topic_key is None, we'll just proceed without it (GPT-5 will handle the query)
-        if not topic_key:
-            logger.debug(f"[FACTS] No topic_key found for list query, proceeding with GPT-5")
-        
-        # REMOVED: Clarification question logic - all queries go through GPT-5 now
-        logger.info(f"[FACTS] Detected full list query: topic_key={topic_key}")
-        
-        # Fast list query handler: "list/show/what are my favorite X"
-        # Uses DB-backed path (not Memory Service HTTP) for speed and reliability
-        if re.search(r'\b(list|show|what are)\s+(?:my|all|your)?\s*(?:favorite|top)?', user_message.lower()):
-            # Extract topic from query
-            topic_key = extract_topic_from_query(user_message)
-            
-            if not topic_key:
-                # No topic found - let GPT-5 handle it
-                logger.debug(f"[FACTS-LIST] No topic_key found for list query, proceeding with GPT-5")
-            elif project_id:
-                # Search ranked facts directly from DB (fast, deterministic, no Memory Service dependency)
-                # For list queries, don't exclude current message UUID - we want to see all stored facts
-                # List queries don't store new facts, so exclusion isn't needed
-                ranked_facts = librarian.search_facts_ranked_list(
-                    project_id=project_id,
-                    topic_key=topic_key,
-                    limit=50,
-                    exclude_message_uuid=None  # Don't exclude for list queries - show all stored facts
-                )
-            
-            if ranked_facts:
-                # Sort by rank (already sorted in helper, but ensure)
-                ranked_facts.sort(key=lambda f: f.get("rank", 0))
-                
-                # Format: "1) X\n2) Y\n3) Z"
-                list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in ranked_facts])
-                
-                # Build sources array with source_message_uuid for deep linking
-                # Group by unique source_message_uuid to avoid duplicates
-                sources_by_uuid = {}
-                for fact in ranked_facts:
-                    msg_uuid = fact.get("source_message_uuid")
-                    if msg_uuid and msg_uuid not in sources_by_uuid:
-                        sources_by_uuid[msg_uuid] = {
-                            "id": f"fact-{msg_uuid[:8]}",
-                            "title": f"Stored Facts",
-                            "siteName": "Facts",
-                            "description": f"Ranked list: {topic_key}",
-                            "rank": len(sources_by_uuid),
-                            "sourceType": "memory",
-                            "citationPrefix": "M",
-                            "meta": {
-                                "source_message_uuid": msg_uuid,  # For deep linking
-                                "topic_key": topic_key,
-                                "fact_count": len([f for f in ranked_facts if f.get("source_message_uuid") == msg_uuid])
-                            }
-                        }
-                
-                sources = list(sources_by_uuid.values())
-                logger.info(f"[FACTS-LIST] ✅ Returning ranked list: topic_key={topic_key}, items={len(ranked_facts)}, sources={len(sources)}")
-                
-                # Save to history
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        message_index = len(history)
-                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                        history.append({
-                            "id": assistant_message_id,
-                            "role": "assistant",
-                            "content": list_items,
-                            "model": "Facts",
-                            "model_label": "Model: Facts",
-                            "provider": "facts",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save list answer to history: {e}")
-                
-                # Return direct answer (fast path, no GPT-5)
-                # NOTE: Do NOT set Facts-R here - list queries are not "recall context to GPT-5"
-                return {
-                    "type": "assistant_message",
-                    "content": list_items,
-                    "meta": {"usedFacts": True, "fastPath": "facts_list"},
-                    "sources": sources,
-                    "model": "Facts",
-                    "model_label": "Model: Facts",
-                    "provider": "facts",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
-            else:
-                # No ranked facts found
-                logger.info(f"[FACTS-LIST] No ranked facts found for topic_key={topic_key}")
-                if thread_id:
-                    try:
-                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
-                        message_index = len(history)
-                        assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                        response_text = "I don't have that stored yet."
-                        history.append({
-                            "id": assistant_message_id,
-                            "role": "assistant",
-                            "content": response_text,
-                            "model": "Facts",
-                            "model_label": "Model: Facts",
-                            "provider": "facts",
-                            "created_at": assistant_msg_created_at
-                        })
-                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to save 'not found' answer to history: {e}")
-                
-                return {
-                    "type": "assistant_message",
-                    "content": "I don't have that stored yet.",
-                    "meta": {"usedFacts": True, "factNotFound": True, "fastPath": "facts_list"},
-                    "model": "Facts",
-                    "model_label": "Model: Facts",
-                    "provider": "facts",
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
+    # REMOVED: Legacy regex-based Facts-R list fast path
+    # All Facts-R queries now go through Qwen query-to-plan → deterministic retrieval
+    # Fast-path responses are handled in the Qwen-based Facts-R section below
     
     # 0. Get memory context if project_id is available
     memory_context = ""
@@ -838,99 +1065,313 @@ async def chat_with_smart_search(
     memory_stored = False  # Track if memory was stored (fact extraction/indexing)
     searched_memory = False  # Track if we attempted to search memory (even if no results)
     hits = []  # Initialize hits to empty list so it's always defined
+    
+    # query_plan is already initialized at line 547 (function scope)
+    # Re-initialize is_retrieval_query here for the retrieval section
+    is_retrieval_query = False
+    if project_id:
+        try:
+            from server.services.facts_query_planner import plan_facts_query
+            from server.services.facts_llm.client import FactsLLMError
+            
+            # Try to plan the query to determine if it's a retrieval query
+            try:
+                query_plan = await plan_facts_query(user_message)
+                is_retrieval_query = query_plan.intent in ["facts_get_ranked_list", "facts_get_by_prefix", "facts_get_exact_key"]
+            except FactsLLMError:
+                # If query planning fails, assume it's not a pure retrieval query
+                is_retrieval_query = False
+            except Exception:
+                # If query planning fails for any reason, assume it's not a pure retrieval query
+                is_retrieval_query = False
+        except Exception:
+            # If we can't import or plan, assume it's not a pure retrieval query
+            is_retrieval_query = False
+    
+    # If this is a pure retrieval query and Facts-S/U didn't write anything,
+    # skip fact extraction to avoid ambiguity issues
+    # (We already ran fact extraction above, but if it returned ambiguity and this is a retrieval query, ignore it)
     if project_id:
         try:
             # NEW: Use Qwen query-to-plan for Facts-R (deterministic retrieval)
             # This replaces the old embedding-based search for facts
-            try:
-                from server.services.facts_query_planner import plan_facts_query
-                from server.services.facts_retrieval import execute_facts_plan
-                from server.services.facts_llm.client import FactsLLMError
-                
-                # Plan query using Qwen
+            from server.services.facts_retrieval import execute_facts_plan
+            from server.services.facts_llm.client import FactsLLMError
+            
+            # Use the query plan we already created, or create a new one if needed
+            if not query_plan:
                 try:
-                    query_plan = plan_facts_query(user_message)
+                    query_plan = await plan_facts_query(user_message)
+                except Exception:
+                    query_plan = None
+            
+            # Safe access: query_plan is initialized at function scope (line 547)
+            if query_plan is not None:
+                # Execute plan deterministically
+                facts_answer = execute_facts_plan(
+                    project_uuid=project_id,
+                    plan=query_plan,
+                    exclude_message_uuid=current_message_uuid
+                )
+                
+                # Count distinct canonical keys for Facts-R
+                facts_actions["R"] = len(facts_answer.canonical_keys)
+                if facts_actions["R"] > 0:
+                    logger.info(f"[FACTS-R] Retrieved {facts_actions['R']} distinct canonical keys: {facts_answer.canonical_keys}")
+                
+                # Fast-path response for ranked list queries (no GPT-5)
+                # Qwen determines if this is a list query via query plan intent
+                if query_plan is not None and query_plan.intent == "facts_get_ranked_list" and facts_answer.facts:
+                    # Format ranked list for direct user response
+                    sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
+                    list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in sorted_facts])
                     
-                    # Execute plan deterministically
-                    facts_answer = execute_facts_plan(
-                        project_uuid=project_id,
-                        plan=query_plan,
-                        exclude_message_uuid=current_message_uuid
-                    )
-                    
-                    # Count distinct canonical keys for Facts-R
-                    facts_actions["R"] = len(facts_answer.canonical_keys)
-                    if facts_actions["R"] > 0:
-                        logger.info(f"[FACTS-R] Retrieved {facts_actions['R']} distinct canonical keys: {facts_answer.canonical_keys}")
-                    
-                    # Convert facts to memory hits format for GPT-5 context
-                    fact_hits = []
-                    for fact in facts_answer.facts:
-                        fact_hits.append({
-                            "content": f"{fact.get('fact_key', '')} = {fact.get('value_text', '')}",
-                            "score": 1.0,
-                            "metadata": {
-                                "is_fact": True,
-                                "fact_key": fact.get("fact_key"),
-                                "value_text": fact.get("value_text"),
-                                "source_message_uuid": fact.get("source_message_uuid")
+                    # Build sources array with source_message_uuid for deep linking
+                    sources_by_uuid = {}
+                    for fact in sorted_facts:
+                        msg_uuid = fact.get("source_message_uuid")
+                        if msg_uuid and msg_uuid not in sources_by_uuid:
+                            topic = (query_plan.topic if query_plan is not None else None) or "items"
+                            sources_by_uuid[msg_uuid] = {
+                                "id": f"fact-{msg_uuid[:8]}",
+                                "title": f"Stored Facts",
+                                "siteName": "Facts",
+                                "description": f"Ranked list: {topic}",
+                                "rank": len(sources_by_uuid),
+                                "sourceType": "memory",
+                                "citationPrefix": "M",
+                                "meta": {
+                                    "source_message_uuid": msg_uuid,
+                                    "topic_key": topic,
+                                    "fact_count": len([f for f in sorted_facts if f.get("source_message_uuid") == msg_uuid])
+                                }
                             }
-                        })
                     
-                    # Also get non-fact memory hits from librarian (for Index domain)
-                    # This provides semantic search results alongside facts
-                    # Note: librarian.get_relevant_memory includes both facts and index hits
-                    # We'll filter out fact hits and only use index hits
-                    all_hits = librarian.get_relevant_memory(
-                        project_id=project_id,
-                        query=user_message,
-                        chat_id=None,
-                        max_hits=30,
-                        exclude_message_uuid=current_message_uuid
+                    sources = list(sources_by_uuid.values())
+                    logger.info(f"[FACTS-R] ✅ Fast-path ranked list response: topic={query_plan.topic if query_plan is not None else 'unknown'}, items={len(sorted_facts)}")
+                    
+                    # Log response path
+                    logger.info(
+                        f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH "
+                        f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
+                        f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
                     )
                     
-                    # Filter to only index hits (non-fact hits)
-                    index_hits = [
-                        hit for hit in all_hits 
-                        if not (hit.metadata and hit.metadata.get("is_fact"))
-                    ]
+                    # Save to history
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            message_index = len(history)
+                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            history.append({
+                                "id": assistant_message_id,
+                                "role": "assistant",
+                                "content": list_items,
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "provider": "facts",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to save list answer to history: {e}")
                     
-                    # Combine fact hits (from query planner) and index hits
-                    hits = fact_hits + index_hits
-                    searched_memory = True
-                    has_memory = len(hits) > 0
+                    # Return fast-path response (no GPT-5)
+                    return {
+                        "type": "assistant_message",
+                        "content": list_items,
+                        "meta": {
+                            "usedFacts": True,
+                            "fastPath": "facts_retrieval",
+                            "facts_actions": facts_actions,
+                            "files_actions": files_actions,
+                            "index_status": index_status,
+                            "facts_provider": facts_provider,
+                            "project_uuid": project_id,
+                            "thread_id": thread_id,
+                            "facts_gate_entered": facts_gate_entered,
+                            "facts_gate_reason": facts_gate_reason or "unknown",
+                            "write_intent_detected": is_write_intent
+                        },
+                        "sources": sources,
+                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                elif query_plan is not None and query_plan.intent == "facts_get_ranked_list" and not facts_answer.facts:
+                    # Ranked list query but no facts found
+                    # GUARD: "I don't have that stored yet" only appears on empty Facts-R retrieval
+                    # Assert that this is NOT a write operation (store_count/update_count should be 0)
+                    if facts_actions.get("S", 0) > 0 or facts_actions.get("U", 0) > 0:
+                        logger.error(
+                            f"[FACTS-RESPONSE] BUG: 'I don't have that stored yet' triggered with "
+                            f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)}. "
+                            f"This should not happen - Facts-S/U should return confirmation before Facts-R."
+                        )
                     
-                    if has_memory:
-                        # Format hits into context string for GPT-5
-                        memory_context = librarian.format_hits_as_context(hits)
-                        logger.info(f"[MEMORY] Retrieved memory context: {len(fact_hits)} facts + {len(index_hits)} index hits")
+                    logger.info(f"[FACTS-R] Ranked list query returned no facts: topic={query_plan.topic if query_plan is not None else 'unknown'}")
                     
-                except FactsLLMError as e:
-                    # Facts-R query planner failed - hard fail Facts-R but continue with Index
-                    logger.error(f"[FACTS-R] Query planner failed: {e}")
-                    facts_actions["R"] = 0
-                    facts_actions["F"] = True  # Mark Facts as failed
-                    
-                    # Fallback to Index-only memory retrieval
-                    hits = librarian.get_relevant_memory(
-                        project_id=project_id,
-                        query=user_message,
-                        chat_id=None,
-                        max_hits=30,
-                        exclude_message_uuid=current_message_uuid
+                    # Log response path
+                    logger.info(
+                        f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH_EMPTY "
+                        f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
+                        f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
                     )
-                    searched_memory = True
-                    has_memory = len(hits) > 0
-                    if has_memory:
-                        memory_context = librarian.format_hits_as_context(hits)
                     
-            except Exception as e:
-                # Hard fail Facts-R if new system fails (no fallback)
-                logger.error(f"[FACTS-R] Query planner failed with unexpected error: {e}", exc_info=True)
+                    if thread_id:
+                        try:
+                            history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            message_index = len(history)
+                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            response_text = "I don't have that stored yet."
+                            history.append({
+                                "id": assistant_message_id,
+                                "role": "assistant",
+                                "content": response_text,
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "provider": "facts",
+                                "created_at": assistant_msg_created_at
+                            })
+                            memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to save 'not found' answer to history: {e}")
+                    
+                    # CRITICAL: This should only appear for retrieval queries, not write-intent
+                    if is_write_intent:
+                        # Write-intent message but retrieval returned empty - this means Facts-S/U didn't execute
+                        # Get diagnostic information from raw LLM response store
+                        from server.services.facts_persistence import _raw_llm_responses
+                        diagnostic_info = _raw_llm_responses.get(current_message_uuid) if current_message_uuid else None
+                        
+                        # Build specific error reason
+                        if diagnostic_info:
+                            ops_count = diagnostic_info.get("ops_count", 0)
+                            needs_clarification = diagnostic_info.get("needs_clarification")
+                            apply_result = diagnostic_info.get("apply_result", {})
+                            apply_warnings = len(apply_result.get("warnings", []))
+                            apply_errors = len(apply_result.get("errors", []))
+                            
+                            if needs_clarification:
+                                skip_reason = f"Extractor needs clarification: {', '.join(needs_clarification)}"
+                            elif ops_count == 0:
+                                skip_reason = "Extractor returned empty ops (no facts extracted from message)"
+                            elif apply_warnings > 0 or apply_errors > 0:
+                                skip_reason = f"All ops rejected during apply ({apply_warnings} warnings, {apply_errors} errors)"
+                            else:
+                                skip_reason = "Facts-S/U returned 0 counts (unknown reason)"
+                        else:
+                            skip_reason = "Facts-S/U returned 0 counts (diagnostics not available)"
+                        
+                        logger.error(
+                            f"[FACTS] WRITE_INTENT_BYPASS_PREVENTED: write-intent message '{user_message[:50]}...' "
+                            f"returned empty retrieval. Facts-S/U counts: S={facts_actions.get('S', 0)}, "
+                            f"U={facts_actions.get('U', 0)}, reason={skip_reason}, "
+                            f"facts_gate_entered={facts_gate_entered}, facts_gate_reason={facts_gate_reason}"
+                        )
+                        facts_actions["F"] = True
+                        error_message = (
+                            f"Facts write failed: {skip_reason}. "
+                            f"Check server logs for raw LLM response (message_uuid={current_message_uuid if current_message_uuid else 'N/A'})."
+                        )
+                        return {
+                            "type": "assistant_message",
+                            "content": error_message,
+                            "meta": {
+                                "fastPath": "facts_error",
+                                "facts_error": True,
+                                "facts_skip_reason": skip_reason,
+                                "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True},
+                                "facts_provider": facts_provider,
+                                "project_uuid": project_id,
+                                "thread_id": thread_id,
+                                "facts_gate_entered": facts_gate_entered,
+                                "facts_gate_reason": facts_gate_reason or "unknown",
+                                "write_intent_detected": True
+                            },
+                            "sources": [],
+                            "model": "Facts-F",
+                            "model_label": "Model: Facts-F",
+                            "provider": "facts",
+                            "created_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    
+                    # Normal empty retrieval response (for non-write-intent queries)
+                    return {
+                        "type": "assistant_message",
+                        "content": "I don't have that stored yet.",
+                        "meta": {
+                            "usedFacts": True,
+                            "factNotFound": True,
+                            "fastPath": "facts_retrieval_empty",
+                            "facts_actions": facts_actions,
+                            "files_actions": files_actions,
+                            "index_status": index_status,
+                            "facts_provider": facts_provider,
+                            "project_uuid": project_id,
+                            "thread_id": thread_id,
+                            "facts_gate_entered": facts_gate_entered,
+                            "facts_gate_reason": facts_gate_reason or "unknown",
+                            "write_intent_detected": is_write_intent
+                        },
+                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
+                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                
+                # For non-ranked-list queries (exact key, prefix), convert facts to memory hits for GPT-5 context
+                fact_hits = []
+                for fact in facts_answer.facts:
+                    fact_hits.append({
+                        "content": f"{fact.get('fact_key', '')} = {fact.get('value_text', '')}",
+                        "score": 1.0,
+                        "metadata": {
+                            "is_fact": True,
+                            "fact_key": fact.get("fact_key"),
+                            "value_text": fact.get("value_text"),
+                            "source_message_uuid": fact.get("source_message_uuid")
+                        }
+                    })
+                
+                # Also get non-fact memory hits from librarian (for Index domain)
+                # This provides semantic search results alongside facts
+                # Note: librarian.get_relevant_memory includes both facts and index hits
+                # We'll filter out fact hits and only use index hits
+                all_hits = librarian.get_relevant_memory(
+                    project_id=project_id,
+                    query=user_message,
+                    chat_id=None,
+                    max_hits=30,
+                    exclude_message_uuid=current_message_uuid
+                )
+                
+                # Filter to only index hits (non-fact hits)
+                index_hits = [
+                    hit for hit in all_hits 
+                    if not (hit.metadata and hit.metadata.get("is_fact"))
+                ]
+                
+                # Combine fact hits (from query planner) and index hits
+                hits = fact_hits + index_hits
+                searched_memory = True
+                has_memory = len(hits) > 0
+                
+                if has_memory:
+                    # Format hits into context string for GPT-5
+                    memory_context = librarian.format_hits_as_context(hits)
+                    logger.info(f"[MEMORY] Retrieved memory context: {len(fact_hits)} facts + {len(index_hits)} index hits")
+                    
+        except FactsLLMError as e:
+                # Facts-R query planner failed - hard fail Facts-R but continue with Index
+                logger.error(f"[FACTS-R] Query planner failed: {e}")
                 facts_actions["R"] = 0
                 facts_actions["F"] = True  # Mark Facts as failed
                 
-                # Still get Index hits for GPT-5 context (Facts failure doesn't block Index)
+                # Fallback to Index-only memory retrieval
                 hits = librarian.get_relevant_memory(
                     project_id=project_id,
                     query=user_message,
@@ -942,23 +1383,28 @@ async def chat_with_smart_search(
                 has_memory = len(hits) > 0
                 if has_memory:
                     memory_context = librarian.format_hits_as_context(hits)
+                    
+        except Exception as e:
+            # Hard fail Facts-R if new system fails (no fallback)
+            logger.error(f"[FACTS-R] Query planner failed with unexpected error: {e}", exc_info=True)
+            facts_actions["R"] = 0
+            facts_actions["F"] = True  # Mark Facts as failed
             
-            # Also retrieve structured facts for detected topics (cross-chat)
-            # NOTE: Disabled NEW facts table retrieval - using OLD project_facts table via librarian instead
-            # The librarian's get_relevant_memory() already searches project_facts via /search-facts endpoint
-            # This avoids the broken NEW facts table system and relies on the working OLD system
-            facts = []  # Disabled: facts retrieval now handled by librarian via project_facts table
-            try:
-                topic_key = extract_topic_from_query(user_message)
-                if topic_key:
-                    # DISABLED: NEW facts table retrieval (broken)
-                    # facts = memory_client.get_facts(...)
-                    # Instead, facts are retrieved via librarian's /search-facts which uses project_facts table
-                    logger.debug(f"[FACTS] Topic detected: {topic_key}, but using librarian's project_facts search instead")
-                    # Facts are retrieved via librarian's /search-facts which uses project_facts table
-                    # No additional fact formatting needed - librarian handles it
-            except Exception as e:
-                logger.warning(f"Failed to retrieve facts for GPT-5 context: {e}", exc_info=True)
+            # Still get Index hits for GPT-5 context (Facts failure doesn't block Index)
+            hits = librarian.get_relevant_memory(
+                project_id=project_id,
+                query=user_message,
+                chat_id=None,
+                max_hits=30,
+                exclude_message_uuid=current_message_uuid
+            )
+            searched_memory = True
+            has_memory = len(hits) > 0
+            if has_memory:
+                memory_context = librarian.format_hits_as_context(hits)
+            
+            # REMOVED: Legacy topic extraction for facts retrieval
+            # All Facts retrieval now goes through Qwen query-to-plan (above)
             
             # Convert Memory hits to structured Source objects for frontend
             if hits:
@@ -1066,6 +1512,14 @@ async def chat_with_smart_search(
         
         # Always route to GPT-5 (never GPT-5 Mini)
         logger.info(f"[MEMORY] Routing to GPT-5 with Memory context ({len(hits) if hits else 0} hits)")
+        
+        # Log response path (GPT-5 fallthrough)
+        logger.info(
+            f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
+            f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
+            f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
+        )
+        
         content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
             messages=messages,
             tools=tools,
@@ -1599,6 +2053,41 @@ async def chat_with_smart_search(
         except:
             pass
     
+    # CRITICAL: Before returning final response, check if write-intent message bypassed Facts
+    # If write-intent and Facts-S/U did not execute (counts are 0 and no Facts-F), return Facts-F
+    if is_write_intent and facts_actions["S"] == 0 and facts_actions["U"] == 0 and not facts_actions["F"]:
+        # Write-intent message but Facts didn't run - this should not happen if gate worked correctly
+        # But if it did, we must return Facts-F to prevent silent fallthrough
+        skip_reason = "Facts gate was skipped or Facts-S/U did not execute for write-intent message"
+        logger.error(f"[FACTS] WRITE_INTENT_BYPASS_PREVENTED: write-intent message bypassed Facts gate, returning Facts-F (reason: {skip_reason})")
+        facts_actions["F"] = True
+        error_message = (
+            f"Facts unavailable: {skip_reason}. "
+            "Please ensure you have selected a project and are in a valid conversation."
+        )
+        return {
+            "type": "assistant_message",
+            "content": error_message,
+            "meta": {
+                "fastPath": "facts_error",
+                "facts_error": True,
+                "facts_skip_reason": skip_reason,
+                "facts_actions": {"S": 0, "U": 0, "R": 0, "F": True},
+                "facts_provider": facts_provider,
+                "project_uuid": project_id,
+                "thread_id": thread_id,
+                "facts_gate_entered": facts_gate_entered,
+                "facts_gate_reason": facts_gate_reason or "unknown",
+                "write_intent_detected": True
+            },
+            "sources": [],
+            "model": "Facts-F",
+            "model_label": "Model: Facts-F",
+            "provider": "facts",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    
+    # Normal response - include comprehensive meta for debugging
     return {
         "type": "assistant_message",
         "content": content,
@@ -1607,7 +2096,13 @@ async def chat_with_smart_search(
             "usedMemory": has_memory or memory_stored,  # Memory was stored or retrieved
             "webResultsPreview": web_results[:5],  # Top 5 for sources display
             "facts_actions": facts_actions,
-            "files_actions": files_actions
+            "files_actions": files_actions,
+            "facts_provider": facts_provider,
+            "project_uuid": project_id,
+            "thread_id": thread_id,
+            "facts_gate_entered": facts_gate_entered,
+            "facts_gate_reason": facts_gate_reason or "unknown",
+            "write_intent_detected": is_write_intent
         },
         "model": model_label.replace("Model: ", ""),  # Return without "Model: " prefix for backward compatibility
         "model_label": model_label,

@@ -387,6 +387,7 @@ Keep it concise, neutral, and factual."""
                 print(f"[RAG] Warning: No context was built despite {len(rag_file_ids)} file IDs provided")
         
         # Resolve project_id to UUID (Facts DB contract: must use UUID, never name)
+        # CRITICAL: This must succeed or Facts will hard-fail
         project_uuid = project_id
         if project_id:
             try:
@@ -394,12 +395,20 @@ Keep it concise, neutral, and factual."""
                 # Get project dict for resolution
                 projects = load_projects()
                 project = next((p for p in projects if p.get("id") == project_id or p.get("name") == project_id), None)
-                project_uuid = resolve_project_uuid(project, project_id=project_id)
-                logger.info(f"[PROJECT] Using project_uuid={project_uuid} project_name={project.get('name') if project else 'unknown'}")
+                if project:
+                    project_uuid = resolve_project_uuid(project, project_id=project_id)
+                    logger.info(f"[STREAM] ✅ Project resolved: project_id={project_id}, project_uuid={project_uuid}, project_name={project.get('name', 'unknown')}")
+                else:
+                    logger.error(f"[STREAM] ❌ Project not found: project_id={project_id}")
+                    # This will cause Facts to hard-fail with clear error
+                    project_uuid = None
             except Exception as e:
-                logger.error(f"[PROJECT] Failed to resolve project UUID for project_id={project_id}: {e}", exc_info=True)
-                # Continue with original project_id - validation will catch it if invalid
-                project_uuid = project_id
+                logger.error(f"[STREAM] ❌ Failed to resolve project UUID for project_id={project_id}: {e}", exc_info=True)
+                # This will cause Facts to hard-fail with clear error
+                project_uuid = None
+        else:
+            logger.error(f"[STREAM] ❌ project_id is None or empty")
+            project_uuid = None
         
         # Load target configuration
         target_cfg = load_target(target_name)
@@ -560,12 +569,27 @@ Keep it concise, neutral, and factual."""
                 conversation_history = load_thread_history(target_cfg.name, conversation_id)
             
             # Call smart chat service (use resolved project_uuid)
+            # CRITICAL: Log endpoint and IDs for debugging
+            # Note: project_id parameter is the resolved UUID (not the original slug)
+            logger.info(
+                f"[WEBSOCKET] Calling chat_with_smart_search: "
+                f"endpoint=websocket, project_id={project_id}, "
+                f"conversation_id={conversation_id}, message_length={len(message)}"
+            )
             result = await chat_with_smart_search(
                 user_message=message,
                 target_name=target_cfg.name,
                 thread_id=conversation_id if conversation_id else None,
                 conversation_history=conversation_history,
                 project_id=project_uuid  # Use resolved UUID, not original project_id
+            )
+            
+            # Log response meta for debugging
+            meta = result.get("meta", {})
+            logger.info(
+                f"[WEBSOCKET] Response meta: facts_gate_entered={meta.get('facts_gate_entered')}, "
+                f"facts_gate_reason={meta.get('facts_gate_reason')}, write_intent={meta.get('write_intent_detected')}, "
+                f"facts_actions={meta.get('facts_actions')}, model={result.get('model')}"
             )
             
             # Extract response content
@@ -928,7 +952,7 @@ async def websocket_endpoint(websocket: WebSocket):
             # Receive message from client
             data = await websocket.receive_json()
             
-            project_id = data.get("project_id")
+            project_slug = data.get("project_id")  # May be slug or UUID
             conversation_id = data.get("conversation_id")
             message = data.get("message")
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
@@ -939,10 +963,22 @@ async def websocket_endpoint(websocket: WebSocket):
             print(f"[WEB] WebSocket received force_search: {force_search}")
             print(f"[WEB] WebSocket received top_results_only: {top_results_only} (type: {type(top_results_only)})")
             
-            if not all([project_id, conversation_id, message]):
+            # Structured logging at WebSocket entrypoint
+            logger.info(f"[WEBSOCKET] Received message: project_slug={project_slug}, conversation_id={conversation_id}, message_length={len(message) if message else 0}")
+            
+            if not all([project_slug, conversation_id, message]):
+                missing = []
+                if not project_slug:
+                    missing.append("project_id")
+                if not conversation_id:
+                    missing.append("conversation_id")
+                if not message:
+                    missing.append("message")
+                error_msg = f"Missing required fields: {', '.join(missing)}"
+                logger.error(f"[WEBSOCKET] {error_msg}")
                 await websocket.send_json({
                     "type": "error",
-                    "content": "Missing required fields: project_id, conversation_id, message",
+                    "content": error_msg,
                     "done": True
                 })
                 continue
@@ -952,29 +988,75 @@ async def websocket_endpoint(websocket: WebSocket):
             from server.main import load_projects, get_target_name_from_project
             from server.services.projects.project_resolver import resolve_project_uuid
             projects = load_projects()
-            project = next((p for p in projects if p.get("id") == project_id or p.get("name") == project_id), None)
+            project = next((p for p in projects if p.get("id") == project_slug or p.get("name") == project_slug), None)
             if not project:
+                error_msg = f"Project not found: {project_slug}"
+                logger.error(f"[WEBSOCKET] {error_msg}")
                 await websocket.send_json({
                     "type": "error",
-                    "content": f"Project not found: {project_id}",
+                    "content": error_msg,
                     "done": True
                 })
                 continue
             
-            # Resolve to UUID
+            # Resolve to UUID (CRITICAL: Facts requires UUID, not slug)
+            project_uuid = None
             try:
-                project_uuid = resolve_project_uuid(project, project_id=project_id)
-                logger.info(f"[PROJECT] Using project_uuid={project_uuid} project_name={project.get('name', 'unknown')}")
+                project_uuid = resolve_project_uuid(project, project_id=project_slug)
+                logger.info(f"[WEBSOCKET] ✅ Project resolved: project_slug={project_slug}, project_uuid={project_uuid}, project_name={project.get('name', 'unknown')}")
             except Exception as e:
-                logger.error(f"[PROJECT] Failed to resolve project UUID: {e}", exc_info=True)
+                error_msg = f"Cannot resolve project UUID for '{project_slug}': {e}"
+                logger.error(f"[WEBSOCKET] ❌ {error_msg}", exc_info=True)
                 await websocket.send_json({
                     "type": "error",
-                    "content": f"Cannot resolve project UUID: {e}",
+                    "content": error_msg,
                     "done": True
                 })
                 continue
+            
+            # Ensure conversation_id exists (create if missing)
+            # CRITICAL: Facts requires thread_id, so we must ensure conversation_id exists
+            thread_id_created = False
+            if not conversation_id or conversation_id.strip() == "":
+                # Create new conversation_id server-side
+                from uuid import uuid4
+                conversation_id = str(uuid4())
+                thread_id_created = True
+                logger.info(f"[WEBSOCKET] ✅ Created new conversation_id: {conversation_id}")
+                
+                # Create chat entry in chats.json
+                try:
+                    from server.main import load_chats, save_chats, now_iso
+                    chats = load_chats()
+                    new_chat = {
+                        "id": conversation_id,
+                        "project_id": project_uuid,  # Use resolved UUID
+                        "title": "New Chat",
+                        "thread_id": conversation_id,
+                        "created_at": now_iso(),
+                        "updated_at": now_iso(),
+                        "trashed": False,
+                        "trashed_at": None,
+                        "archived": False,
+                        "archived_at": None
+                    }
+                    chats.append(new_chat)
+                    save_chats(chats)
+                    logger.info(f"[WEBSOCKET] ✅ Created chat entry for conversation_id: {conversation_id}")
+                except Exception as e:
+                    logger.warning(f"[WEBSOCKET] Failed to create chat entry: {e}")
+            
+            # Log final state before calling stream_chat_response
+            logger.info(f"[WEBSOCKET] ✅ Ready for Facts: project_slug={project_slug}, project_uuid={project_uuid}, conversation_id={conversation_id}, thread_id_created={thread_id_created}")
             
             target_name = get_target_name_from_project(project)
+            
+            # Send immediate "thinking" indicator so frontend shows three dots right away
+            # This ensures user sees feedback even if processing takes time (e.g., Facts LLM timeout)
+            await websocket.send_json({
+                "type": "thinking",
+                "content": ""
+            })
             
             # Stream response (use resolved project_uuid)
             await stream_chat_response(
