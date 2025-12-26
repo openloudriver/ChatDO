@@ -882,16 +882,15 @@ def search_facts_ranked_list(
     """
     try:
         from memory_service.memory_dashboard import db
-        from memory_service.fact_extractor import get_fact_extractor
         from server.services.projects.project_resolver import validate_project_uuid
         import re
         
         # Enforce Facts DB contract: project_id must be UUID
         validate_project_uuid(project_id)
         
-        # Normalize topic_key to match fact_extractor's normalization
-        extractor = get_fact_extractor()
-        normalized_topic_key = extractor._normalize_topic(topic_key.replace('_', ' '))
+        # Canonicalize topic_key using Facts canonical normalization (single source of truth)
+        from server.services.facts_topic import canonicalize_topic
+        normalized_topic_key = canonicalize_topic(topic_key)
         
         # Search facts using the topic as query (searches fact_key and value_text)
         # This will find facts like "user.favorites.crypto.1", "user.favorites.crypto.2", etc.

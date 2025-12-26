@@ -120,18 +120,20 @@ def canonical_list_key(topic: str) -> str:
     
     Schema: user.favorites.<topic>
     
+    Uses canonicalize_topic() to ensure consistent topic normalization.
+    
     Args:
-        topic: Topic name (e.g., "crypto", "colors")
+        topic: Topic name (e.g., "crypto", "colors", "candies")
         
     Returns:
         Canonical list key (e.g., "user.favorites.crypto")
     """
-    # Normalize topic: lowercase, trim, replace spaces with underscores
-    normalized_topic = topic.lower().strip().replace(" ", "_")
-    # Remove invalid characters
-    normalized_topic = re.sub(r'[^a-z0-9_]', '', normalized_topic)
+    from server.services.facts_topic import canonicalize_topic
     
-    return f"user.favorites.{normalized_topic}"
+    # Use canonical topic normalization (single source of truth)
+    canonical_topic = canonicalize_topic(topic)
+    
+    return f"user.favorites.{canonical_topic}"
 
 
 def canonical_rank_key(topic: str, rank: int) -> str:

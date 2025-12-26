@@ -11,7 +11,7 @@ from server.services.facts_llm.client import run_facts_llm, FactsLLMError
 logger = logging.getLogger(__name__)
 
 
-def plan_facts_query(query_text: str) -> FactsQueryPlan:
+async def plan_facts_query(query_text: str) -> FactsQueryPlan:
     """
     Convert a user query into a deterministic Facts query plan using Qwen.
     
@@ -62,7 +62,7 @@ Output JSON:"""
     
     try:
         logger.debug(f"[FACTS-PLANNER] Planning query: {query_text}")
-        llm_response = run_facts_llm(prompt)
+        llm_response = await run_facts_llm(prompt)
         
         # Parse JSON (extract from markdown if needed)
         json_text = llm_response.strip()
@@ -80,6 +80,16 @@ Output JSON:"""
         
         plan_data = json.loads(json_text)
         plan = FactsQueryPlan(**plan_data)
+        
+        # Canonicalize topic for ranked list queries (ensures consistency with Facts-S/U)
+        if plan.intent == "facts_get_ranked_list" and plan.topic:
+            from server.services.facts_topic import canonicalize_topic
+            canonical_topic = canonicalize_topic(plan.topic)
+            plan.topic = canonical_topic
+            # Rebuild list_key with canonical topic
+            from server.services.facts_normalize import canonical_list_key
+            plan.list_key = canonical_list_key(canonical_topic)
+            logger.debug(f"[FACTS-PLANNER] Canonicalized topic: '{plan_data.get('topic')}' → '{canonical_topic}'")
         
         logger.debug(f"[FACTS-PLANNER] ✅ Generated plan: intent={plan.intent}, list_key={plan.list_key}, topic={plan.topic}")
         return plan
