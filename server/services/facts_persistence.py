@@ -93,27 +93,30 @@ def get_or_create_message_uuid(
 
 def _convert_routing_candidate_to_ops(
     candidate: Any  # FactsWriteCandidate from RoutingPlan
-) -> Any:  # FactsOpsResponse
+) -> Tuple[Any, Any]:  # (FactsOpsResponse, CanonicalizationResult)
     """
     Convert RoutingPlan.facts_write_candidate to FactsOpsResponse.
     
     This avoids the second Nano call for Facts extraction when the router
     already extracted the fact candidate.
     
+    Uses Canonicalizer subsystem for topic canonicalization.
+    
     Args:
         candidate: FactsWriteCandidate from RoutingPlan
         
     Returns:
-        FactsOpsResponse with operations ready to apply
+        Tuple of (FactsOpsResponse, CanonicalizationResult)
     """
     from server.contracts.facts_ops import FactsOp, FactsOpsResponse
-    from server.services.facts_topic import canonicalize_topic
+    from server.services.canonicalizer import canonicalize_topic
     from server.services.facts_normalize import canonical_list_key
     
     ops = []
     
-    # Canonicalize topic
-    canonical_topic = canonicalize_topic(candidate.topic)
+    # Canonicalize topic using Canonicalizer subsystem
+    canonicalization_result = canonicalize_topic(candidate.topic, invoke_teacher=True)
+    canonical_topic = canonicalization_result.canonical_topic
     list_key = canonical_list_key(canonical_topic)
     
     # Handle single value or list of values
@@ -129,10 +132,12 @@ def _convert_routing_candidate_to_ops(
             confidence=1.0
         ))
     
-    return FactsOpsResponse(
+    ops_response = FactsOpsResponse(
         ops=ops,
         needs_clarification=[]
     )
+    
+    return ops_response, canonicalization_result
 
 
 async def persist_facts_synchronously(
@@ -148,7 +153,7 @@ async def persist_facts_synchronously(
     retrieved_facts: Optional[List[Dict]] = None,  # For schema-hint topic resolution
     write_intent_detected: bool = False,  # Flag to enable enhanced diagnostics
     routing_plan_candidate: Optional[Any] = None  # FactsWriteCandidate from RoutingPlan
-) -> Tuple[int, int, list, Optional[str], Optional[List[str]]]:
+) -> Tuple[int, int, list, Optional[str], Optional[List[str]], Optional[Any]]:
     """
     Extract and store facts synchronously, returning actual store/update counts.
     
@@ -170,12 +175,13 @@ async def persist_facts_synchronously(
         source_id: Optional source ID (uses project-based source if not provided)
         
     Returns:
-        Tuple of (store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics):
+        Tuple of (store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result):
         - store_count: Number of facts actually stored (new facts)
         - update_count: Number of facts actually updated (existing facts with changed values)
         - stored_fact_keys: List of fact keys that were stored/updated
         - message_uuid: The message_uuid used for fact storage (for exclusion in Facts-R)
         - ambiguous_topics: List of candidate topics if ranked list topic is ambiguous, None otherwise
+        - canonicalization_result: CanonicalizationResult for telemetry (None if not available)
     """
     store_count = 0
     update_count = 0
@@ -185,7 +191,7 @@ async def persist_facts_synchronously(
     
     if not project_id:
         logger.warning(f"[FACTS-PERSIST] Skipping fact persistence: project_id is missing")
-        return store_count, update_count, stored_fact_keys, None, None
+        return store_count, update_count, stored_fact_keys, None, None, None
     
     # Enforce Facts DB contract: project_id must be UUID
     from server.services.projects.project_resolver import validate_project_uuid
@@ -199,7 +205,7 @@ async def persist_facts_synchronously(
     if not message_uuid:
         if not all([chat_id, message_id, timestamp is not None, message_index is not None]):
             logger.warning(f"[FACTS-PERSIST] Cannot create message_uuid: missing required params")
-            return store_count, update_count, stored_fact_keys, None, None
+            return store_count, update_count, stored_fact_keys, None, None, None
         
         message_uuid = get_or_create_message_uuid(
             project_id=project_id,
@@ -213,18 +219,19 @@ async def persist_facts_synchronously(
         
         if not message_uuid:
             logger.warning(f"[FACTS-PERSIST] Failed to get/create message_uuid, skipping fact persistence")
-            return store_count, update_count, stored_fact_keys, None, None
+            return store_count, update_count, stored_fact_keys, None, None, None
     
     # Only extract facts from user messages
     if role != "user":
         logger.debug(f"[FACTS-PERSIST] Skipping fact extraction for role={role} (only user messages)")
-        return store_count, update_count, stored_fact_keys, message_uuid, None
+        return store_count, update_count, stored_fact_keys, message_uuid, None, None
     
     # NEW ARCHITECTURE: Use routing plan candidate if available, otherwise call Facts LLM
     from server.contracts.facts_ops import FactsOpsResponse
     from server.services.facts_apply import apply_facts_ops
     
     ops_response = None
+    canonicalization_result = None  # For telemetry
     
     # If routing plan candidate is available, use it directly (no second Nano call)
     if routing_plan_candidate:
@@ -233,11 +240,19 @@ async def persist_facts_synchronously(
             f"value={routing_plan_candidate.value}), skipping Facts LLM call"
         )
         try:
-            ops_response = _convert_routing_candidate_to_ops(routing_plan_candidate)
+            ops_response, canonicalization_result = _convert_routing_candidate_to_ops(routing_plan_candidate)
+            logger.info(
+                f"[FACTS-PERSIST] Canonicalized topic: '{routing_plan_candidate.topic}' → "
+                f"'{canonicalization_result.canonical_topic}' "
+                f"(confidence: {canonicalization_result.confidence:.3f}, "
+                f"source: {canonicalization_result.source}, "
+                f"teacher_invoked: {canonicalization_result.teacher_invoked})"
+            )
         except Exception as e:
             logger.error(f"[FACTS-PERSIST] Failed to convert routing candidate to ops: {e}", exc_info=True)
             # Fall through to Facts LLM extraction
             ops_response = None
+            canonicalization_result = None
     
     # If no candidate or conversion failed, call Facts LLM extractor
     if not ops_response:
@@ -279,19 +294,19 @@ async def persist_facts_synchronously(
             except FactsLLMTimeoutError as e:
                 # Timeout error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) timed out: {e}")
-                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
             except FactsLLMUnavailableError as e:
                 # Unavailable error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) unavailable: {e}")
-                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
             except FactsLLMInvalidJSONError as e:
                 # Invalid JSON error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
-                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
             except FactsLLMError as e:
                 # Other Facts LLM errors
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
-                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
             
             # Parse JSON response (strict parsing, hard fail if invalid)
             try:
@@ -382,12 +397,12 @@ async def persist_facts_synchronously(
                 "message_id": message_id
             }
         
-        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
+        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result
     
     # Validate ops_response exists before applying
     if not ops_response:
         logger.error(f"[FACTS-PERSIST] ❌ No ops_response available after conversion/LLM extraction")
-        return -1, -1, [], message_uuid, None
+        return -1, -1, [], message_uuid, None, None
     
     # Apply operations deterministically
     apply_result = apply_facts_ops(

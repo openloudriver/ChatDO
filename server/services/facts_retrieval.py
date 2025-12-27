@@ -55,23 +55,27 @@ def execute_facts_plan(
         if plan.intent == "facts_get_ranked_list":
             # Query ranked list directly from DB
             # Extract topic from list_key if not provided, or build list_key from topic
-            # Ensure topic is canonicalized (defensive check)
-            from server.services.facts_topic import canonicalize_topic
+            # Ensure topic is canonicalized using Canonicalizer subsystem (defensive check)
+            from server.services.canonicalizer import canonicalize_topic as canonicalize_with_subsystem
             
             if not plan.topic and plan.list_key:
                 # Extract topic from list_key (e.g., "user.favorites.crypto" -> "crypto")
                 from server.services.facts_normalize import extract_topic_from_list_key
                 raw_topic = extract_topic_from_list_key(plan.list_key)
                 if raw_topic:
-                    plan.topic = canonicalize_topic(raw_topic)
+                    # Note: This should already be canonical, but we canonicalize defensively
+                    canonicalization_result = canonicalize_with_subsystem(raw_topic, invoke_teacher=False)
+                    plan.topic = canonicalization_result.canonical_topic
             
             if not plan.list_key and plan.topic:
                 # Canonicalize topic and build list_key
-                plan.topic = canonicalize_topic(plan.topic)
+                canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
+                plan.topic = canonicalization_result.canonical_topic
                 plan.list_key = canonical_list_key(plan.topic)
             elif plan.topic:
-                # Ensure topic is canonicalized
-                plan.topic = canonicalize_topic(plan.topic)
+                # Ensure topic is canonicalized (defensive - should already be canonical)
+                canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
+                plan.topic = canonicalization_result.canonical_topic
             
             if plan.list_key and plan.topic:
                 try:

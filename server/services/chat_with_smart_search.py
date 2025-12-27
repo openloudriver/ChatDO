@@ -414,18 +414,21 @@ def build_model_label(
     index_status: str = "P",
     escalated: bool = True,
     nano_router_used: bool = False,
-    reasoning_required: bool = True
+    reasoning_required: bool = True,
+    canonicalizer_used: bool = False,
+    teacher_invoked: bool = False
 ) -> str:
     """
     Build model label with execution path using arrows (→).
     
-    Format: GPT-5 Nano → {Facts tokens} → {Files token} → Index-(P/F) → {GPT-5 if reasoning_required}
+    Format: GPT-5 Nano → Canonicalizer → [Teacher] → {Facts tokens} → {Files token} → Index-(P/F) → {GPT-5 if reasoning_required}
     Shows the actual execution path, not just what was used.
     
     Examples:
-    - "GPT-5 Nano → Facts-S(3)" (write, no reasoning)
-    - "GPT-5 Nano → Facts-R(2) → GPT-5" (read with reasoning)
-    - "GPT-5 Nano → GPT-5" (chat only)
+    - "GPT-5 Nano → Canonicalizer → Facts-S(3)" (write, no reasoning, no teacher)
+    - "GPT-5 Nano → Canonicalizer → Teacher → Facts-S(1)" (write with teacher)
+    - "GPT-5 Nano → Canonicalizer → Facts-R(2) → GPT-5" (read with reasoning)
+    - "GPT-5 Nano → GPT-5" (chat only, no canonicalizer)
     
     Args:
         facts_actions: Dict with keys S, U, R, F (all integers >= 0, F is bool)
@@ -434,11 +437,20 @@ def build_model_label(
         escalated: Always True (kept for compatibility)
         nano_router_used: Whether Nano router was used (always True now)
         reasoning_required: Whether GPT-5 reasoning is required
+        canonicalizer_used: Whether canonicalizer was invoked
+        teacher_invoked: Whether teacher model was invoked
     
     Returns:
-        Model label string (e.g., "GPT-5 Nano → Facts-S(3) → GPT-5")
+        Model label string (e.g., "GPT-5 Nano → Canonicalizer → Teacher → Facts-S(3)")
     """
     parts = ["GPT-5 Nano"]  # Always start with Nano router
+    
+    # Add Canonicalizer if used (only for Facts operations)
+    if canonicalizer_used:
+        parts.append("Canonicalizer")
+        # Add Teacher if invoked
+        if teacher_invoked:
+            parts.append("Teacher")
     
     # 1. Facts tokens (order: S → U → R, only if count > 0)
     if facts_actions:
@@ -800,7 +812,7 @@ async def chat_with_smart_search(
             # Falls back to GPT-5 Nano Facts extractor only if candidate not available
             # Determine write intent (though routing plan should already indicate this)
             is_write_intent = _is_write_intent(user_message)
-            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = await persist_facts_synchronously(
+            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
@@ -1033,12 +1045,25 @@ async def chat_with_smart_search(
                             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
                             assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            # Extract canonicalization info for model label
+                            canonicalizer_used_hist = canonicalization_result is not None
+                            teacher_invoked_hist = canonicalization_result.teacher_invoked if canonicalization_result else False
+                            model_label_hist = build_model_label(
+                                facts_actions=facts_actions,
+                                files_actions=files_actions,
+                                index_status=index_status,
+                                escalated=False,
+                                nano_router_used=nano_router_used,
+                                reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                                canonicalizer_used=canonicalizer_used_hist,
+                                teacher_invoked=teacher_invoked_hist
+                            )
                             history.append({
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": confirmation_text,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
+                                "model": model_label_hist,
+                                "model_label": f"Model: {model_label_hist}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -1047,13 +1072,19 @@ async def chat_with_smart_search(
                             logger.warning(f"Failed to save Facts-S/U confirmation to history: {e}")
                     
                     # Return fast-path Facts-S/U confirmation (no GPT-5)
+                    # Extract canonicalization info for telemetry and model label
+                    canonicalizer_used = canonicalization_result is not None
+                    teacher_invoked = canonicalization_result.teacher_invoked if canonicalization_result else False
+                    
                     model_label_text = build_model_label(
                         facts_actions=facts_actions,
                         files_actions=files_actions,
                         index_status=index_status,
                         escalated=False,
                         nano_router_used=nano_router_used,
-                        reasoning_required=routing_plan.reasoning_required if routing_plan else True
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                        canonicalizer_used=canonicalizer_used,
+                        teacher_invoked=teacher_invoked
                     )
                     return {
                         "type": "assistant_message",
@@ -1070,6 +1101,11 @@ async def chat_with_smart_search(
                             "facts_gate_entered": facts_gate_entered,
                             "facts_gate_reason": facts_gate_reason,
                             "write_intent_detected": is_write_intent,
+                            # Canonicalization telemetry
+                            "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
+                            "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
+                            "teacher_invoked": teacher_invoked,
+                            "alias_source": canonicalization_result.source if canonicalization_result else None,
                             "nano_routing_plan": {
                                 "content_plane": routing_plan.content_plane if routing_plan else None,
                                 "operation": routing_plan.operation if routing_plan else None,
@@ -1093,13 +1129,18 @@ async def chat_with_smart_search(
                         f"Returning Facts-F instead of falling through to Index/GPT-5."
                     )
                     facts_actions["F"] = True
+                    # Extract canonicalization info if available (may be None on failure)
+                    canonicalizer_used_f = canonicalization_result is not None
+                    teacher_invoked_f = canonicalization_result.teacher_invoked if canonicalization_result else False
                     model_label_text = build_model_label(
                         facts_actions=facts_actions,
                         files_actions=files_actions,
                         index_status=index_status,
                         escalated=False,
                         nano_router_used=nano_router_used,
-                        reasoning_required=routing_plan.reasoning_required if routing_plan else True
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                        canonicalizer_used=canonicalizer_used_f,
+                        teacher_invoked=teacher_invoked_f
                     )
                     return {
                         "type": "assistant_message",
@@ -1120,10 +1161,15 @@ async def chat_with_smart_search(
                                 "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
                                 "confidence": routing_plan.confidence if routing_plan else None
                             },
-                            "nano_router_used": nano_router_used
+                            "nano_router_used": nano_router_used,
+                            # Canonicalization telemetry (may be None on failure)
+                            "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
+                            "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
+                            "teacher_invoked": teacher_invoked_f,
+                            "alias_source": canonicalization_result.source if canonicalization_result else None
                         },
                         "sources": [],
-                        "model": "Facts-F",
+                        "model": model_label_text,
                         "model_label": f"Model: {model_label_text}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
@@ -1296,8 +1342,11 @@ async def chat_with_smart_search(
             # NEW: Use routing plan candidate if available, otherwise call Facts query planner
             from server.services.facts_retrieval import execute_facts_plan
             from server.services.facts_llm.client import FactsLLMError
-            from server.services.facts_topic import canonicalize_topic
+            from server.services.canonicalizer import canonicalize_topic
             from server.contracts.facts_ops import FactsQueryPlan
+            
+            # Canonicalization result for telemetry
+            canonicalization_result = None
             
             # Use routing plan candidate if available (avoids second Nano call)
             if routing_plan.facts_read_candidate:
@@ -1305,8 +1354,18 @@ async def chat_with_smart_search(
                     f"[FACTS-R] Using routing plan candidate (topic={routing_plan.facts_read_candidate.topic}), "
                     f"skipping query planner"
                 )
-                # Convert candidate to query plan
-                canonical_topic = canonicalize_topic(routing_plan.facts_read_candidate.topic)
+                # Canonicalize topic using Canonicalizer subsystem
+                canonicalization_result = canonicalize_topic(
+                    routing_plan.facts_read_candidate.topic,
+                    invoke_teacher=True
+                )
+                canonical_topic = canonicalization_result.canonical_topic
+                logger.info(
+                    f"[FACTS-R] Canonicalized topic: '{routing_plan.facts_read_candidate.topic}' → "
+                    f"'{canonical_topic}' (confidence: {canonicalization_result.confidence:.3f}, "
+                    f"source: {canonicalization_result.source}, "
+                    f"teacher_invoked: {canonicalization_result.teacher_invoked})"
+                )
                 from server.services.facts_normalize import canonical_list_key
                 list_key = canonical_list_key(canonical_topic)
                 query_plan = FactsQueryPlan(
@@ -1329,7 +1388,18 @@ async def chat_with_smart_search(
             if query_plan is not None:
                 # HIGH-SIGNAL LOGGING: Log retrieval attempt
                 raw_topic = query_plan.topic if query_plan else None
-                canonical_topic = canonicalize_topic(raw_topic) if raw_topic else None
+                # If canonicalization_result not set yet (from query planner path), canonicalize now
+                if not canonicalization_result and raw_topic:
+                    canonicalization_result = canonicalize_topic(raw_topic, invoke_teacher=True)
+                    canonical_topic = canonicalization_result.canonical_topic
+                    logger.info(
+                        f"[FACTS-R] Canonicalized topic from query plan: '{raw_topic}' → "
+                        f"'{canonical_topic}' (confidence: {canonicalization_result.confidence:.3f}, "
+                        f"source: {canonicalization_result.source}, "
+                        f"teacher_invoked: {canonicalization_result.teacher_invoked})"
+                    )
+                else:
+                    canonical_topic = canonicalization_result.canonical_topic if canonicalization_result else raw_topic
                 computed_list_key = query_plan.list_key if query_plan else None
                 
                 logger.info(
@@ -1402,12 +1472,25 @@ async def chat_with_smart_search(
                             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
                             assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            # Extract canonicalization info for model label
+                            canonicalizer_used_hist = canonicalization_result is not None
+                            teacher_invoked_hist = canonicalization_result.teacher_invoked if canonicalization_result else False
+                            model_label_hist = build_model_label(
+                                facts_actions=facts_actions,
+                                files_actions=files_actions,
+                                index_status=index_status,
+                                escalated=False,
+                                nano_router_used=nano_router_used,
+                                reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                                canonicalizer_used=canonicalizer_used_hist,
+                                teacher_invoked=teacher_invoked_hist
+                            )
                             history.append({
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": list_items,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
+                                "model": model_label_hist,
+                                "model_label": f"Model: {model_label_hist}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -1433,8 +1516,8 @@ async def chat_with_smart_search(
                             "write_intent_detected": is_write_intent
                         },
                         "sources": sources,
-                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
-                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
+                        "model": model_label_read,
+                        "model_label": f"Model: {model_label_read}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
@@ -1470,12 +1553,25 @@ async def chat_with_smart_search(
                             message_index = len(history)
                             assistant_message_id = f"{thread_id}-assistant-{message_index}"
                             response_text = "I don't have that stored yet."
+                            # Extract canonicalization info for model label
+                            canonicalizer_used_empty = canonicalization_result is not None
+                            teacher_invoked_empty = canonicalization_result.teacher_invoked if canonicalization_result else False
+                            model_label_empty = build_model_label(
+                                facts_actions=facts_actions,
+                                files_actions=files_actions,
+                                index_status=index_status,
+                                escalated=False,
+                                nano_router_used=nano_router_used,
+                                reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                                canonicalizer_used=canonicalizer_used_empty,
+                                teacher_invoked=teacher_invoked_empty
+                            )
                             history.append({
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": response_text,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
+                                "model": model_label_empty,
+                                "model_label": f"Model: {model_label_empty}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -1545,6 +1641,19 @@ async def chat_with_smart_search(
                     # GUARD: "I don't have that stored yet" ONLY comes from Facts-R empty fastpath
                     # This is the ONLY place this message should be emitted
                     # Normal empty retrieval response (for non-write-intent queries)
+                    # Extract canonicalization info for telemetry and model label
+                    canonicalizer_used_empty_resp = canonicalization_result is not None
+                    teacher_invoked_empty_resp = canonicalization_result.teacher_invoked if canonicalization_result else False
+                    model_label_empty_resp = build_model_label(
+                        facts_actions=facts_actions,
+                        files_actions=files_actions,
+                        index_status=index_status,
+                        escalated=False,
+                        nano_router_used=nano_router_used,
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                        canonicalizer_used=canonicalizer_used_empty_resp,
+                        teacher_invoked=teacher_invoked_empty_resp
+                    )
                     return {
                         "type": "assistant_message",
                         "content": "I don't have that stored yet.",
@@ -1560,10 +1669,15 @@ async def chat_with_smart_search(
                             "thread_id": thread_id,
                             "facts_gate_entered": facts_gate_entered,
                             "facts_gate_reason": facts_gate_reason or "unknown",
-                            "write_intent_detected": is_write_intent
+                            "write_intent_detected": is_write_intent,
+                            # Canonicalization telemetry
+                            "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
+                            "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
+                            "teacher_invoked": teacher_invoked_empty_resp,
+                            "alias_source": canonicalization_result.source if canonicalization_result else None
                         },
-                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
-                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
+                        "model": model_label_empty_resp,
+                        "model_label": f"Model: {model_label_empty_resp}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }

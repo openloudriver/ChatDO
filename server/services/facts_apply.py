@@ -112,9 +112,10 @@ def apply_facts_ops(
                     )
                     continue
                 
-                # Canonicalize topic (ensures consistent normalization)
-                from server.services.facts_topic import canonicalize_topic
-                canonical_topic = canonicalize_topic(topic)
+                # Canonicalize topic using Canonicalizer subsystem (defensive - topics should already be canonical)
+                from server.services.canonicalizer import canonicalize_topic
+                canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)  # Don't invoke teacher here - should already be canonical
+                canonical_topic = canonicalization_result.canonical_topic
                 
                 # Build canonical fact_key using canonicalized topic
                 fact_key = canonical_rank_key(canonical_topic, op.rank)

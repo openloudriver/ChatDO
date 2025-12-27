@@ -87,15 +87,19 @@ Output JSON:"""
         plan_data = json.loads(json_text)
         plan = FactsQueryPlan(**plan_data)
         
-        # Canonicalize topic for ranked list queries (ensures consistency with Facts-S/U)
+        # Canonicalize topic for ranked list queries using Canonicalizer subsystem
         if plan.intent == "facts_get_ranked_list" and plan.topic:
-            from server.services.facts_topic import canonicalize_topic
-            canonical_topic = canonicalize_topic(plan.topic)
+            from server.services.canonicalizer import canonicalize_topic
+            canonicalization_result = canonicalize_topic(plan.topic, invoke_teacher=True)
+            canonical_topic = canonicalization_result.canonical_topic
             plan.topic = canonical_topic
             # Rebuild list_key with canonical topic
             from server.services.facts_normalize import canonical_list_key
             plan.list_key = canonical_list_key(canonical_topic)
-            logger.debug(f"[FACTS-PLANNER] Canonicalized topic: '{plan_data.get('topic')}' → '{canonical_topic}'")
+            logger.debug(
+                f"[FACTS-PLANNER] Canonicalized topic: '{plan_data.get('topic')}' → '{canonical_topic}' "
+                f"(confidence: {canonicalization_result.confidence:.3f}, source: {canonicalization_result.source})"
+            )
         
         logger.debug(f"[FACTS-PLANNER] ✅ Generated plan: intent={plan.intent}, list_key={plan.list_key}, topic={plan.topic}")
         return plan
