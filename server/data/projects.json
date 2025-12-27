@@ -863,6 +863,17 @@
     "default_target": "general",
     "sort_index": 78,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-27T16:41:07.441766+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "0e1bdcbd-f1e6-4421-827d-9155da82feb0",
+    "name": "v40",
+    "default_target": "general",
+    "sort_index": 79,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,
