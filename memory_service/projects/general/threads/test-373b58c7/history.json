@@ -1,0 +1,65 @@
+[
+  {
+    "id": "test-373b58c7-assistant-0",
+    "role": "assistant",
+    "content": "Saved: favorite color = [red, white, blue]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:07:22.290095+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-1",
+    "role": "assistant",
+    "content": "I don't have that stored yet.",
+    "model": "Index-P + GPT-5",
+    "model_label": "Model: Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:07:33.871723+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-2",
+    "role": "assistant",
+    "content": "Saved: favorite fruit = [apple, banana, cherry]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:07:47.878946+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-3",
+    "role": "assistant",
+    "content": "1) apple\n2) banana\n3) cherry",
+    "model": "Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Model: Facts-R(1) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:07:59.929869+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-4",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [BTC, ETH, SOL]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:08:14.021392+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-5",
+    "role": "assistant",
+    "content": "Saved: favorite color = [red, blue, green]",
+    "model": "Facts-S(1) + Facts-U(2) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(1) + Facts-U(2) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:08:24.426270+00:00"
+  },
+  {
+    "id": "test-373b58c7-assistant-6",
+    "role": "assistant",
+    "content": "1) BTC\n2) ETH\n3) SOL",
+    "model": "Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Model: Facts-R(1) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T04:08:36.251111+00:00"
+  }
+]

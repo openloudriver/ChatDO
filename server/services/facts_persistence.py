@@ -8,8 +8,8 @@ and deterministically, ensuring Facts-S/U counts are always truthful.
 Facts DB contract: project_facts.project_id must always be the project UUID string.
 Never use project name/slug for DB access.
 
-NEW ARCHITECTURE: Uses Qwen LLM to produce JSON operations, then applies them deterministically.
-No regex/spaCy extraction - single path only.
+NEW ARCHITECTURE: Uses GPT-5 Nano routing plan candidates when available to avoid double Nano calls.
+Falls back to GPT-5 Nano Facts extractor only when candidate is not available.
 """
 import logging
 import json
@@ -23,8 +23,8 @@ _raw_llm_responses: Dict[str, Dict[str, Any]] = {}
 
 
 # REMOVED: resolve_ranked_list_topic() - Legacy function no longer used
-# Topic resolution for ranked lists is now handled by Qwen LLM in the Facts extraction prompt
-# This ensures all Facts behavior goes through the unified Qwen → JSON ops → deterministic apply path
+# Topic resolution for ranked lists is now handled by GPT-5 Nano LLM in the Facts extraction prompt
+# This ensures all Facts behavior goes through the unified GPT-5 Nano → JSON ops → deterministic apply path
 
 
 def get_or_create_message_uuid(
@@ -91,6 +91,50 @@ def get_or_create_message_uuid(
         return None
 
 
+def _convert_routing_candidate_to_ops(
+    candidate: Any  # FactsWriteCandidate from RoutingPlan
+) -> Any:  # FactsOpsResponse
+    """
+    Convert RoutingPlan.facts_write_candidate to FactsOpsResponse.
+    
+    This avoids the second Nano call for Facts extraction when the router
+    already extracted the fact candidate.
+    
+    Args:
+        candidate: FactsWriteCandidate from RoutingPlan
+        
+    Returns:
+        FactsOpsResponse with operations ready to apply
+    """
+    from server.contracts.facts_ops import FactsOp, FactsOpsResponse
+    from server.services.facts_topic import canonicalize_topic
+    from server.services.facts_normalize import canonical_list_key
+    
+    ops = []
+    
+    # Canonicalize topic
+    canonical_topic = canonicalize_topic(candidate.topic)
+    list_key = canonical_list_key(canonical_topic)
+    
+    # Handle single value or list of values
+    values = candidate.value if isinstance(candidate.value, list) else [candidate.value]
+    
+    # Create ranked_list_set operations
+    for rank, value in enumerate(values, start=1):
+        ops.append(FactsOp(
+            op="ranked_list_set",
+            list_key=list_key,
+            rank=rank,
+            value=str(value),
+            confidence=1.0
+        ))
+    
+    return FactsOpsResponse(
+        ops=ops,
+        needs_clarification=[]
+    )
+
+
 async def persist_facts_synchronously(
     project_id: str,
     message_content: str,
@@ -102,7 +146,8 @@ async def persist_facts_synchronously(
     message_index: Optional[int] = None,
     source_id: Optional[str] = None,
     retrieved_facts: Optional[List[Dict]] = None,  # For schema-hint topic resolution
-    write_intent_detected: bool = False  # Flag to enable enhanced diagnostics
+    write_intent_detected: bool = False,  # Flag to enable enhanced diagnostics
+    routing_plan_candidate: Optional[Any] = None  # FactsWriteCandidate from RoutingPlan
 ) -> Tuple[int, int, list, Optional[str], Optional[List[str]]]:
     """
     Extract and store facts synchronously, returning actual store/update counts.
@@ -175,118 +220,85 @@ async def persist_facts_synchronously(
         logger.debug(f"[FACTS-PERSIST] Skipping fact extraction for role={role} (only user messages)")
         return store_count, update_count, stored_fact_keys, message_uuid, None
     
-    # NEW ARCHITECTURE: Use Qwen LLM to produce JSON operations
-    try:
-        from server.services.facts_llm.client import (
-            run_facts_llm,
-            FactsLLMError,
-            FactsLLMTimeoutError,
-            FactsLLMUnavailableError,
-            FactsLLMInvalidJSONError,
-            FACTS_LLM_TIMEOUT_S
+    # NEW ARCHITECTURE: Use routing plan candidate if available, otherwise call Facts LLM
+    from server.contracts.facts_ops import FactsOpsResponse
+    from server.services.facts_apply import apply_facts_ops
+    
+    ops_response = None
+    
+    # If routing plan candidate is available, use it directly (no second Nano call)
+    if routing_plan_candidate:
+        logger.info(
+            f"[FACTS-PERSIST] Using routing plan candidate (topic={routing_plan_candidate.topic}, "
+            f"value={routing_plan_candidate.value}), skipping Facts LLM call"
         )
-        from server.services.facts_llm.prompts import build_facts_extraction_prompt
-        from server.contracts.facts_ops import FactsOpsResponse
-        from server.services.facts_apply import apply_facts_ops
-        
-        # Build prompt for Qwen
-        # Convert retrieved_facts to a simple format for prompt
-        retrieved_facts_simple = None
-        if retrieved_facts:
-            retrieved_facts_simple = []
-            for fact in retrieved_facts:
-                if isinstance(fact, dict):
-                    metadata = fact.get("metadata", {})
-                    retrieved_facts_simple.append({
-                        "fact_key": metadata.get("fact_key", ""),
-                        "value_text": metadata.get("value_text", ""),
-                        "metadata": metadata
-                    })
-        
-        prompt = build_facts_extraction_prompt(
-            user_message=message_content,
-            recent_context=None,  # Could add recent context if needed
-            retrieved_facts=retrieved_facts_simple
-        )
-        
-        # Call Qwen LLM (hard fail if unavailable, with retry and better error classification)
-        llm_response = None
-        ops_response = None
         try:
-            logger.debug(f"[FACTS-PERSIST] Calling Facts LLM for message (message_uuid={message_uuid}, timeout={FACTS_LLM_TIMEOUT_S}s)")
-            llm_response = await run_facts_llm(prompt, max_retries=1)
-        except FactsLLMTimeoutError as e:
-            # Timeout error - include timeout value in log
-            logger.error(
-                f"[FACTS-PERSIST] ❌ Facts LLM timed out after {FACTS_LLM_TIMEOUT_S}s (with retry): {e}"
-            )
-            # Return special error indicator with timeout classification
-            return -1, -1, [], message_uuid, None  # Negative counts indicate error
-        except FactsLLMUnavailableError as e:
-            # Unavailable error - Ollama not reachable
-            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (Ollama) unavailable: {e}")
-            # Return special error indicator with unavailable classification
-            return -1, -1, [], message_uuid, None  # Negative counts indicate error
-        except FactsLLMInvalidJSONError as e:
-            # Invalid JSON error - no retry
-            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
-            # Return special error indicator with invalid JSON classification
-            return -1, -1, [], message_uuid, None  # Negative counts indicate error
-        except FactsLLMError as e:
-            # Other Facts LLM errors
-            logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
-            # Return special error indicator (will be handled by caller)
-            return -1, -1, [], message_uuid, None  # Negative counts indicate error
-        
-        # Parse JSON response (strict parsing, hard fail if invalid)
-        try:
-            # Try to extract JSON from markdown code blocks if present
-            json_text = llm_response.strip()
-            if json_text.startswith("```"):
-                # Extract JSON from code block
-                lines = json_text.split("\n")
-                json_lines = []
-                in_code_block = False
-                for line in lines:
-                    if line.strip().startswith("```"):
-                        in_code_block = not in_code_block
-                        continue
-                    if in_code_block:
-                        json_lines.append(line)
-                json_text = "\n".join(json_lines).strip()
-            
-            # Parse JSON
-            ops_data = json.loads(json_text)
-            ops_response = FactsOpsResponse(**ops_data)
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
-            logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
-            # Hard fail - return error indicator
-            return -1, -1, [], message_uuid, None
+            ops_response = _convert_routing_candidate_to_ops(routing_plan_candidate)
         except Exception as e:
-            logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
-            logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
-            # Hard fail - return error indicator
-            return -1, -1, [], message_uuid, None
-        
-        # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
-        if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
-            logger.warning(
-                f"[FACTS-PERSIST] ⚠️ Write-intent message but first pass returned empty ops. "
-                f"Retrying with force-extraction prompt (message_uuid={message_uuid})"
+            logger.error(f"[FACTS-PERSIST] Failed to convert routing candidate to ops: {e}", exc_info=True)
+            # Fall through to Facts LLM extraction
+            ops_response = None
+    
+    # If no candidate or conversion failed, call Facts LLM extractor
+    if not ops_response:
+        try:
+            from server.services.facts_llm.client import (
+                run_facts_llm,
+                FactsLLMError,
+                FactsLLMTimeoutError,
+                FactsLLMUnavailableError,
+                FactsLLMInvalidJSONError
             )
-            # Build stricter prompt
-            from server.services.facts_llm.prompts import build_facts_extraction_prompt_force
-            force_prompt = build_facts_extraction_prompt_force(
+            from server.services.facts_llm.prompts import build_facts_extraction_prompt
+            
+            # Build prompt for GPT-5 Nano Facts extractor
+            # Convert retrieved_facts to a simple format for prompt
+            retrieved_facts_simple = None
+            if retrieved_facts:
+                retrieved_facts_simple = []
+                for fact in retrieved_facts:
+                    if isinstance(fact, dict):
+                        metadata = fact.get("metadata", {})
+                        retrieved_facts_simple.append({
+                            "fact_key": metadata.get("fact_key", ""),
+                            "value_text": metadata.get("value_text", ""),
+                            "metadata": metadata
+                        })
+            
+            prompt = build_facts_extraction_prompt(
                 user_message=message_content,
+                recent_context=None,  # Could add recent context if needed
                 retrieved_facts=retrieved_facts_simple
             )
+            
+            # Call GPT-5 Nano Facts extractor (hard fail if unavailable)
+            llm_response = None
             try:
-                llm_response = await run_facts_llm(force_prompt, max_retries=1)
-                # Parse JSON again
+                logger.debug(f"[FACTS-PERSIST] Calling Facts LLM (GPT-5 Nano) for message (message_uuid={message_uuid})")
+                llm_response = await run_facts_llm(prompt)
+            except FactsLLMTimeoutError as e:
+                # Timeout error
+                logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) timed out: {e}")
+                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+            except FactsLLMUnavailableError as e:
+                # Unavailable error
+                logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) unavailable: {e}")
+                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+            except FactsLLMInvalidJSONError as e:
+                # Invalid JSON error
+                logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
+                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+            except FactsLLMError as e:
+                # Other Facts LLM errors
+                logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
+                return -1, -1, [], message_uuid, None  # Negative counts indicate error
+            
+            # Parse JSON response (strict parsing, hard fail if invalid)
+            try:
+                # Try to extract JSON from markdown code blocks if present
                 json_text = llm_response.strip()
                 if json_text.startswith("```"):
+                    # Extract JSON from code block
                     lines = json_text.split("\n")
                     json_lines = []
                     in_code_block = False
@@ -297,108 +309,156 @@ async def persist_facts_synchronously(
                         if in_code_block:
                             json_lines.append(line)
                     json_text = "\n".join(json_lines).strip()
+                
+                # Parse JSON
                 ops_data = json.loads(json_text)
                 ops_response = FactsOpsResponse(**ops_data)
-                logger.info(f"[FACTS-PERSIST] ✅ Force-extraction retry returned {len(ops_response.ops)} ops")
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
+                logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
+                # Hard fail - return error indicator
+                return -1, -1, [], message_uuid, None
             except Exception as e:
-                logger.error(f"[FACTS-PERSIST] ❌ Force-extraction retry failed: {e}")
-                # Continue with original empty ops - will be logged below
-        
-        # Check for clarification needed
-        if ops_response.needs_clarification:
-            ambiguous_topics = ops_response.needs_clarification
-            logger.info(f"[FACTS-PERSIST] Clarification needed: {ambiguous_topics}")
+                logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
+                logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
+                # Hard fail - return error indicator
+                return -1, -1, [], message_uuid, None
             
-            # Store raw response for diagnostics if write-intent
-            if write_intent_detected and message_uuid:
-                _raw_llm_responses[message_uuid] = {
-                    "prompt": prompt,
-                    "raw_response": llm_response,
-                    "parsed_json": ops_data if 'ops_data' in locals() else None,
-                    "needs_clarification": ambiguous_topics,
-                    "ops_count": 0,
-                    "project_id": project_id,
-                    "chat_id": chat_id,
-                    "message_id": message_id
-                }
-            
-            return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
+            # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
+            if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
+                logger.warning(
+                    f"[FACTS-PERSIST] ⚠️ Write-intent message but first pass returned empty ops. "
+                    f"Retrying with force-extraction prompt (message_uuid={message_uuid})"
+                )
+                # Build stricter prompt
+                from server.services.facts_llm.prompts import build_facts_extraction_prompt_force
+                force_prompt = build_facts_extraction_prompt_force(
+                    user_message=message_content,
+                    retrieved_facts=retrieved_facts_simple
+                )
+                try:
+                    llm_response = await run_facts_llm(force_prompt)
+                    # Parse JSON again
+                    json_text = llm_response.strip()
+                    if json_text.startswith("```"):
+                        lines = json_text.split("\n")
+                        json_lines = []
+                        in_code_block = False
+                        for line in lines:
+                            if line.strip().startswith("```"):
+                                in_code_block = not in_code_block
+                                continue
+                            if in_code_block:
+                                json_lines.append(line)
+                        json_text = "\n".join(json_lines).strip()
+                    ops_data = json.loads(json_text)
+                    ops_response = FactsOpsResponse(**ops_data)
+                    logger.info(f"[FACTS-PERSIST] ✅ Force-extraction retry returned {len(ops_response.ops)} ops")
+                except Exception as e:
+                    logger.error(f"[FACTS-PERSIST] ❌ Force-extraction retry failed: {e}")
+                    # Continue with original empty ops - will be logged below
+                    pass
+        except Exception as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Exception during Facts LLM extraction: {e}", exc_info=True)
+            # Hard fail on unexpected exceptions
+            return -1, -1, [], message_uuid, None
+    
+    # Check for clarification needed (applies to both routing candidate and LLM paths)
+    if ops_response and ops_response.needs_clarification:
+        ambiguous_topics = ops_response.needs_clarification
+        logger.info(f"[FACTS-PERSIST] Clarification needed: {ambiguous_topics}")
         
-        # Apply operations deterministically
-        apply_result = apply_facts_ops(
-            project_uuid=project_id,
-            message_uuid=message_uuid,
-            ops_response=ops_response,
-            source_id=source_id
-        )
-        
-        # Return counts from apply result
-        store_count = apply_result.store_count
-        update_count = apply_result.update_count
-        stored_fact_keys = apply_result.stored_fact_keys
-        
-        # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
-        if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
-            # Sanitize parsed JSON (remove sensitive data if any)
-            sanitized_json = None
-            if ops_response:
-                sanitized_json = {
-                    "ops": [{"op": op.op, "list_key": getattr(op, "list_key", None), "fact_key": getattr(op, "fact_key", None)} for op in ops_response.ops],
-                    "needs_clarification": ops_response.needs_clarification,
-                    "notes": ops_response.notes
-                }
-            
-            diagnostic_info = {
-                "message_uuid": message_uuid,
+        # Store raw response for diagnostics if write-intent
+        if write_intent_detected and message_uuid:
+            _raw_llm_responses[message_uuid] = {
+                "prompt": prompt if 'prompt' in locals() else None,
+                "raw_response": llm_response if 'llm_response' in locals() else None,
+                "parsed_json": ops_data if 'ops_data' in locals() else None,
+                "needs_clarification": ambiguous_topics,
+                "ops_count": 0,
                 "project_id": project_id,
                 "chat_id": chat_id,
-                "message_id": message_id,
-                "prompt": prompt,
-                "raw_llm_response": llm_response,
-                "parsed_json": sanitized_json,
-                "ops_count": len(ops_response.ops) if ops_response else 0,
-                "apply_result": {
-                    "store_count": store_count,
-                    "update_count": update_count,
-                    "warnings": apply_result.warnings,
-                    "errors": apply_result.errors
-                }
+                "message_id": message_id
             }
-            
-            # Store in memory for quick inspection
-            _raw_llm_responses[message_uuid] = diagnostic_info
-            
-            # Log comprehensive diagnostics
-            logger.error(
-                f"[FACTS-PERSIST] ❌ DIAGNOSTIC: Write-intent message returned 0 ops. "
-                f"message_uuid={message_uuid}, project_id={project_id}, chat_id={chat_id}, "
-                f"ops_count={len(ops_response.ops) if ops_response else 0}, "
-                f"needs_clarification={ops_response.needs_clarification if ops_response else None}, "
-                f"apply_warnings={len(apply_result.warnings)}, apply_errors={len(apply_result.errors)}"
-            )
-            logger.error(f"[FACTS-PERSIST] Raw LLM response (first 500 chars): {llm_response[:500] if llm_response else 'N/A'}")
-            if sanitized_json:
-                logger.error(f"[FACTS-PERSIST] Parsed JSON: {json.dumps(sanitized_json, indent=2)}")
         
-        # Log warnings/errors
-        if apply_result.warnings:
-            for warning in apply_result.warnings:
-                logger.warning(f"[FACTS-PERSIST] {warning}")
-        if apply_result.errors:
-            for error in apply_result.errors:
-                logger.error(f"[FACTS-PERSIST] {error}")
-            # If there are errors, we still return counts but log them
-            # The caller can decide if errors should be treated as hard failures
-        
-        logger.info(
-            f"[FACTS-PERSIST] ✅ Persisted facts: S={store_count} U={update_count} "
-            f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
-        )
-        
-    except Exception as e:
-        logger.error(f"[FACTS-PERSIST] ❌ Exception during fact persistence: {e}", exc_info=True)
-        # Hard fail on unexpected exceptions
+        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
+    
+    # Validate ops_response exists before applying
+    if not ops_response:
+        logger.error(f"[FACTS-PERSIST] ❌ No ops_response available after conversion/LLM extraction")
         return -1, -1, [], message_uuid, None
+    
+    # Apply operations deterministically
+    apply_result = apply_facts_ops(
+        project_uuid=project_id,
+        message_uuid=message_uuid,
+        ops_response=ops_response,
+        source_id=source_id
+    )
+    
+    # Return counts from apply result
+    store_count = apply_result.store_count
+    update_count = apply_result.update_count
+    stored_fact_keys = apply_result.stored_fact_keys
+    
+    # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
+    if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
+        # Sanitize parsed JSON (remove sensitive data if any)
+        sanitized_json = None
+        if ops_response:
+            sanitized_json = {
+                "ops": [{"op": op.op, "list_key": getattr(op, "list_key", None), "fact_key": getattr(op, "fact_key", None)} for op in ops_response.ops],
+                "needs_clarification": ops_response.needs_clarification,
+                "notes": ops_response.notes
+            }
+        
+        diagnostic_info = {
+            "message_uuid": message_uuid,
+            "project_id": project_id,
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "prompt": prompt if 'prompt' in locals() else None,
+            "raw_llm_response": llm_response if 'llm_response' in locals() else None,
+            "parsed_json": sanitized_json,
+            "ops_count": len(ops_response.ops) if ops_response else 0,
+            "apply_result": {
+                "store_count": store_count,
+                "update_count": update_count,
+                "warnings": apply_result.warnings,
+                "errors": apply_result.errors
+            }
+        }
+        
+        # Store in memory for quick inspection
+        _raw_llm_responses[message_uuid] = diagnostic_info
+        
+        # Log comprehensive diagnostics
+        logger.error(
+            f"[FACTS-PERSIST] ❌ DIAGNOSTIC: Write-intent message returned 0 ops. "
+            f"message_uuid={message_uuid}, project_id={project_id}, chat_id={chat_id}, "
+            f"ops_count={len(ops_response.ops) if ops_response else 0}, "
+            f"needs_clarification={ops_response.needs_clarification if ops_response else None}, "
+            f"apply_warnings={len(apply_result.warnings)}, apply_errors={len(apply_result.errors)}"
+        )
+        logger.error(f"[FACTS-PERSIST] Raw LLM response (first 500 chars): {llm_response[:500] if llm_response and 'llm_response' in locals() else 'N/A'}")
+        if sanitized_json:
+            logger.error(f"[FACTS-PERSIST] Parsed JSON: {json.dumps(sanitized_json, indent=2)}")
+    
+    # Log warnings/errors
+    if apply_result.warnings:
+        for warning in apply_result.warnings:
+            logger.warning(f"[FACTS-PERSIST] {warning}")
+    if apply_result.errors:
+        for error in apply_result.errors:
+            logger.error(f"[FACTS-PERSIST] {error}")
+        # If there are errors, we still return counts but log them
+        # The caller can decide if errors should be treated as hard failures
+    
+    logger.info(
+        f"[FACTS-PERSIST] ✅ Persisted facts: S={store_count} U={update_count} "
+        f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
+    )
     
     return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
 

@@ -1,0 +1,20 @@
+[
+  {
+    "test": "Facts-S Store",
+    "passed": false,
+    "store_count": 3,
+    "update_count": 0,
+    "stored_fact_keys": [
+      "user.favorites.candy.1",
+      "user.favorites.candy.2",
+      "user.favorites.candy.3"
+    ],
+    "message_uuid": "903bff35-77f8-4278-bdb9-7bcbe8615abd",
+    "issues": [
+      "Missing fact key in DB: user.favorites.candies.1",
+      "Missing fact key in DB: user.favorites.candies.2",
+      "Missing fact key in DB: user.favorites.candies.3"
+    ],
+    "db_facts": []
+  }
+]

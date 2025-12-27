@@ -1,0 +1,184 @@
+[
+  {
+    "test": "Facts-S Store",
+    "passed": true,
+    "store_count": 3,
+    "update_count": 0,
+    "stored_fact_keys": [
+      "user.favorites.candy.1",
+      "user.favorites.candy.2",
+      "user.favorites.candy.3"
+    ],
+    "message_uuid": "f67e1713-6987-4a4f-b41b-41e44a01b1b2",
+    "issues": [],
+    "db_facts": [
+      {
+        "fact_key": "user.favorites.candy.3",
+        "value_text": "Twix"
+      },
+      {
+        "fact_key": "user.favorites.candy.2",
+        "value_text": "Reese's"
+      },
+      {
+        "fact_key": "user.favorites.candy.1",
+        "value_text": "Snickers"
+      }
+    ]
+  },
+  {
+    "test": "Facts-U Update",
+    "passed": true,
+    "store_count": 0,
+    "update_count": 1,
+    "stored_fact_keys": [
+      "user.favorites.candy.1"
+    ],
+    "message_uuid": "782e3aea-8527-4521-972c-a643085fef9d",
+    "issues": [],
+    "ranked_facts": [
+      {
+        "rank": 1,
+        "value_text": "Twix"
+      },
+      {
+        "rank": 2,
+        "value_text": "Reese's"
+      },
+      {
+        "rank": 3,
+        "value_text": "Twix"
+      }
+    ]
+  },
+  {
+    "test": "Facts-R Fast Path",
+    "passed": true,
+    "query_plan": {
+      "intent": "facts_get_ranked_list",
+      "topic": "candy",
+      "list_key": "user.favorites.candy"
+    },
+    "facts_count": 3,
+    "canonical_keys": [
+      "user.favorites.candy"
+    ],
+    "facts": [
+      {
+        "rank": 1,
+        "value_text": "Twix"
+      },
+      {
+        "rank": 2,
+        "value_text": "Reese's"
+      },
+      {
+        "rank": 3,
+        "value_text": "Twix"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "test": "Hard Fail",
+    "passed": null,
+    "skipped": true,
+    "reason": "Requires manual Ollama stop (non-interactive mode)"
+  },
+  {
+    "test": "Concurrency",
+    "passed": true,
+    "total_store": 0,
+    "total_update": 0,
+    "results": [
+      {
+        "message": "My favorite fruit is apple.",
+        "store_count": 0,
+        "update_count": 0,
+        "error": null
+      },
+      {
+        "message": "My favorite fruit is banana.",
+        "store_count": 0,
+        "update_count": 0,
+        "error": null
+      },
+      {
+        "message": "My favorite fruit is cherry.",
+        "store_count": 0,
+        "update_count": 0,
+        "error": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "test": "JSON Edge Cases",
+    "passed": true,
+    "has_markdown_extraction": true,
+    "issues": []
+  },
+  {
+    "test": "Facts-S Confirmation Routing",
+    "passed": true,
+    "content": "Saved: favorite color = [red, white, blue]",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "fast_path": "facts_write_confirmation",
+    "store_count": 3,
+    "issues": []
+  },
+  {
+    "test": "Facts-R Empty Retrieval",
+    "passed": true,
+    "content": "I don't have that stored yet.",
+    "fast_path": "facts_retrieval_empty",
+    "facts_r_count": 0,
+    "store_count": 0,
+    "update_count": 0,
+    "issues": []
+  },
+  {
+    "test": "Facts-R After Write",
+    "passed": true,
+    "write_store_count": 3,
+    "read_content": "1) apple\n2) banana\n3) cherry",
+    "read_fast_path": "facts_retrieval",
+    "read_facts_r_count": 1,
+    "issues": []
+  },
+  {
+    "test": "Write Ambiguity Blocks Writes",
+    "passed": false,
+    "content": "Saved: favorite crypto = [BTC]",
+    "fast_path": "facts_write_confirmation",
+    "ambiguous_topics": [],
+    "store_count": 1,
+    "update_count": 0,
+    "issues": [
+      "Response does not contain clarification prompt: 'Saved: favorite crypto = [BTC]'",
+      "Fast path is not 'topic_ambiguity' (got 'facts_write_confirmation')",
+      "No ambiguous_topics in response meta",
+      "Facts-S count is 1 (expected 0)"
+    ]
+  },
+  {
+    "test": "WebSocket Facts-S Store",
+    "passed": false,
+    "content": "I don't have that stored yet.",
+    "model_label": "Model: Index-P + GPT-5",
+    "fast_path": "facts_retrieval_empty",
+    "store_count": 0,
+    "update_count": 0,
+    "facts_f": false,
+    "db_facts_count": 0,
+    "issues": [
+      "Facts-S count is 0 (expected > 0)",
+      "Model label does not start with Facts-S or Facts-U: model_label='Model: Index-P + GPT-5', model='Index-P + GPT-5'",
+      "No facts stored or updated (S=0, U=0)",
+      "Response contains 'I don't have that stored yet' (should be Facts confirmation): 'I don't have that stored yet.'",
+      "Response does not start with 'Saved:' (expected Facts confirmation): 'I don't have that stored yet.'",
+      "Fast path is not 'facts_write_confirmation' (got 'facts_retrieval_empty') - indicates GPT-5 fallthrough",
+      "No facts found in DB after store operation for topic 'sport96bd'"
+    ]
+  }
+]

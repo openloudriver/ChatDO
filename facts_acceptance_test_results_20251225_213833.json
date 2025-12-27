@@ -1,0 +1,17 @@
+[
+  {
+    "test": "Facts-U Update",
+    "passed": false,
+    "store_count": 1,
+    "update_count": 0,
+    "stored_fact_keys": [
+      "user.favorites.candy.1"
+    ],
+    "message_uuid": "396caf21-a0f3-4b0a-a4fa-d2ef9eea2803",
+    "issues": [
+      "Expected Facts-U(\u22651), got Facts-U(0)",
+      "No ranked facts found in DB"
+    ],
+    "ranked_facts": []
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "test": "Write Ambiguity Blocks Writes",
+    "passed": false,
+    "content": "Saved: favorite crypto = [BTC]",
+    "fast_path": "facts_write_confirmation",
+    "ambiguous_topics": [],
+    "store_count": 1,
+    "update_count": 0,
+    "issues": [
+      "Response does not contain clarification prompt: 'Saved: favorite crypto = [BTC]'",
+      "Fast path is not 'topic_ambiguity' (got 'facts_write_confirmation')",
+      "No ambiguous_topics in response meta",
+      "Facts-S count is 1 (expected 0)"
+    ]
+  }
+]

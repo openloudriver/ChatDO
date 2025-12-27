@@ -1,0 +1,21 @@
+[
+  {
+    "test": "Facts-U Update",
+    "passed": false,
+    "store_count": 1,
+    "update_count": 0,
+    "stored_fact_keys": [
+      "user.favorites.candy.1"
+    ],
+    "message_uuid": "d31c6d9b-e1eb-4031-9ee5-1925898e1f22",
+    "issues": [
+      "Expected Facts-U(\u22651), got Facts-U(0)"
+    ],
+    "ranked_facts": [
+      {
+        "rank": 1,
+        "value_text": "Twix"
+      }
+    ]
+  }
+]

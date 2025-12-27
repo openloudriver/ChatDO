@@ -57,10 +57,10 @@ export const openAiGpt5NanoProvider: AiProvider = {
       );
     }
 
-    // Extract tools and tool_choice from input (if provided)
-    const { tools, tool_choice } = input.input;
+    // Extract tools, tool_choice, temperature, and response_format from input (if provided)
+    const { tools, tool_choice, temperature, response_format } = input.input;
 
-    // Build request payload - conditionally include tools and tool_choice
+    // Build request payload - conditionally include optional parameters
     const requestPayload: any = {
       model: modelId,
       messages,
@@ -76,8 +76,17 @@ export const openAiGpt5NanoProvider: AiProvider = {
       requestPayload.tool_choice = tool_choice;
     }
 
+    // Add temperature if provided (for deterministic routing, use 0.0)
+    if (temperature !== undefined) {
+      requestPayload.temperature = temperature;
+    }
+
+    // Add response_format if provided (for JSON schema mode)
+    if (response_format !== undefined) {
+      requestPayload.response_format = response_format;
+    }
+
     // gpt-5-nano uses v1/chat/completions endpoint
-    // gpt-5-nano models don't support custom temperature - only default (1)
     const response = await client.chat.completions.create(requestPayload);
 
     // Get the assistant message from OpenAI response

@@ -1,0 +1,16 @@
+[
+  {
+    "test": "WebSocket Facts-S Store",
+    "passed": false,
+    "content": "Saved: favorite sport = [basketball]",
+    "model_label": "Model: Facts-S(1) + Index-P + GPT-5",
+    "fast_path": "facts_write_confirmation",
+    "store_count": 1,
+    "update_count": 0,
+    "facts_f": false,
+    "db_facts_count": 0,
+    "issues": [
+      "No facts found in DB after store operation for topic 'sport44f2'"
+    ]
+  }
+]

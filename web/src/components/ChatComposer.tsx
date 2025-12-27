@@ -288,6 +288,8 @@ const ChatComposer: React.FC = () => {
     }
     
     setLoading(true);
+    // Set streaming IMMEDIATELY so three dots show right away
+    setStreaming(true);
     
     // Build message with file information (using captured files)
     let messageToSend = messageWithFiles;
@@ -298,7 +300,6 @@ const ChatComposer: React.FC = () => {
       let streamedContent = '';
       
       ws.onopen = () => {
-        setStreaming(true);
         const payload = {
           project_id: currentProject.id,
           conversation_id: currentConversation.id,
@@ -314,6 +315,14 @@ const ChatComposer: React.FC = () => {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          
+          // Handle "thinking" indicator - ensures three dots show immediately
+          if (data.type === 'thinking') {
+            // Explicitly set streaming to true to ensure three dots show
+            // This handles cases where streaming might have been cleared or not set yet
+            setStreaming(true);
+            return;
+          }
           
           if (data.type === 'chunk') {
             streamedContent += data.content;
@@ -468,25 +477,31 @@ const ChatComposer: React.FC = () => {
             if (!data.content?.includes('Connection refused') && !data.content?.includes('Failed to connect')) {
               console.error('WebSocket error:', data.content);
             }
-            clearStreaming();
             ws.close();
             // Show the actual error message
             addMessage({ 
               role: 'assistant', 
               content: `Error: ${data.content}` 
             });
-            setLoading(false);
+            // Clear streaming after error message is added (delay to prevent flash)
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                clearStreaming();
+                setLoading(false);
+              });
+            });
           }
         } catch (e) {
           // Silently handle parse errors
-          clearStreaming();
+          // Don't clear streaming here - let fallbackToRest handle it
           ws.close();
           fallbackToRest(messageToSend);
         }
       };
       
       ws.onerror = () => {
-        clearStreaming();
+        // Don't clear streaming immediately - let fallbackToRest handle it
+        // This prevents the three dots from disappearing during connection errors
         ws.close();
         // Fallback to REST API (silently, don't log)
         fallbackToRest(messageToSend);
@@ -500,6 +515,9 @@ const ChatComposer: React.FC = () => {
 
   const fallbackToRest = async (message: string) => {
     if (!currentProject || !currentConversation) return;
+    
+    // Ensure streaming is active during REST fallback
+    setStreaming(true);
     
     try {
       // Message already includes file info, use as-is
@@ -601,6 +619,10 @@ const ChatComposer: React.FC = () => {
           meta: response.data.message_data?.meta || undefined
         });
       }
+      
+      // Clear streaming after message is added
+      clearStreaming();
+      setLoading(false);
     } catch (error: any) {
       console.error('Failed to send message:', error);
       const errorMessage = error?.response?.data?.detail || error?.message || 'Sorry, I encountered an error. Please try again.';
@@ -608,7 +630,7 @@ const ChatComposer: React.FC = () => {
         role: 'assistant', 
         content: `Error: ${errorMessage}` 
       });
-    } finally {
+      clearStreaming();
       setLoading(false);
     }
   };
@@ -879,6 +901,8 @@ const ChatComposer: React.FC = () => {
         const userMessage = event.detail.content;
         addMessage({ role: 'user', content: userMessage });
         setLoading(true);
+        // Set streaming IMMEDIATELY so three dots show right away
+        setStreaming(true);
         
         // Send the message via WebSocket or REST
         try {
@@ -886,7 +910,6 @@ const ChatComposer: React.FC = () => {
           let streamedContent = '';
           
           ws.onopen = () => {
-            setStreaming(true);
             ws.send(JSON.stringify({
               project_id: currentProject.id,
               conversation_id: currentConversation.id,
@@ -1045,6 +1068,8 @@ const ChatComposer: React.FC = () => {
     }
     
     setLoading(true);
+    // Set streaming IMMEDIATELY so three dots show right away
+    setStreaming(true);
     
     try {
       // Try WebSocket streaming first
@@ -1052,7 +1077,6 @@ const ChatComposer: React.FC = () => {
       let streamedContent = '';
       
       ws.onopen = () => {
-        setStreaming(true);
         const payload = {
           project_id: currentProject.id,
           conversation_id: currentConversation.id,
@@ -1068,6 +1092,14 @@ const ChatComposer: React.FC = () => {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          
+          // Handle "thinking" indicator - ensures three dots show immediately
+          if (data.type === 'thinking') {
+            // Explicitly set streaming to true to ensure three dots show
+            // This handles cases where streaming might have been cleared or not set yet
+            setStreaming(true);
+            return;
+          }
           
           if (data.type === 'chunk') {
             streamedContent += data.content;

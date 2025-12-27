@@ -96,12 +96,12 @@
     "archived_at": null
   },
   {
-    "id": "f77f4a43-a07b-4dd4-8fef-ca62979e14d9",
-    "project_id": "cd4df41a-e398-4263-b99b-b8924bef72fc",
-    "title": "My favorite candies are Snickers, Reese's, Milk...",
-    "thread_id": "f77f4a43-a07b-4dd4-8fef-ca62979e14d9",
-    "created_at": "2025-12-26T01:42:40.838935+00:00",
-    "updated_at": "2025-12-26T01:43:08.696637+00:00",
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54",
+    "project_id": "ca7bffc5-bed8-40d5-b707-2d8fa58da746",
+    "title": "My favorite crypto is XMR",
+    "thread_id": "6ddbde2a-5319-4161-9666-0a73dade8e54",
+    "created_at": "2025-12-27T02:04:17.828110+00:00",
+    "updated_at": "2025-12-27T02:04:21.375224+00:00",
     "trashed": false,
     "trashed_at": null,
     "archived": false,

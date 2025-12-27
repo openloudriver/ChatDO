@@ -1,0 +1,19 @@
+[
+  {
+    "test": "Facts-S Store",
+    "passed": false,
+    "store_count": -1,
+    "update_count": -1,
+    "stored_fact_keys": [],
+    "message_uuid": "0042f8f5-b066-4ffb-9d64-7be0cd762938",
+    "issues": [
+      "Facts LLM failed (negative counts)",
+      "Expected Facts-S(3), got Facts-S(-1)",
+      "Expected Facts-U(0), got Facts-U(-1)",
+      "Missing fact key in DB: user.favorites.candies.1",
+      "Missing fact key in DB: user.favorites.candies.2",
+      "Missing fact key in DB: user.favorites.candies.3"
+    ],
+    "db_facts": []
+  }
+]

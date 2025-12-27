@@ -412,24 +412,33 @@ def build_model_label(
     facts_actions: Optional[dict] = None,
     files_actions: Optional[dict] = None,
     index_status: str = "P",
-    escalated: bool = True
+    escalated: bool = True,
+    nano_router_used: bool = False,
+    reasoning_required: bool = True
 ) -> str:
     """
-    Build model label with locked format: Facts-S/U/R + Files + Index-P/F + GPT-5
+    Build model label with execution path using arrows (→).
     
-    Format: {Facts tokens} + {Files token} + Index-(P/F) + GPT-5
-    Only renders tokens with count > 0 (except Index and GPT-5 which are always shown).
+    Format: GPT-5 Nano → {Facts tokens} → {Files token} → Index-(P/F) → {GPT-5 if reasoning_required}
+    Shows the actual execution path, not just what was used.
+    
+    Examples:
+    - "GPT-5 Nano → Facts-S(3)" (write, no reasoning)
+    - "GPT-5 Nano → Facts-R(2) → GPT-5" (read with reasoning)
+    - "GPT-5 Nano → GPT-5" (chat only)
     
     Args:
         facts_actions: Dict with keys S, U, R, F (all integers >= 0, F is bool)
         files_actions: Dict with key R (integer >= 0)
         index_status: "P" (passed) or "F" (failed)
-        escalated: Always True (GPT-5 is always used, kept for compatibility)
+        escalated: Always True (kept for compatibility)
+        nano_router_used: Whether Nano router was used (always True now)
+        reasoning_required: Whether GPT-5 reasoning is required
     
     Returns:
-        Model label string (e.g., "Facts-S(3) + Files(2) + Index-P + GPT-5")
+        Model label string (e.g., "GPT-5 Nano → Facts-S(3) → GPT-5")
     """
-    parts = []
+    parts = ["GPT-5 Nano"]  # Always start with Nano router
     
     # 1. Facts tokens (order: S → U → R, only if count > 0)
     if facts_actions:
@@ -459,10 +468,11 @@ def build_model_label(
     # 3. Index token (always shown)
     parts.append(f"Index-{index_status}")
     
-    # 4. GPT-5 (always last, always shown)
-    parts.append("GPT-5")
+    # 4. GPT-5 reasoning (only if reasoning_required)
+    if reasoning_required:
+        parts.append("GPT-5")
     
-    return " + ".join(parts)
+    return " → ".join(parts)
 
 
 def _is_write_intent(message: str) -> bool:
@@ -525,9 +535,57 @@ async def chat_with_smart_search(
     
     Facts DB contract: project_id must be UUID, never project name/slug.
     This should be resolved at the entry point (WS handler, HTTP handler) before calling this function.
+    
+    NANO-FIRST ARCHITECTURE: Every message passes through GPT-5 Nano router first.
     """
-    # CRITICAL: Detect write-intent BEFORE any processing
-    is_write_intent = _is_write_intent(user_message)
+    # ============================================================================
+    # PHASE 0: NANO ROUTER (Control Plane) - MANDATORY FIRST STEP
+    # ============================================================================
+    # Load conversation history for Nano router context
+    if conversation_history is None:
+        if thread_id:
+            try:
+                history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                conversation_history = []
+                for msg in history:
+                    if msg.get("role") in ["user", "assistant", "system"]:
+                        if msg.get("type") and not msg.get("content"):
+                            continue
+                        conversation_history.append({
+                            "role": msg.get("role"),
+                            "content": msg.get("content", "")
+                        })
+            except Exception as e:
+                logger.warning(f"Failed to load conversation history for Nano router: {e}")
+                conversation_history = []
+        else:
+            conversation_history = []
+    
+    # Call Nano router - MANDATORY FIRST STEP
+    routing_plan = None
+    nano_router_used = False
+    try:
+        from server.services.nano_router import route_with_nano, NanoRouterError
+        from server.contracts.routing_plan import RoutingPlan
+        routing_plan = await route_with_nano(user_message, conversation_history)
+        nano_router_used = True
+        logger.info(
+            f"[NANO-ROUTER] ✅ Routing plan: content_plane={routing_plan.content_plane}, "
+            f"operation={routing_plan.operation}, reasoning_required={routing_plan.reasoning_required}, "
+            f"confidence={routing_plan.confidence}, why={routing_plan.why}"
+        )
+    except Exception as e:
+        logger.error(f"[NANO-ROUTER] ❌ Failed to route with Nano: {e}", exc_info=True)
+        # If Nano router fails, we must fail hard - no fallback
+        # Create a minimal routing plan for error handling
+        from server.contracts.routing_plan import RoutingPlan
+        routing_plan = RoutingPlan(
+            content_plane="chat",
+            operation="none",
+            reasoning_required=True,
+            confidence=0.0,
+            why=f"Nano router failed: {e}"
+        )
     
     # Initialize action tracking at the very beginning
     facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
@@ -538,7 +596,7 @@ async def chat_with_smart_search(
     # Initialize Facts gate tracking
     facts_gate_entered = False
     facts_gate_reason = None
-    facts_provider = "facts"  # Default provider
+    facts_provider = "nano"  # Now using Nano for Facts
     
     # Validate project_id is UUID if provided (should already be resolved at entry point)
     if project_id:
@@ -698,9 +756,36 @@ async def chat_with_smart_search(
             }
     
     # Both thread_id and project_id are valid - proceed with Facts persistence
+    # BUT: Only if Nano router says "facts_write"
     logger.info(f"[FACTS] ✅ Facts persistence enabled: thread_id={thread_id}, project_id={project_id}")
     
-    if thread_id and project_id:
+    # ENFORCE NANO ROUTING: Only execute Facts-S/U if routing plan says facts/write
+    # Log routing plan for debugging
+    if routing_plan:
+        logger.info(
+            f"[NANO-ROUTING] Routing plan check: content_plane={routing_plan.content_plane}, "
+            f"operation={routing_plan.operation}, reasoning_required={routing_plan.reasoning_required}, "
+            f"confidence={routing_plan.confidence}, why={routing_plan.why}, "
+            f"thread_id={thread_id}, project_id={project_id}"
+        )
+        if routing_plan.facts_write_candidate:
+            logger.info(
+                f"[NANO-ROUTING] Facts write candidate: topic={routing_plan.facts_write_candidate.topic}, "
+                f"value={routing_plan.facts_write_candidate.value}, rank_ordered={routing_plan.facts_write_candidate.rank_ordered}"
+            )
+        # CRITICAL: If user message contains "My favorite" but router didn't route to facts/write, log error
+        user_msg_lower = user_message.lower()
+        if "my favorite" in user_msg_lower and ("is" in user_msg_lower or "are" in user_msg_lower):
+            if routing_plan.content_plane != "facts" or routing_plan.operation != "write":
+                logger.error(
+                    f"[NANO-ROUTING] ⚠️ CRITICAL: User message contains 'My favorite' pattern but router "
+                    f"returned content_plane={routing_plan.content_plane}, operation={routing_plan.operation}. "
+                    f"Message: {user_message[:100]}"
+                )
+    else:
+        logger.warning("[NANO-ROUTING] routing_plan is None - cannot execute Facts write")
+    
+    if thread_id and project_id and routing_plan and routing_plan.content_plane == "facts" and routing_plan.operation == "write":
         try:
             from server.services.facts_persistence import persist_facts_synchronously
             from datetime import datetime as dt
@@ -711,8 +796,10 @@ async def chat_with_smart_search(
             user_message_id = f"{thread_id}-user-{message_index}"
             
             # Persist facts synchronously (does NOT require Memory Service)
-            # NEW: Uses Qwen LLM to produce JSON operations, then applies deterministically
-            # Note: retrieved_facts not available yet (retrieved later), but schema hints will be passed if available
+            # NEW: Uses routing plan candidate when available to avoid double Nano calls
+            # Falls back to GPT-5 Nano Facts extractor only if candidate not available
+            # Determine write intent (though routing plan should already indicate this)
+            is_write_intent = _is_write_intent(user_message)
             store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
@@ -722,7 +809,8 @@ async def chat_with_smart_search(
                 timestamp=user_msg_created_at,
                 message_index=message_index,
                 retrieved_facts=None,  # Will be enhanced later to pass retrieved facts for schema-hint resolution
-                write_intent_detected=is_write_intent  # Pass write-intent flag for enhanced diagnostics
+                write_intent_detected=is_write_intent,  # Pass write-intent flag for enhanced diagnostics
+                routing_plan_candidate=routing_plan.facts_write_candidate if routing_plan else None
             )
             
             # Check for Facts LLM failure (negative counts indicate error)
@@ -740,16 +828,14 @@ async def chat_with_smart_search(
                 from server.services.facts_llm.client import (
                     FactsLLMTimeoutError,
                     FactsLLMUnavailableError,
-                    FactsLLMInvalidJSONError,
-                    FACTS_LLM_TIMEOUT_S
+                    FactsLLMInvalidJSONError
                 )
                 
                 # Try to get the last error from the exception context
                 # For now, use a generic message - the actual error type is logged
                 error_message = (
-                    f"Facts system failed: The Facts LLM (Qwen/Ollama) encountered an error. "
-                    f"Facts were not updated. Please check that Ollama is running and responsive "
-                    f"(timeout={FACTS_LLM_TIMEOUT_S}s). Check server logs for details."
+                    f"Facts system failed: The Facts LLM (GPT-5 Nano) encountered an error. "
+                    f"Facts were not updated. Check server logs for details."
                 )
                 
                 # CRITICAL: If this is a write-intent message, we MUST return Facts-F (no fallthrough)
@@ -846,7 +932,7 @@ async def chat_with_smart_search(
                 if store_count == 0 and update_count == 0:
                     logger.warning(
                         f"[FACTS] ⚠️ Write-intent message but Facts-S/U returned 0 counts. "
-                        f"This may indicate Qwen didn't extract facts or an error occurred."
+                        f"This may indicate GPT-5 Nano didn't extract facts or an error occurred."
                     )
             
             # Use message_uuid for fact exclusion (needed for Facts-R)
@@ -951,8 +1037,8 @@ async def chat_with_smart_search(
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": confirmation_text,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -961,6 +1047,14 @@ async def chat_with_smart_search(
                             logger.warning(f"Failed to save Facts-S/U confirmation to history: {e}")
                     
                     # Return fast-path Facts-S/U confirmation (no GPT-5)
+                    model_label_text = build_model_label(
+                        facts_actions=facts_actions,
+                        files_actions=files_actions,
+                        index_status=index_status,
+                        escalated=False,
+                        nano_router_used=nano_router_used,
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True
+                    )
                     return {
                         "type": "assistant_message",
                         "content": confirmation_text,
@@ -975,19 +1069,111 @@ async def chat_with_smart_search(
                             "thread_id": thread_id,
                             "facts_gate_entered": facts_gate_entered,
                             "facts_gate_reason": facts_gate_reason,
-                            "write_intent_detected": is_write_intent
+                            "write_intent_detected": is_write_intent,
+                            "nano_routing_plan": {
+                                "content_plane": routing_plan.content_plane if routing_plan else None,
+                                "operation": routing_plan.operation if routing_plan else None,
+                                "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                                "confidence": routing_plan.confidence if routing_plan else None
+                            },
+                            "nano_router_used": nano_router_used
                         },
                         "sources": [],
-                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "model": model_label_text,
+                        "model_label": f"Model: {model_label_text}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
                 # Facts-S/U confirmation returned - do not continue to Facts-R section
+            else:
+                # Routing plan said facts/write but Facts-S/U returned 0 counts - return Facts-F
+                if routing_plan and routing_plan.content_plane == "facts" and routing_plan.operation == "write":
+                    logger.warning(
+                        f"[FACTS] ⚠️ Routing plan said facts/write but Facts-S/U returned 0 counts. "
+                        f"Returning Facts-F instead of falling through to Index/GPT-5."
+                    )
+                    facts_actions["F"] = True
+                    model_label_text = build_model_label(
+                        facts_actions=facts_actions,
+                        files_actions=files_actions,
+                        index_status=index_status,
+                        escalated=False,
+                        nano_router_used=nano_router_used,
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True
+                    )
+                    return {
+                        "type": "assistant_message",
+                        "content": "I couldn't extract any facts from that message. Please try rephrasing.",
+                        "meta": {
+                            "usedFacts": True,
+                            "fastPath": "facts_error",
+                            "facts_error": True,
+                            "facts_actions": facts_actions,
+                            "files_actions": files_actions,
+                            "index_status": index_status,
+                            "facts_provider": facts_provider,
+                            "project_uuid": project_id,
+                            "thread_id": thread_id,
+                            "nano_routing_plan": {
+                                "content_plane": routing_plan.content_plane if routing_plan else None,
+                                "operation": routing_plan.operation if routing_plan else None,
+                                "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                                "confidence": routing_plan.confidence if routing_plan else None
+                            },
+                            "nano_router_used": nano_router_used
+                        },
+                        "sources": [],
+                        "model": "Facts-F",
+                        "model_label": f"Model: {model_label_text}",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
             
         except Exception as e:
             logger.error(f"[MEMORY] ❌ Exception during synchronous fact persistence: {e}", exc_info=True)
             # Facts persistence failure doesn't block the response, but counts remain 0
+            # If routing plan said facts/write, return Facts-F instead of falling through
+            if routing_plan and routing_plan.content_plane == "facts" and routing_plan.operation == "write":
+                logger.warning(
+                    f"[FACTS] ⚠️ Exception during Facts-S/U but routing plan said facts/write. "
+                    f"Returning Facts-F instead of falling through to Index/GPT-5."
+                )
+                facts_actions["F"] = True
+                model_label_text = build_model_label(
+                    facts_actions=facts_actions,
+                    files_actions=files_actions,
+                    index_status=index_status,
+                    escalated=False,
+                    nano_router_used=nano_router_used,
+                    reasoning_required=routing_plan.reasoning_required if routing_plan else True
+                )
+                return {
+                    "type": "assistant_message",
+                    "content": f"I encountered an error while trying to save that: {str(e)}",
+                    "meta": {
+                        "usedFacts": True,
+                        "fastPath": "facts_error",
+                        "facts_error": True,
+                        "facts_actions": facts_actions,
+                        "files_actions": files_actions,
+                        "index_status": index_status,
+                        "facts_provider": facts_provider,
+                        "project_uuid": project_id,
+                        "thread_id": thread_id,
+                        "nano_routing_plan": {
+                            "content_plane": routing_plan.content_plane if routing_plan else None,
+                            "operation": routing_plan.operation if routing_plan else None,
+                            "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                            "confidence": routing_plan.confidence if routing_plan else None
+                        },
+                        "nano_router_used": nano_router_used
+                    },
+                    "sources": [],
+                    "model": "Facts-F",
+                    "model_label": f"Model: {model_label_text}",
+                    "provider": "facts",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
     
     # Phase 2: Async Indexing (best-effort, non-blocking)
     # Index-P/Index-F reflects pipeline health (enqueue success), independent of Facts
@@ -1055,8 +1241,8 @@ async def chat_with_smart_search(
     # instead of being returned directly.
     
     # REMOVED: Legacy regex-based Facts-R list fast path
-    # All Facts-R queries now go through Qwen query-to-plan → deterministic retrieval
-    # Fast-path responses are handled in the Qwen-based Facts-R section below
+    # All Facts-R queries now go through GPT-5 Nano query-to-plan → deterministic retrieval
+    # Fast-path responses are handled in the Nano-based Facts-R section below
     
     # 0. Get memory context if project_id is available
     memory_context = ""
@@ -1067,6 +1253,19 @@ async def chat_with_smart_search(
     hits = []  # Initialize hits to empty list so it's always defined
     
     # query_plan is already initialized at line 547 (function scope)
+    # CRITICAL: Enforce routing invariant - retrieval queries MUST execute Facts-R first
+    # Detect retrieval queries using lightweight heuristic (before LLM planning)
+    is_retrieval_query_heuristic = False
+    user_message_lower = user_message.lower().strip()
+    retrieval_patterns = [
+        "list my", "list", "show my", "show", "what are my", "what are", 
+        "tell me my", "tell me", "display my", "display", "get my", "get"
+    ]
+    for pattern in retrieval_patterns:
+        if user_message_lower.startswith(pattern):
+            is_retrieval_query_heuristic = True
+            break
+    
     # Re-initialize is_retrieval_query here for the retrieval section
     is_retrieval_query = False
     if project_id:
@@ -1079,34 +1278,68 @@ async def chat_with_smart_search(
                 query_plan = await plan_facts_query(user_message)
                 is_retrieval_query = query_plan.intent in ["facts_get_ranked_list", "facts_get_by_prefix", "facts_get_exact_key"]
             except FactsLLMError:
-                # If query planning fails, assume it's not a pure retrieval query
-                is_retrieval_query = False
+                # If query planning fails but heuristic says retrieval, still try Facts-R
+                is_retrieval_query = is_retrieval_query_heuristic
             except Exception:
-                # If query planning fails for any reason, assume it's not a pure retrieval query
-                is_retrieval_query = False
+                # If query planning fails for any reason but heuristic says retrieval, still try Facts-R
+                is_retrieval_query = is_retrieval_query_heuristic
         except Exception:
-            # If we can't import or plan, assume it's not a pure retrieval query
-            is_retrieval_query = False
+            # If we can't import or plan, use heuristic
+            is_retrieval_query = is_retrieval_query_heuristic
     
-    # If this is a pure retrieval query and Facts-S/U didn't write anything,
-    # skip fact extraction to avoid ambiguity issues
-    # (We already ran fact extraction above, but if it returned ambiguity and this is a retrieval query, ignore it)
-    if project_id:
+    # CRITICAL ROUTING INVARIANT: Only execute Facts-R if routing plan says facts/read
+    # MUST execute Facts-R first and return Facts-R response (never Index/GPT)
+    if project_id and routing_plan.content_plane == "facts" and routing_plan.operation == "read":
+        # Facts-R is a read operation, so write_intent is False
+        is_write_intent = False
         try:
-            # NEW: Use Qwen query-to-plan for Facts-R (deterministic retrieval)
-            # This replaces the old embedding-based search for facts
+            # NEW: Use routing plan candidate if available, otherwise call Facts query planner
             from server.services.facts_retrieval import execute_facts_plan
             from server.services.facts_llm.client import FactsLLMError
+            from server.services.facts_topic import canonicalize_topic
+            from server.contracts.facts_ops import FactsQueryPlan
             
-            # Use the query plan we already created, or create a new one if needed
-            if not query_plan:
-                try:
-                    query_plan = await plan_facts_query(user_message)
-                except Exception:
-                    query_plan = None
+            # Use routing plan candidate if available (avoids second Nano call)
+            if routing_plan.facts_read_candidate:
+                logger.info(
+                    f"[FACTS-R] Using routing plan candidate (topic={routing_plan.facts_read_candidate.topic}), "
+                    f"skipping query planner"
+                )
+                # Convert candidate to query plan
+                canonical_topic = canonicalize_topic(routing_plan.facts_read_candidate.topic)
+                from server.services.facts_normalize import canonical_list_key
+                list_key = canonical_list_key(canonical_topic)
+                query_plan = FactsQueryPlan(
+                    intent="facts_get_ranked_list",
+                    list_key=list_key,
+                    topic=canonical_topic,
+                    limit=25,
+                    include_ranks=True
+                )
+            else:
+                # Fallback to query planner (should be rare)
+                if not query_plan:
+                    try:
+                        query_plan = await plan_facts_query(user_message)
+                    except Exception as e:
+                        logger.warning(f"[FACTS-R] Query planning failed for retrieval query: {e}")
+                        query_plan = None
             
-            # Safe access: query_plan is initialized at function scope (line 547)
+            # If we have a query plan, execute it
             if query_plan is not None:
+                # HIGH-SIGNAL LOGGING: Log retrieval attempt
+                raw_topic = query_plan.topic if query_plan else None
+                canonical_topic = canonicalize_topic(raw_topic) if raw_topic else None
+                computed_list_key = query_plan.list_key if query_plan else None
+                
+                logger.info(
+                    f"[FACTS-R] RETRIEVAL_ATTEMPT "
+                    f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
+                    f"query_plan.intent={query_plan.intent if query_plan else 'N/A'} "
+                    f"query_plan.topic.raw={raw_topic} canonical_topic={canonical_topic} "
+                    f"computed_list_key={computed_list_key}"
+                )
+                
                 # Execute plan deterministically
                 facts_answer = execute_facts_plan(
                     project_uuid=project_id,
@@ -1120,7 +1353,7 @@ async def chat_with_smart_search(
                     logger.info(f"[FACTS-R] Retrieved {facts_actions['R']} distinct canonical keys: {facts_answer.canonical_keys}")
                 
                 # Fast-path response for ranked list queries (no GPT-5)
-                # Qwen determines if this is a list query via query plan intent
+                # GPT-5 Nano determines if this is a list query via query plan intent
                 if query_plan is not None and query_plan.intent == "facts_get_ranked_list" and facts_answer.facts:
                     # Format ranked list for direct user response
                     sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
@@ -1150,11 +1383,16 @@ async def chat_with_smart_search(
                     sources = list(sources_by_uuid.values())
                     logger.info(f"[FACTS-R] ✅ Fast-path ranked list response: topic={query_plan.topic if query_plan is not None else 'unknown'}, items={len(sorted_facts)}")
                     
-                    # Log response path
+                    # HIGH-SIGNAL LOGGING: Log response path
                     logger.info(
                         f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH "
+                        f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
+                        f"query_plan.intent={query_plan.intent if query_plan else 'N/A'} "
+                        f"query_plan.topic={query_plan.topic if query_plan else 'N/A'} "
+                        f"canonical_topic={canonical_topic} computed_list_key={computed_list_key} "
+                        f"facts_answer.count={facts_answer.count} canonical_keys={facts_answer.canonical_keys} "
                         f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
-                        f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
+                        f"facts_r_count={facts_actions.get('R', 0)}"
                     )
                     
                     # Save to history
@@ -1168,8 +1406,8 @@ async def chat_with_smart_search(
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": list_items,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -1195,8 +1433,8 @@ async def chat_with_smart_search(
                             "write_intent_detected": is_write_intent
                         },
                         "sources": sources,
-                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
+                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
@@ -1213,11 +1451,16 @@ async def chat_with_smart_search(
                     
                     logger.info(f"[FACTS-R] Ranked list query returned no facts: topic={query_plan.topic if query_plan is not None else 'unknown'}")
                     
-                    # Log response path
+                    # HIGH-SIGNAL LOGGING: Log empty retrieval response path
                     logger.info(
                         f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH_EMPTY "
+                        f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
+                        f"query_plan.intent={query_plan.intent if query_plan else 'N/A'} "
+                        f"query_plan.topic.raw={raw_topic} canonical_topic={canonical_topic} "
+                        f"computed_list_key={computed_list_key} facts_answer.count={facts_answer.count} "
+                        f"canonical_keys={facts_answer.canonical_keys} "
                         f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
-                        f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
+                        f"facts_r_count={facts_actions.get('R', 0)}"
                     )
                     
                     if thread_id:
@@ -1231,8 +1474,8 @@ async def chat_with_smart_search(
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": response_text,
-                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                                "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
+                                "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
                             })
@@ -1299,6 +1542,8 @@ async def chat_with_smart_search(
                             "created_at": datetime.now(timezone.utc).isoformat()
                         }
                     
+                    # GUARD: "I don't have that stored yet" ONLY comes from Facts-R empty fastpath
+                    # This is the ONLY place this message should be emitted
                     # Normal empty retrieval response (for non-write-intent queries)
                     return {
                         "type": "assistant_message",
@@ -1317,53 +1562,91 @@ async def chat_with_smart_search(
                             "facts_gate_reason": facts_gate_reason or "unknown",
                             "write_intent_detected": is_write_intent
                         },
-                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False),
-                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False)}",
+                        "model": build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True),
+                        "model_label": f"Model: {build_model_label(facts_actions=facts_actions, files_actions=files_actions, index_status=index_status, escalated=False, nano_router_used=nano_router_used, reasoning_required=routing_plan.reasoning_required if routing_plan else True)}",
                         "provider": "facts",
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
-                
-                # For non-ranked-list queries (exact key, prefix), convert facts to memory hits for GPT-5 context
-                fact_hits = []
-                for fact in facts_answer.facts:
-                    fact_hits.append({
-                        "content": f"{fact.get('fact_key', '')} = {fact.get('value_text', '')}",
-                        "score": 1.0,
-                        "metadata": {
-                            "is_fact": True,
-                            "fact_key": fact.get("fact_key"),
-                            "value_text": fact.get("value_text"),
-                            "source_message_uuid": fact.get("source_message_uuid")
-                        }
-                    })
-                
-                # Also get non-fact memory hits from librarian (for Index domain)
-                # This provides semantic search results alongside facts
-                # Note: librarian.get_relevant_memory includes both facts and index hits
-                # We'll filter out fact hits and only use index hits
-                all_hits = librarian.get_relevant_memory(
-                    project_id=project_id,
-                    query=user_message,
-                    chat_id=None,
-                    max_hits=30,
-                    exclude_message_uuid=current_message_uuid
+            
+            # If query plan is None but heuristic says retrieval, log warning and continue
+            # (We'll fall through to Index/GPT, but this should be rare)
+            elif is_retrieval_query_heuristic:
+                logger.warning(
+                    f"[FACTS-R] Retrieval query detected (heuristic) but query planning failed. "
+                    f"Falling through to Index/GPT (this should be rare). "
+                    f"message_uuid={current_message_uuid} project_id={project_id}"
                 )
-                
-                # Filter to only index hits (non-fact hits)
-                index_hits = [
-                    hit for hit in all_hits 
-                    if not (hit.metadata and hit.metadata.get("is_fact"))
-                ]
-                
-                # Combine fact hits (from query planner) and index hits
-                hits = fact_hits + index_hits
-                searched_memory = True
-                has_memory = len(hits) > 0
-                
-                if has_memory:
-                    # Format hits into context string for GPT-5
-                    memory_context = librarian.format_hits_as_context(hits)
-                    logger.info(f"[MEMORY] Retrieved memory context: {len(fact_hits)} facts + {len(index_hits)} index hits")
+                # Log fallthrough
+                logger.info(
+                    f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
+                    f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
+                    f"reason=query_plan_failed_for_retrieval_heuristic"
+                )
+        except Exception as e:
+            logger.error(f"[FACTS-R] Exception during retrieval execution: {e}", exc_info=True)
+            # If retrieval fails, log and continue (will fall through to Index/GPT)
+            logger.info(
+                f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
+                f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
+                f"reason=retrieval_exception: {str(e)[:100]}"
+            )
+            
+            # For non-ranked-list queries (exact key, prefix), convert facts to memory hits for GPT-5 context
+            # Note: facts_answer may not be defined if exception occurred before execution
+            from server.services.librarian import MemoryHit
+            fact_hits = []
+            try:
+                if 'facts_answer' in locals() and facts_answer.facts:
+                    for fact in facts_answer.facts:
+                        # Convert fact dict to MemoryHit object
+                        fact_hits.append(MemoryHit(
+                            source_id=f"project-{project_id}",
+                            message_id=fact.get("source_message_uuid", ""),
+                            chat_id=None,
+                            role="fact",
+                            content=f"{fact.get('fact_key', '')} = {fact.get('value_text', '')}",
+                            score=1.0,
+                            source_type="fact",
+                            file_path=None,
+                            created_at=fact.get("created_at"),
+                            metadata={
+                                "is_fact": True,
+                                "fact_key": fact.get("fact_key"),
+                                "value_text": fact.get("value_text"),
+                                "source_message_uuid": fact.get("source_message_uuid")
+                            },
+                            message_uuid=fact.get("source_message_uuid")
+                        ))
+            except Exception:
+                pass  # Ignore errors in fact hit conversion
+            
+            # Also get non-fact memory hits from librarian (for Index domain)
+            # This provides semantic search results alongside facts
+            # Note: librarian.get_relevant_memory includes both facts and index hits
+            # We'll filter out fact hits and only use index hits
+            all_hits = librarian.get_relevant_memory(
+                project_id=project_id,
+                query=user_message,
+                chat_id=None,
+                max_hits=30,
+                exclude_message_uuid=current_message_uuid
+            )
+            
+            # Filter to only index hits (non-fact hits)
+            index_hits = [
+                hit for hit in all_hits 
+                if not (hit.metadata and hit.metadata.get("is_fact"))
+            ]
+            
+            # Combine fact hits (from query planner) and index hits
+            hits = fact_hits + index_hits
+            searched_memory = True
+            has_memory = len(hits) > 0
+            
+            if has_memory:
+                # Format hits into context string for GPT-5
+                memory_context = librarian.format_hits_as_context(hits)
+                logger.info(f"[MEMORY] Retrieved memory context: {len(fact_hits)} facts + {len(index_hits)} index hits")
                     
         except FactsLLMError as e:
                 # Facts-R query planner failed - hard fail Facts-R but continue with Index
@@ -1404,7 +1687,7 @@ async def chat_with_smart_search(
                 memory_context = librarian.format_hits_as_context(hits)
             
             # REMOVED: Legacy topic extraction for facts retrieval
-            # All Facts retrieval now goes through Qwen query-to-plan (above)
+            # All Facts retrieval now goes through GPT-5 Nano query-to-plan (above)
             
             # Convert Memory hits to structured Source objects for frontend
             if hits:
@@ -1505,29 +1788,38 @@ async def chat_with_smart_search(
     
     if not decision.use_search:
         # 2a. Memory-only or GPT-5 chat (no Brave)
-        # Always use GPT-5 - Memory is a tool, not a speaking model
+        # Only use GPT-5 if reasoning_required is True (per Nano router decision)
         used_web = False
         # Memory tag shows if memory was stored OR retrieved (Memory service was used)
         used_memory = has_memory or memory_stored
         
-        # Always route to GPT-5 (never GPT-5 Mini)
-        logger.info(f"[MEMORY] Routing to GPT-5 with Memory context ({len(hits) if hits else 0} hits)")
-        
-        # Log response path (GPT-5 fallthrough)
-        logger.info(
-            f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
-            f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
-            f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
-        )
-        
-        content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-            messages=messages,
-            tools=tools,
-            intent="general_chat",
-            project_id=project_id,
-            files_actions=files_actions
-        )
-        
+        # ENFORCE NANO ROUTING: Only call GPT-5 if reasoning_required is True
+        if routing_plan.reasoning_required:
+            # Always route to GPT-5 (never GPT-5 Mini)
+            logger.info(f"[MEMORY] Routing to GPT-5 with Memory context ({len(hits) if hits else 0} hits)")
+            
+            # Log response path (GPT-5 fallthrough)
+            logger.info(
+                f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
+                f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
+                f"facts_r_count={facts_actions.get('R', 0)} message_uuid={current_message_uuid}"
+            )
+            
+            content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+                messages=messages,
+                tools=tools,
+                intent="general_chat",
+                project_id=project_id,
+                files_actions=files_actions
+            )
+        else:
+            # No reasoning required - return simple confirmation
+            logger.info(f"[NANO-ROUTER] Reasoning not required, skipping GPT-5 call")
+            # For Facts-S/U, we already returned confirmation above
+            # For other cases, return a simple acknowledgment
+            content = "Done."
+            model_id = "gpt-5-nano"
+            provider_id = "openai-gpt5-nano"
         # Count distinct file sources from final sources list (before building model label)
         files_actions["R"] = count_distinct_file_sources(sources)
         
@@ -1536,7 +1828,9 @@ async def chat_with_smart_search(
             facts_actions=facts_actions,
             files_actions=files_actions,
             index_status=index_status,
-            escalated=True
+            escalated=True,
+            nano_router_used=nano_router_used,
+            reasoning_required=routing_plan.reasoning_required if routing_plan else True
         )
         logger.info(f"[MODEL] model label = {model_display}")
         
@@ -1657,7 +1951,14 @@ async def chat_with_smart_search(
                 "index_job": {
                     "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
                     "assistant_job_id": assistant_index_job_id if 'assistant_index_job_id' in locals() else None
-                } if ('user_index_job_id' in locals() and user_index_job_id) or ('assistant_index_job_id' in locals() and assistant_index_job_id) else None
+                } if ('user_index_job_id' in locals() and user_index_job_id) or ('assistant_index_job_id' in locals() and assistant_index_job_id) else None,
+                "nano_routing_plan": {
+                    "content_plane": routing_plan.content_plane if routing_plan else None,
+                    "operation": routing_plan.operation if routing_plan else None,
+                    "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                    "confidence": routing_plan.confidence if routing_plan else None
+                },
+                "nano_router_used": nano_router_used
             },
             "model": model_display,
             "model_label": model_label,
@@ -1821,7 +2122,14 @@ async def chat_with_smart_search(
                 "index_job": {
                     "user_job_id": user_index_job_id if 'user_index_job_id' in locals() else None,
                     "assistant_job_id": None
-                } if 'user_index_job_id' in locals() and user_index_job_id else None
+                } if 'user_index_job_id' in locals() and user_index_job_id else None,
+                "nano_routing_plan": {
+                    "content_plane": routing_plan.content_plane if routing_plan else None,
+                    "operation": routing_plan.operation if routing_plan else None,
+                    "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                    "confidence": routing_plan.confidence if routing_plan else None
+                },
+                "nano_router_used": nano_router_used
             },
             "model": model_display,
             "model_label": model_label,
@@ -1893,13 +2201,22 @@ async def chat_with_smart_search(
         messages.insert(0, {"role": "system", "content": system_prompt_with_web})
         messages.insert(1, {"role": "system", "content": web_results_text})
     
-    # Call GPT-5 with web search context (with tool loop processing)
-    content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
-        messages=messages,
-        tools=tools,
-        intent="general_chat",
-        project_id=project_id
-    )
+    # ENFORCE NANO ROUTING: Only call GPT-5 if reasoning_required is True
+    if routing_plan.reasoning_required:
+        # Call GPT-5 with web search context (with tool loop processing)
+        content, model_id, provider_id, model_display = await call_ai_router_with_tool_loop(
+            messages=messages,
+            tools=tools,
+            intent="general_chat",
+            project_id=project_id
+        )
+    else:
+        # No reasoning required - return simple confirmation
+        logger.info(f"[NANO-ROUTER] Reasoning not required, skipping GPT-5 call (web search path)")
+        content = "Done."  # Simple confirmation
+        model_id = "gpt-5-nano"
+        provider_id = "openai-gpt5-nano"
+        model_display = "GPT-5 Nano"
     
     # Save to memory store if thread_id is provided
     if thread_id:
@@ -1967,7 +2284,9 @@ async def chat_with_smart_search(
                 facts_actions=facts_actions,
                 files_actions=files_actions,
                 index_status=index_status,
-                escalated=True
+                escalated=True,
+                nano_router_used=nano_router_used,
+                reasoning_required=routing_plan.reasoning_required if routing_plan else True
             )
             # Use constructed message_id to match indexing (enables UUID lookup)
             assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
@@ -2039,7 +2358,9 @@ async def chat_with_smart_search(
         facts_actions=facts_actions,
         files_actions=files_actions,
         index_status=index_status,
-        escalated=True
+        escalated=True,
+        nano_router_used=nano_router_used,
+                            reasoning_required=routing_plan.reasoning_required if routing_plan else True
     )
     if thread_id:
         try:
@@ -2102,7 +2423,14 @@ async def chat_with_smart_search(
             "thread_id": thread_id,
             "facts_gate_entered": facts_gate_entered,
             "facts_gate_reason": facts_gate_reason or "unknown",
-            "write_intent_detected": is_write_intent
+            "write_intent_detected": is_write_intent,
+            "nano_routing_plan": {
+                "content_plane": routing_plan.content_plane if routing_plan else None,
+                "operation": routing_plan.operation if routing_plan else None,
+                "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                "confidence": routing_plan.confidence if routing_plan else None
+            },
+            "nano_router_used": nano_router_used
         },
         "model": model_label.replace("Model: ", ""),  # Return without "Model: " prefix for backward compatibility
         "model_label": model_label,

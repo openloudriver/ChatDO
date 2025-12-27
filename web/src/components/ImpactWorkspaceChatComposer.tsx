@@ -178,13 +178,15 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       textareaRef.current.style.height = '88px';
     }
 
+    // Set streaming IMMEDIATELY so three dots show right away
+    setStreaming(true);
+    
     try {
       // Use WebSocket for streaming
       const ws = new WebSocket('ws://localhost:8000/api/chat/stream');
       let streamedContent = '';
       
       ws.onopen = () => {
-        setStreaming(true);
         const payload = {
           project_id: currentProject.id,
           conversation_id: currentConversation.id,
@@ -205,6 +207,14 @@ export const ImpactWorkspaceChatComposer: React.FC<ImpactWorkspaceChatComposerPr
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          
+          // Handle "thinking" indicator - ensures three dots show immediately
+          if (data.type === 'thinking') {
+            // Explicitly set streaming to true to ensure three dots show
+            // This handles cases where streaming might have been cleared or not set yet
+            setStreaming(true);
+            return;
+          }
           
           if (data.type === 'chunk') {
             streamedContent += data.content;

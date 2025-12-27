@@ -1,0 +1,16 @@
+[
+  {
+    "test": "Facts-S Confirmation Routing",
+    "passed": false,
+    "content": "",
+    "model_label": "",
+    "fast_path": "facts_error",
+    "store_count": 0,
+    "issues": [
+      "Response does not start with 'Saved:' (expected Facts confirmation): ''",
+      "Model label does not begin with Facts-S: model_label='', model='Facts-F'",
+      "Fast path is not 'facts_write_confirmation' (got 'facts_error') - indicates GPT-5 fallthrough",
+      "Facts-S count is 0 (expected > 0)"
+    ]
+  }
+]

@@ -1,5 +1,5 @@
 """
-Facts Query Planner - Uses Qwen to convert user queries into deterministic query plans.
+Facts Query Planner - Uses GPT-5 Nano to convert user queries into deterministic query plans.
 """
 import logging
 import json
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 async def plan_facts_query(query_text: str) -> FactsQueryPlan:
     """
-    Convert a user query into a deterministic Facts query plan using Qwen.
+    Convert a user query into a deterministic Facts query plan using GPT-5 Nano.
     
-    This function hard-fails if Qwen is unavailable or returns invalid JSON.
+    This function hard-fails if GPT-5 Nano is unavailable or returns invalid JSON.
     
     Args:
         query_text: User's query (e.g., "What are my favorite cryptos?")
@@ -24,7 +24,7 @@ async def plan_facts_query(query_text: str) -> FactsQueryPlan:
         FactsQueryPlan with intent and parameters
         
     Raises:
-        FactsLLMError: If Qwen is unavailable or returns invalid JSON
+        FactsLLMError: If GPT-5 Nano is unavailable or returns invalid JSON
     """
     prompt = f"""You are a Facts query planner. Convert the user's query into a deterministic query plan.
 
@@ -42,10 +42,14 @@ OUTPUT FORMAT (JSON only, no markdown, no explanation):
 INTENT RULES:
 1. facts_get_ranked_list: User is asking for a ranked list (e.g., "What are my favorite cryptos?")
    - Requires: list_key (user.favorites.<topic>) and topic
+   - ALWAYS extract the topic from the query, even if you're not sure it exists
+   - If the topic doesn't exist, the system will return empty results (that's OK)
    - Example: {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.crypto", "topic": "crypto", "limit": 25, "include_ranks": true}}
+   - Example: "What are my favorite planets?" → {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.planet", "topic": "planet", "limit": 25, "include_ranks": true}}
 
-2. facts_get_by_prefix: User wants facts matching a prefix (e.g., "Show all my favorites")
+2. facts_get_by_prefix: User wants facts matching a prefix (e.g., "Show all my favorites" without specifying a topic)
    - Requires: key_prefix
+   - ONLY use this if the query truly doesn't specify a topic (e.g., "Show all my favorites", "List my favorites")
    - Example: {{"intent": "facts_get_by_prefix", "key_prefix": "user.favorites", "limit": 50, "include_ranks": true}}
 
 3. facts_get_exact_key: User wants a specific fact (e.g., "What is my email?")
@@ -53,8 +57,10 @@ INTENT RULES:
    - Example: {{"intent": "facts_get_exact_key", "fact_key": "user.email", "limit": 1, "include_ranks": false}}
 
 SCHEMA LOCK: Ranked lists always use user.favorites.<topic>.<rank>
-- Extract topic from query: "cryptos" → "crypto", "colors" → "colors", etc.
-- If topic is ambiguous (e.g., "Show my favorites" with multiple lists), use facts_get_by_prefix with key_prefix="user.favorites"
+- Extract topic from query: "cryptos" → "crypto", "colors" → "colors", "planets" → "planet", etc.
+- For retrieval queries, ALWAYS try to extract the topic and use facts_get_ranked_list
+- Do NOT return ambiguity for retrieval queries - just extract the topic and let the system return empty results if it doesn't exist
+- Only use facts_get_by_prefix if the query truly doesn't specify any topic
 
 User query: {query_text}
 

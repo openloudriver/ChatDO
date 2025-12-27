@@ -1038,7 +1038,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Facts Acceptance Test Runner")
     parser.add_argument("--project-uuid", required=True, help="Project UUID")
     parser.add_argument("--thread-id", required=True, help="Thread ID")
-    parser.add_argument("--test", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "all"], default="all", help="Test to run")
+    parser.add_argument("--test", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "all"], default="all", help="Test to run")
     
     args = parser.parse_args()
     
@@ -1103,6 +1103,10 @@ async def main():
     
     if args.test in ["13", "all"]:
         result = await test_13_write_intent_pie_regression(args.project_uuid, args.thread_id)
+        results.append(result)
+    
+    if args.test in ["14", "all"]:
+        result = await test_14_facts_r_synonym_retrieval(args.project_uuid, args.thread_id)
         results.append(result)
     
     # Print summary

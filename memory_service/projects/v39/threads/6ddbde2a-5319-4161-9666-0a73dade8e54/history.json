@@ -1,0 +1,140 @@
+[
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-0",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [XMR]",
+    "model": "GPT-5 Nano → Facts-S(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-27T02:04:35.513920+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-1",
+    "role": "assistant",
+    "content": "1) XMR",
+    "model": "GPT-5 Nano → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-27T02:04:54.631380+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-2",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [BTC, XMR]",
+    "model": "GPT-5 Nano → Facts-S(1) → Facts-U(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(1) → Facts-U(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-27T02:05:25.376277+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-user-3",
+    "role": "user",
+    "content": "Please list my favorite crypto currencies",
+    "created_at": "2025-12-27T02:07:12.728130+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-4",
+    "role": "assistant",
+    "content": "I don’t have your favorite cryptocurrencies saved yet. \n\n## 🔍 What I need\n- Tell me your favorites (e.g., BTC, ETH, SOL, ADA, AVAX), and I’ll remember them for future queries.\n- If you have a portfolio or watchlist you want me to mirror, share it and I’ll use that as your favorites.\n\n## 💡 Optional prompts\n- “My favorites are BTC, ETH, and SOL.”\n- “Use my current Coinbase watchlist as favorites.”",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-user-0:1766801209225",
+        "assistant_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-4:1766801232776"
+      }
+    },
+    "created_at": "2025-12-27T02:07:12.726858+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-user-5",
+    "role": "user",
+    "content": "Please list my favorite cryptos",
+    "created_at": "2025-12-27T02:08:03.860716+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-6",
+    "role": "assistant",
+    "content": "I don’t have any favorite cryptocurrencies saved for you yet.\n\n## 🔍 Status\n- No saved “favorite cryptos” found in your profile memory.\n\n## ✅ Tell me your list\nReply with your favorites (tickers or names), for example:\n- BTC, ETH, SOL\n- Plus any others you want (e.g., LINK, AVAX, MATIC, APT)\n\nIf you want, I’ll save them so I can recall them instantly next time.\n\n## 💡 Optional prompts\n- “Top 5 I follow are …”\n- “DeFi favorites are …”\n- “AI/Infra picks are …”",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-user-0:1766801258970",
+        "assistant_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-6:1766801283904"
+      }
+    },
+    "created_at": "2025-12-27T02:08:03.858995+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-user-7",
+    "role": "user",
+    "content": "Please list my favorite crypto",
+    "created_at": "2025-12-27T02:08:39.718602+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-8",
+    "role": "assistant",
+    "content": "I don’t have your favorite cryptocurrencies saved in memory yet.\n\n## Want to set them now?\n- Reply with your favorites (tickers or names), e.g. “BTC, ETH, SOL”.\n- Optional: group by category (long-term, DeFi, L2, AI, privacy, memecoins).\n\n## Quick template\n```\nFavorites (top 3–5):\n- \n```\n\n## Extras\n- Say “track these” if you want me to watch prices and news for your list.",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-user-0:1766801297321",
+        "assistant_job_id": "6ddbde2a-5319-4161-9666-0a73dade8e54:6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-8:1766801319755"
+      }
+    },
+    "created_at": "2025-12-27T02:08:39.717393+00:00"
+  },
+  {
+    "id": "6ddbde2a-5319-4161-9666-0a73dade8e54-assistant-9",
+    "role": "assistant",
+    "content": "1) BTC\n2) XMR",
+    "model": "GPT-5 Nano → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-27T02:12:43.675749+00:00"
+  }
+]

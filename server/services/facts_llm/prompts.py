@@ -1,5 +1,5 @@
 """
-Prompts for Facts LLM (Qwen) to produce JSON operations.
+Prompts for Facts LLM (GPT-5 Nano) to produce JSON operations.
 """
 from typing import Optional, List, Dict
 
@@ -10,7 +10,7 @@ def build_facts_extraction_prompt(
     retrieved_facts: Optional[List[Dict]] = None
 ) -> str:
     """
-    Build a strict prompt for Qwen to extract facts as JSON operations.
+    Build a strict prompt for GPT-5 Nano to extract facts as JSON operations.
     
     Args:
         user_message: The user's message to extract facts from
@@ -98,7 +98,7 @@ def build_facts_extraction_prompt_force(
     """
     Build a stricter prompt for force-extraction retry when write-intent returns empty ops.
     
-    This prompt explicitly instructs Qwen to emit at least one operation or set needs_clarification.
+    This prompt explicitly instructs GPT-5 Nano to emit at least one operation or set needs_clarification.
     """
     # Build retrieved facts section if available
     facts_section = ""

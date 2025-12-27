@@ -1,0 +1,15 @@
+[
+  {
+    "test": "Facts-R Empty Retrieval",
+    "passed": false,
+    "content": "",
+    "fast_path": "topic_ambiguity",
+    "facts_r_count": 0,
+    "store_count": 0,
+    "update_count": 0,
+    "issues": [
+      "Response does not contain 'I don't have that stored yet' (expected for empty Facts-R): ''",
+      "Fast path is not 'facts_retrieval_empty' (got 'topic_ambiguity')"
+    ]
+  }
+]

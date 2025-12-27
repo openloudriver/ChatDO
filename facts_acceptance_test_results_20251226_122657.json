@@ -1,0 +1,22 @@
+[
+  {
+    "test": "WebSocket Facts-S Store",
+    "passed": false,
+    "content": "I don't have that stored yet.",
+    "model_label": "Model: Index-P + GPT-5",
+    "fast_path": "facts_retrieval_empty",
+    "store_count": 0,
+    "update_count": 0,
+    "facts_f": false,
+    "db_facts_count": 0,
+    "issues": [
+      "Facts-S count is 0 (expected > 0)",
+      "Model label does not start with Facts-S or Facts-U: model_label='Model: Index-P + GPT-5', model='Index-P + GPT-5'",
+      "No facts stored or updated (S=0, U=0)",
+      "Response contains 'I don't have that stored yet' (should be Facts confirmation): 'I don't have that stored yet.'",
+      "Response does not start with 'Saved:' (expected Facts confirmation): 'I don't have that stored yet.'",
+      "Fast path is not 'facts_write_confirmation' (got 'facts_retrieval_empty') - indicates GPT-5 fallthrough",
+      "No facts found in DB after store operation for topic 'sport8aca' or 'sport'"
+    ]
+  }
+]

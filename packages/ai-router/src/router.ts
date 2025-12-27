@@ -4,6 +4,7 @@ import { findPricing } from "./pricing";
 import { recordUsage } from "./spendTracker";
 import { openAiGpt5Provider } from "./providers/openai";
 import { openAiGpt5MiniProvider } from "./providers/openai-mini";
+import { openAiGpt5NanoProvider } from "./providers/openai-nano";
 import { claudeSonnetProvider } from "./providers/anthropic";
 import { grokCodeProvider } from "./providers/grok";
 import { geminiProProvider } from "./providers/gemini";
@@ -12,6 +13,7 @@ import { mistralLargeProvider } from "./providers/mistral";
 const providers: Record<string, AiProvider> = {
   [openAiGpt5Provider.id]: openAiGpt5Provider,
   [openAiGpt5MiniProvider.id]: openAiGpt5MiniProvider,
+  [openAiGpt5NanoProvider.id]: openAiGpt5NanoProvider,
   [claudeSonnetProvider.id]: claudeSonnetProvider,
   [grokCodeProvider.id]: grokCodeProvider,
   [geminiProProvider.id]: geminiProProvider,

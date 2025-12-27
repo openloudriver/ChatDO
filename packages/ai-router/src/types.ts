@@ -11,7 +11,9 @@ export type AiIntent =
   | "summarize_article"
   | "file_summary"
   | "tool_orchestration"
-  | "web_search";
+  | "web_search"
+  | "nano_routing"
+  | "nano_facts";
 
 export type Priority = "low" | "medium" | "high";
 
@@ -30,6 +32,8 @@ export interface AiRouterInput {
     tools?: any[];        // OpenAI-style tool definitions
     tool_choice?: any;    // optional tool_choice parameter (e.g., "auto", "none", or specific tool)
     systemHint?: string;  // optional routing hint
+    temperature?: number; // optional temperature (0.0-2.0)
+    response_format?: any; // optional response format (e.g., JSON schema)
   };
 }
 

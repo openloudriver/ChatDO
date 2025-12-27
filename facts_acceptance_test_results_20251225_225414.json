@@ -1,0 +1,12 @@
+[
+  {
+    "test": "Facts-R Empty Retrieval",
+    "passed": true,
+    "content": "I don't have that stored yet.",
+    "fast_path": "facts_retrieval_empty",
+    "facts_r_count": 0,
+    "store_count": 0,
+    "update_count": 0,
+    "issues": []
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "test": "Facts-R After Write",
+    "passed": true,
+    "write_store_count": 3,
+    "read_content": "1) apple\n2) banana\n3) cherry",
+    "read_fast_path": "facts_retrieval",
+    "read_facts_r_count": 1,
+    "issues": []
+  }
+]

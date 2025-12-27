@@ -1,0 +1,11 @@
+[
+  {
+    "id": "test-7bf235aa-assistant-0",
+    "role": "assistant",
+    "content": "Saved: favorite fruit = [apple, banana, cherry]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T03:53:40.789224+00:00"
+  }
+]

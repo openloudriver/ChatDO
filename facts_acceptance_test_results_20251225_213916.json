@@ -1,0 +1,20 @@
+[
+  {
+    "test": "Facts-S Store",
+    "passed": false,
+    "store_count": -1,
+    "update_count": -1,
+    "stored_fact_keys": [],
+    "message_uuid": "cb133359-307e-481d-ae98-6255586e32ac",
+    "issues": [
+      "Facts LLM failed (negative counts)",
+      "Expected Facts-S(3), got Facts-S(-1)",
+      "Expected Facts-U(0), got Facts-U(-1)",
+      "Expected at least 3 facts, found 0",
+      "Expected value 'snickers' not found in stored facts",
+      "Expected value 'reese's' not found in stored facts",
+      "Expected value 'twix' not found in stored facts"
+    ],
+    "db_facts": []
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "test-89ed0ff5-assistant-0",
+    "role": "assistant",
+    "content": "Saved: favorite color = [red, white, blue]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:18:53.274574+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-1",
+    "role": "assistant",
+    "content": "I don't have that stored yet.",
+    "model": "Index-P + GPT-5",
+    "model_label": "Model: Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:19:10.059494+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-2",
+    "role": "assistant",
+    "content": "Saved: favorite fruit = [apple, banana, cherry]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:19:25.537307+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-3",
+    "role": "assistant",
+    "content": "1) apple\n2) banana\n3) cherry",
+    "model": "Facts-R(1) + Index-P + GPT-5",
+    "model_label": "Model: Facts-R(1) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:19:43.002012+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-4",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [BTC, ETH, SOL]",
+    "model": "Facts-S(3) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:19:59.035355+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-5",
+    "role": "assistant",
+    "content": "Saved: favorite color = [red, blue, green]",
+    "model": "Facts-S(1) + Facts-U(2) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(1) + Facts-U(2) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:20:10.985118+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-6",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [BTC]",
+    "model": "Facts-S(1) + Index-P + GPT-5",
+    "model_label": "Model: Facts-S(1) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:20:16.543835+00:00"
+  },
+  {
+    "id": "test-89ed0ff5-assistant-7",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [Reese's]",
+    "model": "Facts-U(1) + Index-P + GPT-5",
+    "model_label": "Model: Facts-U(1) + Index-P + GPT-5",
+    "provider": "facts",
+    "created_at": "2025-12-26T17:20:22.272438+00:00"
+  }
+]

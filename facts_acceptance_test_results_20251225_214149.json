@@ -1,0 +1,18 @@
+[
+  {
+    "test": "Facts-R Fast Path",
+    "passed": false,
+    "query_plan": {
+      "intent": "facts_get_ranked_list",
+      "topic": "candy",
+      "list_key": "user.favorites.candy"
+    },
+    "facts_count": 0,
+    "canonical_keys": [],
+    "facts": [],
+    "issues": [
+      "No facts returned",
+      "Expected 1 canonical key, got 0: []"
+    ]
+  }
+]

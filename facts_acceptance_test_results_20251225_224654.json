@@ -1,0 +1,16 @@
+[
+  {
+    "test": "Facts-R After Write",
+    "passed": false,
+    "write_store_count": 3,
+    "read_content": "",
+    "read_fast_path": "topic_ambiguity",
+    "read_facts_r_count": 0,
+    "issues": [
+      "Fast path is not 'facts_retrieval' (got 'topic_ambiguity')",
+      "Facts-R count is 0 (expected > 0)",
+      "Response does not contain all expected fruits: ''",
+      "Response does not appear to be a ranked list: ''"
+    ]
+  }
+]

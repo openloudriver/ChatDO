@@ -1,0 +1,27 @@
+[
+  {
+    "test": "Facts-U Update",
+    "passed": true,
+    "store_count": 0,
+    "update_count": 1,
+    "stored_fact_keys": [
+      "user.favorites.candy.1"
+    ],
+    "message_uuid": "652dd3d2-008b-429e-bf55-f47de9273026",
+    "issues": [],
+    "ranked_facts": [
+      {
+        "rank": 1,
+        "value_text": "Twix"
+      },
+      {
+        "rank": 2,
+        "value_text": "Reese's"
+      },
+      {
+        "rank": 3,
+        "value_text": "Twix"
+      }
+    ]
+  }
+]

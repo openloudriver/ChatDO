@@ -1,0 +1,14 @@
+[
+  {
+    "test": "WebSocket Facts-S Store",
+    "passed": true,
+    "content": "Saved: favorite candy = [Reese's]",
+    "model_label": "Model: Facts-S(1) + Index-P + GPT-5",
+    "fast_path": "facts_write_confirmation",
+    "store_count": 1,
+    "update_count": 0,
+    "facts_f": false,
+    "db_facts_count": 1,
+    "issues": []
+  }
+]

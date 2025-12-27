@@ -23,14 +23,15 @@ def canonicalize_topic(raw: str) -> str:
     2. Trim whitespace
     3. Remove "favorite(s)" prefix if present
     4. Convert spaces/hyphens to underscores
-    5. Singularize deterministically:
+    5. Apply synonym normalization (e.g., "cryptocurrency" → "crypto")
+    6. Singularize deterministically:
        - If ends with "ies" → replace with "y" (candies → candy)
        - If ends with "s" and not "ss" → drop trailing "s" (cryptos → crypto, colors → color)
-    6. Remove any non-alphanumeric characters except underscores
-    7. Collapse multiple underscores to single underscore
+    7. Remove any non-alphanumeric characters except underscores
+    8. Collapse multiple underscores to single underscore
     
     Args:
-        raw: Raw topic string (e.g., "My Favorite Candies", "cryptos", "colors")
+        raw: Raw topic string (e.g., "My Favorite Candies", "cryptos", "cryptocurrencies")
         
     Returns:
         Canonical topic string (e.g., "candy", "crypto", "color")
@@ -39,6 +40,10 @@ def canonicalize_topic(raw: str) -> str:
         "My Favorite Candies" → "candy"
         "candies" → "candy"
         "cryptos" → "crypto"
+        "cryptocurrency" → "crypto"
+        "cryptocurrencies" → "crypto"
+        "crypto currency" → "crypto"
+        "digital currency" → "crypto"
         "colors" → "color"
         "favorite-crypto" → "crypto"
         "favorites crypto" → "crypto"
@@ -61,16 +66,32 @@ def canonicalize_topic(raw: str) -> str:
     # Step 3: Convert spaces and hyphens to underscores
     normalized = re.sub(r'[\s-]+', '_', normalized)
     
-    # Step 4: Remove non-alphanumeric characters except underscores
+    # Step 4: Apply synonym normalization BEFORE singularization
+    # This ensures synonyms map to the same canonical topic
+    synonym_map = {
+        # Cryptocurrency synonyms → "crypto"
+        r'\bcryptocurrenc(?:y|ies)\b': 'crypto',
+        r'\bcrypto_currenc(?:y|ies)\b': 'crypto',
+        r'\bdigital_currenc(?:y|ies)\b': 'crypto',
+        r'\bvirtual_currenc(?:y|ies)\b': 'crypto',
+        # Add more synonym mappings as needed
+        # Example: r'\bautomobile(?:s)?\b': 'car',
+        # Example: r'\bvehicle(?:s)?\b': 'car',
+    }
+    
+    for pattern, replacement in synonym_map.items():
+        normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
+    
+    # Step 5: Remove non-alphanumeric characters except underscores
     normalized = re.sub(r'[^a-z0-9_]', '', normalized)
     
-    # Step 5: Collapse multiple underscores to single underscore
+    # Step 6: Collapse multiple underscores to single underscore
     normalized = re.sub(r'_+', '_', normalized)
     
-    # Step 6: Remove leading/trailing underscores
+    # Step 7: Remove leading/trailing underscores
     normalized = normalized.strip('_')
     
-    # Step 7: Singularize deterministically
+    # Step 8: Singularize deterministically
     if normalized.endswith('ies'):
         # candies → candy, cities → city
         normalized = normalized[:-3] + 'y'
@@ -80,7 +101,7 @@ def canonicalize_topic(raw: str) -> str:
         if len(normalized) > 2:
             normalized = normalized[:-1]
     
-    # Step 8: Final cleanup - ensure it's not empty
+    # Step 9: Final cleanup - ensure it's not empty
     if not normalized:
         logger.warning(f"[FACTS-TOPIC] Empty topic after canonicalization of '{raw}'")
         return "unknown"

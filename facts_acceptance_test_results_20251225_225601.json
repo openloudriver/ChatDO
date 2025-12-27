@@ -1,0 +1,11 @@
+[
+  {
+    "test": "Facts-S Confirmation Routing",
+    "passed": true,
+    "content": "Saved: favorite color = [red, white, blue]",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "fast_path": "facts_write_confirmation",
+    "store_count": 3,
+    "issues": []
+  }
+]

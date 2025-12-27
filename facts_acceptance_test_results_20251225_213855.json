@@ -1,0 +1,31 @@
+[
+  {
+    "test": "Concurrency",
+    "passed": false,
+    "total_store": 0,
+    "total_update": 0,
+    "results": [
+      {
+        "message": "My favorite fruit is apple.",
+        "store_count": 0,
+        "update_count": 0,
+        "error": null
+      },
+      {
+        "message": "My favorite fruit is banana.",
+        "store_count": -1,
+        "update_count": -1,
+        "error": null
+      },
+      {
+        "message": "My favorite fruit is cherry.",
+        "store_count": 0,
+        "update_count": 0,
+        "error": null
+      }
+    ],
+    "issues": [
+      "Message 1 failed (negative counts)"
+    ]
+  }
+]

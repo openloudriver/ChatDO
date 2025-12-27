@@ -13,6 +13,12 @@ export const PRICING: PricingEntry[] = [
     outputPerMillion: 10.0,
   },
   {
+    providerId: "openai-gpt5-nano",
+    // GPT-5 Nano pricing (to be verified)
+    inputPerMillion: 0.1,
+    outputPerMillion: 0.4,
+  },
+  {
     providerId: "anthropic-claude-sonnet",
     inputPerMillion: 3.0,
     outputPerMillion: 15.0,

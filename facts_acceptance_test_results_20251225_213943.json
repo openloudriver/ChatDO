@@ -1,0 +1,29 @@
+[
+  {
+    "test": "Facts-S Store",
+    "passed": true,
+    "store_count": 3,
+    "update_count": 0,
+    "stored_fact_keys": [
+      "user.favorites.candy.1",
+      "user.favorites.candy.2",
+      "user.favorites.candy.3"
+    ],
+    "message_uuid": "16bb50c4-80c1-4aae-ab3e-88e743c99aeb",
+    "issues": [],
+    "db_facts": [
+      {
+        "fact_key": "user.favorites.candy.3",
+        "value_text": "Twix"
+      },
+      {
+        "fact_key": "user.favorites.candy.2",
+        "value_text": "Reese's"
+      },
+      {
+        "fact_key": "user.favorites.candy.1",
+        "value_text": "Snickers"
+      }
+    ]
+  }
+]

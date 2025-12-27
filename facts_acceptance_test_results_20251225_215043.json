@@ -1,0 +1,30 @@
+[
+  {
+    "test": "Facts-R Fast Path",
+    "passed": true,
+    "query_plan": {
+      "intent": "facts_get_ranked_list",
+      "topic": "candy",
+      "list_key": "user.favorites.candy"
+    },
+    "facts_count": 3,
+    "canonical_keys": [
+      "user.favorites.candy"
+    ],
+    "facts": [
+      {
+        "rank": 1,
+        "value_text": "Twix"
+      },
+      {
+        "rank": 2,
+        "value_text": "Reese's"
+      },
+      {
+        "rank": 3,
+        "value_text": "Twix"
+      }
+    ],
+    "issues": []
+  }
+]

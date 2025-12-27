@@ -1,5 +1,5 @@
 """
 Facts LLM client module.
-Provides Qwen-based fact extraction and query planning.
+Provides GPT-5 Nano-based fact extraction and query planning.
 """
 

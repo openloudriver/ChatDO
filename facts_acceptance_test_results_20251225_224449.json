@@ -1,0 +1,15 @@
+[
+  {
+    "test": "Facts-S Confirmation Routing",
+    "passed": false,
+    "content": "I don't have that stored yet.",
+    "model_label": "Model: Facts-S(3) + Index-P + GPT-5",
+    "fast_path": "facts_retrieval_empty",
+    "store_count": 3,
+    "issues": [
+      "Response contains 'I don't have that stored yet' (should be Facts confirmation): 'I don't have that stored yet.'",
+      "Response does not start with 'Saved:' (expected Facts confirmation): 'I don't have that stored yet.'",
+      "Fast path is not 'facts_write_confirmation' (got 'facts_retrieval_empty') - indicates GPT-5 fallthrough"
+    ]
+  }
+]
