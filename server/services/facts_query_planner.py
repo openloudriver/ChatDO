@@ -36,16 +36,24 @@ OUTPUT FORMAT (JSON only, no markdown, no explanation):
   "key_prefix": "user.favorites.crypto" (for prefix queries),
   "fact_key": "user.email" (for exact key queries),
   "limit": 25,
-  "include_ranks": true
+  "include_ranks": true,
+  "rank": null (for full list) or 2 (for "second favorite"), 3 (for "third favorite"), etc.
 }}
 
 INTENT RULES:
-1. facts_get_ranked_list: User is asking for a ranked list (e.g., "What are my favorite cryptos?")
+1. facts_get_ranked_list: User is asking for a ranked list (e.g., "What are my favorite cryptos?") OR a specific rank (e.g., "What is my second favorite crypto?")
    - Requires: list_key (user.favorites.<topic>) and topic
    - ALWAYS extract the topic from the query, even if you're not sure it exists
    - If the topic doesn't exist, the system will return empty results (that's OK)
-   - Example: {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.crypto", "topic": "crypto", "limit": 25, "include_ranks": true}}
-   - Example: "What are my favorite planets?" → {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.planet", "topic": "planet", "limit": 25, "include_ranks": true}}
+   - For ordinal queries (second, third, fourth, etc.), set "rank" to the numeric rank:
+     * "second favorite" → rank=2
+     * "third favorite" → rank=3
+     * "fourth favorite" → rank=4
+     * etc.
+   - For full list queries (no ordinal), set "rank": null
+   - Example (full list): {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.crypto", "topic": "crypto", "limit": 25, "include_ranks": true, "rank": null}}
+   - Example (ordinal): "What is my second favorite crypto?" → {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.crypto", "topic": "crypto", "limit": 1, "include_ranks": true, "rank": 2}}
+   - Example: "What are my favorite planets?" → {{"intent": "facts_get_ranked_list", "list_key": "user.favorites.planet", "topic": "planet", "limit": 25, "include_ranks": true, "rank": null}}
 
 2. facts_get_by_prefix: User wants facts matching a prefix (e.g., "Show all my favorites" without specifying a topic)
    - Requires: key_prefix
@@ -85,6 +93,21 @@ Output JSON:"""
             json_text = "\n".join(json_lines).strip()
         
         plan_data = json.loads(json_text)
+        
+        # Detect ordinal queries (second, third, etc.) and extract rank if not already set
+        if plan_data.get("intent") == "facts_get_ranked_list" and plan_data.get("rank") is None:
+            from server.services.ranked_lists import detect_ordinal_query
+            ordinal_result = detect_ordinal_query(query_text)
+            if ordinal_result:
+                rank, detected_topic = ordinal_result
+                plan_data["rank"] = rank
+                # If topic wasn't extracted by LLM but we detected it, use detected topic
+                if not plan_data.get("topic") and detected_topic:
+                    plan_data["topic"] = detected_topic
+                    from server.services.facts_normalize import canonical_list_key
+                    plan_data["list_key"] = canonical_list_key(detected_topic)
+                logger.debug(f"[FACTS-PLANNER] Detected ordinal query: rank={rank}, topic={detected_topic}")
+        
         plan = FactsQueryPlan(**plan_data)
         
         # Canonicalize topic for ranked list queries using Canonicalizer subsystem
@@ -101,7 +124,7 @@ Output JSON:"""
                 f"(confidence: {canonicalization_result.confidence:.3f}, source: {canonicalization_result.source})"
             )
         
-        logger.debug(f"[FACTS-PLANNER] ✅ Generated plan: intent={plan.intent}, list_key={plan.list_key}, topic={plan.topic}")
+        logger.debug(f"[FACTS-PLANNER] ✅ Generated plan: intent={plan.intent}, list_key={plan.list_key}, topic={plan.topic}, rank={plan.rank}")
         return plan
         
     except json.JSONDecodeError as e:

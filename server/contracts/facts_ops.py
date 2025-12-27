@@ -105,4 +105,9 @@ class FactsQueryPlan(BaseModel):
         True,
         description="Whether to include rank information in results"
     )
+    rank: Optional[int] = Field(
+        None,
+        ge=1,
+        description="Specific rank to retrieve (1-based) for ordinal queries like 'second favorite' (e.g., 2 for 'second', 3 for 'third')"
+    )
 

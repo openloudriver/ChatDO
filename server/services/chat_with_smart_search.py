@@ -1425,9 +1425,17 @@ async def chat_with_smart_search(
                 # Fast-path response for ranked list queries (no GPT-5)
                 # GPT-5 Nano determines if this is a list query via query plan intent
                 if query_plan is not None and query_plan.intent == "facts_get_ranked_list" and facts_answer.facts:
-                    # Format ranked list for direct user response
-                    sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
-                    list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in sorted_facts])
+                    # Check if this is an ordinal query (specific rank requested)
+                    if query_plan.rank is not None:
+                        # Ordinal query: return just the single fact at the requested rank
+                        fact = facts_answer.facts[0]  # Should only be one fact when rank is specified
+                        list_items = fact.get("value_text", "")
+                        sorted_facts = [fact]  # Single fact for sources building
+                        logger.info(f"[FACTS-R] Ordinal query response: rank={query_plan.rank}, value={list_items}")
+                    else:
+                        # Full list query: return all facts in ranked order
+                        sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
+                        list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in sorted_facts])
                     
                     # Build sources array with source_message_uuid for deep linking
                     sources_by_uuid = {}
@@ -1463,6 +1471,20 @@ async def chat_with_smart_search(
                         f"facts_answer.count={facts_answer.count} canonical_keys={facts_answer.canonical_keys} "
                         f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
                         f"facts_r_count={facts_actions.get('R', 0)}"
+                    )
+                    
+                    # Extract canonicalization info for telemetry and model label
+                    canonicalizer_used_read = canonicalization_result is not None
+                    teacher_invoked_read = canonicalization_result.teacher_invoked if canonicalization_result else False
+                    model_label_read = build_model_label(
+                        facts_actions=facts_actions,
+                        files_actions=files_actions,
+                        index_status=index_status,
+                        escalated=False,
+                        nano_router_used=nano_router_used,
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                        canonicalizer_used=canonicalizer_used_read,
+                        teacher_invoked=teacher_invoked_read
                     )
                     
                     # Save to history
@@ -1513,7 +1535,12 @@ async def chat_with_smart_search(
                             "thread_id": thread_id,
                             "facts_gate_entered": facts_gate_entered,
                             "facts_gate_reason": facts_gate_reason or "unknown",
-                            "write_intent_detected": is_write_intent
+                            "write_intent_detected": is_write_intent,
+                            # Canonicalization telemetry
+                            "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
+                            "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
+                            "teacher_invoked": teacher_invoked_read,
+                            "alias_source": canonicalization_result.source if canonicalization_result else None
                         },
                         "sources": sources,
                         "model": model_label_read,

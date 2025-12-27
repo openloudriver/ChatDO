@@ -91,11 +91,17 @@ def execute_facts_plan(
                     ranked_facts = []
                 
                 # Convert to answer format
+                # If rank is specified (ordinal query), filter to only that rank
                 for fact in ranked_facts:
+                    fact_rank = fact.get("rank")
+                    # If plan.rank is set, only include facts matching that rank
+                    if plan.rank is not None and fact_rank != plan.rank:
+                        continue
+                    
                     facts.append({
                         "fact_key": fact.get("fact_key", ""),
                         "value_text": fact.get("value_text", ""),
-                        "rank": fact.get("rank"),
+                        "rank": fact_rank,
                         "source_message_uuid": fact.get("source_message_uuid"),
                         "created_at": fact.get("created_at")
                     })
@@ -106,7 +112,10 @@ def execute_facts_plan(
                         if parts[0].startswith("user.favorites."):
                             canonical_keys.add(parts[0])
                 
-                logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key}")
+                if plan.rank is not None:
+                    logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key} at rank {plan.rank}")
+                else:
+                    logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key}")
             else:
                 logger.warning(f"[FACTS-RETRIEVAL] Missing list_key or topic for ranked list query: list_key={plan.list_key}, topic={plan.topic}")
         

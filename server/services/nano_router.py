@@ -146,29 +146,39 @@ async def route_with_nano(
 
 PATTERN MATCHING RULES (CHECK THESE FIRST, IN ORDER):
 
-RULE 1: "My favorite" + topic + "is/are" + value(s)
-IF the message contains the pattern "My favorite" followed by a topic word, then "is" or "are", then value(s):
+RULE 1: "My favorite" + topic + "is/are" + value(s) OR numbered lists with "favorite"
+IF the message contains ANYWHERE (not just at the start):
+  a) The pattern "favorite" (or "favorites") + topic word + "is" or "are" + value(s), OR
+  b) A numbered list (1), 2), 3) or 1. 2. 3.) with "favorite" + topic in the same message:
   → content_plane="facts"
   → operation="write"
   → reasoning_required=false
   → facts_write_candidate MUST be populated:
-    - topic: extract the topic word (e.g., "crypto", "colors", "candy")
+    - topic: extract the topic word (e.g., "crypto", "colors", "candy", "cryptocurrency", "cryptos")
     - value: extract the value(s) as string or array
       * Single value: "My favorite candy is Reese's" → value="Reese's"
       * Multiple values: "My favorite colors are red, white, blue" → value=["red", "white", "blue"]
+      * Numbered list: "1) XMR, 2) BTC, 3) XLM" → value=["XMR", "BTC", "XLM"] (preserve order from numbers)
       * Handle commas and "and": "red, white and blue" → ["red", "white", "blue"]
-    - rank_ordered: true if multiple values, false if single value
+    - rank_ordered: true if multiple values OR numbered list, false if single value
   → confidence=1.0
   → why="My favorite pattern detected: [topic] = [value(s)]"
   → DO NOT route to index or chat - this is ALWAYS facts/write
+  
+CRITICAL: Look for "favorite" + topic + numbered list ANYWHERE in the message, even if the message starts with other text like "Sorry" or "Argh!".
 
 EXAMPLES FOR RULE 1:
 - "My favorite candy is Reese's" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"candy","value":"Reese's","rank_ordered":false}},"confidence":1.0,"why":"My favorite pattern detected: candy = Reese's"}}
 - "My favorite colors are red, white and blue" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"colors","value":["red","white","blue"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: colors = [red, white, blue]"}}
 - "My favorite cryptos are BTC, XMR and XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["BTC","XMR","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [BTC, XMR, XLM]"}}
+- "Here's the list of my favorite cryptos: 1) XMR, 2) BTC, and 3) XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
+- "My favorite cryptos: 1. XMR, 2. BTC, 3. XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
+- "Argh! Sorry, that was wrong again. Here's the list of my favorite cryptos: 1) XMR, 2) BTC, and 3) XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
 
-RULE 2: "List/Show/What is my favorite X"
-IF the message starts with "List my favorite", "Show my favorite", "What is my favorite", "What are my favorite":
+RULE 2: "List/Show/What is my favorite X" OR ordinal queries like "second favorite", "third favorite"
+IF the message:
+  a) Starts with "List my favorite", "Show my favorite", "What is my favorite", "What are my favorite", OR
+  b) Contains ordinal words (second, third, fourth, fifth, etc.) + "favorite" + topic:
   → content_plane="facts"
   → operation="read"
   → reasoning_required=false
@@ -176,7 +186,12 @@ IF the message starts with "List my favorite", "Show my favorite", "What is my f
     - topic: extract the topic word
     - query: the original message
   → confidence=1.0
-  → why="Facts read query for [topic]"
+  → why="Facts read query for [topic]" (or "Facts ordinal query: [ordinal] favorite [topic]")
+  
+EXAMPLES FOR RULE 2:
+- "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?"}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?"}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
+- "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?"}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
 
 RULE 3: "What did we discuss" or "Search for X in my history"
 IF the message contains "What did we discuss" or "Search for X in my history":
