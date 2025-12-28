@@ -177,8 +177,10 @@ EXAMPLES FOR RULE 1:
 
 RULE 2: "List/Show/What is my favorite X" OR ordinal queries like "second favorite", "third favorite"
 IF the message:
-  a) Starts with "List my favorite", "Show my favorite", "What is my favorite", "What are my favorite", OR
-  b) Contains ordinal words (second, third, fourth, fifth, etc.) + "favorite" + topic:
+  a) Contains "list" (anywhere) + "my favorite" + topic, OR
+  b) Starts with "List my favorite", "Show my favorite", "What is my favorite", "What are my favorite", OR
+  c) Contains "list in order" + "my favorite" + topic, OR
+  d) Contains ordinal words (second, third, fourth, fifth, etc.) + "favorite" + topic:
   → content_plane="facts"
   → operation="read"
   → reasoning_required=false
@@ -188,8 +190,13 @@ IF the message:
   → confidence=1.0
   → why="Facts read query for [topic]" (or "Facts ordinal query: [ordinal] favorite [topic]")
   
+CRITICAL: "Please list my favorite X", "List my favorite X", "list in order my favorite X" all route to facts/read.
+  
 EXAMPLES FOR RULE 2:
 - "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?","rank":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "List my favorite cryptos" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"List my favorite cryptos","rank":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "Please list my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list my favorite candy","rank":null}},"confidence":1.0,"why":"Facts read query for candy"}}
+- "Please list in order my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list in order my favorite candy","rank":null}},"confidence":1.0,"why":"Facts read query for candy"}}
 - "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
 - "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?","rank":3}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
 - "What's my #2 favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What's my #2 favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: #2 favorite crypto"}}

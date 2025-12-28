@@ -21,11 +21,12 @@ class MemoryServiceClient:
     def is_available(self) -> bool:
         """Check if Memory Service is running.
         
-        Uses a longer timeout and retries to handle temporary slowdowns.
+        Uses a short timeout for health checks - if it's not responding quickly,
+        we consider it unavailable rather than blocking the request.
         """
         import time
-        max_retries = 2
-        timeout = 5  # Increased from 2 to 5 seconds
+        max_retries = 1  # Single attempt with short timeout
+        timeout = 1  # 1 second timeout - health check should be instant
         
         for attempt in range(max_retries):
             try:
@@ -33,13 +34,11 @@ class MemoryServiceClient:
                 if response.status_code == 200:
                     return True
             except requests.exceptions.Timeout:
-                if attempt < max_retries - 1:
-                    time.sleep(0.5)  # Brief delay before retry
-                    continue
-                logger.debug(f"[MEMORY] Health check timeout (attempt {attempt + 1}/{max_retries})")
+                logger.debug(f"[MEMORY] Health check timeout after {timeout}s - service may be overloaded")
+                return False  # Don't retry - if health check times out, service is likely stuck
             except Exception as e:
                 logger.debug(f"[MEMORY] Health check failed: {e}")
-                break
+                return False  # Don't retry on other errors either
         
         return False
     
@@ -88,7 +87,7 @@ class MemoryServiceClient:
                     "chat_id": chat_id,
                     "exclude_chat_ids": exclude_chat_ids
                 },
-                timeout=5
+                timeout=3  # 3 second timeout for search (vector search can take a moment)
             )
             response.raise_for_status()
             data = response.json()
@@ -250,7 +249,7 @@ class MemoryServiceClient:
                     "timestamp": timestamp,
                     "message_index": message_index
                 },
-                timeout=5  # Short timeout - just for enqueue, not actual indexing
+                timeout=2  # 2 second timeout - enqueue should be very fast (just adding to queue)
             )
             response.raise_for_status()
             data = response.json()

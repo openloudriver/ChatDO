@@ -43,6 +43,41 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle."""
     # Startup
     logger.info("Initializing Memory Service...")
+    
+    # Check for existing instance before starting
+    try:
+        from memory_service.startup_check import (
+            check_existing_instance,
+            create_pid_file,
+            remove_pid_file,
+            acquire_lock,
+            release_lock
+        )
+        
+        is_running, message = check_existing_instance(API_HOST, API_PORT)
+        if is_running:
+            logger.error(f"[STARTUP] {message}")
+            logger.error("[STARTUP] Exiting to prevent duplicate instance")
+            raise RuntimeError(f"Cannot start: {message}")
+        
+        # Acquire lock to prevent race conditions
+        if not acquire_lock():
+            logger.error("[STARTUP] Failed to acquire lock - another instance may be starting")
+            raise RuntimeError("Failed to acquire lock - another instance may be starting")
+        
+        # Create PID file
+        if not create_pid_file():
+            logger.warning("[STARTUP] Failed to create PID file (continuing anyway)")
+        
+        logger.info("[STARTUP] No existing instance detected, proceeding with startup")
+    except ImportError:
+        # startup_check module not available - skip checks (for development)
+        logger.warning("[STARTUP] startup_check module not available, skipping duplicate check")
+    except RuntimeError as e:
+        # Re-raise startup errors
+        raise
+    except Exception as e:
+        logger.warning(f"[STARTUP] Error during startup check: {e} (continuing anyway)")
     # Initialize tracking database
     db.init_tracking_db()
     logger.info("Tracking database initialized")
@@ -89,6 +124,15 @@ async def lifespan(app: FastAPI):
     indexing_queue = get_indexing_queue()
     indexing_queue.stop()
     logger.info("Indexing queue stopped")
+    
+    # Clean up PID file and lock
+    try:
+        from memory_service.startup_check import remove_pid_file, release_lock
+        remove_pid_file()
+        release_lock()
+        logger.info("[SHUTDOWN] Cleaned up PID file and lock")
+    except Exception as e:
+        logger.warning(f"[SHUTDOWN] Error cleaning up: {e}")
 
 
 app = FastAPI(title="Memory Service", version="1.0.0", lifespan=lifespan)

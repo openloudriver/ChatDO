@@ -96,12 +96,12 @@
     "archived_at": null
   },
   {
-    "id": "f6ec3a88-8251-4cd0-8eae-345c9f5c34b7",
-    "project_id": "0e1bdcbd-f1e6-4421-827d-9155da82feb0",
-    "title": "New Chat",
-    "thread_id": "f6ec3a88-8251-4cd0-8eae-345c9f5c34b7",
-    "created_at": "2025-12-27T16:41:15.996261+00:00",
-    "updated_at": "2025-12-27T16:41:15.996270+00:00",
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7",
+    "project_id": "4d9f2a5d-dfb9-4f2a-b69e-15fe4e25fde1",
+    "title": "My favorite candy is Milky Way",
+    "thread_id": "76af5ad5-7221-4b77-b573-68385b47e7b7",
+    "created_at": "2025-12-28T01:44:10.280297+00:00",
+    "updated_at": "2025-12-28T01:44:28.059937+00:00",
     "trashed": false,
     "trashed_at": null,
     "archived": false,

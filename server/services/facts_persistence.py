@@ -333,12 +333,12 @@ async def persist_facts_synchronously(
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
                 logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None
+                return -1, -1, [], message_uuid, None, None
             except Exception as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
                 logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None
+                return -1, -1, [], message_uuid, None, None
             
             # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
             if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
@@ -377,7 +377,7 @@ async def persist_facts_synchronously(
         except Exception as e:
             logger.error(f"[FACTS-PERSIST] ❌ Exception during Facts LLM extraction: {e}", exc_info=True)
             # Hard fail on unexpected exceptions
-            return -1, -1, [], message_uuid, None
+            return -1, -1, [], message_uuid, None, None
     
     # Check for clarification needed (applies to both routing candidate and LLM paths)
     if ops_response and ops_response.needs_clarification:
@@ -475,5 +475,5 @@ async def persist_facts_synchronously(
         f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
     )
     
-    return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics
+    return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result
 

@@ -1,0 +1,191 @@
+[
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-0",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [Milky Way]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-S(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-S(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:44:42.199569+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-1",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [Reese's]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-U(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-U(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:45:05.422066+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-2",
+    "role": "assistant",
+    "content": "I don't have that stored yet.",
+    "model": "GPT-5 Nano → Canonicalizer → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:45:30.542365+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-3",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [Reese's, Milky Way, Snickers]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:45:59.456427+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-user-4",
+    "role": "user",
+    "content": "Please list my favorite candies",
+    "created_at": "2025-12-28T01:46:47.077992+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-5",
+    "role": "assistant",
+    "content": "I don’t have your favorite candies saved yet.\n\n## What I need\n- List your favorite candies (top 3–10).  \n- If order matters, rank them.  \n- Any specifics: flavors, brands, seasonal editions, dietary constraints.\n\n## Want me to remember them?\n- Reply with the list, and I’ll store it in your memory for future use (e.g., gift ideas, shopping lists).",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "76af5ad5-7221-4b77-b573-68385b47e7b7:76af5ad5-7221-4b77-b573-68385b47e7b7-user-0:1766886378492",
+        "assistant_job_id": "76af5ad5-7221-4b77-b573-68385b47e7b7:76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-5:1766886407123"
+      }
+    },
+    "created_at": "2025-12-28T01:46:47.076306+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-6",
+    "role": "assistant",
+    "content": "1) Reese's\n2) Milky Way\n3) Snickers",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:48:17.839551+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-user-7",
+    "role": "user",
+    "content": "Please list my favorite candy",
+    "created_at": "2025-12-28T01:49:10.255625+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-8",
+    "role": "assistant",
+    "content": "I don’t have your favorite candy saved yet.\n\n## 🔍 What I need\n- Tell me your top 3–5 favorite candies (exact names).\n- I’ll save them to memory so I can list them instantly next time.\n\n## 🍬 Quick picks (optional ideas to choose from)\n- Chocolate: Reese’s, Snickers, Kit Kat, Twix, M&M’s (peanut or plain)\n- Fruity/Sour: Sour Patch Kids, Skittles, Starburst\n- Chewy/Gummy: Haribo Goldbears, Swedish Fish\n\nReply with your list and I’ll remember it.",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "76af5ad5-7221-4b77-b573-68385b47e7b7:76af5ad5-7221-4b77-b573-68385b47e7b7-user-0:1766886523481",
+        "assistant_job_id": null
+      }
+    },
+    "created_at": "2025-12-28T01:49:10.253516+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-9",
+    "role": "assistant",
+    "content": "1) Reese's\n2) Milky Way\n3) Snickers",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:50:51.807594+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-10",
+    "role": "assistant",
+    "content": "Snickers",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:51:35.850857+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-11",
+    "role": "assistant",
+    "content": "Reese's",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:52:12.227300+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-12",
+    "role": "assistant",
+    "content": "Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:52:46.475255+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-user-13",
+    "role": "user",
+    "content": "Please list in order my favorite candy",
+    "created_at": "2025-12-28T01:54:04.031068+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-14",
+    "role": "assistant",
+    "content": "I don’t have your favorite candy ranking in memory yet.\n\n## How to proceed\n- Paste your ranked list (1 = favorite) and I’ll confirm it.\n- Or name 5–10 candies you like, and I’ll help you rank them quickly.\n\n## Quick 30‑second ranking (optional)\nReply with:\n1) All the candies you want considered (e.g., Reese’s, Snickers, Sour Patch Kids, Skittles, KitKat).\n2) Any hard rules (e.g., “chocolate over fruity,” “no nuts,” “sour > sweet”).\n3) Ties allowed? yes/no.\n\n## Want me to remember it?\nIf you want this saved as your “Favorite Candy (ranked)” for future questions, say “save it” after we finalize the list.",
+    "model": "GPT-5 Nano → Index-F → GPT-5",
+    "model_label": "GPT-5 Nano → Index-F → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "F",
+      "index_job": null
+    },
+    "created_at": "2025-12-28T01:54:04.028703+00:00"
+  },
+  {
+    "id": "76af5ad5-7221-4b77-b573-68385b47e7b7-assistant-15",
+    "role": "assistant",
+    "content": "1) Reese's\n2) Milky Way\n3) Snickers",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-F",
+    "provider": "facts",
+    "created_at": "2025-12-28T01:55:10.967119+00:00"
+  }
+]
