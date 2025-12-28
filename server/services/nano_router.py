@@ -189,9 +189,11 @@ IF the message:
   → why="Facts read query for [topic]" (or "Facts ordinal query: [ordinal] favorite [topic]")
   
 EXAMPLES FOR RULE 2:
-- "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?"}},"confidence":1.0,"why":"Facts read query for crypto"}}
-- "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?"}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
-- "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?"}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
+- "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?","rank":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
+- "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?","rank":3}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
+- "What's my #2 favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What's my #2 favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: #2 favorite crypto"}}
+- "What is my 2nd favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my 2nd favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: 2nd favorite crypto"}}
 
 RULE 3: "What did we discuss" or "Search for X in my history"
 IF the message contains "What did we discuss" or "Search for X in my history":
@@ -219,7 +221,7 @@ OUTPUT SCHEMA:
   "operation": "write" | "read" | "search" | "none",
   "reasoning_required": boolean,
   "facts_write_candidate": {{"topic": "string", "value": "string" | ["string"], "rank_ordered": boolean}} | null,
-  "facts_read_candidate": {{"topic": "string", "query": "string"}} | null,
+  "facts_read_candidate": {{"topic": "string", "query": "string", "rank": number | null}} | null,
   "index_candidate": {{"query": "string"}} | null,
   "files_candidate": {{"query": "string", "path_hint": "string" | null}} | null,
   "confidence": 0.0-1.0,
@@ -332,11 +334,28 @@ Output ONLY valid JSON matching the RoutingPlan schema. No markdown, no explanat
         try:
             routing_data = json.loads(json_text)
             logger.info(f"[NANO-ROUTER] Parsed JSON: {json.dumps(routing_data, indent=2)}")
+            
+            # Detect and set rank for ordinal queries if not already set by router
+            if routing_data.get("content_plane") == "facts" and routing_data.get("operation") == "read":
+                facts_read = routing_data.get("facts_read_candidate")
+                if facts_read and facts_read.get("rank") is None:
+                    from server.services.ordinal_detection import detect_ordinal_rank
+                    detected_rank = detect_ordinal_rank(user_message)
+                    if detected_rank:
+                        facts_read["rank"] = detected_rank
+                        logger.info(f"[NANO-ROUTER] Detected ordinal rank: {detected_rank} (ordinal_parse_source=router_post_parse)")
+            
             routing_plan = RoutingPlan(**routing_data)
+            
+            # Log rank if present
+            rank_info = ""
+            if routing_plan.facts_read_candidate and routing_plan.facts_read_candidate.rank:
+                rank_info = f", rank={routing_plan.facts_read_candidate.rank}"
+            
             logger.info(
                 f"[NANO-ROUTER] ✅ Validated routing plan: content_plane={routing_plan.content_plane}, "
                 f"operation={routing_plan.operation}, reasoning_required={routing_plan.reasoning_required}, "
-                f"confidence={routing_plan.confidence}, why={routing_plan.why}"
+                f"confidence={routing_plan.confidence}, why={routing_plan.why}{rank_info}"
             )
         except Exception as e:
             # Schema validation failed - retry once with corrective prompt

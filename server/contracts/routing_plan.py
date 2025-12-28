@@ -22,6 +22,12 @@ class FactsReadCandidate(BaseModel):
     """Extracted query candidate for read operations."""
     topic: str = Field(..., description="Topic to query (e.g., 'candy', 'crypto')")
     query: str = Field(..., description="Original query text for context")
+    rank: Optional[int] = Field(
+        None,
+        ge=1,
+        le=10,
+        description="Specific rank to retrieve (1-based) for ordinal queries like 'second favorite' (e.g., 2 for 'second', 3 for 'third'). None for full list queries."
+    )
 
 
 class IndexCandidate(BaseModel):

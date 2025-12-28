@@ -1349,10 +1349,15 @@ async def chat_with_smart_search(
             canonicalization_result = None
             
             # Use routing plan candidate if available (avoids second Nano call)
+            ordinal_parse_source = "none"
             if routing_plan.facts_read_candidate:
+                router_rank = routing_plan.facts_read_candidate.rank
+                if router_rank:
+                    ordinal_parse_source = "router"
+                
                 logger.info(
-                    f"[FACTS-R] Using routing plan candidate (topic={routing_plan.facts_read_candidate.topic}), "
-                    f"skipping query planner"
+                    f"[FACTS-R] Using routing plan candidate (topic={routing_plan.facts_read_candidate.topic}, "
+                    f"rank={router_rank}), skipping query planner"
                 )
                 # Canonicalize topic using Canonicalizer subsystem
                 canonicalization_result = canonicalize_topic(
@@ -1372,9 +1377,11 @@ async def chat_with_smart_search(
                     intent="facts_get_ranked_list",
                     list_key=list_key,
                     topic=canonical_topic,
-                    limit=25,
-                    include_ranks=True
+                    limit=25 if router_rank is None else 1,  # Limit to 1 for ordinal queries
+                    include_ranks=True,
+                    rank=router_rank  # CRITICAL: Pass rank from router
                 )
+                logger.info(f"[FACTS-R] Query plan created with rank={router_rank} (ordinal_parse_source={ordinal_parse_source})")
             else:
                 # Fallback to query planner (should be rare)
                 if not query_plan:
@@ -1461,12 +1468,17 @@ async def chat_with_smart_search(
                     sources = list(sources_by_uuid.values())
                     logger.info(f"[FACTS-R] ✅ Fast-path ranked list response: topic={query_plan.topic if query_plan is not None else 'unknown'}, items={len(sorted_facts)}")
                     
-                    # HIGH-SIGNAL LOGGING: Log response path
+                    # HIGH-SIGNAL LOGGING: Log response path with rank telemetry
+                    requested_rank = query_plan.rank if query_plan else None
+                    rank_applied = requested_rank is not None
+                    rank_result_found = len(facts_answer.facts) > 0 if rank_applied else None
                     logger.info(
                         f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH "
                         f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
                         f"query_plan.intent={query_plan.intent if query_plan else 'N/A'} "
                         f"query_plan.topic={query_plan.topic if query_plan else 'N/A'} "
+                        f"requested_rank={requested_rank} rank_applied={rank_applied} rank_result_found={rank_result_found} "
+                        f"ordinal_parse_source={ordinal_parse_source} "
                         f"canonical_topic={canonical_topic} computed_list_key={computed_list_key} "
                         f"facts_answer.count={facts_answer.count} canonical_keys={facts_answer.canonical_keys} "
                         f"store_count={facts_actions.get('S', 0)} update_count={facts_actions.get('U', 0)} "
@@ -1540,7 +1552,13 @@ async def chat_with_smart_search(
                             "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
                             "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
                             "teacher_invoked": teacher_invoked_read,
-                            "alias_source": canonicalization_result.source if canonicalization_result else None
+                            "alias_source": canonicalization_result.source if canonicalization_result else None,
+                            # Rank telemetry
+                            "requested_rank": query_plan.rank if query_plan else None,
+                            "detected_rank": query_plan.rank if query_plan else None,
+                            "ordinal_parse_source": ordinal_parse_source,
+                            "rank_applied": query_plan.rank is not None if query_plan else False,
+                            "rank_result_found": len(facts_answer.facts) > 0 if query_plan and query_plan.rank else None
                         },
                         "sources": sources,
                         "model": model_label_read,

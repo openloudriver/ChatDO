@@ -95,18 +95,21 @@ Output JSON:"""
         plan_data = json.loads(json_text)
         
         # Detect ordinal queries (second, third, etc.) and extract rank if not already set
+        ordinal_parse_source = "none"
         if plan_data.get("intent") == "facts_get_ranked_list" and plan_data.get("rank") is None:
-            from server.services.ranked_lists import detect_ordinal_query
-            ordinal_result = detect_ordinal_query(query_text)
-            if ordinal_result:
-                rank, detected_topic = ordinal_result
-                plan_data["rank"] = rank
-                # If topic wasn't extracted by LLM but we detected it, use detected topic
-                if not plan_data.get("topic") and detected_topic:
-                    plan_data["topic"] = detected_topic
-                    from server.services.facts_normalize import canonical_list_key
-                    plan_data["list_key"] = canonical_list_key(detected_topic)
-                logger.debug(f"[FACTS-PLANNER] Detected ordinal query: rank={rank}, topic={detected_topic}")
+            from server.services.ordinal_detection import detect_ordinal_rank
+            detected_rank = detect_ordinal_rank(query_text)
+            if detected_rank:
+                plan_data["rank"] = detected_rank
+                ordinal_parse_source = "planner"
+                # Update limit to 1 for ordinal queries
+                if plan_data.get("limit", 25) > 1:
+                    plan_data["limit"] = 1
+                logger.info(f"[FACTS-PLANNER] Detected ordinal rank: {detected_rank} (ordinal_parse_source=planner)")
+        
+        # Store ordinal_parse_source for telemetry (will be logged but not in schema)
+        if ordinal_parse_source != "none":
+            logger.info(f"[FACTS-PLANNER] Ordinal query detected: rank={plan_data.get('rank')}, source={ordinal_parse_source}")
         
         plan = FactsQueryPlan(**plan_data)
         

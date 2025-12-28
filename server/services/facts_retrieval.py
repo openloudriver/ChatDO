@@ -79,11 +79,13 @@ def execute_facts_plan(
             
             if plan.list_key and plan.topic:
                 try:
-                    # Use canonicalized topic for retrieval
+                    # CRITICAL: For ordinal queries, we need ALL facts to filter by rank
+                    # Don't limit before filtering - get all facts, filter by rank, then limit
+                    retrieval_limit = plan.limit if plan.rank is None else 50  # Get more facts if filtering by rank
                     ranked_facts = search_facts_ranked_list(
                         project_id=project_uuid,
                         topic_key=plan.topic,
-                        limit=plan.limit,
+                        limit=retrieval_limit,
                         exclude_message_uuid=exclude_message_uuid
                     )
                 except Exception as e:
@@ -91,7 +93,7 @@ def execute_facts_plan(
                     ranked_facts = []
                 
                 # Convert to answer format
-                # If rank is specified (ordinal query), filter to only that rank
+                # If rank is specified (ordinal query), filter to only that rank FIRST
                 for fact in ranked_facts:
                     fact_rank = fact.get("rank")
                     # If plan.rank is set, only include facts matching that rank
@@ -113,7 +115,10 @@ def execute_facts_plan(
                             canonical_keys.add(parts[0])
                 
                 if plan.rank is not None:
-                    logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key} at rank {plan.rank}")
+                    logger.info(
+                        f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key} at rank {plan.rank} "
+                        f"(rank_applied=True, rank_result_found={len(facts) > 0})"
+                    )
                 else:
                     logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key}")
             else:
