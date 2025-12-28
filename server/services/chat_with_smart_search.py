@@ -540,7 +540,8 @@ async def chat_with_smart_search(
     target_name: str = "general",
     thread_id: Optional[str] = None,
     conversation_history: Optional[List[Dict[str, str]]] = None,
-    project_id: Optional[str] = None
+    project_id: Optional[str] = None,
+    client_message_uuid: Optional[str] = None  # Client-generated UUID for user message
 ) -> Dict[str, Any]:
     """
     Chat with smart search and Facts persistence.
@@ -666,7 +667,7 @@ async def chat_with_smart_search(
     # can find the message they just sent
     # Phase 1: Synchronous Facts Persistence (does NOT depend on Memory Service)
     # Store facts immediately and deterministically, get actual counts from DB writes
-    current_message_uuid = None
+    current_message_uuid = client_message_uuid  # Initialize with client-provided UUID
     
     # Initialize query_plan early (before Facts persistence) so it can be used in ambiguity check
     # CRITICAL: Must be initialized at function scope before any conditional access
@@ -807,6 +808,9 @@ async def chat_with_smart_search(
             user_msg_created_at = datetime.now(timezone.utc)
             user_message_id = f"{thread_id}-user-{message_index}"
             
+            # Use client_message_uuid if provided, otherwise will be generated
+            message_uuid_to_use = client_message_uuid
+            
             # Persist facts synchronously (does NOT require Memory Service)
             # NEW: Uses routing plan candidate when available to avoid double Nano calls
             # Falls back to GPT-5 Nano Facts extractor only if candidate not available
@@ -816,6 +820,7 @@ async def chat_with_smart_search(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
+                message_uuid=message_uuid_to_use,  # Use client-provided UUID
                 chat_id=thread_id,
                 message_id=user_message_id,
                 timestamp=user_msg_created_at,
@@ -1237,6 +1242,9 @@ async def chat_with_smart_search(
             memory_client = get_memory_client()
             logger.info(f"[MEMORY] Enqueueing user message for async indexing: {user_message_id} for project {project_id}")
             
+            # Use client_message_uuid if available (from Facts persistence) or current_message_uuid
+            message_uuid_for_indexing = current_message_uuid or client_message_uuid
+            
             try:
                 success, job_id, message_uuid = memory_client.index_chat_message(
                     project_id=project_id,
@@ -1245,7 +1253,8 @@ async def chat_with_smart_search(
                     role="user",
                     content=user_message,
                     timestamp=user_msg_created_at,
-                    message_index=message_index
+                    message_index=message_index,
+                    message_uuid=message_uuid_for_indexing  # Pass provided UUID
                 )
                 
                 # Use message_uuid from indexing if we don't have one yet
@@ -2583,6 +2592,7 @@ async def chat_with_smart_search(
             "facts_gate_entered": facts_gate_entered,
             "facts_gate_reason": facts_gate_reason or "unknown",
             "write_intent_detected": is_write_intent,
+            "message_uuid": current_message_uuid,  # Echo back user message UUID for reconciliation
             "nano_routing_plan": {
                 "content_plane": routing_plan.content_plane if routing_plan else None,
                 "operation": routing_plan.operation if routing_plan else None,

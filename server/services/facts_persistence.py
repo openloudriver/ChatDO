@@ -34,13 +34,17 @@ def get_or_create_message_uuid(
     role: str,
     content: str,
     timestamp: datetime,
-    message_index: int
+    message_index: int,
+    provided_message_uuid: Optional[str] = None  # Client-provided UUID to use
 ) -> Optional[str]:
     """
     Get or create message_uuid for a message.
     
     This ensures we have a message_uuid before storing facts, even if
     the Memory Service is unavailable.
+    
+    If provided_message_uuid is given, it will be used (idempotent: if message
+    already exists with different UUID, existing UUID is preserved).
     
     Args:
         project_id: Project ID
@@ -50,6 +54,7 @@ def get_or_create_message_uuid(
         content: Message content
         timestamp: Message timestamp
         message_index: Message index in conversation
+        provided_message_uuid: Optional client-provided UUID to use
         
     Returns:
         message_uuid if successful, None otherwise
@@ -63,7 +68,7 @@ def get_or_create_message_uuid(
         # Upsert source (chat messages don't have a root_path)
         db.upsert_source(source_id, project_id, "", None, None)
         
-        # Upsert chat message (generates message_uuid if not exists)
+        # Upsert chat message (uses provided_message_uuid if given, otherwise generates)
         chat_message_id = db.upsert_chat_message(
             source_id=source_id,
             project_id=project_id,
@@ -72,7 +77,8 @@ def get_or_create_message_uuid(
             role=role,
             content=content,
             timestamp=timestamp,
-            message_index=message_index
+            message_index=message_index,
+            message_uuid=provided_message_uuid  # Pass provided UUID
         )
         
         # Get the message_uuid
@@ -214,7 +220,8 @@ async def persist_facts_synchronously(
             role=role,
             content=message_content,
             timestamp=timestamp,
-            message_index=message_index
+            message_index=message_index,
+            provided_message_uuid=message_uuid  # Pass provided UUID if available
         )
         
         if not message_uuid:

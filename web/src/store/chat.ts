@@ -1114,6 +1114,14 @@ export const useChatStore = create<ChatStore>((set) => ({
         });
       }
       
+      // DIAGNOSTICS: Log message counts and UUID presence
+      const user_count = messages.filter(m => m.role === 'user').length;
+      const assistant_count = messages.filter(m => m.role === 'assistant').length;
+      const missing_uuid_count = messages.filter(m => !m.uuid).length;
+      const first_timestamp = messages[0]?.timestamp?.toISOString();
+      const last_timestamp = messages[messages.length - 1]?.timestamp?.toISOString();
+      console.log(`[REHYDRATION] Loaded ${messages.length} messages: user=${user_count}, assistant=${assistant_count}, missing_uuid=${missing_uuid_count}, first=${first_timestamp}, last=${last_timestamp}`);
+      
       console.log(`[DIAG] Converted ${messages.length} messages for frontend (filtered ${backendMessages.length - messages.length} RAG/system messages)`);
       
       // Update conversation object with messages so preview works

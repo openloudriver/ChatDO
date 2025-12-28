@@ -955,8 +955,9 @@ def upsert_chat_message(
     Returns the database ID of the chat message.
     
     Args:
-        message_uuid: Optional UUIDv4. If not provided, generates a new one for new messages.
-                     For existing messages, preserves the existing UUID.
+        message_uuid: Optional UUIDv4. If provided, will be used for new messages.
+                     For existing messages, preserves the existing UUID (idempotent).
+                     If not provided for new messages, generates a new UUID.
     """
     # Get source_db_id
     source_db_id = upsert_source(source_id, project_id, "", None, None)
@@ -974,11 +975,11 @@ def upsert_chat_message(
     existing = cursor.fetchone()
     
     if existing:
-        # Update existing message (preserve existing UUID)
+        # Update existing message (preserve existing UUID - idempotent)
         existing_uuid = existing["message_uuid"]
         if not existing_uuid:
-            # If UUID is missing (migration case), generate one
-            existing_uuid = str(uuid.uuid4())
+            # If UUID is missing (migration case), use provided UUID or generate one
+            existing_uuid = message_uuid or str(uuid.uuid4())
         cursor.execute("""
             UPDATE chat_messages
             SET role = ?, content = ?, timestamp = ?, message_index = ?, message_uuid = ?
@@ -986,7 +987,7 @@ def upsert_chat_message(
         """, (role, content, timestamp, message_index, existing_uuid, existing["id"]))
         chat_message_id = existing["id"]
     else:
-        # Insert new message with UUID
+        # Insert new message with UUID (use provided UUID if available)
         if not message_uuid:
             message_uuid = str(uuid.uuid4())
         cursor.execute("""

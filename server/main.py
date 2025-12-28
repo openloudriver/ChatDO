@@ -2806,6 +2806,13 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
     from memory_service.memory_dashboard import db as memory_db
     
     print(f"[DIAG] Loading messages for chat {chat_id}: history has {len(history)} messages")
+    
+    # DIAGNOSTICS: Count messages by role before filtering
+    user_count = sum(1 for m in history if m.get("role") == "user")
+    assistant_count = sum(1 for m in history if m.get("role") == "assistant")
+    system_count = sum(1 for m in history if m.get("role") == "system")
+    logger.info(f"[REHYDRATION] Message counts: user={user_count}, assistant={assistant_count}, system={system_count}, total={len(history)}")
+    
     for idx, msg in enumerate(history):
         # Skip system messages for display
         if msg.get("role") == "system":
@@ -2878,6 +2885,14 @@ async def get_chat_messages(chat_id: str, limit: Optional[int] = None):
         
         print(f"[DIAG] Message {idx}: role={msg.get('role')}, content_length={len(msg.get('content', ''))}, type={msg.get('type', 'none')}, created_at={message_obj.get('created_at', 'missing')}, model_label={message_obj.get('model_label', 'none')}, uuid={message_obj.get('uuid', 'none')}")
         messages.append(message_obj)
+    
+    # DIAGNOSTICS: Count messages by role after processing
+    final_user_count = sum(1 for m in messages if m.get("role") == "user")
+    final_assistant_count = sum(1 for m in messages if m.get("role") == "assistant")
+    missing_uuid_count = sum(1 for m in messages if not m.get("uuid") and not m.get("message_uuid"))
+    first_timestamp = messages[0].get("created_at") if messages else None
+    last_timestamp = messages[-1].get("created_at") if messages else None
+    logger.info(f"[REHYDRATION] Final counts: user={final_user_count}, assistant={final_assistant_count}, missing_uuid={missing_uuid_count}, first={first_timestamp}, last={last_timestamp}")
     
     print(f"[DIAG] Returning {len(messages)} messages to frontend")
     

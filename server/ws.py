@@ -131,6 +131,7 @@ async def stream_chat_response(
     conversation_id: str,
     target_name: str,  # This is now determined from project_id, but kept for backward compatibility
     message: str,
+    client_message_uuid: Optional[str] = None,  # Client-generated UUID for user message
     rag_file_ids: Optional[List[str]] = None,
     web_mode: str = 'auto',
     force_search: bool = False,
@@ -581,7 +582,8 @@ Keep it concise, neutral, and factual."""
                 target_name=target_cfg.name,
                 thread_id=conversation_id if conversation_id else None,
                 conversation_history=conversation_history,
-                project_id=project_uuid  # Use resolved UUID, not original project_id
+                project_id=project_uuid,  # Use resolved UUID, not original project_id
+                client_message_uuid=client_message_uuid  # Pass client-generated UUID
             )
             
             # Log response meta for debugging
@@ -955,6 +957,7 @@ async def websocket_endpoint(websocket: WebSocket):
             project_slug = data.get("project_id")  # May be slug or UUID
             conversation_id = data.get("conversation_id")
             message = data.get("message")
+            client_message_uuid = data.get("client_message_uuid")  # Client-generated UUID for user message
             rag_file_ids = data.get("rag_file_ids")  # Optional RAG file IDs
             web_mode = data.get("web_mode", "auto")  # Web mode: 'auto' or 'on'
             force_search = data.get("force_search", False)  # Force web search (Top Results card)
@@ -1065,6 +1068,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 conversation_id,
                 target_name,
                 message,
+                client_message_uuid=client_message_uuid,  # Pass client-generated UUID
                 rag_file_ids=rag_file_ids,
                 web_mode=web_mode,
                 force_search=force_search,

@@ -8,6 +8,7 @@ import type { Source } from '../types/sources';
 import UrlSummaryDialog from './UrlSummaryDialog';
 import WebSearchDialog from './WebSearchDialog';
 import { useTheme } from '../contexts/ThemeContext';
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper: Convert web search result to Source
 const webResultToSource = (result: { title: string; url: string; snippet: string }, index: number): Source => {
@@ -250,6 +251,9 @@ const ChatComposer: React.FC = () => {
                           currentConversation.messages.length === 0 &&
                           !isEditing;
     
+    // Generate client_message_uuid at send-time for first-class persistence
+    const client_message_uuid = uuidv4();
+    
     // If we're editing a message, update it and remove messages after
     if (isEditing && messageIdToEdit) {
       editMessage(messageIdToEdit, messageWithFiles);
@@ -257,8 +261,12 @@ const ChatComposer: React.FC = () => {
       setEditingMessageId(null);
       // Don't add a new message - the existing one is updated
     } else {
-      // Add user message (only if not editing)
-      addMessage({ role: 'user', content: messageWithFiles });
+      // Add user message with client_message_uuid (only if not editing)
+      addMessage({ 
+        role: 'user', 
+        content: messageWithFiles,
+        uuid: client_message_uuid  // Store durable UUID in optimistic message
+      });
     }
     
     setInput('');
@@ -306,9 +314,10 @@ const ChatComposer: React.FC = () => {
           target_name: currentConversation.targetName,
           message: messageToSend,
           rag_file_ids: ragFileIds.length > 0 ? ragFileIds : undefined,
-          web_mode: webMode
+          web_mode: webMode,
+          client_message_uuid: client_message_uuid  // Include client-generated UUID
         };
-        console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds);
+        console.log('[RAG] Sending WebSocket message with rag_file_ids:', ragFileIds, 'client_message_uuid:', client_message_uuid);
         ws.send(JSON.stringify(payload));
       };
       
@@ -434,6 +443,27 @@ const ChatComposer: React.FC = () => {
             
             // Close WebSocket first to prevent any more messages
             ws.close();
+            
+            // Reconcile optimistic user message with server UUID if available
+            if (data.meta?.message_uuid && client_message_uuid) {
+              const state = useChatStore.getState();
+              const messages = state.messages;
+              // Find optimistic user message (should have the client_message_uuid we generated)
+              const optimisticMessage = messages.find(m => 
+                m.role === 'user' && 
+                (m.uuid === client_message_uuid || (!m.uuid && messages.indexOf(m) === messages.length - 2))
+              );
+              if (optimisticMessage) {
+                // Update optimistic message with server UUID (reconcile)
+                const updatedMessages = messages.map(m => 
+                  m.id === optimisticMessage.id 
+                    ? { ...m, uuid: data.meta.message_uuid }  // Update UUID from server
+                    : m
+                );
+                useChatStore.setState({ messages: updatedMessages });
+                console.log(`[RECONCILE] Updated optimistic user message ${optimisticMessage.id} with UUID ${data.meta.message_uuid}`);
+              }
+            }
             
             // Add final message with model/provider info
             // Use requestAnimationFrame to ensure the message is added before clearing streaming

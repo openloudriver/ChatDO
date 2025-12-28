@@ -918,6 +918,17 @@
     "default_target": "general",
     "sort_index": 83,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-28T02:26:24.535911+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "0a2ee9ae-e7b2-4cb6-bd9e-3599f1e846a3",
+    "name": "v45",
+    "default_target": "general",
+    "sort_index": 84,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,

@@ -213,7 +213,8 @@ class MemoryServiceClient:
         role: str,
         content: str,
         timestamp: str,
-        message_index: int
+        message_index: int,
+        message_uuid: Optional[str] = None  # Client-provided UUID to use
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Enqueue a chat message for async indexing.
@@ -226,12 +227,13 @@ class MemoryServiceClient:
             content: Message content
             timestamp: ISO format datetime string
             message_index: Index of message in the conversation
+            message_uuid: Optional client-provided UUID to use
             
         Returns:
             Tuple of (success: bool, job_id: Optional[str], message_uuid: Optional[str])
             - success: True if job was enqueued, False if enqueue failed
             - job_id: Job identifier for status tracking (None if failed)
-            - message_uuid: Will be None initially, available after job completes
+            - message_uuid: Available immediately if provided, otherwise after job completes
         """
         if not self.is_available():
             logger.warning("[MEMORY] Memory Service is not available, skipping chat message indexing")
@@ -247,7 +249,8 @@ class MemoryServiceClient:
                     "role": role,
                     "content": content,
                     "timestamp": timestamp,
-                    "message_index": message_index
+                    "message_index": message_index,
+                    "message_uuid": message_uuid  # Pass provided UUID if available
                 },
                 timeout=2  # 2 second timeout - enqueue should be very fast (just adding to queue)
             )

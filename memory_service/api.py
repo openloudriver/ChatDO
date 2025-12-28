@@ -191,6 +191,7 @@ class IndexChatMessageRequest(BaseModel):
     content: str
     timestamp: str  # ISO format datetime string
     message_index: int
+    message_uuid: Optional[str] = None  # Client-provided UUID to use
 
 
 class SearchResponse(BaseModel):
