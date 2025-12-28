@@ -1047,9 +1047,22 @@ async def chat_with_smart_search(
                     if thread_id:
                         try:
                             history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
-                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            
+                            # Add user message to history FIRST (before assistant message)
+                            user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            user_message_id = f"{thread_id}-user-{message_index}"
+                            user_msg = {
+                                "id": user_message_id,
+                                "role": "user",
+                                "content": user_message,
+                                "created_at": user_msg_created_at
+                            }
+                            history.append(user_msg)
+                            
+                            # Now add assistant message
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                             # Extract canonicalization info for model label
                             canonicalizer_used_hist = canonicalization_result is not None
                             teacher_invoked_hist = canonicalization_result.teacher_invoked if canonicalization_result else False
@@ -1512,9 +1525,22 @@ async def chat_with_smart_search(
                     if thread_id:
                         try:
                             history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
-                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            
+                            # Add user message to history FIRST (before assistant message)
+                            user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            user_message_id = f"{thread_id}-user-{message_index}"
+                            user_msg = {
+                                "id": user_message_id,
+                                "role": "user",
+                                "content": user_message,
+                                "created_at": user_msg_created_at
+                            }
+                            history.append(user_msg)
+                            
+                            # Now add assistant message
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                             # Extract canonicalization info for model label
                             canonicalizer_used_hist = canonicalization_result is not None
                             teacher_invoked_hist = canonicalization_result.teacher_invoked if canonicalization_result else False

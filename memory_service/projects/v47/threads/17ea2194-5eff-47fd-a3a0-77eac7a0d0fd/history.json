@@ -1,0 +1,212 @@
+[
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-0",
+    "role": "user",
+    "content": "My favorite candy is M&Ms",
+    "created_at": "2025-12-28T20:24:48.134288+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-1",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [M&Ms]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-S(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-S(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T20:24:48.134295+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-2",
+    "role": "user",
+    "content": "My favorite candies in order are M&Ms, Reese's, and Milky Way",
+    "created_at": "2025-12-28T20:25:36.567314+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-3",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [M&Ms, Reese's, Milky Way]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T20:25:36.567323+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-4",
+    "role": "user",
+    "content": "Please list my favorite candy",
+    "created_at": "2025-12-28T20:25:59.845109+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-5",
+    "role": "assistant",
+    "content": "1) M&Ms\n2) Reese's\n3) Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T20:25:59.845131+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-6",
+    "role": "user",
+    "content": "What is my second favorite candy?",
+    "created_at": "2025-12-28T20:26:24.180565+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-7",
+    "role": "assistant",
+    "content": "Reese's",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T20:26:24.180580+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-8",
+    "role": "user",
+    "content": "Please list my favorite candies",
+    "created_at": "2025-12-28T21:18:53.926623+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-9",
+    "role": "assistant",
+    "content": "1) M&Ms\n2) Reese's\n3) Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:18:53.926699+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-10",
+    "role": "user",
+    "content": "What is my third favorite candy?",
+    "created_at": "2025-12-28T21:19:21.015771+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-11",
+    "role": "assistant",
+    "content": "Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:19:21.015823+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-12",
+    "role": "user",
+    "content": "My favorite cryptocurrencies in order are BTC, XMR, and XLM",
+    "created_at": "2025-12-28T21:19:54.191920+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-13",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [BTC, XMR, XLM]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-S(3) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:19:54.191931+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-14",
+    "role": "user",
+    "content": "I forgot. My #1 favorite candy is Reese's and my #2 favorite candy is M&Ms",
+    "created_at": "2025-12-28T21:20:30.330481+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-15",
+    "role": "assistant",
+    "content": "Saved: favorite candy = [Reese's, M&Ms]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-U(2) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-U(2) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:20:30.330493+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-16",
+    "role": "user",
+    "content": "Please list my favorite candies",
+    "created_at": "2025-12-28T21:20:57.314378+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-17",
+    "role": "assistant",
+    "content": "1) Reese's\n2) M&Ms\n3) Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:20:57.314394+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-18",
+    "role": "user",
+    "content": "My third favorite candy is actually Mr. Goodbar, and my 4th favorite candy is Milky Way",
+    "created_at": "2025-12-28T21:21:46.521253+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-19",
+    "role": "assistant",
+    "content": "Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:21:46.521288+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-20",
+    "role": "user",
+    "content": "Please list my favorite candies",
+    "created_at": "2025-12-28T21:22:09.394025+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-21",
+    "role": "assistant",
+    "content": "1) Reese's\n2) M&Ms\n3) Milky Way",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:22:09.394035+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-22",
+    "role": "user",
+    "content": "Please list my favorite cryptos",
+    "created_at": "2025-12-28T21:22:37.650872+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-23",
+    "role": "assistant",
+    "content": "1) BTC\n2) XMR\n3) XLM",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:22:37.650882+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-24",
+    "role": "user",
+    "content": "Ah! Please flip my #1 and #2 favorite cryptos. My #1 favorite is actually XMR, and my second favorite is BTC.",
+    "created_at": "2025-12-28T21:38:59.174130+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-25",
+    "role": "assistant",
+    "content": "Saved: favorite crypto = [XMR, BTC]",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-U(2) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-U(2) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:38:59.174139+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-user-26",
+    "role": "user",
+    "content": "Please list my favorite cryptos",
+    "created_at": "2025-12-28T21:39:17.909135+00:00"
+  },
+  {
+    "id": "17ea2194-5eff-47fd-a3a0-77eac7a0d0fd-assistant-27",
+    "role": "assistant",
+    "content": "1) XMR\n2) BTC\n3) XLM",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-28T21:39:17.909183+00:00"
+  }
+]

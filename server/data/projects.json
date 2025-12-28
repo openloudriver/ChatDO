@@ -929,6 +929,28 @@
     "default_target": "general",
     "sort_index": 84,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-28T20:01:36.490522+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "3192d2a3-139f-491e-9171-8278ec73eda6",
+    "name": "v46",
+    "default_target": "general",
+    "sort_index": 85,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-28T20:24:27.960435+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "d83f7944-4419-46b9-8997-d89113cbcb27",
+    "name": "v47",
+    "default_target": "general",
+    "sort_index": 86,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,
