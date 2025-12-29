@@ -1056,7 +1056,8 @@ async def chat_with_smart_search(
                                 "id": user_message_id,
                                 "role": "user",
                                 "content": user_message,
-                                "created_at": user_msg_created_at
+                                "created_at": user_msg_created_at,
+                                "uuid": current_message_uuid  # Include UUID for rehydration
                             }
                             history.append(user_msg)
                             
@@ -1534,7 +1535,8 @@ async def chat_with_smart_search(
                                 "id": user_message_id,
                                 "role": "user",
                                 "content": user_message,
-                                "created_at": user_msg_created_at
+                                "created_at": user_msg_created_at,
+                                "uuid": current_message_uuid  # Include UUID for rehydration
                             }
                             history.append(user_msg)
                             
@@ -1561,7 +1563,8 @@ async def chat_with_smart_search(
                                 "model": model_label_hist,
                                 "model_label": f"Model: {model_label_hist}",
                                 "provider": "facts",
-                                "created_at": assistant_msg_created_at
+                                "created_at": assistant_msg_created_at,
+                                "uuid": None  # Assistant messages don't have message_uuid (they're not indexed separately)
                             })
                             memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
@@ -2048,7 +2051,8 @@ async def chat_with_smart_search(
                     "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
-                    "created_at": user_msg_created_at
+                    "created_at": user_msg_created_at,
+                    "uuid": current_message_uuid  # Include UUID for rehydration
                 }
                 # NOTE: Ranked lists are now stored in facts DB, not thread metadata
                 history.append(user_msg)
