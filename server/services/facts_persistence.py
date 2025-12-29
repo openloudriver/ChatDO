@@ -155,56 +155,32 @@ def _convert_routing_candidate_to_ops(
             logger.error(f"[FACTS-PERSIST] ❌ Failed to process candidate values: {e}", exc_info=True)
             return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to process values: {e}"]), canonicalization_result
         
-        # Determine starting rank based on rank_ordered flag
+        # Determine rank assignment based on rank_ordered flag
         if candidate.rank_ordered:
             # Explicit ordering: use ranks 1, 2, 3... (may overwrite existing ranks)
+            # Rank is assigned here (explicit user intent)
             start_rank = 1
+            for offset, value in enumerate(values):
+                rank = start_rank + offset
+                ops.append(FactsOp(
+                    op="ranked_list_set",
+                    list_key=list_key,
+                    rank=rank,  # Explicit rank assigned
+                    value=str(value),
+                    confidence=1.0
+                ))
         else:
-            # Unranked/FIFO append: find max existing rank and append after it
-            # Also check for legacy scalar/array facts and migrate them
-            start_rank = 1  # Default if no existing facts
-            if project_id:
-                try:
-                    from server.services.librarian import search_facts_ranked_list
-                    from server.services.projects.project_resolver import validate_project_uuid
-                    
-                    # Validate project_id before querying
-                    validate_project_uuid(project_id)
-                    
-                    # Check for ranked facts
-                    # STORAGE IS UNBOUNDED: Facts are stored without limits.
-                    # RETRIEVAL FOR MAX RANK: Use high limit (10000) to find max rank for unranked appends.
-                    # This is paginated retrieval (not truly unbounded), but sufficient for finding max rank.
-                    existing_facts = search_facts_ranked_list(
-                        project_id=project_id,
-                        topic_key=canonical_topic,
-                        limit=10000  # High limit for max rank calculation (storage is unbounded, retrieval is paginated)
-                    )
-                    
-                    # Now check max rank from ranked facts
-                    if existing_facts:
-                        max_rank = max(f.get("rank", 0) for f in existing_facts)
-                        start_rank = max_rank + 1  # Append after max rank
-                        logger.debug(f"[FACTS-PERSIST] Unranked write: appending after max_rank={max_rank}, starting at rank={start_rank}")
-                except ValueError as e:
-                    # Invalid project UUID - log and fallback
-                    logger.warning(f"[FACTS-PERSIST] Invalid project_id for unranked append check: {e}")
-                    start_rank = 1
-                except Exception as e:
-                    logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}", exc_info=True)
-                    # Fallback to rank 1 if check fails
-                    start_rank = 1
-        
-        # Create ranked_list_set operations
-        for offset, value in enumerate(values):
-            rank = start_rank + offset
-            ops.append(FactsOp(
-                op="ranked_list_set",
-                list_key=list_key,
-                rank=rank,
-                value=str(value),
-                confidence=1.0
-            ))
+            # Unranked/FIFO append: emit operations with rank=None
+            # Rank will be assigned atomically in apply_facts_ops() using _get_max_rank_atomic()
+            # This centralizes rank assignment logic and avoids edge cases with pre-check limits
+            for value in values:
+                ops.append(FactsOp(
+                    op="ranked_list_set",
+                    list_key=list_key,
+                    rank=None,  # None = append operation, rank assigned atomically in apply_facts_ops()
+                    value=str(value),
+                    confidence=1.0
+                ))
         
         ops_response = FactsOpsResponse(
             ops=ops,
@@ -233,7 +209,7 @@ async def persist_facts_synchronously(
     retrieved_facts: Optional[List[Dict]] = None,  # For schema-hint topic resolution
     write_intent_detected: bool = False,  # Flag to enable enhanced diagnostics
     routing_plan_candidate: Optional[Any] = None  # FactsWriteCandidate from RoutingPlan
-) -> Tuple[int, int, list, Optional[str], Optional[List[str]], Optional[Any]]:
+) -> Tuple[int, int, list, Optional[str], Optional[List[str]], Optional[Any], Optional[Dict[str, str]], Optional[Dict[str, Dict[str, Any]]]]:
     """
     Extract and store facts synchronously, returning actual store/update counts.
     
@@ -255,13 +231,15 @@ async def persist_facts_synchronously(
         source_id: Optional source ID (uses project-based source if not provided)
         
     Returns:
-        Tuple of (store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result):
+        Tuple of (store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked):
         - store_count: Number of facts actually stored (new facts)
         - update_count: Number of facts actually updated (existing facts with changed values)
         - stored_fact_keys: List of fact keys that were stored/updated
         - message_uuid: The message_uuid used for fact storage (for exclusion in Facts-R)
         - ambiguous_topics: List of candidate topics if ranked list topic is ambiguous, None otherwise
         - canonicalization_result: CanonicalizationResult for telemetry (None if not available)
+        - rank_assignment_source: Dict mapping fact_key -> "explicit" | "atomic_append" (None if no ranked facts)
+        - duplicate_blocked: Dict mapping value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str} (None if no duplicates blocked)
     """
     store_count = 0
     update_count = 0
@@ -271,7 +249,7 @@ async def persist_facts_synchronously(
     
     if not project_id:
         logger.warning(f"[FACTS-PERSIST] Skipping fact persistence: project_id is missing")
-        return store_count, update_count, stored_fact_keys, None, None, None
+        return store_count, update_count, stored_fact_keys, None, None, None, None, None
     
     # Enforce Facts DB contract: project_id must be UUID
     from server.services.projects.project_resolver import validate_project_uuid
@@ -285,7 +263,7 @@ async def persist_facts_synchronously(
     if not message_uuid:
         if not all([chat_id, message_id, timestamp is not None, message_index is not None]):
             logger.warning(f"[FACTS-PERSIST] Cannot create message_uuid: missing required params")
-            return store_count, update_count, stored_fact_keys, None, None, None
+            return store_count, update_count, stored_fact_keys, None, None, None, None, None, None
         
         message_uuid = get_or_create_message_uuid(
             project_id=project_id,
@@ -300,12 +278,12 @@ async def persist_facts_synchronously(
         
         if not message_uuid:
             logger.warning(f"[FACTS-PERSIST] Failed to get/create message_uuid, skipping fact persistence")
-            return store_count, update_count, stored_fact_keys, None, None, None
+            return store_count, update_count, stored_fact_keys, None, None, None, None, None, None
     
     # Only extract facts from user messages
     if role != "user":
         logger.debug(f"[FACTS-PERSIST] Skipping fact extraction for role={role} (only user messages)")
-        return store_count, update_count, stored_fact_keys, message_uuid, None, None
+        return store_count, update_count, stored_fact_keys, message_uuid, None, None, None, None, None
     
     # NEW ARCHITECTURE: Use routing plan candidate if available, otherwise call Facts LLM
     from server.contracts.facts_ops import FactsOpsResponse
@@ -378,19 +356,19 @@ async def persist_facts_synchronously(
             except FactsLLMTimeoutError as e:
                 # Timeout error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) timed out: {e}")
-                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
             except FactsLLMUnavailableError as e:
                 # Unavailable error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) unavailable: {e}")
-                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
             except FactsLLMInvalidJSONError as e:
                 # Invalid JSON error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
-                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
             except FactsLLMError as e:
                 # Other Facts LLM errors
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
-                return -1, -1, [], message_uuid, None, None  # Negative counts indicate error
+                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
             
             # Parse JSON response (strict parsing, hard fail if invalid)
             try:
@@ -413,9 +391,9 @@ async def persist_facts_synchronously(
                 ops_data = json.loads(json_text)
                 ops_response = FactsOpsResponse(**ops_data)
                 
-                # POST-PROCESS: Detect unranked writes and append after max rank
+                # POST-PROCESS: Detect unranked writes and set rank=None for atomic assignment
                 # If Facts LLM extracted rank=1 but user didn't explicitly specify a rank,
-                # and rank 1 already exists, append after max rank instead
+                # set rank=None so apply_facts_ops() can assign it atomically
                 if ops_response and ops_response.ops:
                     import re
                     # Check if user message explicitly mentions a rank (#1, first, 1st, etc.)
@@ -424,42 +402,23 @@ async def persist_facts_synchronously(
                     
                     for op in ops_response.ops:
                         if op.op == "ranked_list_set" and op.rank == 1 and op.list_key and not has_explicit_rank:
-                            # Check if rank 1 already exists for this topic
-                            try:
-                                from server.services.facts_normalize import extract_topic_from_list_key
-                                topic = extract_topic_from_list_key(op.list_key)
-                                if topic:
-                                    from server.services.librarian import search_facts_ranked_list
-                                    existing_facts = search_facts_ranked_list(
-                                        project_id=project_id,
-                                        topic_key=topic,
-                                        limit=10000  # High limit for max rank calculation (storage is unbounded, retrieval is paginated)
-                                    )
-                                    if existing_facts:
-                                        # Check if rank 1 exists
-                                        has_rank_1 = any(f.get("rank") == 1 for f in existing_facts)
-                                        if has_rank_1:
-                                            # This is an unranked write - append after max rank
-                                            max_rank = max(f.get("rank", 0) for f in existing_facts)
-                                            op.rank = max_rank + 1
-                                            logger.info(
-                                                f"[FACTS-PERSIST] Detected unranked write: appending after max_rank={max_rank}, "
-                                                f"new rank={op.rank} for topic={topic}"
-                                            )
-                            except Exception as e:
-                                logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}")
-                                # Continue with rank=1 if check fails
+                            # This is likely an unranked write - set rank=None for atomic assignment
+                            op.rank = None
+                            logger.info(
+                                f"[FACTS-PERSIST] Detected unranked write: set rank=None for atomic assignment "
+                                f"(topic from list_key={op.list_key})"
+                            )
                 
             except json.JSONDecodeError as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
                 logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None, None
+                return -1, -1, [], message_uuid, None, None, None, None, None
             except Exception as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
                 logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None, None
+                return -1, -1, [], message_uuid, None, None, None, None, None
             
             # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
             if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
@@ -498,7 +457,7 @@ async def persist_facts_synchronously(
         except Exception as e:
             logger.error(f"[FACTS-PERSIST] ❌ Exception during Facts LLM extraction: {e}", exc_info=True)
             # Hard fail on unexpected exceptions
-            return -1, -1, [], message_uuid, None, None
+            return -1, -1, [], message_uuid, None, None, None, None
     
     # Check for clarification needed (applies to both routing candidate and LLM paths)
     if ops_response and ops_response.needs_clarification:
@@ -518,12 +477,12 @@ async def persist_facts_synchronously(
                 "message_id": message_id
             }
         
-        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result
+        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, None, None, None
     
     # Validate ops_response exists before applying
     if not ops_response:
         logger.error(f"[FACTS-PERSIST] ❌ No ops_response available after conversion/LLM extraction")
-        return -1, -1, [], message_uuid, None, None
+        return -1, -1, [], message_uuid, None, None, None, None
     
     # Apply operations deterministically
     apply_result = apply_facts_ops(
@@ -537,6 +496,7 @@ async def persist_facts_synchronously(
     store_count = apply_result.store_count
     update_count = apply_result.update_count
     stored_fact_keys = apply_result.stored_fact_keys
+    rank_assignment_source = apply_result.rank_assignment_source if apply_result.rank_assignment_source else None
     
     # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
     if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
@@ -596,5 +556,15 @@ async def persist_facts_synchronously(
         f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
     )
     
-    return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result
+    # Log rank assignment sources for telemetry
+    if rank_assignment_source:
+        for fact_key, source in rank_assignment_source.items():
+            logger.debug(f"[FACTS-PERSIST] Rank assignment: {fact_key} -> {source}")
+    
+    # Log duplicate blocking for telemetry
+    if duplicate_blocked:
+        for value, info in duplicate_blocked.items():
+            logger.info(f"[FACTS-PERSIST] Duplicate blocked: '{value}' already exists at rank {info.get('existing_rank')} for topic={info.get('topic')}")
+    
+    return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked
 

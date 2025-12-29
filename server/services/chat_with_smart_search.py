@@ -816,7 +816,7 @@ async def chat_with_smart_search(
             # Falls back to GPT-5 Nano Facts extractor only if candidate not available
             # Determine write intent (though routing plan should already indicate this)
             is_write_intent = _is_write_intent(user_message)
-            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result = await persist_facts_synchronously(
+            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
@@ -1008,6 +1008,14 @@ async def chat_with_smart_search(
                             value = fact_values.get(fact_key, "")
                             single_facts.append((fact_key, value))
                     
+                    # Handle duplicate blocking messages
+                    duplicate_messages = []
+                    if duplicate_blocked:
+                        for value, info in duplicate_blocked.items():
+                            existing_rank = info.get("existing_rank")
+                            topic = info.get("topic", "item")
+                            duplicate_messages.append(f"{value} is already in your favorites at #{existing_rank}.")
+                    
                     # Format ranked lists
                     for topic, items in ranked_lists.items():
                         items.sort(key=lambda x: x[0])  # Sort by rank
@@ -1027,6 +1035,12 @@ async def chat_with_smart_search(
                     # Build confirmation message
                     if confirmation_parts:
                         confirmation_text = "Saved: " + ", ".join(confirmation_parts)
+                        # If we have duplicates, append them
+                        if duplicate_messages:
+                            confirmation_text += " " + " ".join(duplicate_messages)
+                    elif duplicate_messages:
+                        # Only duplicate messages, no new facts stored
+                        confirmation_text = " ".join(duplicate_messages)
                     else:
                         # Fallback if we can't format properly
                         if store_count > 0:
@@ -1125,6 +1139,8 @@ async def chat_with_smart_search(
                             "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
                             "teacher_invoked": teacher_invoked,
                             "alias_source": canonicalization_result.source if canonicalization_result else None,
+                            "rank_assignment_source": rank_assignment_source,  # Dict: fact_key -> "explicit" | "atomic_append"
+                            "duplicate_blocked": duplicate_blocked,  # Dict: value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str}
                             "nano_routing_plan": {
                                 "content_plane": routing_plan.content_plane if routing_plan else None,
                                 "operation": routing_plan.operation if routing_plan else None,
@@ -1185,7 +1201,8 @@ async def chat_with_smart_search(
                             "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
                             "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
                             "teacher_invoked": teacher_invoked_f,
-                            "alias_source": canonicalization_result.source if canonicalization_result else None
+                            "alias_source": canonicalization_result.source if canonicalization_result else None,
+                            "rank_assignment_source": None  # No facts stored, so no rank assignment
                         },
                         "sources": [],
                         "model": model_label_text,

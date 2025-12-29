@@ -75,6 +75,58 @@ def _get_max_rank_atomic(
     return max_rank
 
 
+def _check_value_exists_in_ranked_list(
+    conn,
+    project_uuid: str,
+    list_key: str,
+    value: str
+) -> Optional[int]:
+    """
+    Check if a value already exists in a ranked list and return its rank.
+    
+    This function must be called within an active transaction to ensure
+    atomicity and prevent race conditions.
+    
+    Args:
+        conn: Active database connection (must be in a transaction)
+        project_uuid: Project UUID
+        list_key: List key (e.g., "user.favorites.crypto")
+        value: Value to check for (normalized)
+        
+    Returns:
+        Rank (1-based) if value exists, None otherwise
+    """
+    cursor = conn.cursor()
+    
+    # Query all ranked facts for this topic (using list_key prefix)
+    # Pattern: user.favorites.<topic>.<rank>
+    cursor.execute("""
+        SELECT fact_key, value_text
+        FROM project_facts
+        WHERE project_id = ? AND fact_key LIKE ? AND is_current = 1
+        ORDER BY fact_key
+    """, (project_uuid, f"{list_key}.%"))
+    
+    rows = cursor.fetchall()
+    
+    for row in rows:
+        fact_key = row[0]
+        existing_value = row[1] if len(row) > 1 else ""
+        
+        # Normalize comparison (case-insensitive, trimmed)
+        if existing_value and existing_value.strip().lower() == value.strip().lower():
+            # Extract rank from fact_key (e.g., "user.favorites.crypto.2" -> 2)
+            if "." in fact_key:
+                try:
+                    rank_str = fact_key.rsplit(".", 1)[1]
+                    rank = int(rank_str)
+                    return rank
+                except (ValueError, IndexError):
+                    continue
+    
+    return None
+
+
 @dataclass
 class ApplyResult:
     """Result of applying facts operations."""
@@ -83,6 +135,8 @@ class ApplyResult:
     stored_fact_keys: List[str] = None
     warnings: List[str] = None
     errors: List[str] = None
+    rank_assignment_source: Dict[str, str] = None  # Maps fact_key -> source ("explicit" | "atomic_append")
+    duplicate_blocked: Dict[str, Dict[str, Any]] = None  # Maps fact_key -> {"value": str, "existing_rank": int}
     
     def __post_init__(self):
         """Initialize mutable defaults."""
@@ -92,6 +146,10 @@ class ApplyResult:
             self.warnings = []
         if self.errors is None:
             self.errors = []
+        if self.rank_assignment_source is None:
+            self.rank_assignment_source = {}
+        if self.duplicate_blocked is None:
+            self.duplicate_blocked = {}
 
 
 def apply_facts_ops(
@@ -173,9 +231,9 @@ def apply_facts_ops(
             try:
                 if op.op == "ranked_list_set":
                     # Validate required fields
-                    if not op.list_key or op.rank is None or not op.value:
+                    if not op.list_key or not op.value:
                         result.errors.append(
-                            f"Operation {idx}: ranked_list_set requires list_key, rank, and value"
+                            f"Operation {idx}: ranked_list_set requires list_key and value"
                         )
                         continue
                     
@@ -192,34 +250,31 @@ def apply_facts_ops(
                     from server.services.canonicalizer import canonicalize_topic
                     canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)  # Don't invoke teacher here - should already be canonical
                     canonical_topic = canonicalization_result.canonical_topic
-                    
-                    # RACE CONDITION FIX: For unranked writes, detect conflicts and retry atomically
-                    # Detection heuristic: If rank=1 and there's already a fact at rank 1 with different value,
-                    # this is likely an unranked write that should append after max rank
-                    # We'll check this atomically within the transaction
                     list_key_for_check = canonical_list_key(canonical_topic)
-                    fact_key_to_check = canonical_rank_key(canonical_topic, op.rank)
                     
-                    # Check if this fact_key already exists with a different value (potential conflict)
-                    cursor.execute("""
-                        SELECT fact_id, value_text FROM project_facts
-                        WHERE project_id = ? AND fact_key = ? AND is_current = 1
-                        LIMIT 1
-                    """, (project_uuid, fact_key_to_check))
-                    existing_fact = cursor.fetchone()
-                    
-                    # If rank=1 and fact exists with different value, this is likely an unranked write
-                    # Atomically query max rank and adjust
-                    if op.rank == 1 and existing_fact and existing_fact[1] != op.value:
-                        logger.debug(f"[FACTS-APPLY] Detected potential unranked write conflict at rank 1, querying max rank atomically")
+                    # RANK ASSIGNMENT: This is the SINGLE SOURCE OF TRUTH for rank assignment
+                    # - If rank is None: This is an unranked append, assign rank atomically
+                    # - If rank is provided: Use it as-is (explicit user intent)
+                    if op.rank is None:
+                        # Unranked append: assign rank atomically using _get_max_rank_atomic()
+                        # This ensures atomicity and prevents race conditions
                         max_rank = _get_max_rank_atomic(conn, project_uuid, canonical_topic, list_key_for_check)
-                        new_rank = max_rank + 1
-                        logger.info(f"[FACTS-APPLY] Unranked write: adjusting rank from {op.rank} to {new_rank} (max_rank={max_rank})")
-                        op.rank = new_rank
-                        fact_key = canonical_rank_key(canonical_topic, op.rank)
+                        assigned_rank = max_rank + 1
+                        fact_key = canonical_rank_key(canonical_topic, assigned_rank)
+                        rank_assignment_source = "atomic_append"
+                        logger.info(
+                            f"[FACTS-APPLY] Unranked append: assigned rank {assigned_rank} atomically "
+                            f"(max_rank={max_rank}, topic={canonical_topic})"
+                        )
                     else:
-                        # Use the rank as-is
-                        fact_key = canonical_rank_key(canonical_topic, op.rank)
+                        # Explicit rank provided: use it as-is
+                        assigned_rank = op.rank
+                        fact_key = canonical_rank_key(canonical_topic, assigned_rank)
+                        rank_assignment_source = "explicit"
+                        logger.debug(f"[FACTS-APPLY] Explicit rank: using rank {assigned_rank} for topic={canonical_topic}")
+                    
+                    # Store rank assignment source for telemetry
+                    result.rank_assignment_source[fact_key] = rank_assignment_source
                 
                     # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
                     # Look for user.favorites.<topic> (without rank) before writing ranked entry

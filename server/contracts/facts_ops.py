@@ -31,7 +31,7 @@ class FactsOp(BaseModel):
     rank: Optional[int] = Field(
         None,
         ge=1,
-        description="Rank number (1-based) for ranked_list_set operation"
+        description="Rank number (1-based) for ranked_list_set operation. Use None for unranked appends (rank will be assigned atomically in apply_facts_ops)."
     )
     value: Optional[str] = Field(
         None,
