@@ -966,7 +966,8 @@ async def chat_with_smart_search(
             # Do NOT fall through to GPT-5 or show "I don't have that stored yet"
             # NOTE: Even if the query could be interpreted as a retrieval query, if Facts-S/U
             # succeeded, we return the confirmation. The user can ask again to retrieve.
-            if store_count > 0 or update_count > 0:
+            # Also check for duplicate_blocked - this is a successful operation (duplicate prevented)
+            if store_count > 0 or update_count > 0 or duplicate_blocked:
                     # This is a write operation (Facts-S/U), return confirmation immediately
                     # Format confirmation message from stored facts
                     # Query DB to get actual values for the stored fact keys
@@ -1157,6 +1158,112 @@ async def chat_with_smart_search(
                     }
                 # Facts-S/U confirmation returned - do not continue to Facts-R section
             else:
+                # Routing plan said facts/write but Facts-S/U returned 0 counts
+                # Check if this was due to duplicate blocking (which is a success case)
+                if duplicate_blocked:
+                    # Duplicate was blocked - this is a success, return duplicate message
+                    facts_actions["S"] = 0
+                    facts_actions["U"] = 0
+                    facts_gate_entered = True
+                    facts_gate_reason = "duplicate_blocked"
+                    
+                    # Build duplicate confirmation message
+                    duplicate_messages = []
+                    for value, info in duplicate_blocked.items():
+                        existing_rank = info.get("existing_rank")
+                        duplicate_messages.append(f"'{info['value']}' is already in your favorites at #{existing_rank}.")
+                    confirmation_text = " ".join(duplicate_messages)
+                    
+                    # Save user message to history
+                    if thread_id and not any(m.get("uuid") == current_message_uuid for m in history):
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                        message_index = len(history)
+                        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        user_message_id = f"{thread_id}-user-{message_index}"
+                        user_msg = {
+                            "id": user_message_id,
+                            "role": "user",
+                            "content": user_message,
+                            "created_at": user_msg_created_at,
+                            "uuid": current_message_uuid
+                        }
+                        history.append(user_msg)
+                        
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        canonicalizer_used_hist = canonicalization_result is not None
+                        teacher_invoked_hist = canonicalization_result.teacher_invoked if canonicalization_result else False
+                        model_label_hist = build_model_label(
+                            facts_actions=facts_actions,
+                            files_actions=files_actions,
+                            index_status=index_status,
+                            escalated=False,
+                            nano_router_used=nano_router_used,
+                            reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                            canonicalizer_used=canonicalizer_used_hist,
+                            teacher_invoked=teacher_invoked_hist
+                        )
+                        history.append({
+                            "id": assistant_message_id,
+                            "role": "assistant",
+                            "content": confirmation_text,
+                            "model": model_label_hist,
+                            "model_label": f"Model: {model_label_hist}",
+                            "provider": "facts",
+                            "created_at": assistant_msg_created_at
+                        })
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                    
+                    # Return duplicate confirmation
+                    canonicalizer_used = canonicalization_result is not None
+                    teacher_invoked = canonicalization_result.teacher_invoked if canonicalization_result else False
+                    model_label_text = build_model_label(
+                        facts_actions=facts_actions,
+                        files_actions=files_actions,
+                        index_status=index_status,
+                        escalated=False,
+                        nano_router_used=nano_router_used,
+                        reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                        canonicalizer_used=canonicalizer_used,
+                        teacher_invoked=teacher_invoked
+                    )
+                    
+                    return {
+                        "type": "assistant_message",
+                        "content": confirmation_text,
+                        "meta": {
+                            "usedFacts": True,
+                            "fastPath": "facts_duplicate_blocked",
+                            "facts_actions": facts_actions,
+                            "files_actions": files_actions,
+                            "index_status": index_status,
+                            "facts_provider": facts_provider,
+                            "project_uuid": project_id,
+                            "thread_id": thread_id,
+                            "facts_gate_entered": facts_gate_entered,
+                            "facts_gate_reason": facts_gate_reason,
+                            "write_intent_detected": is_write_intent,
+                            "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
+                            "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
+                            "teacher_invoked": teacher_invoked,
+                            "alias_source": canonicalization_result.source if canonicalization_result else None,
+                            "rank_assignment_source": rank_assignment_source,
+                            "duplicate_blocked": duplicate_blocked,
+                            "nano_routing_plan": {
+                                "content_plane": routing_plan.content_plane if routing_plan else None,
+                                "operation": routing_plan.operation if routing_plan else None,
+                                "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
+                                "confidence": routing_plan.confidence if routing_plan else None
+                            },
+                            "nano_router_used": nano_router_used
+                        },
+                        "sources": [],
+                        "model": model_label_text,
+                        "model_label": f"Model: {model_label_text}",
+                        "provider": "facts",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                
                 # Routing plan said facts/write but Facts-S/U returned 0 counts - return Facts-F
                 if routing_plan and routing_plan.content_plane == "facts" and routing_plan.operation == "write":
                     logger.warning(
