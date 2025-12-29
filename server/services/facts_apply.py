@@ -109,12 +109,29 @@ def _check_value_exists_in_ranked_list(
     
     rows = cursor.fetchall()
     
+    logger.debug(
+        f"[FACTS-APPLY] _check_value_exists_in_ranked_list: "
+        f"list_key={list_key}, value='{value}', found {len(rows)} existing facts"
+    )
+    
     for row in rows:
         fact_key = row[0]
         existing_value = row[1] if len(row) > 1 else ""
         
-        # Normalize comparison (case-insensitive, trimmed)
-        if existing_value and existing_value.strip().lower() == value.strip().lower():
+        # Normalize both values using the same normalization function for accurate comparison
+        # This ensures we compare normalized values consistently (handles spaces, quotes, etc.)
+        from server.services.facts_normalize import normalize_fact_value
+        normalized_existing, _ = normalize_fact_value(existing_value, is_ranked_list=True)
+        normalized_input, _ = normalize_fact_value(value, is_ranked_list=True)
+        
+        logger.debug(
+            f"[FACTS-APPLY] Comparing: existing='{existing_value}' (norm: '{normalized_existing}') "
+            f"vs input='{value}' (norm: '{normalized_input}') -> "
+            f"match={normalized_existing.strip().lower() == normalized_input.strip().lower()}"
+        )
+        
+        # Compare normalized values (case-insensitive, trimmed, spaces collapsed, etc.)
+        if normalized_existing and normalized_existing.strip().lower() == normalized_input.strip().lower():
             # Extract rank from fact_key (e.g., "user.favorites.crypto.2" -> 2)
             if "." in fact_key:
                 try:
@@ -252,10 +269,51 @@ def apply_facts_ops(
                     canonical_topic = canonicalization_result.canonical_topic
                     list_key_for_check = canonical_list_key(canonical_topic)
                     
+                    # Normalize value for duplicate checking (must happen before duplicate check)
+                    normalized_value, _ = normalize_fact_value(op.value, is_ranked_list=True)
+                    
                     # RANK ASSIGNMENT: This is the SINGLE SOURCE OF TRUTH for rank assignment
                     # - If rank is None: This is an unranked append, assign rank atomically
                     # - If rank is provided: Use it as-is (explicit user intent)
                     if op.rank is None:
+                        # DUPLICATE PREVENTION: For favorites topics, check if value already exists
+                        # Only block duplicates for unranked appends to favorites (user.favorites.*)
+                        # Explicit ranks always allowed (user can explicitly request duplicates)
+                        is_favorites_topic = list_key_for_check.startswith("user.favorites.")
+                        
+                        logger.debug(
+                            f"[FACTS-APPLY] Checking duplicate prevention: "
+                            f"is_favorites_topic={is_favorites_topic}, "
+                            f"list_key={list_key_for_check}, "
+                            f"normalized_value='{normalized_value}'"
+                        )
+                        
+                        if is_favorites_topic:
+                            existing_rank = _check_value_exists_in_ranked_list(
+                                conn, project_uuid, list_key_for_check, normalized_value
+                            )
+                            
+                            logger.debug(
+                                f"[FACTS-APPLY] Duplicate check result: existing_rank={existing_rank} "
+                                f"for value='{normalized_value}' in topic={canonical_topic}"
+                            )
+                            
+                            if existing_rank is not None:
+                                # Value already exists - block duplicate append
+                                # Store duplicate info for telemetry and user-facing message
+                                result.duplicate_blocked[op.value] = {
+                                    "value": op.value,
+                                    "existing_rank": existing_rank,
+                                    "topic": canonical_topic,
+                                    "list_key": list_key_for_check
+                                }
+                                logger.info(
+                                    f"[FACTS-APPLY] Duplicate blocked: '{op.value}' already exists at rank {existing_rank} "
+                                    f"for topic={canonical_topic}"
+                                )
+                                # Skip this operation (don't append)
+                                continue
+                        
                         # Unranked append: assign rank atomically using _get_max_rank_atomic()
                         # This ensures atomicity and prevents race conditions
                         max_rank = _get_max_rank_atomic(conn, project_uuid, canonical_topic, list_key_for_check)
@@ -267,7 +325,7 @@ def apply_facts_ops(
                             f"(max_rank={max_rank}, topic={canonical_topic})"
                         )
                     else:
-                        # Explicit rank provided: use it as-is
+                        # Explicit rank provided: use it as-is (allows duplicates if user explicitly requests)
                         assigned_rank = op.rank
                         fact_key = canonical_rank_key(canonical_topic, assigned_rank)
                         rank_assignment_source = "explicit"
@@ -333,8 +391,9 @@ def apply_facts_ops(
                         logger.warning(f"[FACTS-APPLY] Failed to check/migrate legacy scalar facts: {e}")
                         # Continue with normal ranked_list_set processing
                 
-                    # Normalize value (ranked list values have stricter length limit)
-                    normalized_value, warning = normalize_fact_value(op.value, is_ranked_list=True)
+                    # Value already normalized above for duplicate checking
+                    # Just check for warnings (normalization already done)
+                    _, warning = normalize_fact_value(op.value, is_ranked_list=True)
                     if warning:
                         result.warnings.append(f"Operation {idx}: {warning}")
                     
