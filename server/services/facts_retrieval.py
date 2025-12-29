@@ -22,12 +22,22 @@ class FactsAnswer:
     facts: List[Dict]
     count: int  # Number of facts returned
     canonical_keys: List[str]  # Distinct canonical keys (for Facts-R counting)
+    rank_applied: bool = False  # Whether rank filtering was applied
+    rank_result_found: Optional[bool] = None  # Whether rank filter found results (None if rank not applied)
+    ordinal_parse_source: str = "none"  # Source of ordinal detection: "router" | "planner" | "none"
+    max_available_rank: Optional[int] = None  # Maximum rank available for this topic (for bounds checking)
+    
+    def __post_init__(self):
+        """Initialize defaults for optional fields."""
+        if self.canonical_keys is None:
+            self.canonical_keys = []
 
 
 def execute_facts_plan(
     project_uuid: str,
     plan: FactsQueryPlan,
-    exclude_message_uuid: Optional[str] = None
+    exclude_message_uuid: Optional[str] = None,
+    ordinal_parse_source: str = "none"  # Source of ordinal detection: "router" | "planner" | "none"
 ) -> FactsAnswer:
     """
     Execute a Facts query plan deterministically.
@@ -38,9 +48,10 @@ def execute_facts_plan(
         project_uuid: Project UUID (must be valid UUID)
         plan: FactsQueryPlan to execute
         exclude_message_uuid: Optional message UUID to exclude from results
+        ordinal_parse_source: Source of ordinal detection ("router" | "planner" | "none")
         
     Returns:
-        FactsAnswer with facts, count, and canonical keys
+        FactsAnswer with facts, count, canonical keys, and telemetry fields
         
     Raises:
         ValueError: If project_uuid is not a valid UUID
@@ -50,38 +61,50 @@ def execute_facts_plan(
     
     facts = []
     canonical_keys = set()
+    rank_applied = False
+    rank_result_found = None
+    max_available_rank = None
     
     try:
         if plan.intent == "facts_get_ranked_list":
             # Query ranked list directly from DB
             # Extract topic from list_key if not provided, or build list_key from topic
             # Ensure topic is canonicalized using Canonicalizer subsystem (defensive check)
+            # DEDUPLICATION: Cache canonicalization result per request
             from server.services.canonicalizer import canonicalize_topic as canonicalize_with_subsystem
+            canonicalization_cache = {}  # Cache per request to avoid duplicate calls
             
             if not plan.topic and plan.list_key:
                 # Extract topic from list_key (e.g., "user.favorites.crypto" -> "crypto")
                 from server.services.facts_normalize import extract_topic_from_list_key
                 raw_topic = extract_topic_from_list_key(plan.list_key)
                 if raw_topic:
-                    # Note: This should already be canonical, but we canonicalize defensively
-                    canonicalization_result = canonicalize_with_subsystem(raw_topic, invoke_teacher=False)
-                    plan.topic = canonicalization_result.canonical_topic
+                    # Use cache if available
+                    if raw_topic not in canonicalization_cache:
+                        canonicalization_result = canonicalize_with_subsystem(raw_topic, invoke_teacher=False)
+                        canonicalization_cache[raw_topic] = canonicalization_result
+                    plan.topic = canonicalization_cache[raw_topic].canonical_topic
             
             if not plan.list_key and plan.topic:
                 # Canonicalize topic and build list_key
-                canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
-                plan.topic = canonicalization_result.canonical_topic
+                if plan.topic not in canonicalization_cache:
+                    canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
+                    canonicalization_cache[plan.topic] = canonicalization_result
+                plan.topic = canonicalization_cache[plan.topic].canonical_topic
                 plan.list_key = canonical_list_key(plan.topic)
             elif plan.topic:
                 # Ensure topic is canonicalized (defensive - should already be canonical)
-                canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
-                plan.topic = canonicalization_result.canonical_topic
+                if plan.topic not in canonicalization_cache:
+                    canonicalization_result = canonicalize_with_subsystem(plan.topic, invoke_teacher=False)
+                    canonicalization_cache[plan.topic] = canonicalization_result
+                plan.topic = canonicalization_cache[plan.topic].canonical_topic
             
             if plan.list_key and plan.topic:
                 try:
                     # UNBOUNDED MODEL: For ordinal queries, get all facts to filter by rank
                     # For list queries, use plan.limit for pagination (but don't truncate storage)
                     # If plan.rank is set, we need all facts to find the specific rank
+                    # FIX: Use 10000 limit instead of 1000 for unbounded retrieval
                     retrieval_limit = None if plan.rank is not None else plan.limit  # None = unbounded
                     ranked_facts = search_facts_ranked_list(
                         project_id=project_uuid,
@@ -93,13 +116,20 @@ def execute_facts_plan(
                     logger.error(f"[FACTS-RETRIEVAL] Failed to search ranked list: {e}", exc_info=True)
                     ranked_facts = []
                 
+                # Calculate max_available_rank for bounds checking
+                if ranked_facts:
+                    max_available_rank = max(f.get("rank", 0) for f in ranked_facts)
+                
                 # Convert to answer format
                 # If rank is specified (ordinal query), filter to only that rank FIRST
+                rank_applied = plan.rank is not None
                 for fact in ranked_facts:
                     fact_rank = fact.get("rank")
                     # If plan.rank is set, only include facts matching that rank
-                    if plan.rank is not None and fact_rank != plan.rank:
-                        continue
+                    if plan.rank is not None:
+                        if fact_rank != plan.rank:
+                            continue
+                        rank_result_found = True  # Found at least one fact at requested rank
                     
                     facts.append({
                         "fact_key": fact.get("fact_key", ""),
@@ -115,13 +145,18 @@ def execute_facts_plan(
                         if parts[0].startswith("user.favorites."):
                             canonical_keys.add(parts[0])
                 
+                # Set rank_result_found to False if rank was applied but no facts found
+                if rank_applied and rank_result_found is None:
+                    rank_result_found = False
+                
                 if plan.rank is not None:
                     logger.info(
                         f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key} at rank {plan.rank} "
-                        f"(rank_applied=True, rank_result_found={len(facts) > 0})"
+                        f"(rank_applied={rank_applied}, rank_result_found={rank_result_found}, "
+                        f"max_available_rank={max_available_rank}, ordinal_parse_source={ordinal_parse_source})"
                     )
                 else:
-                    logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key}")
+                    logger.debug(f"[FACTS-RETRIEVAL] Retrieved {len(facts)} ranked list facts for {plan.list_key} (max_available_rank={max_available_rank})")
             else:
                 logger.warning(f"[FACTS-RETRIEVAL] Missing list_key or topic for ranked list query: list_key={plan.list_key}, topic={plan.topic}")
         
@@ -195,6 +230,10 @@ def execute_facts_plan(
     return FactsAnswer(
         facts=facts,
         count=len(facts),
-        canonical_keys=list(canonical_keys)
+        canonical_keys=list(canonical_keys),
+        rank_applied=rank_applied,
+        rank_result_found=rank_result_found,
+        ordinal_parse_source=ordinal_parse_source,
+        max_available_rank=max_available_rank
     )
 

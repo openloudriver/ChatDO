@@ -120,69 +120,102 @@ def _convert_routing_candidate_to_ops(
         
     Returns:
         Tuple of (FactsOpsResponse, CanonicalizationResult)
+        
+    Raises:
+        Exception: If canonicalization fails or other critical errors occur
     """
     from server.contracts.facts_ops import FactsOp, FactsOpsResponse
     from server.services.canonicalizer import canonicalize_topic
     from server.services.facts_normalize import canonical_list_key
     
     ops = []
+    canonicalization_result = None
     
-    # Canonicalize topic using Canonicalizer subsystem
-    canonicalization_result = canonicalize_topic(candidate.topic, invoke_teacher=True)
-    canonical_topic = canonicalization_result.canonical_topic
-    list_key = canonical_list_key(canonical_topic)
-    
-    # Handle single value or list of values
-    values = candidate.value if isinstance(candidate.value, list) else [candidate.value]
-    
-    # Determine starting rank based on rank_ordered flag
-    if candidate.rank_ordered:
-        # Explicit ordering: use ranks 1, 2, 3... (may overwrite existing ranks)
-        start_rank = 1
-    else:
-        # Unranked/FIFO append: find max existing rank and append after it
-        # Also check for legacy scalar/array facts and migrate them
-        start_rank = 1  # Default if no existing facts
-        if project_id:
-            try:
-                from server.services.librarian import search_facts_ranked_list
-                from memory_service.memory_dashboard import db as memory_db
-                from server.services.projects.project_resolver import validate_project_uuid
-                
-                # Check for ranked facts
-                existing_facts = search_facts_ranked_list(
-                    project_id=project_id,
-                    topic_key=canonical_topic,
-                    limit=1000  # Get all facts to find max rank (unbounded)
-                )
-                
-                # Now check max rank from ranked facts
-                if existing_facts:
-                    max_rank = max(f.get("rank", 0) for f in existing_facts)
-                    start_rank = max_rank + 1  # Append after max rank
-                    logger.debug(f"[FACTS-PERSIST] Unranked write: appending after max_rank={max_rank}, starting at rank={start_rank}")
-            except Exception as e:
-                logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}")
-                # Fallback to rank 1 if check fails
-                start_rank = 1
-    
-    # Create ranked_list_set operations
-    for offset, value in enumerate(values):
-        rank = start_rank + offset
-        ops.append(FactsOp(
-            op="ranked_list_set",
-            list_key=list_key,
-            rank=rank,
-            value=str(value),
-            confidence=1.0
-        ))
-    
-    ops_response = FactsOpsResponse(
-        ops=ops,
-        needs_clarification=[]
-    )
-    
-    return ops_response, canonicalization_result
+    try:
+        # Canonicalize topic using Canonicalizer subsystem
+        # ERROR HANDLING: Wrap in try/except for Facts-F diagnostics
+        try:
+            canonicalization_result = canonicalize_topic(candidate.topic, invoke_teacher=True)
+            canonical_topic = canonicalization_result.canonical_topic
+        except Exception as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Canonicalization failed for topic '{candidate.topic}': {e}", exc_info=True)
+            # Return empty ops with error indication
+            return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to canonicalize topic: {e}"]), None
+        
+        try:
+            list_key = canonical_list_key(canonical_topic)
+        except Exception as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Failed to build list_key for topic '{canonical_topic}': {e}", exc_info=True)
+            return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to build list key: {e}"]), canonicalization_result
+        
+        # Handle single value or list of values
+        try:
+            values = candidate.value if isinstance(candidate.value, list) else [candidate.value]
+        except Exception as e:
+            logger.error(f"[FACTS-PERSIST] ❌ Failed to process candidate values: {e}", exc_info=True)
+            return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to process values: {e}"]), canonicalization_result
+        
+        # Determine starting rank based on rank_ordered flag
+        if candidate.rank_ordered:
+            # Explicit ordering: use ranks 1, 2, 3... (may overwrite existing ranks)
+            start_rank = 1
+        else:
+            # Unranked/FIFO append: find max existing rank and append after it
+            # Also check for legacy scalar/array facts and migrate them
+            start_rank = 1  # Default if no existing facts
+            if project_id:
+                try:
+                    from server.services.librarian import search_facts_ranked_list
+                    from server.services.projects.project_resolver import validate_project_uuid
+                    
+                    # Validate project_id before querying
+                    validate_project_uuid(project_id)
+                    
+                    # Check for ranked facts
+                    # FIX: Use 10000 limit instead of 1000 for unbounded retrieval
+                    existing_facts = search_facts_ranked_list(
+                        project_id=project_id,
+                        topic_key=canonical_topic,
+                        limit=10000  # Get all facts to find max rank (unbounded, increased from 1000)
+                    )
+                    
+                    # Now check max rank from ranked facts
+                    if existing_facts:
+                        max_rank = max(f.get("rank", 0) for f in existing_facts)
+                        start_rank = max_rank + 1  # Append after max rank
+                        logger.debug(f"[FACTS-PERSIST] Unranked write: appending after max_rank={max_rank}, starting at rank={start_rank}")
+                except ValueError as e:
+                    # Invalid project UUID - log and fallback
+                    logger.warning(f"[FACTS-PERSIST] Invalid project_id for unranked append check: {e}")
+                    start_rank = 1
+                except Exception as e:
+                    logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}", exc_info=True)
+                    # Fallback to rank 1 if check fails
+                    start_rank = 1
+        
+        # Create ranked_list_set operations
+        for offset, value in enumerate(values):
+            rank = start_rank + offset
+            ops.append(FactsOp(
+                op="ranked_list_set",
+                list_key=list_key,
+                rank=rank,
+                value=str(value),
+                confidence=1.0
+            ))
+        
+        ops_response = FactsOpsResponse(
+            ops=ops,
+            needs_clarification=[]
+        )
+        
+        return ops_response, canonicalization_result
+        
+    except Exception as e:
+        # Catch-all for any unexpected errors
+        logger.error(f"[FACTS-PERSIST] ❌ Unexpected error in _convert_routing_candidate_to_ops: {e}", exc_info=True)
+        # Return empty ops with error indication
+        return FactsOpsResponse(ops=[], needs_clarification=[f"Unexpected error: {e}"]), canonicalization_result
 
 
 async def persist_facts_synchronously(
@@ -398,7 +431,7 @@ async def persist_facts_synchronously(
                                     existing_facts = search_facts_ranked_list(
                                         project_id=project_id,
                                         topic_key=topic,
-                                        limit=1000  # Get all to find max rank
+                                        limit=10000  # Get all to find max rank (increased from 1000)
                                     )
                                     if existing_facts:
                                         # Check if rank 1 exists

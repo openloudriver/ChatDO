@@ -1441,10 +1441,12 @@ async def chat_with_smart_search(
                 )
                 
                 # Execute plan deterministically
+                # Pass ordinal_parse_source for telemetry
                 facts_answer = execute_facts_plan(
                     project_uuid=project_id,
                     plan=query_plan,
-                    exclude_message_uuid=current_message_uuid
+                    exclude_message_uuid=current_message_uuid,
+                    ordinal_parse_source=ordinal_parse_source
                 )
                 
                 # Count distinct canonical keys for Facts-R
@@ -1617,6 +1619,14 @@ async def chat_with_smart_search(
                     
                     logger.info(f"[FACTS-R] Ranked list query returned no facts: topic={query_plan.topic if query_plan is not None else 'unknown'}")
                     
+                    # ORDINAL BOUNDS MESSAGING: If this is an ordinal query and we have max_available_rank,
+                    # provide a more informative message
+                    response_text = "I don't have that stored yet."
+                    if query_plan.rank is not None and facts_answer.max_available_rank is not None:
+                        if query_plan.rank > facts_answer.max_available_rank:
+                            response_text = f"I only have {facts_answer.max_available_rank} favorite{'s' if facts_answer.max_available_rank != 1 else ''} stored, so there's no #{query_plan.rank} favorite."
+                            logger.info(f"[FACTS-R] Ordinal bounds check: requested rank={query_plan.rank}, max_available={facts_answer.max_available_rank}")
+                    
                     # HIGH-SIGNAL LOGGING: Log empty retrieval response path
                     logger.info(
                         f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=READ_FASTPATH_EMPTY "
@@ -1635,7 +1645,7 @@ async def chat_with_smart_search(
                             assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
                             assistant_message_id = f"{thread_id}-assistant-{message_index}"
-                            response_text = "I don't have that stored yet."
+                            # response_text is already set above with ordinal bounds messaging
                             # Extract canonicalization info for model label
                             canonicalizer_used_empty = canonicalization_result is not None
                             teacher_invoked_empty = canonicalization_result.teacher_invoked if canonicalization_result else False
@@ -1737,9 +1747,10 @@ async def chat_with_smart_search(
                         canonicalizer_used=canonicalizer_used_empty_resp,
                         teacher_invoked=teacher_invoked_empty_resp
                     )
+                    # Use response_text (which may include ordinal bounds messaging)
                     return {
                         "type": "assistant_message",
-                        "content": "I don't have that stored yet.",
+                        "content": response_text,  # May be "I don't have that stored yet." or ordinal bounds message
                         "meta": {
                             "usedFacts": True,
                             "factNotFound": True,
@@ -1757,7 +1768,14 @@ async def chat_with_smart_search(
                             "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
                             "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
                             "teacher_invoked": teacher_invoked_empty_resp,
-                            "alias_source": canonicalization_result.source if canonicalization_result else None
+                            "alias_source": canonicalization_result.source if canonicalization_result else None,
+                            # Rank telemetry (from FactsAnswer)
+                            "requested_rank": query_plan.rank if query_plan else None,
+                            "detected_rank": query_plan.rank if query_plan else None,
+                            "ordinal_parse_source": facts_answer.ordinal_parse_source,
+                            "rank_applied": facts_answer.rank_applied,
+                            "rank_result_found": facts_answer.rank_result_found,
+                            "max_available_rank": facts_answer.max_available_rank
                         },
                         "model": model_label_empty_resp,
                         "model_label": f"Model: {model_label_empty_resp}",

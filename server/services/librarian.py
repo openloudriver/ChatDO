@@ -897,9 +897,9 @@ def search_facts_ranked_list(
         
         # Search facts using the topic as query (searches fact_key and value_text)
         # This will find facts like "user.favorites.crypto.1", "user.favorites.crypto.2", etc.
-        # UNBOUNDED: Use a very high limit (1000) if no limit specified to get all facts
-        # This ensures we don't truncate ranked lists
-        search_limit = limit if limit is not None else 1000
+        # UNBOUNDED: Use a very high limit (10000) if no limit specified to get all facts
+        # This ensures we don't truncate ranked lists (increased from 1000 to 10000)
+        search_limit = limit if limit is not None else 10000
         source_id = f"project-{project_id}"
         facts = db.search_current_facts(
             project_id=project_id,

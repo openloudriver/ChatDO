@@ -5,20 +5,74 @@ This is the SINGLE SOURCE OF TRUTH for all fact writes.
 No other code path should write facts to the database.
 """
 import logging
+import uuid
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
+from datetime import datetime
 
 from server.contracts.facts_ops import FactsOp, FactsOpsResponse
 from server.services.facts_normalize import (
     normalize_fact_key,
     normalize_fact_value,
     canonical_rank_key,
+    canonical_list_key,
     extract_topic_from_list_key
 )
 from server.services.projects.project_resolver import validate_project_uuid
 from memory_service.memory_dashboard import db
 
 logger = logging.getLogger(__name__)
+
+
+def _get_max_rank_atomic(
+    conn,
+    project_uuid: str,
+    topic: str,
+    list_key: str
+) -> int:
+    """
+    Atomically get the maximum rank for a topic within a transaction.
+    
+    This function must be called within an active transaction to ensure
+    atomicity and prevent race conditions.
+    
+    Args:
+        conn: Active database connection (must be in a transaction)
+        project_uuid: Project UUID
+        topic: Canonical topic
+        list_key: List key (e.g., "user.favorites.crypto")
+        
+    Returns:
+        Maximum rank found (0 if no facts exist)
+    """
+    cursor = conn.cursor()
+    
+    # Query all ranked facts for this topic (using list_key prefix)
+    # Pattern: user.favorites.<topic>.<rank>
+    cursor.execute("""
+        SELECT fact_key, value_text
+        FROM project_facts
+        WHERE project_id = ? AND fact_key LIKE ? AND is_current = 1
+        ORDER BY fact_key
+    """, (project_uuid, f"{list_key}.%"))
+    
+    rows = cursor.fetchall()
+    max_rank = 0
+    
+    for row in rows:
+        fact_key = row[0]
+        # Extract rank from fact_key (e.g., "user.favorites.crypto.5" -> 5)
+        if "." in fact_key:
+            try:
+                rank_str = fact_key.rsplit(".", 1)[1]
+                rank = int(rank_str)
+                if rank > max_rank:
+                    max_rank = rank
+            except (ValueError, IndexError):
+                # Skip invalid rank format
+                continue
+    
+    return max_rank
 
 
 @dataclass
@@ -92,180 +146,302 @@ def apply_facts_ops(
     
     logger.info(f"[FACTS-APPLY] Applying {len(ops_response.ops)} operations for project {project_uuid}")
     
-    # Process each operation
-    for idx, op in enumerate(ops_response.ops, 1):
-        try:
-            if op.op == "ranked_list_set":
-                # Validate required fields
-                if not op.list_key or op.rank is None or not op.value:
-                    result.errors.append(
-                        f"Operation {idx}: ranked_list_set requires list_key, rank, and value"
-                    )
-                    continue
-                
-                # Extract topic from list_key
-                topic = extract_topic_from_list_key(op.list_key)
-                if not topic:
-                    result.errors.append(
-                        f"Operation {idx}: Invalid list_key format: {op.list_key}. "
-                        "Expected format: user.favorites.<topic>"
-                    )
-                    continue
-                
-                # Canonicalize topic using Canonicalizer subsystem (defensive - topics should already be canonical)
-                from server.services.canonicalizer import canonicalize_topic
-                canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)  # Don't invoke teacher here - should already be canonical
-                canonical_topic = canonicalization_result.canonical_topic
-                
-                # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
-                # Look for user.favorites.<topic> (without rank) before writing ranked entry
-                try:
-                    # validate_project_uuid is already imported at module level
-                    validate_project_uuid(project_uuid)
-                    source_id_for_migration = source_id or f"project-{project_uuid}"
-                    db.init_db(source_id_for_migration, project_id=project_uuid)
-                    conn = db.get_db_connection(source_id_for_migration, project_id=project_uuid)
-                    cursor = conn.cursor()
+    # Initialize DB connection for atomic operations
+    db.init_db(source_id, project_id=project_uuid)
+    conn = db.get_db_connection(source_id, project_id=project_uuid)
+    cursor = conn.cursor()
+    
+    # Start transaction for atomic unranked writes
+    # SQLite uses implicit transactions, but we'll use BEGIN/COMMIT for clarity
+    try:
+        cursor.execute("BEGIN")
+        
+        # Process each operation
+        for idx, op in enumerate(ops_response.ops, 1):
+            try:
+                if op.op == "ranked_list_set":
+                    # Validate required fields
+                    if not op.list_key or op.rank is None or not op.value:
+                        result.errors.append(
+                            f"Operation {idx}: ranked_list_set requires list_key, rank, and value"
+                        )
+                        continue
                     
-                    # Check for scalar fact: user.favorites.<topic> (no rank)
-                    scalar_key = op.list_key  # e.g., "user.favorites.crypto" (without .1, .2, etc.)
+                    # Extract topic from list_key
+                    topic = extract_topic_from_list_key(op.list_key)
+                    if not topic:
+                        result.errors.append(
+                            f"Operation {idx}: Invalid list_key format: {op.list_key}. "
+                            "Expected format: user.favorites.<topic>"
+                        )
+                        continue
+                    
+                    # Canonicalize topic using Canonicalizer subsystem (defensive - topics should already be canonical)
+                    from server.services.canonicalizer import canonicalize_topic
+                    canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)  # Don't invoke teacher here - should already be canonical
+                    canonical_topic = canonicalization_result.canonical_topic
+                    
+                    # RACE CONDITION FIX: For unranked writes, detect conflicts and retry atomically
+                    # Detection heuristic: If rank=1 and there's already a fact at rank 1 with different value,
+                    # this is likely an unranked write that should append after max rank
+                    # We'll check this atomically within the transaction
+                    list_key_for_check = canonical_list_key(canonical_topic)
+                    fact_key_to_check = canonical_rank_key(canonical_topic, op.rank)
+                    
+                    # Check if this fact_key already exists with a different value (potential conflict)
                     cursor.execute("""
-                        SELECT fact_id, value_text, source_message_uuid, created_at
-                        FROM project_facts
+                        SELECT fact_id, value_text FROM project_facts
+                        WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                        LIMIT 1
+                    """, (project_uuid, fact_key_to_check))
+                    existing_fact = cursor.fetchone()
+                    
+                    # If rank=1 and fact exists with different value, this is likely an unranked write
+                    # Atomically query max rank and adjust
+                    if op.rank == 1 and existing_fact and existing_fact[1] != op.value:
+                        logger.debug(f"[FACTS-APPLY] Detected potential unranked write conflict at rank 1, querying max rank atomically")
+                        max_rank = _get_max_rank_atomic(conn, project_uuid, canonical_topic, list_key_for_check)
+                        new_rank = max_rank + 1
+                        logger.info(f"[FACTS-APPLY] Unranked write: adjusting rank from {op.rank} to {new_rank} (max_rank={max_rank})")
+                        op.rank = new_rank
+                        fact_key = canonical_rank_key(canonical_topic, op.rank)
+                    else:
+                        # Use the rank as-is
+                        fact_key = canonical_rank_key(canonical_topic, op.rank)
+                
+                    # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
+                    # Look for user.favorites.<topic> (without rank) before writing ranked entry
+                    try:
+                        scalar_key = op.list_key  # e.g., "user.favorites.crypto" (without .1, .2, etc.)
+                        cursor.execute("""
+                            SELECT fact_id, value_text, source_message_uuid, created_at
+                            FROM project_facts
+                            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                            ORDER BY effective_at DESC, created_at DESC
+                            LIMIT 1
+                        """, (project_uuid, scalar_key))
+                        scalar_fact = cursor.fetchone()
+                        
+                        if scalar_fact:
+                            # Legacy scalar fact found - migrate to ranked entry at rank 1
+                            legacy_value = scalar_fact[1] if len(scalar_fact) > 1 else ""
+                            legacy_message_uuid = scalar_fact[2] if len(scalar_fact) > 2 else None
+                            legacy_created_at = scalar_fact[3] if len(scalar_fact) > 3 else None
+                            
+                            if legacy_value:
+                                # Create ranked entry at rank 1 from legacy scalar
+                                legacy_rank_key = canonical_rank_key(canonical_topic, 1)
+                                
+                                logger.info(
+                                    f"[FACTS-APPLY] Migrating legacy scalar fact: {scalar_key} = {legacy_value} "
+                                    f"→ ranked entry at {legacy_rank_key}"
+                                )
+                                
+                                # Store as ranked entry within the same transaction
+                                # Use the same connection for atomicity
+                                legacy_fact_id = str(uuid.uuid4())
+                                legacy_created_at_dt = legacy_created_at if legacy_created_at else datetime.now()
+                                
+                                # Mark scalar as not current
+                                cursor.execute("""
+                                    UPDATE project_facts
+                                    SET is_current = 0
+                                    WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                                """, (project_uuid, scalar_key))
+                                
+                                # Insert ranked entry
+                                cursor.execute("""
+                                    INSERT INTO project_facts (
+                                        fact_id, project_id, fact_key, value_text, value_type,
+                                        confidence, source_message_uuid, created_at, effective_at,
+                                        supersedes_fact_id, is_current
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                                """, (
+                                    legacy_fact_id, project_uuid, legacy_rank_key, legacy_value, "string",
+                                    1.0, legacy_message_uuid or message_uuid, legacy_created_at_dt, legacy_created_at_dt,
+                                    None
+                                ))
+                    except Exception as e:
+                        logger.warning(f"[FACTS-APPLY] Failed to check/migrate legacy scalar facts: {e}")
+                        # Continue with normal ranked_list_set processing
+                
+                    # Normalize value (ranked list values have stricter length limit)
+                    normalized_value, warning = normalize_fact_value(op.value, is_ranked_list=True)
+                    if warning:
+                        result.warnings.append(f"Operation {idx}: {warning}")
+                    
+                    # Store fact atomically within the transaction
+                    fact_id = str(uuid.uuid4())
+                    created_at = datetime.now()
+                    effective_at = created_at
+                    
+                    # Check if fact_key already exists
+                    cursor.execute("""
+                        SELECT fact_id, value_text FROM project_facts
                         WHERE project_id = ? AND fact_key = ? AND is_current = 1
                         ORDER BY effective_at DESC, created_at DESC
                         LIMIT 1
-                    """, (project_uuid, scalar_key))
-                    scalar_fact = cursor.fetchone()
-                    conn.close()
+                    """, (project_uuid, fact_key))
+                    previous_fact = cursor.fetchone()
+                    supersedes_fact_id = previous_fact[0] if previous_fact else None
                     
-                    if scalar_fact:
-                        # Legacy scalar fact found - migrate to ranked entry at rank 1
-                        legacy_value = scalar_fact[1] if len(scalar_fact) > 1 else ""
-                        legacy_message_uuid = scalar_fact[2] if len(scalar_fact) > 2 else None
-                        legacy_created_at = scalar_fact[3] if len(scalar_fact) > 3 else None
-                        
-                        if legacy_value:
-                            # Create ranked entry at rank 1 from legacy scalar
-                            legacy_rank_key = canonical_rank_key(canonical_topic, 1)
-                            
-                            logger.info(
-                                f"[FACTS-APPLY] Migrating legacy scalar fact: {scalar_key} = {legacy_value} "
-                                f"→ ranked entry at {legacy_rank_key}"
-                            )
-                            
-                            # Store as ranked entry (this will mark the scalar as not current)
-                            db.store_project_fact(
-                                project_id=project_uuid,
-                                fact_key=legacy_rank_key,
-                                value_text=legacy_value,
-                                value_type="string",
-                                source_message_uuid=legacy_message_uuid or message_uuid,
-                                confidence=1.0,
-                                source_id=source_id_for_migration,
-                                created_at=legacy_created_at  # Preserve original timestamp
-                            )
-                except Exception as e:
-                    logger.warning(f"[FACTS-APPLY] Failed to check/migrate legacy scalar facts: {e}")
-                    # Continue with normal ranked_list_set processing
+                    # Determine action type
+                    action_type = "store"
+                    if previous_fact:
+                        previous_value = previous_fact[1] if len(previous_fact) > 1 else None
+                        if previous_value and previous_value != normalized_value:
+                            action_type = "update"
+                    
+                    # Mark previous facts as not current
+                    if previous_fact:
+                        cursor.execute("""
+                            UPDATE project_facts
+                            SET is_current = 0
+                            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                        """, (project_uuid, fact_key))
+                    
+                    # Insert new fact
+                    cursor.execute("""
+                        INSERT INTO project_facts (
+                            fact_id, project_id, fact_key, value_text, value_type,
+                            confidence, source_message_uuid, created_at, effective_at,
+                            supersedes_fact_id, is_current
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                    """, (
+                        fact_id, project_uuid, fact_key, normalized_value, "string",
+                        op.confidence or 1.0, message_uuid, created_at, effective_at,
+                        supersedes_fact_id
+                    ))
+                    
+                    # Count based on action type
+                    if action_type == "store":
+                        result.store_count += 1
+                        logger.debug(f"[FACTS-APPLY] ✅ STORE op {idx}: {fact_key} = {normalized_value}")
+                    elif action_type == "update":
+                        result.update_count += 1
+                        logger.debug(f"[FACTS-APPLY] ✅ UPDATE op {idx}: {fact_key} = {normalized_value}")
+                    
+                    result.stored_fact_keys.append(fact_key)
                 
-                # Build canonical fact_key using canonicalized topic
-                fact_key = canonical_rank_key(canonical_topic, op.rank)
+                elif op.op == "set":
+                    # Validate required fields
+                    if not op.fact_key or not op.value:
+                        result.errors.append(
+                            f"Operation {idx}: set requires fact_key and value"
+                        )
+                        continue
+                    
+                    # Normalize key and value
+                    normalized_key, key_warning = normalize_fact_key(op.fact_key)
+                    if key_warning:
+                        result.warnings.append(f"Operation {idx}: {key_warning}")
+                    
+                    normalized_value, value_warning = normalize_fact_value(op.value, is_ranked_list=False)
+                    if value_warning:
+                        result.warnings.append(f"Operation {idx}: {value_warning}")
+                    
+                    # Store fact atomically within the transaction
+                    fact_id = str(uuid.uuid4())
+                    created_at = datetime.now()
+                    effective_at = created_at
+                    
+                    # Check if fact_key already exists
+                    cursor.execute("""
+                        SELECT fact_id, value_text FROM project_facts
+                        WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                        ORDER BY effective_at DESC, created_at DESC
+                        LIMIT 1
+                    """, (project_uuid, normalized_key))
+                    previous_fact = cursor.fetchone()
+                    supersedes_fact_id = previous_fact[0] if previous_fact else None
+                    
+                    # Determine action type
+                    action_type = "store"
+                    if previous_fact:
+                        previous_value = previous_fact[1] if len(previous_fact) > 1 else None
+                        if previous_value and previous_value != normalized_value:
+                            action_type = "update"
+                    
+                    # Mark previous facts as not current
+                    if previous_fact:
+                        cursor.execute("""
+                            UPDATE project_facts
+                            SET is_current = 0
+                            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                        """, (project_uuid, normalized_key))
+                    
+                    # Insert new fact
+                    cursor.execute("""
+                        INSERT INTO project_facts (
+                            fact_id, project_id, fact_key, value_text, value_type,
+                            confidence, source_message_uuid, created_at, effective_at,
+                            supersedes_fact_id, is_current
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                    """, (
+                        fact_id, project_uuid, normalized_key, normalized_value, "string",
+                        op.confidence or 1.0, message_uuid, created_at, effective_at,
+                        supersedes_fact_id
+                    ))
+                    
+                    # Count based on action type
+                    if action_type == "store":
+                        result.store_count += 1
+                        logger.debug(f"[FACTS-APPLY] ✅ STORE op {idx}: {normalized_key} = {normalized_value}")
+                    elif action_type == "update":
+                        result.update_count += 1
+                        logger.debug(f"[FACTS-APPLY] ✅ UPDATE op {idx}: {normalized_key} = {normalized_value}")
+                    
+                    result.stored_fact_keys.append(normalized_key)
                 
-                # Normalize value (ranked list values have stricter length limit)
-                normalized_value, warning = normalize_fact_value(op.value, is_ranked_list=True)
-                if warning:
-                    result.warnings.append(f"Operation {idx}: {warning}")
+                elif op.op == "ranked_list_clear":
+                    # Clear all ranks for a list_key
+                    if not op.list_key:
+                        result.errors.append(
+                            f"Operation {idx}: ranked_list_clear requires list_key"
+                        )
+                        continue
+                    
+                    # Extract topic
+                    topic = extract_topic_from_list_key(op.list_key)
+                    if not topic:
+                        result.errors.append(
+                            f"Operation {idx}: Invalid list_key format: {op.list_key}"
+                        )
+                        continue
+                    
+                    # Query all current facts for this list_key prefix
+                    # This is a special operation - we need to mark all ranks as not current
+                    # For now, we'll implement this by querying and updating
+                    # TODO: Consider adding a bulk clear operation to DB
+                    logger.warning(f"[FACTS-APPLY] ranked_list_clear not yet fully implemented for {op.list_key}")
+                    result.warnings.append(f"Operation {idx}: ranked_list_clear is not yet implemented")
                 
-                # Store fact
-                fact_id, action_type = db.store_project_fact(
-                    project_id=project_uuid,
-                    fact_key=fact_key,
-                    value_text=normalized_value,
-                    value_type="string",
-                    source_message_uuid=message_uuid,
-                    confidence=op.confidence or 1.0,
-                    source_id=source_id
-                )
-                
-                # Count based on action type
-                if action_type == "store":
-                    result.store_count += 1
-                    logger.debug(f"[FACTS-APPLY] ✅ STORE op {idx}: {fact_key} = {normalized_value}")
-                elif action_type == "update":
-                    result.update_count += 1
-                    logger.debug(f"[FACTS-APPLY] ✅ UPDATE op {idx}: {fact_key} = {normalized_value}")
-                
-                result.stored_fact_keys.append(fact_key)
-                
-            elif op.op == "set":
-                # Validate required fields
-                if not op.fact_key or not op.value:
-                    result.errors.append(
-                        f"Operation {idx}: set requires fact_key and value"
-                    )
-                    continue
-                
-                # Normalize key and value
-                normalized_key, key_warning = normalize_fact_key(op.fact_key)
-                if key_warning:
-                    result.warnings.append(f"Operation {idx}: {key_warning}")
-                
-                normalized_value, value_warning = normalize_fact_value(op.value, is_ranked_list=False)
-                if value_warning:
-                    result.warnings.append(f"Operation {idx}: {value_warning}")
-                
-                # Store fact
-                fact_id, action_type = db.store_project_fact(
-                    project_id=project_uuid,
-                    fact_key=normalized_key,
-                    value_text=normalized_value,
-                    value_type="string",
-                    source_message_uuid=message_uuid,
-                    confidence=op.confidence or 1.0,
-                    source_id=source_id
-                )
-                
-                # Count based on action type
-                if action_type == "store":
-                    result.store_count += 1
-                    logger.debug(f"[FACTS-APPLY] ✅ STORE op {idx}: {normalized_key} = {normalized_value}")
-                elif action_type == "update":
-                    result.update_count += 1
-                    logger.debug(f"[FACTS-APPLY] ✅ UPDATE op {idx}: {normalized_key} = {normalized_value}")
-                
-                result.stored_fact_keys.append(normalized_key)
-                
-            elif op.op == "ranked_list_clear":
-                # Clear all ranks for a list_key
-                if not op.list_key:
-                    result.errors.append(
-                        f"Operation {idx}: ranked_list_clear requires list_key"
-                    )
-                    continue
-                
-                # Extract topic
-                topic = extract_topic_from_list_key(op.list_key)
-                if not topic:
-                    result.errors.append(
-                        f"Operation {idx}: Invalid list_key format: {op.list_key}"
-                    )
-                    continue
-                
-                # Query all current facts for this list_key prefix
-                # This is a special operation - we need to mark all ranks as not current
-                # For now, we'll implement this by querying and updating
-                # TODO: Consider adding a bulk clear operation to DB
-                logger.warning(f"[FACTS-APPLY] ranked_list_clear not yet fully implemented for {op.list_key}")
-                result.warnings.append(f"Operation {idx}: ranked_list_clear is not yet implemented")
-                
-            else:
-                result.errors.append(f"Operation {idx}: Unknown operation type: {op.op}")
-                
-        except Exception as e:
-            error_msg = f"Operation {idx}: Failed to apply {op.op}: {e}"
-            result.errors.append(error_msg)
-            logger.error(f"[FACTS-APPLY] {error_msg}", exc_info=True)
+                else:
+                    result.errors.append(f"Operation {idx}: Unknown operation type: {op.op}")
+                    
+            except Exception as e:
+                error_msg = f"Operation {idx}: Failed to apply {op.op}: {e}"
+                result.errors.append(error_msg)
+                logger.error(f"[FACTS-APPLY] {error_msg}", exc_info=True)
+        
+        # Commit transaction
+        cursor.execute("COMMIT")
+        conn.commit()
+        
+    except Exception as e:
+        # Rollback on error
+        try:
+            cursor.execute("ROLLBACK")
+            conn.rollback()
+        except:
+            pass
+        logger.error(f"[FACTS-APPLY] Transaction failed, rolled back: {e}", exc_info=True)
+        result.errors.append(f"Transaction failed: {e}")
+    finally:
+        conn.close()
     
     logger.info(
         f"[FACTS-APPLY] ✅ Applied operations: S={result.store_count} U={result.update_count} "
