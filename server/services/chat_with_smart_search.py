@@ -2225,7 +2225,8 @@ async def chat_with_smart_search(
                     "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
-                    "created_at": user_msg_created_at
+                    "created_at": user_msg_created_at,
+                    "uuid": current_message_uuid  # Include UUID for rehydration
                 })
                 history.append({
                     "id": assistant_message_id,  # Use constructed ID to match indexing
@@ -2291,7 +2292,8 @@ async def chat_with_smart_search(
                     "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
-                    "created_at": user_msg_created_at
+                    "created_at": user_msg_created_at,
+                    "uuid": current_message_uuid  # Include UUID for rehydration
                 })
                 history.append({
                     "id": assistant_message_id,  # Use constructed ID to match indexing
@@ -2433,7 +2435,8 @@ async def chat_with_smart_search(
                 "id": user_message_id,  # Use constructed ID to match indexing
                 "role": "user",
                 "content": user_message,
-                "created_at": user_msg_created_at
+                "created_at": user_msg_created_at,
+                "uuid": current_message_uuid  # Include UUID for rehydration
             }
             # NOTE: Ranked lists are now stored in facts DB, not thread metadata
             history.append(user_msg)
