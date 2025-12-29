@@ -244,8 +244,15 @@ async def persist_facts_synchronously(
     store_count = 0
     update_count = 0
     stored_fact_keys = []
+    rank_assignment_source = None  # Will be set from apply_result
+    duplicate_blocked = None  # Will be set from apply_result
     
     ambiguous_topics = None  # Will be set if ranked list topic resolution is ambiguous
+    
+    # Initialize variables that may be referenced in diagnostic logging
+    # These must be initialized before any branching to ensure they're always in scope
+    llm_response = None
+    prompt = None
     
     if not project_id:
         logger.warning(f"[FACTS-PERSIST] Skipping fact persistence: project_id is missing")
@@ -349,7 +356,7 @@ async def persist_facts_synchronously(
             )
             
             # Call GPT-5 Nano Facts extractor (hard fail if unavailable)
-            llm_response = None
+            # Note: llm_response is already initialized to None at function start
             try:
                 logger.debug(f"[FACTS-PERSIST] Calling Facts LLM (GPT-5 Nano) for message (message_uuid={message_uuid})")
                 llm_response = await run_facts_llm(prompt)
@@ -467,8 +474,8 @@ async def persist_facts_synchronously(
         # Store raw response for diagnostics if write-intent
         if write_intent_detected and message_uuid:
             _raw_llm_responses[message_uuid] = {
-                "prompt": prompt if 'prompt' in locals() else None,
-                "raw_response": llm_response if 'llm_response' in locals() else None,
+                "prompt": prompt,
+                "raw_response": llm_response,
                 "parsed_json": ops_data if 'ops_data' in locals() else None,
                 "needs_clarification": ambiguous_topics,
                 "ops_count": 0,
@@ -497,6 +504,7 @@ async def persist_facts_synchronously(
     update_count = apply_result.update_count
     stored_fact_keys = apply_result.stored_fact_keys
     rank_assignment_source = apply_result.rank_assignment_source if apply_result.rank_assignment_source else None
+    duplicate_blocked = apply_result.duplicate_blocked if apply_result.duplicate_blocked else None
     
     # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
     if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
@@ -514,8 +522,8 @@ async def persist_facts_synchronously(
             "project_id": project_id,
             "chat_id": chat_id,
             "message_id": message_id,
-            "prompt": prompt if 'prompt' in locals() else None,
-            "raw_llm_response": llm_response if 'llm_response' in locals() else None,
+            "prompt": prompt,
+            "raw_llm_response": llm_response,
             "parsed_json": sanitized_json,
             "ops_count": len(ops_response.ops) if ops_response else 0,
             "apply_result": {
@@ -537,7 +545,7 @@ async def persist_facts_synchronously(
             f"needs_clarification={ops_response.needs_clarification if ops_response else None}, "
             f"apply_warnings={len(apply_result.warnings)}, apply_errors={len(apply_result.errors)}"
         )
-        logger.error(f"[FACTS-PERSIST] Raw LLM response (first 500 chars): {llm_response[:500] if llm_response and 'llm_response' in locals() else 'N/A'}")
+        logger.error(f"[FACTS-PERSIST] Raw LLM response (first 500 chars): {llm_response[:500] if llm_response else 'N/A'}")
         if sanitized_json:
             logger.error(f"[FACTS-PERSIST] Parsed JSON: {json.dumps(sanitized_json, indent=2)}")
     
