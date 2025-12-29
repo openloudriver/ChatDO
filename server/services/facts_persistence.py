@@ -98,7 +98,8 @@ def get_or_create_message_uuid(
 
 
 def _convert_routing_candidate_to_ops(
-    candidate: Any  # FactsWriteCandidate from RoutingPlan
+    candidate: Any,  # FactsWriteCandidate from RoutingPlan
+    project_id: Optional[str] = None  # Project ID for checking existing ranks
 ) -> Tuple[Any, Any]:  # (FactsOpsResponse, CanonicalizationResult)
     """
     Convert RoutingPlan.facts_write_candidate to FactsOpsResponse.
@@ -108,8 +109,14 @@ def _convert_routing_candidate_to_ops(
     
     Uses Canonicalizer subsystem for topic canonicalization.
     
+    UNBOUNDED RANKED MODEL:
+    - If rank_ordered=True: Use ranks 1, 2, 3... (explicit ordering)
+    - If rank_ordered=False: Append after max(rank) (FIFO append)
+    - Never overwrite existing entries unless explicitly updating a specific rank
+    
     Args:
         candidate: FactsWriteCandidate from RoutingPlan
+        project_id: Optional project ID to check existing max rank for unranked writes
         
     Returns:
         Tuple of (FactsOpsResponse, CanonicalizationResult)
@@ -128,8 +135,40 @@ def _convert_routing_candidate_to_ops(
     # Handle single value or list of values
     values = candidate.value if isinstance(candidate.value, list) else [candidate.value]
     
+    # Determine starting rank based on rank_ordered flag
+    if candidate.rank_ordered:
+        # Explicit ordering: use ranks 1, 2, 3... (may overwrite existing ranks)
+        start_rank = 1
+    else:
+        # Unranked/FIFO append: find max existing rank and append after it
+        # Also check for legacy scalar/array facts and migrate them
+        start_rank = 1  # Default if no existing facts
+        if project_id:
+            try:
+                from server.services.librarian import search_facts_ranked_list
+                from memory_service.memory_dashboard import db as memory_db
+                from server.services.projects.project_resolver import validate_project_uuid
+                
+                # Check for ranked facts
+                existing_facts = search_facts_ranked_list(
+                    project_id=project_id,
+                    topic_key=canonical_topic,
+                    limit=1000  # Get all facts to find max rank (unbounded)
+                )
+                
+                # Now check max rank from ranked facts
+                if existing_facts:
+                    max_rank = max(f.get("rank", 0) for f in existing_facts)
+                    start_rank = max_rank + 1  # Append after max rank
+                    logger.debug(f"[FACTS-PERSIST] Unranked write: appending after max_rank={max_rank}, starting at rank={start_rank}")
+            except Exception as e:
+                logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}")
+                # Fallback to rank 1 if check fails
+                start_rank = 1
+    
     # Create ranked_list_set operations
-    for rank, value in enumerate(values, start=1):
+    for offset, value in enumerate(values):
+        rank = start_rank + offset
         ops.append(FactsOp(
             op="ranked_list_set",
             list_key=list_key,
@@ -247,7 +286,10 @@ async def persist_facts_synchronously(
             f"value={routing_plan_candidate.value}), skipping Facts LLM call"
         )
         try:
-            ops_response, canonicalization_result = _convert_routing_candidate_to_ops(routing_plan_candidate)
+            ops_response, canonicalization_result = _convert_routing_candidate_to_ops(
+                routing_plan_candidate,
+                project_id=project_id  # Pass project_id for checking existing max rank
+            )
             logger.info(
                 f"[FACTS-PERSIST] Canonicalized topic: '{routing_plan_candidate.topic}' → "
                 f"'{canonicalization_result.canonical_topic}' "
@@ -335,6 +377,43 @@ async def persist_facts_synchronously(
                 # Parse JSON
                 ops_data = json.loads(json_text)
                 ops_response = FactsOpsResponse(**ops_data)
+                
+                # POST-PROCESS: Detect unranked writes and append after max rank
+                # If Facts LLM extracted rank=1 but user didn't explicitly specify a rank,
+                # and rank 1 already exists, append after max rank instead
+                if ops_response and ops_response.ops:
+                    import re
+                    # Check if user message explicitly mentions a rank (#1, first, 1st, etc.)
+                    explicit_rank_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
+                    has_explicit_rank = bool(explicit_rank_pattern.search(message_content))
+                    
+                    for op in ops_response.ops:
+                        if op.op == "ranked_list_set" and op.rank == 1 and op.list_key and not has_explicit_rank:
+                            # Check if rank 1 already exists for this topic
+                            try:
+                                from server.services.facts_normalize import extract_topic_from_list_key
+                                topic = extract_topic_from_list_key(op.list_key)
+                                if topic:
+                                    from server.services.librarian import search_facts_ranked_list
+                                    existing_facts = search_facts_ranked_list(
+                                        project_id=project_id,
+                                        topic_key=topic,
+                                        limit=1000  # Get all to find max rank
+                                    )
+                                    if existing_facts:
+                                        # Check if rank 1 exists
+                                        has_rank_1 = any(f.get("rank") == 1 for f in existing_facts)
+                                        if has_rank_1:
+                                            # This is an unranked write - append after max rank
+                                            max_rank = max(f.get("rank", 0) for f in existing_facts)
+                                            op.rank = max_rank + 1
+                                            logger.info(
+                                                f"[FACTS-PERSIST] Detected unranked write: appending after max_rank={max_rank}, "
+                                                f"new rank={op.rank} for topic={topic}"
+                                            )
+                            except Exception as e:
+                                logger.warning(f"[FACTS-PERSIST] Failed to check existing ranks for unranked append: {e}")
+                                # Continue with rank=1 if check fails
                 
             except json.JSONDecodeError as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")

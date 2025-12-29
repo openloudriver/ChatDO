@@ -82,6 +82,9 @@ RULES:
 - Output ONLY the JSON object, no markdown code blocks, no explanation
 - Values must be clean (no extra words like "is actually" or "and X at")
 - IMPORTANT: "My favorite X is Y" ALWAYS creates a ranked list operation with list_key="user.favorites.X", rank=1, value="Y"
+- UNBOUNDED: Never limit the number of favorites. Each favorite is stored as a separate ranked entry.
+- If user says "X is my favorite" without a rank, use rank=1 (system will append after max rank if unranked)
+- If user specifies a rank (e.g., "#4", "fourth"), extract and use that rank explicitly
 
 User message:
 {user_message}{context_section}{facts_section}
@@ -152,6 +155,9 @@ CRITICAL RULES:
 - Do NOT return empty ops: [] unless you explicitly set needs_clarification with a reason
 - Output ONLY the JSON object, no markdown code blocks, no explanation
 - Values must be clean (no extra words like "is actually" or "and X at")
+- UNBOUNDED: Never limit the number of favorites. Each favorite is stored as a separate ranked entry.
+- If user says "X is my favorite" without a rank, use rank=1 (system will append after max rank if unranked)
+- If user specifies a rank (e.g., "#4", "fourth"), extract and use that rank explicitly
 
 User message:
 {user_message}{facts_section}

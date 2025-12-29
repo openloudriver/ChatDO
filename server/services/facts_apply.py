@@ -117,6 +117,58 @@ def apply_facts_ops(
                 canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)  # Don't invoke teacher here - should already be canonical
                 canonical_topic = canonicalization_result.canonical_topic
                 
+                # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
+                # Look for user.favorites.<topic> (without rank) before writing ranked entry
+                try:
+                    from server.services.projects.project_resolver import validate_project_uuid
+                    validate_project_uuid(project_uuid)
+                    source_id_for_migration = source_id or f"project-{project_uuid}"
+                    db.init_db(source_id_for_migration, project_id=project_uuid)
+                    conn = db.get_db_connection(source_id_for_migration, project_id=project_uuid)
+                    cursor = conn.cursor()
+                    
+                    # Check for scalar fact: user.favorites.<topic> (no rank)
+                    scalar_key = op.list_key  # e.g., "user.favorites.crypto" (without .1, .2, etc.)
+                    cursor.execute("""
+                        SELECT fact_id, value_text, source_message_uuid, created_at
+                        FROM project_facts
+                        WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                        ORDER BY effective_at DESC, created_at DESC
+                        LIMIT 1
+                    """, (project_uuid, scalar_key))
+                    scalar_fact = cursor.fetchone()
+                    conn.close()
+                    
+                    if scalar_fact:
+                        # Legacy scalar fact found - migrate to ranked entry at rank 1
+                        legacy_value = scalar_fact[1] if len(scalar_fact) > 1 else ""
+                        legacy_message_uuid = scalar_fact[2] if len(scalar_fact) > 2 else None
+                        legacy_created_at = scalar_fact[3] if len(scalar_fact) > 3 else None
+                        
+                        if legacy_value:
+                            # Create ranked entry at rank 1 from legacy scalar
+                            legacy_rank_key = canonical_rank_key(canonical_topic, 1)
+                            
+                            logger.info(
+                                f"[FACTS-APPLY] Migrating legacy scalar fact: {scalar_key} = {legacy_value} "
+                                f"→ ranked entry at {legacy_rank_key}"
+                            )
+                            
+                            # Store as ranked entry (this will mark the scalar as not current)
+                            db.store_project_fact(
+                                project_id=project_uuid,
+                                fact_key=legacy_rank_key,
+                                value_text=legacy_value,
+                                value_type="string",
+                                source_message_uuid=legacy_message_uuid or message_uuid,
+                                confidence=1.0,
+                                source_id=source_id_for_migration,
+                                created_at=legacy_created_at  # Preserve original timestamp
+                            )
+                except Exception as e:
+                    logger.warning(f"[FACTS-APPLY] Failed to check/migrate legacy scalar facts: {e}")
+                    # Continue with normal ranked_list_set processing
+                
                 # Build canonical fact_key using canonicalized topic
                 fact_key = canonical_rank_key(canonical_topic, op.rank)
                 

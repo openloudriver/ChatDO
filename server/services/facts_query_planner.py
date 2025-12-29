@@ -35,7 +35,7 @@ OUTPUT FORMAT (JSON only, no markdown, no explanation):
   "topic": "crypto" (for ranked list queries),
   "key_prefix": "user.favorites.crypto" (for prefix queries),
   "fact_key": "user.email" (for exact key queries),
-  "limit": 25,
+  "limit": 100,  // Increased default for unbounded model (pagination only, not storage limit)
   "include_ranks": true,
   "rank": null (for full list) or 2 (for "second favorite"), 3 (for "third favorite"), etc.
 }}

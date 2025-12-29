@@ -854,7 +854,7 @@ def _detect_multi_claim(response: str) -> bool:
 def search_facts_ranked_list(
     project_id: str,
     topic_key: str,
-    limit: int = 50,
+    limit: Optional[int] = None,  # None = unbounded, only use for pagination
     exclude_message_uuid: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
@@ -864,12 +864,15 @@ def search_facts_ranked_list(
     This function reads directly from the project_facts DB (not via Memory Service HTTP),
     making it fast, deterministic, and independent of Memory Service availability.
     
+    UNBOUNDED MODEL: By default, returns ALL ranked facts for the topic (no limit).
+    Limit is only used for pagination in UI, not for storage constraints.
+    
     Facts DB contract: project_id must be UUID, never project name/slug.
     
     Args:
         project_id: Project UUID (must be UUID format, validated)
         topic_key: Topic key (e.g., "crypto", "colors") - will be normalized
-        limit: Maximum number of facts to return
+        limit: Optional maximum number of facts to return (None = unbounded, returns all)
         exclude_message_uuid: Optional message UUID to exclude from results
         
     Returns:
@@ -894,11 +897,14 @@ def search_facts_ranked_list(
         
         # Search facts using the topic as query (searches fact_key and value_text)
         # This will find facts like "user.favorites.crypto.1", "user.favorites.crypto.2", etc.
+        # UNBOUNDED: Use a very high limit (1000) if no limit specified to get all facts
+        # This ensures we don't truncate ranked lists
+        search_limit = limit if limit is not None else 1000
         source_id = f"project-{project_id}"
         facts = db.search_current_facts(
             project_id=project_id,
             query=normalized_topic_key,  # Search for the topic
-            limit=limit,
+            limit=search_limit,
             source_id=source_id,
             exclude_message_uuid=exclude_message_uuid
         )

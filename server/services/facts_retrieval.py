@@ -79,13 +79,14 @@ def execute_facts_plan(
             
             if plan.list_key and plan.topic:
                 try:
-                    # CRITICAL: For ordinal queries, we need ALL facts to filter by rank
-                    # Don't limit before filtering - get all facts, filter by rank, then limit
-                    retrieval_limit = plan.limit if plan.rank is None else 50  # Get more facts if filtering by rank
+                    # UNBOUNDED MODEL: For ordinal queries, get all facts to filter by rank
+                    # For list queries, use plan.limit for pagination (but don't truncate storage)
+                    # If plan.rank is set, we need all facts to find the specific rank
+                    retrieval_limit = None if plan.rank is not None else plan.limit  # None = unbounded
                     ranked_facts = search_facts_ranked_list(
                         project_id=project_uuid,
                         topic_key=plan.topic,
-                        limit=retrieval_limit,
+                        limit=retrieval_limit,  # None for ordinal queries (unbounded)
                         exclude_message_uuid=exclude_message_uuid
                     )
                 except Exception as e:
