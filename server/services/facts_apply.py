@@ -120,7 +120,7 @@ def apply_facts_ops(
                 # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
                 # Look for user.favorites.<topic> (without rank) before writing ranked entry
                 try:
-                    from server.services.projects.project_resolver import validate_project_uuid
+                    # validate_project_uuid is already imported at module level
                     validate_project_uuid(project_uuid)
                     source_id_for_migration = source_id or f"project-{project_uuid}"
                     db.init_db(source_id_for_migration, project_id=project_uuid)
