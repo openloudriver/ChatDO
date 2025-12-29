@@ -172,11 +172,13 @@ def _convert_routing_candidate_to_ops(
                     validate_project_uuid(project_id)
                     
                     # Check for ranked facts
-                    # FIX: Use 10000 limit instead of 1000 for unbounded retrieval
+                    # STORAGE IS UNBOUNDED: Facts are stored without limits.
+                    # RETRIEVAL FOR MAX RANK: Use high limit (10000) to find max rank for unranked appends.
+                    # This is paginated retrieval (not truly unbounded), but sufficient for finding max rank.
                     existing_facts = search_facts_ranked_list(
                         project_id=project_id,
                         topic_key=canonical_topic,
-                        limit=10000  # Get all facts to find max rank (unbounded, increased from 1000)
+                        limit=10000  # High limit for max rank calculation (storage is unbounded, retrieval is paginated)
                     )
                     
                     # Now check max rank from ranked facts
@@ -431,7 +433,7 @@ async def persist_facts_synchronously(
                                     existing_facts = search_facts_ranked_list(
                                         project_id=project_id,
                                         topic_key=topic,
-                                        limit=10000  # Get all to find max rank (increased from 1000)
+                                        limit=10000  # High limit for max rank calculation (storage is unbounded, retrieval is paginated)
                                     )
                                     if existing_facts:
                                         # Check if rank 1 exists

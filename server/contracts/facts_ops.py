@@ -96,10 +96,10 @@ class FactsQueryPlan(BaseModel):
         description="Exact fact key for exact key queries"
     )
     limit: int = Field(
-        100,  # Increased default for unbounded model
+        100,  # Default pagination limit
         ge=1,
-        le=1000,  # Increased max for pagination (not a storage limit)
-        description="Maximum number of facts to return (pagination only, not a storage limit)"
+        le=1000,  # Maximum pagination limit (storage is unbounded, retrieval is paginated)
+        description="Maximum number of facts to return (pagination limit for retrieval; storage has no limit)"
     )
     include_ranks: bool = Field(
         True,

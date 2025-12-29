@@ -152,9 +152,21 @@ def apply_facts_ops(
     cursor = conn.cursor()
     
     # Start transaction for atomic unranked writes
-    # SQLite uses implicit transactions, but we'll use BEGIN/COMMIT for clarity
+    # CRITICAL: Use BEGIN IMMEDIATE to acquire reserved lock BEFORE reading max_rank
+    # This prevents race conditions where two concurrent transactions both read the same
+    # max_rank value before either writes, leading to duplicate rank assignments.
+    # 
+    # SQLite transaction modes:
+    # - BEGIN (DEFERRED): Lock acquired on first write (too late for our use case)
+    # - BEGIN IMMEDIATE: Reserved lock acquired immediately, prevents other writers
+    # - BEGIN EXCLUSIVE: Exclusive lock, prevents all access (too restrictive)
+    #
+    # With BEGIN IMMEDIATE:
+    # - Transaction 1: BEGIN IMMEDIATE (acquires lock) → SELECT max_rank → INSERT
+    # - Transaction 2: BEGIN IMMEDIATE (waits for lock) → SELECT max_rank (sees updated value) → INSERT
+    # This ensures the "read max_rank → calculate new_rank → insert" sequence is atomic.
     try:
-        cursor.execute("BEGIN")
+        cursor.execute("BEGIN IMMEDIATE")
         
         # Process each operation
         for idx, op in enumerate(ops_response.ops, 1):

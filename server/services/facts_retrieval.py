@@ -101,11 +101,12 @@ def execute_facts_plan(
             
             if plan.list_key and plan.topic:
                 try:
-                    # UNBOUNDED MODEL: For ordinal queries, get all facts to filter by rank
-                    # For list queries, use plan.limit for pagination (but don't truncate storage)
-                    # If plan.rank is set, we need all facts to find the specific rank
-                    # FIX: Use 10000 limit instead of 1000 for unbounded retrieval
-                    retrieval_limit = None if plan.rank is not None else plan.limit  # None = unbounded
+                    # STORAGE IS UNBOUNDED: Facts are stored without limits.
+                    # RETRIEVAL IS PAGINATED: List queries use plan.limit for pagination (default 100, max 1000).
+                    # ORDINAL QUERIES USE UNBOUNDED RETRIEVAL: When plan.rank is set, we retrieve all facts
+                    # internally (limit=None) to find the specific rank, then filter to return only that rank.
+                    # This ensures ordinal queries work correctly even with >1000 facts.
+                    retrieval_limit = None if plan.rank is not None else plan.limit  # None = unbounded retrieval
                     ranked_facts = search_facts_ranked_list(
                         project_id=project_uuid,
                         topic_key=plan.topic,
