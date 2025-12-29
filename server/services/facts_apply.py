@@ -6,6 +6,8 @@ No other code path should write facts to the database.
 """
 import logging
 import uuid
+import unicodedata
+import re
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
@@ -75,6 +77,74 @@ def _get_max_rank_atomic(
     return max_rank
 
 
+def normalize_favorite_value(s: str) -> str:
+    """
+    Normalize a favorite value for duplicate detection.
+    
+    This is the SINGLE SOURCE OF TRUTH for favorite value normalization.
+    All duplicate checks for favorites must use this function to ensure
+    consistent comparison across variations like:
+    - "Reese's" vs "Reese's." vs "reese's " vs "Reese's"
+    
+    Normalization steps:
+    1. Unicode normalization (NFKC) - handles composed/decomposed characters
+    2. Map smart quotes to ASCII equivalents (' → ', " → ")
+    3. Strip leading/trailing whitespace
+    4. Collapse internal whitespace to single spaces
+    5. Strip trailing punctuation: .,!?;:
+    6. Lowercase (for comparison only - original value is preserved)
+    
+    Args:
+        s: Raw value string
+        
+    Returns:
+        Normalized string for comparison (lowercased)
+        
+    Examples:
+        "Reese's" → "reese's"
+        "Reese's." → "reese's"
+        "  reese's  " → "reese's"
+        "Reese's" (smart quote) → "reese's"
+    """
+    if not s:
+        return ""
+    
+    # Step 1: Unicode normalization (NFKC)
+    # This handles composed/decomposed characters (e.g., é vs é)
+    normalized = unicodedata.normalize("NFKC", s)
+    
+    # Step 2: Map smart quotes to ASCII equivalents
+    # Map various apostrophe/quotation mark characters to standard ASCII
+    quote_map = {
+        '\u2018': "'",  # Left single quotation mark
+        '\u2019': "'",  # Right single quotation mark (most common)
+        '\u201A': "'",  # Single low-9 quotation mark
+        '\u201B': "'",  # Single high-reversed-9 quotation mark
+        '\u2032': "'",  # Prime
+        '\u201C': '"',  # Left double quotation mark
+        '\u201D': '"',  # Right double quotation mark
+        '\u201E': '"',  # Double low-9 quotation mark
+        '\u201F': '"',  # Double high-reversed-9 quotation mark
+        '\u2033': '"',  # Double prime
+    }
+    for smart_char, ascii_char in quote_map.items():
+        normalized = normalized.replace(smart_char, ascii_char)
+    
+    # Step 3: Strip leading/trailing whitespace
+    normalized = normalized.strip()
+    
+    # Step 4: Collapse internal whitespace to single spaces
+    normalized = re.sub(r'\s+', ' ', normalized)
+    
+    # Step 5: Strip trailing punctuation: .,!?;:
+    normalized = re.sub(r'[.,!?;:]+$', '', normalized)
+    
+    # Step 6: Lowercase for comparison
+    normalized = normalized.lower()
+    
+    return normalized
+
+
 def _check_value_exists_in_ranked_list(
     conn,
     project_uuid: str,
@@ -91,7 +161,7 @@ def _check_value_exists_in_ranked_list(
         conn: Active database connection (must be in a transaction)
         project_uuid: Project UUID
         list_key: List key (e.g., "user.favorites.crypto")
-        value: Value to check for (normalized)
+        value: Value to check for (raw value - will be normalized internally using normalize_favorite_value)
         
     Returns:
         Rank (1-based) if value exists, None otherwise
@@ -114,24 +184,30 @@ def _check_value_exists_in_ranked_list(
         f"list_key={list_key}, value='{value}', found {len(rows)} existing facts"
     )
     
+    # Normalize the input value once (for comparison)
+    normalized_input = normalize_favorite_value(value)
+    
+    # Optional: Cache normalized existing values to avoid re-normalizing in loop
+    # (Lightweight optimization for large lists)
+    normalized_cache: Dict[str, str] = {}
+    
     for row in rows:
         fact_key = row[0]
         existing_value = row[1] if len(row) > 1 else ""
         
-        # Normalize both values using the same normalization function for accurate comparison
-        # This ensures we compare normalized values consistently (handles spaces, quotes, etc.)
-        from server.services.facts_normalize import normalize_fact_value
-        normalized_existing, _ = normalize_fact_value(existing_value, is_ranked_list=True)
-        normalized_input, _ = normalize_fact_value(value, is_ranked_list=True)
+        # Use cached normalized value if available, otherwise normalize and cache
+        if existing_value not in normalized_cache:
+            normalized_cache[existing_value] = normalize_favorite_value(existing_value)
+        normalized_existing = normalized_cache[existing_value]
         
         logger.debug(
             f"[FACTS-APPLY] Comparing: existing='{existing_value}' (norm: '{normalized_existing}') "
             f"vs input='{value}' (norm: '{normalized_input}') -> "
-            f"match={normalized_existing.strip().lower() == normalized_input.strip().lower()}"
+            f"match={normalized_existing == normalized_input}"
         )
         
-        # Compare normalized values (case-insensitive, trimmed, spaces collapsed, etc.)
-        if normalized_existing and normalized_existing.strip().lower() == normalized_input.strip().lower():
+        # Compare normalized values (both are already lowercased and normalized)
+        if normalized_existing and normalized_existing == normalized_input:
             # Extract rank from fact_key (e.g., "user.favorites.crypto.2" -> 2)
             if "." in fact_key:
                 try:
@@ -289,13 +365,15 @@ def apply_facts_ops(
                         )
                         
                         if is_favorites_topic:
+                            # For duplicate checking, use the raw value (not normalized_value from normalize_fact_value)
+                            # normalize_favorite_value will handle the normalization for comparison
                             existing_rank = _check_value_exists_in_ranked_list(
-                                conn, project_uuid, list_key_for_check, normalized_value
+                                conn, project_uuid, list_key_for_check, op.value
                             )
                             
                             logger.debug(
                                 f"[FACTS-APPLY] Duplicate check result: existing_rank={existing_rank} "
-                                f"for value='{normalized_value}' in topic={canonical_topic}"
+                                f"for value='{op.value}' in topic={canonical_topic}"
                             )
                             
                             if existing_rank is not None:
