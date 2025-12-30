@@ -15,11 +15,35 @@ import logging
 import json
 from typing import Dict, Optional, Tuple, List, Any
 from datetime import datetime
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 # In-memory store for raw LLM responses (keyed by message_uuid) for quick inspection
 _raw_llm_responses: Dict[str, Dict[str, Any]] = {}
+
+
+@dataclass
+class PersistFactsResult:
+    """
+    Result of persisting facts synchronously.
+    
+    This dataclass ensures type safety and prevents tuple unpacking errors.
+    All return statements from persist_facts_synchronously() must return this type.
+    """
+    store_count: int = 0
+    update_count: int = 0
+    stored_fact_keys: List[str] = None
+    message_uuid: Optional[str] = None
+    ambiguous_topics: Optional[List[str]] = None
+    canonicalization_result: Optional[Any] = None
+    rank_assignment_source: Optional[Dict[str, str]] = None  # Maps fact_key -> "explicit" | "atomic_append"
+    duplicate_blocked: Optional[Dict[str, Dict[str, Any]]] = None  # Maps value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str}
+    
+    def __post_init__(self):
+        """Initialize mutable defaults."""
+        if self.stored_fact_keys is None:
+            self.stored_fact_keys = []
 
 
 # REMOVED: resolve_ranked_list_topic() - Legacy function no longer used
@@ -277,7 +301,7 @@ async def persist_facts_synchronously(
     retrieved_facts: Optional[List[Dict]] = None,  # For schema-hint topic resolution
     write_intent_detected: bool = False,  # Flag to enable enhanced diagnostics
     routing_plan_candidate: Optional[Any] = None  # FactsWriteCandidate from RoutingPlan
-) -> Tuple[int, int, list, Optional[str], Optional[List[str]], Optional[Any], Optional[Dict[str, str]], Optional[Dict[str, Dict[str, Any]]]]:
+) -> PersistFactsResult:
     """
     Extract and store facts synchronously, returning actual store/update counts.
     
@@ -299,7 +323,7 @@ async def persist_facts_synchronously(
         source_id: Optional source ID (uses project-based source if not provided)
         
     Returns:
-        Tuple of (store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked):
+        PersistFactsResult with:
         - store_count: Number of facts actually stored (new facts)
         - update_count: Number of facts actually updated (existing facts with changed values)
         - stored_fact_keys: List of fact keys that were stored/updated
@@ -309,13 +333,8 @@ async def persist_facts_synchronously(
         - rank_assignment_source: Dict mapping fact_key -> "explicit" | "atomic_append" (None if no ranked facts)
         - duplicate_blocked: Dict mapping value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str} (None if no duplicates blocked)
     """
-    store_count = 0
-    update_count = 0
-    stored_fact_keys = []
-    rank_assignment_source = None  # Will be set from apply_result
-    duplicate_blocked = None  # Will be set from apply_result
-    
-    ambiguous_topics = None  # Will be set if ranked list topic resolution is ambiguous
+    # Initialize result object
+    result = PersistFactsResult()
     
     # Initialize variables that may be referenced in diagnostic logging
     # These must be initialized before any branching to ensure they're always in scope
@@ -324,7 +343,7 @@ async def persist_facts_synchronously(
     
     if not project_id:
         logger.warning(f"[FACTS-PERSIST] Skipping fact persistence: project_id is missing")
-        return store_count, update_count, stored_fact_keys, None, None, None, None, None
+        return result
     
     # Enforce Facts DB contract: project_id must be UUID
     from server.services.projects.project_resolver import validate_project_uuid
@@ -338,7 +357,7 @@ async def persist_facts_synchronously(
     if not message_uuid:
         if not all([chat_id, message_id, timestamp is not None, message_index is not None]):
             logger.warning(f"[FACTS-PERSIST] Cannot create message_uuid: missing required params")
-            return store_count, update_count, stored_fact_keys, None, None, None, None, None, None
+            return result
         
         message_uuid = get_or_create_message_uuid(
             project_id=project_id,
@@ -353,12 +372,14 @@ async def persist_facts_synchronously(
         
         if not message_uuid:
             logger.warning(f"[FACTS-PERSIST] Failed to get/create message_uuid, skipping fact persistence")
-            return store_count, update_count, stored_fact_keys, None, None, None, None, None, None
+            return result
+    
+    result.message_uuid = message_uuid
     
     # Only extract facts from user messages
     if role != "user":
         logger.debug(f"[FACTS-PERSIST] Skipping fact extraction for role={role} (only user messages)")
-        return store_count, update_count, stored_fact_keys, message_uuid, None, None, None, None, None
+        return result
     
     # NEW ARCHITECTURE: Use routing plan candidate if available, otherwise call Facts LLM
     from server.contracts.facts_ops import FactsOpsResponse
@@ -432,19 +453,27 @@ async def persist_facts_synchronously(
             except FactsLLMTimeoutError as e:
                 # Timeout error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) timed out: {e}")
-                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
+                result.store_count = -1
+                result.update_count = -1
+                return result  # Negative counts indicate error
             except FactsLLMUnavailableError as e:
                 # Unavailable error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM (GPT-5 Nano) unavailable: {e}")
-                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
+                result.store_count = -1
+                result.update_count = -1
+                return result  # Negative counts indicate error
             except FactsLLMInvalidJSONError as e:
                 # Invalid JSON error
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM returned invalid JSON: {e}")
-                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
+                result.store_count = -1
+                result.update_count = -1
+                return result  # Negative counts indicate error
             except FactsLLMError as e:
                 # Other Facts LLM errors
                 logger.error(f"[FACTS-PERSIST] ❌ Facts LLM failed: {e}")
-                return -1, -1, [], message_uuid, None, None, None, None, None  # Negative counts indicate error
+                result.store_count = -1
+                result.update_count = -1
+                return result  # Negative counts indicate error
             
             # Parse JSON response (strict parsing, hard fail if invalid)
             try:
@@ -489,12 +518,16 @@ async def persist_facts_synchronously(
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
                 logger.error(f"[FACTS-PERSIST] Raw response: {llm_response[:500] if llm_response else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None, None, None, None, None
+                result.store_count = -1
+                result.update_count = -1
+                return result
             except Exception as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to validate FactsOpsResponse: {e}")
                 logger.error(f"[FACTS-PERSIST] Parsed data: {ops_data if 'ops_data' in locals() else 'N/A'}")
                 # Hard fail - return error indicator
-                return -1, -1, [], message_uuid, None, None, None, None, None
+                result.store_count = -1
+                result.update_count = -1
+                return result
             
             # FORCE EXTRACTION RETRY: If write-intent and ops are empty, retry with stricter prompt
             if write_intent_detected and ops_response and len(ops_response.ops) == 0 and not ops_response.needs_clarification:
@@ -533,7 +566,9 @@ async def persist_facts_synchronously(
         except Exception as e:
             logger.error(f"[FACTS-PERSIST] ❌ Exception during Facts LLM extraction: {e}", exc_info=True)
             # Hard fail on unexpected exceptions
-            return -1, -1, [], message_uuid, None, None, None, None
+            result.store_count = -1
+            result.update_count = -1
+            return result
     
     # Check for clarification needed (applies to both routing candidate and LLM paths)
     if ops_response and ops_response.needs_clarification:
@@ -553,12 +588,16 @@ async def persist_facts_synchronously(
                 "message_id": message_id
             }
         
-        return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, None, None, None
+        result.ambiguous_topics = ambiguous_topics
+        result.canonicalization_result = canonicalization_result
+        return result
     
     # Validate ops_response exists before applying
     if not ops_response:
         logger.error(f"[FACTS-PERSIST] ❌ No ops_response available after conversion/LLM extraction")
-        return -1, -1, [], message_uuid, None, None, None, None
+        result.store_count = -1
+        result.update_count = -1
+        return result
     
     # Apply operations deterministically
     apply_result = apply_facts_ops(
@@ -568,15 +607,15 @@ async def persist_facts_synchronously(
         source_id=source_id
     )
     
-    # Return counts from apply result
-    store_count = apply_result.store_count
-    update_count = apply_result.update_count
-    stored_fact_keys = apply_result.stored_fact_keys
-    rank_assignment_source = apply_result.rank_assignment_source if apply_result.rank_assignment_source else None
-    duplicate_blocked = apply_result.duplicate_blocked if apply_result.duplicate_blocked else None
+    # Populate result from apply result
+    result.store_count = apply_result.store_count
+    result.update_count = apply_result.update_count
+    result.stored_fact_keys = apply_result.stored_fact_keys
+    result.rank_assignment_source = apply_result.rank_assignment_source if apply_result.rank_assignment_source else None
+    result.duplicate_blocked = apply_result.duplicate_blocked if apply_result.duplicate_blocked else None
     
     # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
-    if write_intent_detected and store_count == 0 and update_count == 0 and message_uuid:
+    if write_intent_detected and result.store_count == 0 and result.update_count == 0 and result.message_uuid:
         # Sanitize parsed JSON (remove sensitive data if any)
         sanitized_json = None
         if ops_response:
@@ -596,8 +635,8 @@ async def persist_facts_synchronously(
             "parsed_json": sanitized_json,
             "ops_count": len(ops_response.ops) if ops_response else 0,
             "apply_result": {
-                "store_count": store_count,
-                "update_count": update_count,
+                "store_count": result.store_count,
+                "update_count": result.update_count,
                 "warnings": apply_result.warnings,
                 "errors": apply_result.errors
             }
@@ -629,19 +668,19 @@ async def persist_facts_synchronously(
         # The caller can decide if errors should be treated as hard failures
     
     logger.info(
-        f"[FACTS-PERSIST] ✅ Persisted facts: S={store_count} U={update_count} "
-        f"keys={len(stored_fact_keys)} (message_uuid={message_uuid})"
+        f"[FACTS-PERSIST] ✅ Persisted facts: S={result.store_count} U={result.update_count} "
+        f"keys={len(result.stored_fact_keys)} (message_uuid={result.message_uuid})"
     )
     
     # Log rank assignment sources for telemetry
-    if rank_assignment_source:
-        for fact_key, source in rank_assignment_source.items():
+    if result.rank_assignment_source:
+        for fact_key, source in result.rank_assignment_source.items():
             logger.debug(f"[FACTS-PERSIST] Rank assignment: {fact_key} -> {source}")
     
     # Log duplicate blocking for telemetry
-    if duplicate_blocked:
-        for value, info in duplicate_blocked.items():
+    if result.duplicate_blocked:
+        for value, info in result.duplicate_blocked.items():
             logger.info(f"[FACTS-PERSIST] Duplicate blocked: '{value}' already exists at rank {info.get('existing_rank')} for topic={info.get('topic')}")
     
-    return store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked
+    return result
 

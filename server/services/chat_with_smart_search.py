@@ -816,7 +816,7 @@ async def chat_with_smart_search(
             # Falls back to GPT-5 Nano Facts extractor only if candidate not available
             # Determine write intent (though routing plan should already indicate this)
             is_write_intent = _is_write_intent(user_message)
-            store_count, update_count, stored_fact_keys, message_uuid, ambiguous_topics, canonicalization_result, rank_assignment_source, duplicate_blocked = await persist_facts_synchronously(
+            persist_result = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
                 role="user",
@@ -829,6 +829,16 @@ async def chat_with_smart_search(
                 write_intent_detected=is_write_intent,  # Pass write-intent flag for enhanced diagnostics
                 routing_plan_candidate=routing_plan.facts_write_candidate if routing_plan else None
             )
+            
+            # Extract values from result dataclass
+            store_count = persist_result.store_count
+            update_count = persist_result.update_count
+            stored_fact_keys = persist_result.stored_fact_keys
+            message_uuid = persist_result.message_uuid
+            ambiguous_topics = persist_result.ambiguous_topics
+            canonicalization_result = persist_result.canonicalization_result
+            rank_assignment_source = persist_result.rank_assignment_source
+            duplicate_blocked = persist_result.duplicate_blocked
             
             # Check for Facts LLM failure (negative counts indicate error)
             if store_count < 0 or update_count < 0:
