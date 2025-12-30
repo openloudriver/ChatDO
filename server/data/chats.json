@@ -96,12 +96,12 @@
     "archived_at": null
   },
   {
-    "id": "2b7a4873-03c7-424b-8da4-487f42890f73",
-    "project_id": "28aff3eb-a5a4-4b49-9bb1-0fc0fcb37a55",
-    "title": "My favorite candy is Snickers.",
-    "thread_id": "2b7a4873-03c7-424b-8da4-487f42890f73",
-    "created_at": "2025-12-29T21:27:16.006366+00:00",
-    "updated_at": "2025-12-29T21:29:55.480995+00:00",
+    "id": "374d8421-03e9-4dcf-afca-b6ed3cdc51bc",
+    "project_id": "d2db57b7-7589-4ff9-87d8-f2dd8f56d7b7",
+    "title": "New Chat",
+    "thread_id": "374d8421-03e9-4dcf-afca-b6ed3cdc51bc",
+    "created_at": "2025-12-30T23:21:37.991668+00:00",
+    "updated_at": "2025-12-30T23:21:37.991683+00:00",
     "trashed": false,
     "trashed_at": null,
     "archived": false,

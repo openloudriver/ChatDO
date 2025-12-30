@@ -677,6 +677,10 @@ async def chat_with_smart_search(
         from server.contracts.facts_ops import FactsQueryPlan
     query_plan: Optional['FactsQueryPlan'] = None
     
+    # CRITICAL: Initialize is_write_intent early so it's available for all early-return paths
+    # This must be set before any conditional checks that reference it
+    is_write_intent = _is_write_intent(user_message)
+    
     # CRITICAL: Facts persistence requires both thread_id and project_id
     # HARD-FAIL if either is missing - do not silently skip and fall through to Index/GPT-5
     facts_skip_reason = None
@@ -814,8 +818,7 @@ async def chat_with_smart_search(
             # Persist facts synchronously (does NOT require Memory Service)
             # NEW: Uses routing plan candidate when available to avoid double Nano calls
             # Falls back to GPT-5 Nano Facts extractor only if candidate not available
-            # Determine write intent (though routing plan should already indicate this)
-            is_write_intent = _is_write_intent(user_message)
+            # Note: is_write_intent is already set at function start
             persist_result = await persist_facts_synchronously(
                 project_id=project_id,
                 message_content=user_message,
@@ -890,10 +893,16 @@ async def chat_with_smart_search(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
             
-            # Check for topic ambiguity - if ambiguous, return fast-path clarification response
+            # Check for topic ambiguity or ranked-list protection - if present, return fast-path clarification response
             # BUT: Only block on ambiguity for WRITE operations, not retrieval queries
             # For retrieval queries, ambiguity should be ignored (we'll try to retrieve what the user asked for)
             if ambiguous_topics:
+                # Check if this is a ranked-list protection message (single message starting with "You already have")
+                is_ranked_list_protection = (
+                    len(ambiguous_topics) == 1 and 
+                    ambiguous_topics[0].startswith("You already have a ranked list")
+                )
+                
                 # Use the query plan we already created (if available) to check if this is a retrieval query
                 # If we don't have a query plan yet, check now
                 is_retrieval_query_check = False
@@ -915,16 +924,23 @@ async def chat_with_smart_search(
                     except Exception:
                         pass
                 
-                # Only return ambiguity clarification for WRITE operations
+                # Only return clarification for WRITE operations
                 # For retrieval queries, ignore ambiguity and proceed (will return empty if topic doesn't exist)
                 if not is_retrieval_query_check:
-                    logger.info(f"[MEMORY] Topic ambiguity detected: {ambiguous_topics} - returning clarification")
-                    # Format candidate topics for user-friendly display
-                    topic_display = " / ".join(ambiguous_topics)
-                    clarification_message = (
-                        f"Which favorites list is this for? ({topic_display})\n\n"
-                        f"Please specify the topic (e.g., 'crypto', 'colors', 'candies') so I can update the correct list."
-                    )
+                    if is_ranked_list_protection:
+                        # Ranked-list protection message - return it directly
+                        logger.info(f"[MEMORY] Ranked-list protection triggered: {ambiguous_topics[0]}")
+                        clarification_message = ambiguous_topics[0]
+                        fast_path_type = "ranked_list_protection"
+                    else:
+                        # Topic ambiguity - format candidate topics for user-friendly display
+                        logger.info(f"[MEMORY] Topic ambiguity detected: {ambiguous_topics} - returning clarification")
+                        topic_display = " / ".join(ambiguous_topics)
+                        clarification_message = (
+                            f"Which favorites list is this for? ({topic_display})\n\n"
+                            f"Please specify the topic (e.g., 'crypto', 'colors', 'candies') so I can update the correct list."
+                        )
+                        fast_path_type = "topic_ambiguity"
                     
                     # Return fast-path response with zero fact counts
                     return {
@@ -932,7 +948,7 @@ async def chat_with_smart_search(
                         "model": "Facts",
                         "provider": "facts",
                         "meta": {
-                            "fastPath": "topic_ambiguity",
+                            "fastPath": fast_path_type,
                             "ambiguous_topics": ambiguous_topics,
                             "facts_actions": {"S": 0, "U": 0, "R": 0, "F": False}
                         },
@@ -1274,13 +1290,51 @@ async def chat_with_smart_search(
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
                 
-                # Routing plan said facts/write but Facts-S/U returned 0 counts - return Facts-F
+                # Routing plan said facts/write but Facts-S/U returned 0 counts
+                # Check for clarification or duplicate cases before returning Facts-F
                 if routing_plan and routing_plan.content_plane == "facts" and routing_plan.operation == "write":
+                    logger.info(
+                        f"[FACTS-E2E] RESPONSE: routing_plan=facts/write store_count={store_count} "
+                        f"update_count={update_count} duplicate_blocked={bool(duplicate_blocked)} "
+                        f"ambiguous_topics={bool(ambiguous_topics)} message_uuid={current_message_uuid}"
+                    )
+                    
+                    # Check for clarification needed
+                    if ambiguous_topics:
+                        # Already handled above, but log for completeness
+                        logger.info(
+                            f"[FACTS-E2E] RESPONSE: returned clarification message "
+                            f"message_uuid={current_message_uuid}"
+                        )
+                        # Return was already handled above
+                        return  # This shouldn't be reached, but just in case
+                    
+                    # Check if this looks like a write intent that failed to parse
+                    # Detect strong preference patterns even if router didn't catch them
+                    import re
+                    preference_patterns = [
+                        r'my\s+favorite\s+\w+(?:\s+\w+)*\s+(?:are|is)\s+',
+                        r'my\s+favorites\s+are\s+',
+                    ]
+                    has_preference_pattern = any(re.search(pattern, user_message.lower()) for pattern in preference_patterns)
+                    
+                    if has_preference_pattern and not routing_plan.content_plane == "facts":
+                        logger.warning(
+                            f"[FACTS-E2E] RESPONSE: router regression detected - message has preference pattern "
+                            f"but router said {routing_plan.content_plane}/{routing_plan.operation} "
+                            f"message_uuid={current_message_uuid}"
+                        )
+                    
+                    # If we have duplicates, that's already handled above
+                    # Otherwise, return Facts-F only if we truly have no write intent
                     logger.warning(
                         f"[FACTS] ⚠️ Routing plan said facts/write but Facts-S/U returned 0 counts. "
                         f"Returning Facts-F instead of falling through to Index/GPT-5."
                     )
                     facts_actions["F"] = True
+                    logger.info(
+                        f"[FACTS-E2E] RESPONSE: returned Facts-F message_uuid={current_message_uuid}"
+                    )
                     # Extract canonicalization info if available (may be None on failure)
                     canonicalizer_used_f = canonicalization_result is not None
                     teacher_invoked_f = canonicalization_result.teacher_invoked if canonicalization_result else False

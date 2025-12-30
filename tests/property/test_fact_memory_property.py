@@ -596,7 +596,7 @@ def test_concurrent_updates(test_db):
     uuid2 = str(uuid.uuid4())
     
     # Store first fact
-    fact_id1 = db.store_project_fact(
+    result1 = db.store_project_fact(
         project_id=project_id,
         fact_key=fact_key,
         value_text="blue",
@@ -605,9 +605,10 @@ def test_concurrent_updates(test_db):
         effective_at=now,
         source_id=source_id
     )
+    fact_id1 = result1[0] if isinstance(result1, tuple) else result1
     
     # Store second fact with same effective_at (simulating concurrent write)
-    fact_id2 = db.store_project_fact(
+    result2 = db.store_project_fact(
         project_id=project_id,
         fact_key=fact_key,
         value_text="red",
@@ -616,6 +617,7 @@ def test_concurrent_updates(test_db):
         effective_at=now,  # Same effective_at
         source_id=source_id
     )
+    fact_id2 = result2[0] if isinstance(result2, tuple) else result2
     
     # Get current fact
     current = db.get_current_fact(project_id=project_id, fact_key=fact_key, source_id=source_id)

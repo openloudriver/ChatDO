@@ -448,7 +448,10 @@ def apply_facts_ops(
     if source_id is None:
         source_id = f"project-{project_uuid}"
     
-    logger.info(f"[FACTS-APPLY] Applying {len(ops_response.ops)} operations for project {project_uuid}")
+    logger.info(
+        f"[FACTS-E2E] APPLY: ops_count={len(ops_response.ops)} project_uuid={project_uuid} "
+        f"message_uuid={message_uuid}"
+    )
     
     # Initialize DB connection for atomic operations
     db.init_db(source_id, project_id=project_uuid)
@@ -505,32 +508,16 @@ def apply_facts_ops(
                     # - If rank is None: This is an unranked append, assign rank atomically
                     # - If rank is provided: Use it as-is (explicit user intent)
                     if op.rank is None:
-                        # RANKED-MODE PROTECTION: Check if ranked list exists for unranked appends
-                        # If a ranked list exists, reject unranked appends (require explicit ranks)
-                        ranked_list_exists = _check_ranked_list_exists(conn, project_uuid, list_key_for_check)
-                        is_favorites_topic = list_key_for_check.startswith("user.favorites.")
-                        
-                        if ranked_list_exists and is_favorites_topic:
-                            # Ranked list exists and this is an unranked append - reject it
-                            logger.warning(
-                                f"[FACTS-APPLY] Rejecting unranked append to existing ranked list: "
-                                f"topic={canonical_topic}, list_key={list_key_for_check}, value='{op.value}'. "
-                                f"User must specify explicit rank (e.g., 'My #N favorite {canonical_topic} is {op.value}')."
-                            )
-                            result.errors.append(
-                                f"You already have a ranked list for {canonical_topic}. "
-                                f"To add '{op.value}', please specify an explicit rank "
-                                f"(e.g., 'My #N favorite {canonical_topic} is {op.value}'). "
-                                f"Unranked appends are not allowed once a ranked list exists."
-                            )
-                            continue
-                        
+                        # APPEND-MANY SEMANTICS: For unranked appends, always allow append to end
+                        # Even if ranked list exists, treat as append-many (not replacement)
                         # DUPLICATE PREVENTION: For favorites topics, check if value already exists
                         # Only block duplicates for unranked appends to favorites (user.favorites.*)
                         # Explicit ranks always allowed (user can explicitly request duplicates)
                         
+                        is_favorites_topic = list_key_for_check.startswith("user.favorites.")
+                        
                         logger.debug(
-                            f"[FACTS-APPLY] Checking duplicate prevention: "
+                            f"[FACTS-APPLY] Processing unranked append: "
                             f"is_favorites_topic={is_favorites_topic}, "
                             f"list_key={list_key_for_check}, "
                             f"normalized_value='{normalized_value}'"
@@ -852,6 +839,12 @@ def apply_facts_ops(
         result.errors.append(f"Transaction failed: {e}")
     finally:
         conn.close()
+    
+    logger.info(
+        f"[FACTS-E2E] APPLY: store_count={result.store_count} update_count={result.update_count} "
+        f"dupes={len(result.duplicate_blocked)} errors={len(result.errors)} "
+        f"invariant_ok={len(result.errors) == 0} message_uuid={message_uuid}"
+    )
     
     logger.info(
         f"[FACTS-APPLY] ✅ Applied operations: S={result.store_count} U={result.update_count} "

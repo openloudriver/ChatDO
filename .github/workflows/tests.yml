@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f server/requirements.txt ]; then pip install -r server/requirements.txt; fi
+        # pytest and pytest-asyncio should be in server/requirements.txt, but ensure they're installed
+        pip install pytest pytest-asyncio || true
+    
+    - name: Run tests
+      run: |
+        pytest -q
+    
+    - name: Upload test results (if any)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          .pytest_cache/
+          **/test-results.xml
+

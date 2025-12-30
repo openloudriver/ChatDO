@@ -297,6 +297,10 @@ Output ONLY valid JSON matching the RoutingPlan schema. No markdown, no explanat
     try:
         logger.debug(f"[NANO-ROUTER] Routing message: {user_message[:100]}...")
         
+        # Generate a correlation ID for this routing request (for E2E tracing)
+        import uuid
+        correlation_id = str(uuid.uuid4())[:8]
+        
         response = requests.post(
             AI_ROUTER_URL,
             json=payload,
@@ -361,6 +365,25 @@ Output ONLY valid JSON matching the RoutingPlan schema. No markdown, no explanat
                         logger.info(f"[NANO-ROUTER] Detected ordinal rank: {detected_rank} (ordinal_parse_source=router_post_parse)")
             
             routing_plan = RoutingPlan(**routing_data)
+            
+            # Structured E2E logging
+            has_candidate = bool(routing_plan.facts_write_candidate or routing_plan.facts_read_candidate)
+            candidate_topic = None
+            candidate_values = None
+            candidate_rank_ordered = None
+            if routing_plan.facts_write_candidate:
+                candidate_topic = routing_plan.facts_write_candidate.topic
+                candidate_values = routing_plan.facts_write_candidate.value
+                candidate_rank_ordered = routing_plan.facts_write_candidate.rank_ordered
+            elif routing_plan.facts_read_candidate:
+                candidate_topic = routing_plan.facts_read_candidate.topic
+            
+            logger.info(
+                f"[FACTS-E2E] ROUTER: content_plane={routing_plan.content_plane} "
+                f"operation={routing_plan.operation} has_candidate={has_candidate} "
+                f"candidate_topic={candidate_topic!r} candidate_values={candidate_values!r} "
+                f"candidate_rank_ordered={candidate_rank_ordered} correlation_id={correlation_id}"
+            )
             
             # Log rank if present
             rank_info = ""

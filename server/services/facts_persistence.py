@@ -13,11 +13,18 @@ Falls back to GPT-5 Nano Facts extractor only when candidate is not available.
 """
 import logging
 import json
+import re
 from typing import Dict, Optional, Tuple, List, Any
 from datetime import datetime
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Import centralized parsing utilities
+from server.services.facts_parsing import (
+    parse_bulk_preference_values,
+    is_bulk_preference_without_rank
+)
 
 # In-memory store for raw LLM responses (keyed by message_uuid) for quick inspection
 _raw_llm_responses: Dict[str, Dict[str, Any]] = {}
@@ -39,6 +46,7 @@ class PersistFactsResult:
     canonicalization_result: Optional[Any] = None
     rank_assignment_source: Optional[Dict[str, str]] = None  # Maps fact_key -> "explicit" | "atomic_append"
     duplicate_blocked: Optional[Dict[str, Dict[str, Any]]] = None  # Maps value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str}
+    safety_net_used: bool = False  # True if safety net path was taken (for test verification)
     
     def __post_init__(self):
         """Initialize mutable defaults."""
@@ -382,14 +390,92 @@ async def persist_facts_synchronously(
         return result
     
     # NEW ARCHITECTURE: Use routing plan candidate if available, otherwise call Facts LLM
-    from server.contracts.facts_ops import FactsOpsResponse
+    from server.contracts.facts_ops import FactsOpsResponse, FactsOp
     from server.services.facts_apply import apply_facts_ops
+    from server.services.canonicalizer import canonicalize_topic
+    from server.services.facts_normalize import canonical_list_key
     
     ops_response = None
     canonicalization_result = None  # For telemetry
     
-    # If routing plan candidate is available, use it directly (no second Nano call)
-    if routing_plan_candidate:
+    # STEP 1: SAFETY NET - Always try direct bulk conversion FIRST (runs regardless of routing candidate)
+    # This ensures bulk statements ALWAYS work, even if router/LLM fails
+    if is_bulk_preference_without_rank(message_content):
+        result.safety_net_used = True  # Mark that safety net was triggered
+        logger.info(
+            f"[FACTS-E2E] SAFETYNET: matched=True message_uuid={message_uuid} message='{message_content[:100]}...'"
+        )
+        
+        # Extract topic and values from message using regex
+        topic_match = re.search(
+            r'my\s+favorite\s+(\w+(?:\s+\w+)*?)\s+(?:are|is)\s+(.+)',
+            message_content.lower()
+        )
+        
+        if topic_match:
+            raw_topic = topic_match.group(1).strip()
+            values_str = topic_match.group(2).strip().rstrip('.')
+            
+            logger.info(
+                f"[FACTS-E2E] SAFETYNET: extracted topic={raw_topic!r} values_str={values_str!r}"
+            )
+            
+            # Parse values using centralized parser
+            values = parse_bulk_preference_values(values_str)
+            
+            if not values:
+                logger.warning(
+                    f"[FACTS-E2E] SAFETYNET: parsed_values=[] (empty) values_str={values_str!r} "
+                    f"message_uuid={message_uuid} - allowing downstream paths to try"
+                )
+            else:
+                logger.info(
+                    f"[FACTS-E2E] SAFETYNET: parsed_values={values!r} count={len(values)}"
+                )
+                
+                # Canonicalize topic and create append ops
+                try:
+                    canonicalization_result = canonicalize_topic(raw_topic, invoke_teacher=True)
+                    canonical_topic = canonicalization_result.canonical_topic
+                    list_key = canonical_list_key(canonical_topic)
+                    
+                    logger.info(
+                        f"[FACTS-E2E] SAFETYNET: canonicalized topic={raw_topic!r} -> {canonical_topic!r} "
+                        f"list_key={list_key!r}"
+                    )
+                    
+                    # Create append ops for each value (rank=None for FIFO append)
+                    # This works even when ranked list exists - will append to end
+                    ops = []
+                    for value in values:
+                        ops.append(FactsOp(
+                            op="ranked_list_set",
+                            list_key=list_key,
+                            rank=None,  # None = append operation, rank assigned atomically
+                            value=value,
+                            confidence=1.0
+                        ))
+                    
+                    ops_response = FactsOpsResponse(ops=ops, needs_clarification=[])
+                    logger.info(
+                        f"[FACTS-E2E] SAFETYNET: ops_count={len(ops)} created successfully "
+                        f"message_uuid={message_uuid}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"[FACTS-E2E] SAFETYNET: failed to create ops error={e!r} "
+                        f"message_uuid={message_uuid}",
+                        exc_info=True
+                    )
+                    # Continue to routing candidate or LLM extractor
+        else:
+            logger.warning(
+                f"[FACTS-E2E] SAFETYNET: matched=True but regex did not match message='{message_content[:100]}...' "
+                f"message_uuid={message_uuid}"
+            )
+    
+    # STEP 2: If routing plan candidate is available and safety net didn't create ops, use it
+    if routing_plan_candidate and not ops_response:
         logger.info(
             f"[FACTS-PERSIST] Using routing plan candidate (topic={routing_plan_candidate.topic}, "
             f"value={routing_plan_candidate.value}), skipping Facts LLM call"
@@ -413,8 +499,12 @@ async def persist_facts_synchronously(
             ops_response = None
             canonicalization_result = None
     
-    # If no candidate or conversion failed, call Facts LLM extractor
+    # STEP 3: If no candidate or conversion failed, call Facts LLM extractor
     if not ops_response:
+        logger.info(
+            f"[FACTS-E2E] LLM: called=True message_uuid={message_uuid} "
+            f"reason={'no_candidate' if not routing_plan_candidate else 'candidate_failed'}"
+        )
         try:
             from server.services.facts_llm.client import (
                 run_facts_llm,
@@ -496,23 +586,42 @@ async def persist_facts_synchronously(
                 ops_data = json.loads(json_text)
                 ops_response = FactsOpsResponse(**ops_data)
                 
+                logger.info(
+                    f"[FACTS-E2E] LLM: returned_ops_count={len(ops_response.ops) if ops_response else 0} "
+                    f"needs_clarification_count={len(ops_response.needs_clarification) if ops_response and ops_response.needs_clarification else 0} "
+                    f"message_uuid={message_uuid}"
+                )
+                
                 # POST-PROCESS: Detect unranked writes and set rank=None for atomic assignment
                 # If Facts LLM extracted rank=1 but user didn't explicitly specify a rank,
                 # set rank=None so apply_facts_ops() can assign it atomically
+                # Also: If this is a bulk preference statement, convert to append-many
                 if ops_response and ops_response.ops:
-                    import re
-                    # Check if user message explicitly mentions a rank (#1, first, 1st, etc.)
-                    explicit_rank_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
-                    has_explicit_rank = bool(explicit_rank_pattern.search(message_content))
+                    # Check if this is a bulk preference statement
+                    is_bulk = is_bulk_preference_without_rank(message_content)
                     
-                    for op in ops_response.ops:
-                        if op.op == "ranked_list_set" and op.rank == 1 and op.list_key and not has_explicit_rank:
-                            # This is likely an unranked write - set rank=None for atomic assignment
-                            op.rank = None
-                            logger.info(
-                                f"[FACTS-PERSIST] Detected unranked write: set rank=None for atomic assignment "
-                                f"(topic from list_key={op.list_key})"
-                            )
+                    if is_bulk:
+                        # For bulk statements, ensure all ops have rank=None for append-many semantics
+                        logger.info(
+                            f"[FACTS-E2E] LLM: detected bulk statement, converting to append-many "
+                            f"message_uuid={message_uuid}"
+                        )
+                        for op in ops_response.ops:
+                            if op.op == "ranked_list_set" and op.list_key:
+                                op.rank = None
+                    else:
+                        # Check if user message explicitly mentions a rank (#1, first, 1st, etc.)
+                        explicit_rank_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
+                        has_explicit_rank = bool(explicit_rank_pattern.search(message_content))
+                        
+                        for op in ops_response.ops:
+                            if op.op == "ranked_list_set" and op.rank == 1 and op.list_key and not has_explicit_rank:
+                                # This is likely an unranked write - set rank=None for atomic assignment
+                                op.rank = None
+                                logger.info(
+                                    f"[FACTS-PERSIST] Detected unranked write: set rank=None for atomic assignment "
+                                    f"(topic from list_key={op.list_key})"
+                                )
                 
             except json.JSONDecodeError as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
