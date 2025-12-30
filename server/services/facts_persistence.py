@@ -99,7 +99,8 @@ def get_or_create_message_uuid(
 
 def _convert_routing_candidate_to_ops(
     candidate: Any,  # FactsWriteCandidate from RoutingPlan
-    project_id: Optional[str] = None  # Project ID for checking existing ranks
+    project_id: Optional[str] = None,  # Project ID for checking existing ranks
+    user_message: Optional[str] = None  # Original user message for fallback rank detection
 ) -> Tuple[Any, Any]:  # (FactsOpsResponse, CanonicalizationResult)
     """
     Convert RoutingPlan.facts_write_candidate to FactsOpsResponse.
@@ -155,17 +156,84 @@ def _convert_routing_candidate_to_ops(
             logger.error(f"[FACTS-PERSIST] ❌ Failed to process candidate values: {e}", exc_info=True)
             return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to process values: {e}"]), canonicalization_result
         
-        # Determine rank assignment based on rank_ordered flag
-        if candidate.rank_ordered:
+        # Determine rank assignment based on explicit rank or rank_ordered flag
+        # Priority: explicit rank (candidate.rank) > fallback detection > rank_ordered sequential > unranked append
+        explicit_rank = None
+        if hasattr(candidate, 'rank') and candidate.rank is not None:
+            # Router extracted explicit rank
+            explicit_rank = candidate.rank
+        elif user_message:
+            # Fallback: detect rank from user message if router didn't extract it
+            from server.services.ordinal_detection import detect_ordinal_rank
+            detected_rank = detect_ordinal_rank(user_message)
+            if detected_rank is not None:
+                explicit_rank = detected_rank
+                logger.info(
+                    f"[FACTS-PERSIST] Router didn't extract rank, but detected rank {explicit_rank} "
+                    f"from user message: '{user_message}'"
+                )
+        
+        if explicit_rank is not None:
+            # User specified an explicit rank (e.g., "#4 favorite planet is Venus")
+            # Use that exact rank for the value(s)
+            current_rank = explicit_rank
+            for value in values:
+                ops.append(FactsOp(
+                    op="ranked_list_set",
+                    list_key=list_key,
+                    rank=current_rank,  # Use explicit rank from user
+                    value=str(value),
+                    confidence=1.0
+                ))
+                # If multiple values with explicit rank, increment for each (e.g., "#4 favorite planets are Venus, Mars" → rank 4, 5)
+                current_rank += 1
+        elif candidate.rank_ordered:
+            # RANKED-MODE PROTECTION: Check if ranked list already exists
+            # If it does, reject unranked bulk writes (require explicit ranks)
+            from memory_service.memory_dashboard import db
+            from server.services.facts_apply import _check_ranked_list_exists
+            
+            # Check if ranked list exists (must be done outside transaction, so use a read-only check)
+            # We'll do a full check in apply_facts_ops() within the transaction, but this is a pre-check
+            ranked_list_exists = False
+            if project_id:
+                try:
+                    source_id = f"project-{project_id}"
+                    db.init_db(source_id, project_id=project_id)
+                    conn = db.get_db_connection(source_id, project_id=project_id)
+                    ranked_list_exists = _check_ranked_list_exists(conn, project_id, list_key)
+                    conn.close()
+                except Exception as e:
+                    logger.warning(f"[FACTS-PERSIST] Could not check ranked list existence: {e}")
+                    # Continue - will be checked again in apply_facts_ops() within transaction
+            
+            if ranked_list_exists:
+                # Ranked list exists - reject unranked bulk write
+                logger.warning(
+                    f"[FACTS-PERSIST] Rejecting unranked bulk write to existing ranked list: "
+                    f"topic={canonical_topic}, list_key={list_key}. "
+                    f"User must specify explicit ranks (e.g., 'My #1 favorite X is Y')."
+                )
+                return FactsOpsResponse(
+                    ops=[],
+                    needs_clarification=[
+                        f"You already have a ranked list for {canonical_topic}. "
+                        f"To update it, please specify explicit ranks (e.g., 'My #1 favorite {canonical_topic} is X', "
+                        f"'My #2 favorite {canonical_topic} is Y'). "
+                        f"Bulk updates like 'My favorite {canonical_topic} are X, Y, Z' are not allowed once a ranked list exists."
+                    ]
+                ), canonicalization_result
+            
+            # No ranked list exists - allow bulk write with sequential ranks
             # Explicit ordering: use ranks 1, 2, 3... (may overwrite existing ranks)
-            # Rank is assigned here (explicit user intent)
+            # Rank is assigned here (explicit user intent for multiple values)
             start_rank = 1
             for offset, value in enumerate(values):
                 rank = start_rank + offset
                 ops.append(FactsOp(
                     op="ranked_list_set",
                     list_key=list_key,
-                    rank=rank,  # Explicit rank assigned
+                    rank=rank,  # Explicit rank assigned sequentially
                     value=str(value),
                     confidence=1.0
                 ))
@@ -308,7 +376,8 @@ async def persist_facts_synchronously(
         try:
             ops_response, canonicalization_result = _convert_routing_candidate_to_ops(
                 routing_plan_candidate,
-                project_id=project_id  # Pass project_id for checking existing max rank
+                project_id=project_id,  # Pass project_id for checking existing max rank
+                user_message=message_content  # Pass user message for fallback rank detection
             )
             logger.info(
                 f"[FACTS-PERSIST] Canonicalized topic: '{routing_plan_candidate.topic}' → "

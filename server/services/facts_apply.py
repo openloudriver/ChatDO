@@ -145,6 +145,159 @@ def normalize_favorite_value(s: str) -> str:
     return normalized
 
 
+def _check_ranked_list_exists(
+    conn,
+    project_uuid: str,
+    list_key: str
+) -> bool:
+    """
+    Check if a ranked list already exists for a topic.
+    
+    This function must be called within an active transaction to ensure
+    atomicity and prevent race conditions.
+    
+    Args:
+        conn: Active database connection (must be in a transaction)
+        project_uuid: Project UUID
+        list_key: List key (e.g., "user.favorites.crypto")
+        
+    Returns:
+        True if any ranked facts exist for this topic, False otherwise
+    """
+    cursor = conn.cursor()
+    
+    # Query for any ranked facts for this topic (using list_key prefix)
+    # Pattern: user.favorites.<topic>.<rank>
+    cursor.execute("""
+        SELECT COUNT(*) 
+        FROM project_facts
+        WHERE project_id = ? AND fact_key LIKE ? AND is_current = 1
+    """, (project_uuid, f"{list_key}.%"))
+    
+    count = cursor.fetchone()[0]
+    return count > 0
+
+
+def _get_ranked_list_items(
+    conn,
+    project_uuid: str,
+    list_key: str
+) -> List[Dict[str, Any]]:
+    """
+    Get all ranked list items for a topic, sorted by rank.
+    
+    This function must be called within an active transaction.
+    
+    Args:
+        conn: Active database connection (must be in a transaction)
+        project_uuid: Project UUID
+        list_key: List key (e.g., "user.favorites.crypto")
+        
+    Returns:
+        List of dicts with keys: fact_key, rank, value_text
+    """
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT fact_key, value_text
+        FROM project_facts
+        WHERE project_id = ? AND fact_key LIKE ? AND is_current = 1
+        ORDER BY fact_key
+    """, (project_uuid, f"{list_key}.%"))
+    
+    rows = cursor.fetchall()
+    items = []
+    
+    for row in rows:
+        fact_key = row[0]
+        value_text = row[1] if len(row) > 1 else ""
+        
+        # Extract rank from fact_key (e.g., "user.favorites.crypto.2" -> 2)
+        if "." in fact_key:
+            try:
+                rank_str = fact_key.rsplit(".", 1)[1]
+                rank = int(rank_str)
+                items.append({
+                    "fact_key": fact_key,
+                    "rank": rank,
+                    "value_text": value_text
+                })
+            except (ValueError, IndexError):
+                continue
+    
+    return items
+
+
+def validate_ranked_list_invariants(
+    items: List[Dict[str, Any]],
+    list_key: str
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate ranked list invariants.
+    
+    Enforces:
+    - Uniqueness: a value may appear only once in the ranked list
+    - Contiguous ranks: ranks must be exactly 1..N with no gaps
+    - Single rank per value: no duplicates across ranks
+    
+    Args:
+        items: List of ranked items with keys: fact_key, rank, value_text
+        list_key: List key for error messages
+        
+    Returns:
+        (is_valid, error_message)
+        - is_valid: True if all invariants pass, False otherwise
+        - error_message: None if valid, descriptive error if invalid
+    """
+    if not items:
+        return True, None
+    
+    # Extract ranks and values
+    ranks = [item["rank"] for item in items]
+    values = [item["value_text"] for item in items]
+    
+    # Check 1: Contiguous ranks (must be exactly 1..N with no gaps)
+    expected_ranks = set(range(1, len(items) + 1))
+    actual_ranks = set(ranks)
+    
+    if expected_ranks != actual_ranks:
+        missing = expected_ranks - actual_ranks
+        extra = actual_ranks - expected_ranks
+        return False, (
+            f"Ranked list '{list_key}' has non-contiguous ranks. "
+            f"Expected ranks 1..{len(items)}, but found ranks: {sorted(ranks)}. "
+            f"Missing: {sorted(missing)}, Extra: {sorted(extra)}"
+        )
+    
+    # Check 2: Uniqueness - no duplicate values (using normalized comparison)
+    normalized_values = {}
+    for item in items:
+        normalized = normalize_favorite_value(item["value_text"])
+        if normalized in normalized_values:
+            existing_rank = normalized_values[normalized]["rank"]
+            existing_value = normalized_values[normalized]["value_text"]
+            return False, (
+                f"Ranked list '{list_key}' has duplicate values. "
+                f"Value '{item['value_text']}' at rank {item['rank']} "
+                f"duplicates '{existing_value}' at rank {existing_rank} "
+                f"(normalized: '{normalized}')"
+            )
+        normalized_values[normalized] = item
+    
+    # Check 3: Single rank per value (implicitly checked by uniqueness above)
+    # But also check for duplicate ranks (shouldn't happen if fact_keys are unique)
+    rank_counts = {}
+    for rank in ranks:
+        rank_counts[rank] = rank_counts.get(rank, 0) + 1
+        if rank_counts[rank] > 1:
+            return False, (
+                f"Ranked list '{list_key}' has duplicate rank {rank}. "
+                f"Each rank must appear exactly once."
+            )
+    
+    return True, None
+
+
 def _check_value_exists_in_ranked_list(
     conn,
     project_uuid: str,
@@ -352,10 +505,29 @@ def apply_facts_ops(
                     # - If rank is None: This is an unranked append, assign rank atomically
                     # - If rank is provided: Use it as-is (explicit user intent)
                     if op.rank is None:
+                        # RANKED-MODE PROTECTION: Check if ranked list exists for unranked appends
+                        # If a ranked list exists, reject unranked appends (require explicit ranks)
+                        ranked_list_exists = _check_ranked_list_exists(conn, project_uuid, list_key_for_check)
+                        is_favorites_topic = list_key_for_check.startswith("user.favorites.")
+                        
+                        if ranked_list_exists and is_favorites_topic:
+                            # Ranked list exists and this is an unranked append - reject it
+                            logger.warning(
+                                f"[FACTS-APPLY] Rejecting unranked append to existing ranked list: "
+                                f"topic={canonical_topic}, list_key={list_key_for_check}, value='{op.value}'. "
+                                f"User must specify explicit rank (e.g., 'My #N favorite {canonical_topic} is {op.value}')."
+                            )
+                            result.errors.append(
+                                f"You already have a ranked list for {canonical_topic}. "
+                                f"To add '{op.value}', please specify an explicit rank "
+                                f"(e.g., 'My #N favorite {canonical_topic} is {op.value}'). "
+                                f"Unranked appends are not allowed once a ranked list exists."
+                            )
+                            continue
+                        
                         # DUPLICATE PREVENTION: For favorites topics, check if value already exists
                         # Only block duplicates for unranked appends to favorites (user.favorites.*)
                         # Explicit ranks always allowed (user can explicitly request duplicates)
-                        is_favorites_topic = list_key_for_check.startswith("user.favorites.")
                         
                         logger.debug(
                             f"[FACTS-APPLY] Checking duplicate prevention: "
@@ -630,6 +802,40 @@ def apply_facts_ops(
                 error_msg = f"Operation {idx}: Failed to apply {op.op}: {e}"
                 result.errors.append(error_msg)
                 logger.error(f"[FACTS-APPLY] {error_msg}", exc_info=True)
+        
+        # RANKED-LIST INVARIANT VALIDATION: Run after all ops but before commit
+        # Group operations by list_key to validate each ranked list
+        ranked_lists_to_validate: Dict[str, str] = {}  # list_key -> canonical_topic
+        
+        # Collect all list_keys that were modified
+        for op in ops_response.ops:
+            if op.op == "ranked_list_set" and op.list_key:
+                topic = extract_topic_from_list_key(op.list_key)
+                if topic:
+                    from server.services.canonicalizer import canonicalize_topic
+                    canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)
+                    canonical_topic = canonicalization_result.canonical_topic
+                    list_key_for_validation = canonical_list_key(canonical_topic)
+                    ranked_lists_to_validate[list_key_for_validation] = canonical_topic
+        
+        # Validate each ranked list
+        for list_key_to_validate, canonical_topic in ranked_lists_to_validate.items():
+            items = _get_ranked_list_items(conn, project_uuid, list_key_to_validate)
+            if items:
+                is_valid, error_msg = validate_ranked_list_invariants(items, list_key_to_validate)
+                if not is_valid:
+                    # Invariant violation - prevent commit
+                    logger.error(
+                        f"[FACTS-APPLY] ❌ Ranked list invariant violation for '{list_key_to_validate}': {error_msg}"
+                    )
+                    result.errors.append(
+                        f"Ranked list invariant violation for {canonical_topic}: {error_msg}"
+                    )
+                    # Rollback transaction
+                    cursor.execute("ROLLBACK")
+                    conn.rollback()
+                    conn.close()
+                    return result
         
         # Commit transaction
         cursor.execute("COMMIT")
