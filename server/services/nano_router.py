@@ -49,9 +49,10 @@ ROUTING_PLAN_SCHEMA = {
                         {"type": "array", "items": {"type": "string"}}
                     ]
                 },
-                "rank_ordered": {"type": "boolean"}
+                "rank_ordered": {"type": "boolean"},
+                "rank": {"type": "integer", "minimum": 1, "maximum": 100}
             },
-            "required": ["topic", "value", "rank_ordered"],  # All properties required for OpenAI JSON schema
+            "required": ["topic", "value", "rank_ordered"],  # rank is optional
             "additionalProperties": False
         },
         "facts_read_candidate": {
@@ -146,10 +147,11 @@ async def route_with_nano(
 
 PATTERN MATCHING RULES (CHECK THESE FIRST, IN ORDER):
 
-RULE 1: "My favorite" + topic + "is/are" + value(s) OR numbered lists with "favorite"
+RULE 1: "My favorite" + topic + "is/are" + value(s) OR numbered lists with "favorite" OR explicit rank (#4, fourth, etc.)
 IF the message contains ANYWHERE (not just at the start):
   a) The pattern "favorite" (or "favorites") + topic word + "is" or "are" + value(s), OR
-  b) A numbered list (1), 2), 3) or 1. 2. 3.) with "favorite" + topic in the same message:
+  b) A numbered list (1), 2), 3) or 1. 2. 3.) with "favorite" + topic in the same message, OR
+  c) An explicit rank specification like "#4", "fourth", "4th" + "favorite" + topic + "is" + value:
   → content_plane="facts"
   → operation="write"
   → reasoning_required=false
@@ -161,15 +163,21 @@ IF the message contains ANYWHERE (not just at the start):
       * Numbered list: "1) XMR, 2) BTC, 3) XLM" → value=["XMR", "BTC", "XLM"] (preserve order from numbers)
       * Handle commas and "and": "red, white and blue" → ["red", "white", "blue"]
     - rank_ordered: true if multiple values OR numbered list, false if single value
+    - rank: extract explicit rank if specified (e.g., "#4" → 4, "fourth" → 4, "4th" → 4). null if not specified.
+      * Examples: "My #4 favorite planet is Venus" → rank=4
+      * "My fourth favorite candy is Skittles" → rank=4
+      * "My favorite candy is Reese's" → rank=null (not specified)
   → confidence=1.0
-  → why="My favorite pattern detected: [topic] = [value(s)]"
+  → why="My favorite pattern detected: [topic] = [value(s)]" (or "My #N favorite pattern detected: [topic] = [value]")
   → DO NOT route to index or chat - this is ALWAYS facts/write
   
 CRITICAL: Look for "favorite" + topic + numbered list ANYWHERE in the message, even if the message starts with other text like "Sorry" or "Argh!".
 
 EXAMPLES FOR RULE 1:
-- "My favorite candy is Reese's" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"candy","value":"Reese's","rank_ordered":false}},"confidence":1.0,"why":"My favorite pattern detected: candy = Reese's"}}
-- "My favorite colors are red, white and blue" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"colors","value":["red","white","blue"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: colors = [red, white, blue]"}}
+- "My favorite candy is Reese's" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"candy","value":"Reese's","rank_ordered":false,"rank":null}},"confidence":1.0,"why":"My favorite pattern detected: candy = Reese's"}}
+- "My #4 favorite planet is Venus" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"planet","value":"Venus","rank_ordered":false,"rank":4}},"confidence":1.0,"why":"My #4 favorite pattern detected: planet = Venus"}}
+- "My fourth favorite candy is Skittles" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"candy","value":"Skittles","rank_ordered":false,"rank":4}},"confidence":1.0,"why":"My fourth favorite pattern detected: candy = Skittles"}}
+- "My favorite colors are red, white and blue" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"colors","value":["red","white","blue"],"rank_ordered":true,"rank":null}},"confidence":1.0,"why":"My favorite pattern detected: colors = [red, white, blue]"}}
 - "My favorite cryptos are BTC, XMR and XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["BTC","XMR","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [BTC, XMR, XLM]"}}
 - "Here's the list of my favorite cryptos: 1) XMR, 2) BTC, and 3) XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
 - "My favorite cryptos: 1. XMR, 2. BTC, 3. XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
@@ -227,7 +235,7 @@ OUTPUT SCHEMA:
   "content_plane": "facts" | "index" | "files" | "chat",
   "operation": "write" | "read" | "search" | "none",
   "reasoning_required": boolean,
-  "facts_write_candidate": {{"topic": "string", "value": "string" | ["string"], "rank_ordered": boolean}} | null,
+  "facts_write_candidate": {{"topic": "string", "value": "string" | ["string"], "rank_ordered": boolean, "rank": number | null}} | null,
   "facts_read_candidate": {{"topic": "string", "query": "string", "rank": number | null}} | null,
   "index_candidate": {{"query": "string"}} | null,
   "files_candidate": {{"query": "string", "path_hint": "string" | null}} | null,
@@ -466,9 +474,12 @@ Output the corrected JSON now:"""
             f"confidence={routing_plan.confidence}, why={routing_plan.why}"
         )
         if routing_plan.facts_write_candidate:
+            rank_info = ""
+            if hasattr(routing_plan.facts_write_candidate, 'rank') and routing_plan.facts_write_candidate.rank is not None:
+                rank_info = f", rank={routing_plan.facts_write_candidate.rank}"
             logger.info(
                 f"[NANO-ROUTER] Facts write candidate: topic={routing_plan.facts_write_candidate.topic}, "
-                f"value={routing_plan.facts_write_candidate.value}, rank_ordered={routing_plan.facts_write_candidate.rank_ordered}"
+                f"value={routing_plan.facts_write_candidate.value}, rank_ordered={routing_plan.facts_write_candidate.rank_ordered}{rank_info}"
             )
         if routing_plan.facts_read_candidate:
             logger.info(

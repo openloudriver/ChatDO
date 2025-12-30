@@ -16,6 +16,12 @@ class FactsWriteCandidate(BaseModel):
         False,
         description="Whether the values are rank-ordered (true for 'My favorites are X, Y, Z')"
     )
+    rank: Optional[int] = Field(
+        None,
+        ge=1,
+        le=100,
+        description="Explicit rank number if user specified one (e.g., 4 for 'My #4 favorite planet is Venus'). None if not specified."
+    )
 
 
 class FactsReadCandidate(BaseModel):
