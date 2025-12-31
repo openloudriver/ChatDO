@@ -46,6 +46,7 @@ class PersistFactsResult:
     canonicalization_result: Optional[Any] = None
     rank_assignment_source: Optional[Dict[str, str]] = None  # Maps fact_key -> "explicit" | "atomic_append"
     duplicate_blocked: Optional[Dict[str, Dict[str, Any]]] = None  # Maps value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str}
+    rank_mutations: Optional[Dict[str, Dict[str, Any]]] = None  # Maps fact_key -> {"action": "move"|"insert"|"noop"|"append", "old_rank": int|None, "new_rank": int, "value": str, "topic": str}
     safety_net_used: bool = False  # True if safety net path was taken (for test verification)
     
     def __post_init__(self):
@@ -208,8 +209,16 @@ def _convert_routing_candidate_to_ops(
         if explicit_rank is not None:
             # User specified an explicit rank (e.g., "#4 favorite planet is Venus")
             # Use that exact rank for the value(s)
+            logger.info(
+                f"[FACTS-E2E] ROUTER-CONVERT: explicit_rank={explicit_rank} topic={canonical_topic!r} "
+                f"values={values!r} list_key={list_key!r}"
+            )
             current_rank = explicit_rank
             for value in values:
+                logger.info(
+                    f"[FACTS-E2E] ROUTER-CONVERT: creating op rank={current_rank} value={value!r} "
+                    f"for topic={canonical_topic!r}"
+                )
                 ops.append(FactsOp(
                     op="ranked_list_set",
                     list_key=list_key,
@@ -400,8 +409,9 @@ async def persist_facts_synchronously(
     
     # STEP 1: SAFETY NET - Always try direct bulk conversion FIRST (runs regardless of routing candidate)
     # This ensures bulk statements ALWAYS work, even if router/LLM fails
+    # CRITICAL: If safety net produces valid ops, HARD SHORT-CIRCUIT (skip router and LLM entirely)
+    safety_net_ops_response = None
     if is_bulk_preference_without_rank(message_content):
-        result.safety_net_used = True  # Mark that safety net was triggered
         logger.info(
             f"[FACTS-E2E] SAFETYNET: matched=True message_uuid={message_uuid} message='{message_content[:100]}...'"
         )
@@ -456,11 +466,22 @@ async def persist_facts_synchronously(
                             confidence=1.0
                         ))
                     
-                    ops_response = FactsOpsResponse(ops=ops, needs_clarification=[])
+                    safety_net_ops_response = FactsOpsResponse(ops=ops, needs_clarification=[])
+                    result.safety_net_used = True  # Mark that safety net was triggered and produced ops
                     logger.info(
                         f"[FACTS-E2E] SAFETYNET: ops_count={len(ops)} created successfully "
-                        f"message_uuid={message_uuid}"
+                        f"message_uuid={message_uuid} - SHORT-CIRCUITING router and LLM"
                     )
+                    # CRITICAL: Validate that ops have values before proceeding
+                    for op_idx, op in enumerate(ops, 1):
+                        if not op.value or not op.value.strip():
+                            logger.error(
+                                f"[FACTS-E2E] SAFETYNET: ERROR - op {op_idx} missing value! "
+                                f"op={op.op} list_key={op.list_key} message_uuid={message_uuid}"
+                            )
+                            # Clear safety_net_ops_response if any op is invalid
+                            safety_net_ops_response = None
+                            break
                 except Exception as e:
                     logger.error(
                         f"[FACTS-E2E] SAFETYNET: failed to create ops error={e!r} "
@@ -474,8 +495,31 @@ async def persist_facts_synchronously(
                 f"message_uuid={message_uuid}"
             )
     
+    # STEP 1.5: HARD SHORT-CIRCUIT - If safety net produced valid ops, skip router and LLM entirely
+    safety_net_short_circuit = False
+    if safety_net_ops_response and safety_net_ops_response.ops:
+        # Validate all ops have values before short-circuiting
+        all_ops_valid = all(op.value and op.value.strip() for op in safety_net_ops_response.ops)
+        if all_ops_valid:
+            ops_response = safety_net_ops_response
+            safety_net_short_circuit = True  # Mark that we're using safety net ops
+            # Get canonicalization result from safety net (already computed above)
+            # Note: canonicalization_result may not be set if safety net failed, but that's OK
+            # We'll use the one from safety net if available
+            logger.info(
+                f"[FACTS-E2E] SAFETYNET: SHORT-CIRCUIT - skipping router and LLM, using safety net ops "
+                f"ops_count={len(ops_response.ops)} message_uuid={message_uuid}"
+            )
+        else:
+            logger.error(
+                f"[FACTS-E2E] SAFETYNET: ERROR - ops created but some missing values! "
+                f"ops_count={len(safety_net_ops_response.ops)} message_uuid={message_uuid} - "
+                f"allowing LLM to try"
+            )
+            # Clear invalid safety net ops - let LLM try
+            safety_net_ops_response = None
     # STEP 2: If routing plan candidate is available and safety net didn't create ops, use it
-    if routing_plan_candidate and not ops_response:
+    elif routing_plan_candidate and not ops_response:
         logger.info(
             f"[FACTS-PERSIST] Using routing plan candidate (topic={routing_plan_candidate.topic}, "
             f"value={routing_plan_candidate.value}), skipping Facts LLM call"
@@ -500,7 +544,8 @@ async def persist_facts_synchronously(
             canonicalization_result = None
     
     # STEP 3: If no candidate or conversion failed, call Facts LLM extractor
-    if not ops_response:
+    # CRITICAL: Never call LLM if safety net already created ops (hard short-circuit)
+    if not ops_response and not safety_net_short_circuit:
         logger.info(
             f"[FACTS-E2E] LLM: called=True message_uuid={message_uuid} "
             f"reason={'no_candidate' if not routing_plan_candidate else 'candidate_failed'}"
@@ -708,6 +753,51 @@ async def persist_facts_synchronously(
         result.update_count = -1
         return result
     
+    # DATA INTEGRITY GUARD: Validate all ops before applying
+    # Prevent malformed ops from reaching the database
+    validation_errors = []
+    for idx, op in enumerate(ops_response.ops, 1):
+        if op.op in ("ranked_list_set", "set"):
+            # Require value for all write operations
+            if not op.value or not op.value.strip():
+                error_msg = (
+                    f"Operation {idx}: {op.op} requires a non-empty value. "
+                    f"list_key={getattr(op, 'list_key', None)}, "
+                    f"fact_key={getattr(op, 'fact_key', None)}"
+                )
+                validation_errors.append(error_msg)
+                logger.error(f"[FACTS-E2E][VALIDATE] invalid_op_missing_value: {error_msg}")
+            
+            # Require list_key for ranked_list_set
+            if op.op == "ranked_list_set":
+                if not op.list_key:
+                    error_msg = f"Operation {idx}: ranked_list_set requires list_key"
+                    validation_errors.append(error_msg)
+                    logger.error(f"[FACTS-E2E][VALIDATE] invalid_op_missing_list_key: {error_msg}")
+    
+    # If validation failed, return user-facing clarification (NOT Facts-F)
+    if validation_errors:
+        # Check if this looks like a ranked mutation attempt
+        has_rank_pattern = re.search(r'#\d+|(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)', message_content, re.IGNORECASE)
+        if has_rank_pattern:
+            clarification = (
+                "I detected you want to update a ranked favorite, but I couldn't parse the destination. "
+                "Please rephrase like: 'My #2 favorite vacation destination is Thailand.'"
+            )
+        else:
+            clarification = (
+                "I couldn't extract the values from your message. "
+                "Please rephrase like: 'My favorite vacation destinations are Spain, Greece, and Thailand.'"
+            )
+        
+        logger.warning(
+            f"[FACTS-PERSIST] ⚠️ Validation failed: {len(validation_errors)} errors. "
+            f"Returning clarification instead of applying malformed ops. message_uuid={message_uuid}"
+        )
+        result.ambiguous_topics = [clarification]
+        result.canonicalization_result = canonicalization_result
+        return result
+    
     # Apply operations deterministically
     apply_result = apply_facts_ops(
         project_uuid=project_id,
@@ -722,6 +812,7 @@ async def persist_facts_synchronously(
     result.stored_fact_keys = apply_result.stored_fact_keys
     result.rank_assignment_source = apply_result.rank_assignment_source if apply_result.rank_assignment_source else None
     result.duplicate_blocked = apply_result.duplicate_blocked if apply_result.duplicate_blocked else None
+    result.rank_mutations = apply_result.rank_mutations if apply_result.rank_mutations else None
     
     # MANDATORY RAW LLM CAPTURE: If write-intent and (S=0, U=0), log full diagnostics
     if write_intent_detected and result.store_count == 0 and result.update_count == 0 and result.message_uuid:

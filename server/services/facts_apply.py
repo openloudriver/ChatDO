@@ -228,6 +228,270 @@ def _get_ranked_list_items(
     return items
 
 
+def _apply_ranked_mutation(
+    conn,
+    cursor,
+    project_uuid: str,
+    canonical_topic: str,
+    list_key: str,
+    desired_rank: int,
+    value: str,
+    message_uuid: str,
+    normalized_value: str
+) -> Dict[str, Any]:
+    """
+    Apply a ranked mutation operation: MOVE, INSERT, or NO-OP.
+    
+    This is the SINGLE SOURCE OF TRUTH for ranked list mutations.
+    
+    Behavior:
+    1. If value already exists at rank K != desired_rank:
+       - MOVE value to desired_rank
+       - Shift intervening items accordingly (stable, no duplicates)
+    2. If value already exists at desired_rank:
+       - NO-OP and return {"action": "noop", "existing_rank": desired_rank}
+    3. If value does NOT exist in the list:
+       - INSERT value at desired_rank (shift items at desired_rank..end down by 1)
+    4. If desired_rank > len(list)+1:
+       - Append to end (rank = len(list)+1)
+    
+    Args:
+        conn: Active database connection (must be in a transaction)
+        cursor: Database cursor
+        project_uuid: Project UUID
+        canonical_topic: Canonical topic name
+        list_key: List key (e.g., "user.favorites.crypto")
+        desired_rank: Desired rank (1-based)
+        value: Raw value string (user-provided)
+        message_uuid: Message UUID for fact storage
+        normalized_value: Normalized value (for storage)
+        
+    Returns:
+        Dict with keys:
+        - action: "move" | "insert" | "noop" | "append"
+        - old_rank: Previous rank if moved, None otherwise
+        - new_rank: Final rank assigned
+        - shifted_items: List of (old_rank, new_rank, value) for items that were shifted
+    """
+    # Get current ranked list
+    items = _get_ranked_list_items(conn, project_uuid, list_key)
+    current_max_rank = len(items)
+    
+    # Normalize input value for comparison
+    normalized_input = normalize_favorite_value(value)
+    
+    # Find if value already exists and at what rank
+    existing_rank = None
+    existing_item = None
+    for item in items:
+        if normalize_favorite_value(item["value_text"]) == normalized_input:
+            existing_rank = item["rank"]
+            existing_item = item
+            break
+    
+    # Handle rank beyond length: append to end
+    if desired_rank > current_max_rank + 1:
+        desired_rank = current_max_rank + 1
+        logger.info(
+            f"[FACTS-APPLY] Rank {desired_rank} beyond list length ({current_max_rank}), "
+            f"appending to end at rank {desired_rank}"
+        )
+    
+    result = {
+        "action": None,
+        "old_rank": None,
+        "new_rank": desired_rank,
+        "shifted_items": []
+    }
+    
+    if existing_rank is not None:
+        # Value already exists
+        if existing_rank == desired_rank:
+            # Already at desired rank: NO-OP
+            result["action"] = "noop"
+            result["old_rank"] = desired_rank
+            logger.info(
+                f"[FACTS-APPLY] Rank mutation NO-OP: '{value}' already at rank {desired_rank} "
+                f"for topic={canonical_topic}"
+            )
+            return result
+        
+        # MOVE: Value exists at different rank, move to desired_rank
+        result["action"] = "move"
+        result["old_rank"] = existing_rank
+        
+        # Mark old fact as not current
+        old_fact_key = existing_item["fact_key"]
+        cursor.execute("""
+            UPDATE project_facts
+            SET is_current = 0
+            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        """, (project_uuid, old_fact_key))
+        
+        # Determine shift direction and range
+        # Note: Lower rank number = earlier in list (rank 1 is first)
+        if existing_rank > desired_rank:
+            # Moving earlier in list (e.g., rank 6 -> rank 2): shift items at desired_rank..(existing_rank-1) down by 1
+            # Example: moving from 6 to 2, shift items at ranks 2-5 down to ranks 3-6
+            shift_start = desired_rank
+            shift_end = existing_rank - 1
+            shift_delta = +1
+        else:
+            # Moving later in list (e.g., rank 2 -> rank 6): shift items at (existing_rank+1)..desired_rank up by 1
+            # Example: moving from 2 to 6, shift items at ranks 3-6 up to ranks 2-5
+            shift_start = existing_rank + 1
+            shift_end = desired_rank
+            shift_delta = -1
+        
+        # Shift intervening items (exclude the item being moved)
+        # IMPORTANT: Shift in the correct order to avoid overwriting items that haven't been shifted yet
+        # When moving down (existing_rank > desired_rank): shift from end backwards (high to low)
+        # When moving up (existing_rank < desired_rank): shift from start forwards (low to high)
+        items_to_shift = [
+            item for item in items
+            if item["rank"] != existing_rank and shift_start <= item["rank"] <= shift_end
+        ]
+        
+        if existing_rank > desired_rank:
+            # Moving down: shift from end backwards (rank 5, 4, 3, 2)
+            items_to_shift.sort(key=lambda x: x["rank"], reverse=True)
+        else:
+            # Moving up: shift from start forwards (rank 3, 4, 5, 6)
+            items_to_shift.sort(key=lambda x: x["rank"])
+        
+        for item in items_to_shift:
+            item_rank = item["rank"]
+            new_rank = item_rank + shift_delta
+            old_fact_key = item["fact_key"]
+            new_fact_key = canonical_rank_key(canonical_topic, new_rank)
+            
+            # Mark old fact as not current
+            cursor.execute("""
+                UPDATE project_facts
+                SET is_current = 0
+                WHERE project_id = ? AND fact_key = ? AND is_current = 1
+            """, (project_uuid, old_fact_key))
+            
+            # Insert shifted fact at new rank
+            fact_id = str(uuid.uuid4())
+            created_at = datetime.now()
+            cursor.execute("""
+                INSERT INTO project_facts (
+                    fact_id, project_id, fact_key, value_text, value_type,
+                    confidence, source_message_uuid, created_at, effective_at,
+                    supersedes_fact_id, is_current
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            """, (
+                fact_id, project_uuid, new_fact_key, item["value_text"], "string",
+                1.0, message_uuid, created_at, created_at, None
+            ))
+            
+            result["shifted_items"].append((item_rank, new_rank, item["value_text"]))
+            logger.debug(
+                f"[FACTS-APPLY] Shifted item: rank {item_rank} -> {new_rank} "
+                f"value='{item['value_text']}'"
+            )
+        
+        # Mark any existing fact at desired_rank as not current (shouldn't happen after shift, but be safe)
+        cursor.execute("""
+            UPDATE project_facts
+            SET is_current = 0
+            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        """, (project_uuid, canonical_rank_key(canonical_topic, desired_rank)))
+        
+        # Insert moved value at desired_rank
+        new_fact_key = canonical_rank_key(canonical_topic, desired_rank)
+        fact_id = str(uuid.uuid4())
+        created_at = datetime.now()
+        cursor.execute("""
+            INSERT INTO project_facts (
+                fact_id, project_id, fact_key, value_text, value_type,
+                confidence, source_message_uuid, created_at, effective_at,
+                supersedes_fact_id, is_current
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        """, (
+            fact_id, project_uuid, new_fact_key, normalized_value, "string",
+            1.0, message_uuid, created_at, created_at, None
+        ))
+        
+        logger.info(
+            f"[FACTS-APPLY] Rank mutation MOVE: '{value}' from rank {existing_rank} to {desired_rank} "
+            f"for topic={canonical_topic}, shifted {len(result['shifted_items'])} items"
+        )
+        logger.debug(
+            f"[FACTS-APPLY] Inserted moved value '{value}' at rank {desired_rank} "
+            f"fact_key={new_fact_key}"
+        )
+        
+    else:
+        # INSERT: Value doesn't exist, insert at desired_rank
+        result["action"] = "insert"
+        
+        # Shift items at desired_rank..end down by 1
+        # IMPORTANT: Shift from end backwards to avoid overwriting items that haven't been shifted yet
+        items_to_shift = [item for item in items if item["rank"] >= desired_rank]
+        items_to_shift.sort(key=lambda x: x["rank"], reverse=True)  # Shift from end backwards
+        
+        for item in items_to_shift:
+            item_rank = item["rank"]
+            new_rank = item_rank + 1
+            old_fact_key = item["fact_key"]
+            new_fact_key = canonical_rank_key(canonical_topic, new_rank)
+            
+            # Mark old fact as not current
+            cursor.execute("""
+                UPDATE project_facts
+                SET is_current = 0
+                WHERE project_id = ? AND fact_key = ? AND is_current = 1
+            """, (project_uuid, old_fact_key))
+            
+            # Insert shifted fact at new rank
+            fact_id = str(uuid.uuid4())
+            created_at = datetime.now()
+            cursor.execute("""
+                INSERT INTO project_facts (
+                    fact_id, project_id, fact_key, value_text, value_type,
+                    confidence, source_message_uuid, created_at, effective_at,
+                    supersedes_fact_id, is_current
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            """, (
+                fact_id, project_uuid, new_fact_key, item["value_text"], "string",
+                1.0, message_uuid, created_at, created_at, None
+            ))
+            
+            result["shifted_items"].append((item_rank, new_rank, item["value_text"]))
+            logger.debug(
+                f"[FACTS-APPLY] Shifted item: rank {item_rank} -> {new_rank} "
+                f"value='{item['value_text']}'"
+            )
+        
+        # Insert new value at desired_rank
+        new_fact_key = canonical_rank_key(canonical_topic, desired_rank)
+        fact_id = str(uuid.uuid4())
+        created_at = datetime.now()
+        cursor.execute("""
+            INSERT INTO project_facts (
+                fact_id, project_id, fact_key, value_text, value_type,
+                confidence, source_message_uuid, created_at, effective_at,
+                supersedes_fact_id, is_current
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        """, (
+            fact_id, project_uuid, new_fact_key, normalized_value, "string",
+            1.0, message_uuid, created_at, created_at, None
+        ))
+        
+        logger.info(
+            f"[FACTS-APPLY] Rank mutation INSERT: '{value}' at rank {desired_rank} "
+            f"for topic={canonical_topic}, shifted {len(result['shifted_items'])} items"
+        )
+    
+    return result
+
+
 def validate_ranked_list_invariants(
     items: List[Dict[str, Any]],
     list_key: str
@@ -383,6 +647,7 @@ class ApplyResult:
     errors: List[str] = None
     rank_assignment_source: Dict[str, str] = None  # Maps fact_key -> source ("explicit" | "atomic_append")
     duplicate_blocked: Dict[str, Dict[str, Any]] = None  # Maps fact_key -> {"value": str, "existing_rank": int}
+    rank_mutations: Dict[str, Dict[str, Any]] = None  # Maps fact_key -> {"action": "move"|"insert"|"noop"|"append", "old_rank": int|None, "new_rank": int, "value": str}
     
     def __post_init__(self):
         """Initialize mutable defaults."""
@@ -396,6 +661,8 @@ class ApplyResult:
             self.rank_assignment_source = {}
         if self.duplicate_blocked is None:
             self.duplicate_blocked = {}
+        if self.rank_mutations is None:
+            self.rank_mutations = {}
 
 
 def apply_facts_ops(
@@ -475,6 +742,10 @@ def apply_facts_ops(
     try:
         cursor.execute("BEGIN IMMEDIATE")
         
+        # Track max rank per list_key within the transaction for unranked appends
+        # This ensures sequential rank assignment when appending multiple items
+        max_rank_cache: Dict[str, int] = {}  # list_key -> current_max_rank
+        
         # Process each operation
         for idx, op in enumerate(ops_response.ops, 1):
             try:
@@ -551,142 +822,141 @@ def apply_facts_ops(
                                 # Skip this operation (don't append)
                                 continue
                         
-                        # Unranked append: assign rank atomically using _get_max_rank_atomic()
-                        # This ensures atomicity and prevents race conditions
-                        max_rank = _get_max_rank_atomic(conn, project_uuid, canonical_topic, list_key_for_check)
-                        assigned_rank = max_rank + 1
+                        # Unranked append: assign rank atomically
+                        # For multiple appends in the same transaction, track max_rank within the transaction
+                        # to ensure sequential assignment (1, 2, 3, ...) instead of all getting the same rank
+                        if list_key_for_check not in max_rank_cache:
+                            # First op for this list_key: get initial max_rank from DB
+                            max_rank_cache[list_key_for_check] = _get_max_rank_atomic(
+                                conn, project_uuid, canonical_topic, list_key_for_check
+                            )
+                        
+                        # Increment max_rank for this op
+                        max_rank_cache[list_key_for_check] += 1
+                        assigned_rank = max_rank_cache[list_key_for_check]
                         fact_key = canonical_rank_key(canonical_topic, assigned_rank)
                         rank_assignment_source = "atomic_append"
                         logger.info(
                             f"[FACTS-APPLY] Unranked append: assigned rank {assigned_rank} atomically "
-                            f"(max_rank={max_rank}, topic={canonical_topic})"
+                            f"(topic={canonical_topic}, list_key={list_key_for_check})"
                         )
-                    else:
-                        # Explicit rank provided: use it as-is (allows duplicates if user explicitly requests)
-                        assigned_rank = op.rank
-                        fact_key = canonical_rank_key(canonical_topic, assigned_rank)
-                        rank_assignment_source = "explicit"
-                        logger.debug(f"[FACTS-APPLY] Explicit rank: using rank {assigned_rank} for topic={canonical_topic}")
-                    
-                    # Store rank assignment source for telemetry
-                    result.rank_assignment_source[fact_key] = rank_assignment_source
-                
-                    # BACKWARD COMPATIBILITY: Check for legacy scalar facts and migrate them
-                    # Look for user.favorites.<topic> (without rank) before writing ranked entry
-                    try:
-                        scalar_key = op.list_key  # e.g., "user.favorites.crypto" (without .1, .2, etc.)
-                        cursor.execute("""
-                            SELECT fact_id, value_text, source_message_uuid, created_at
-                            FROM project_facts
-                            WHERE project_id = ? AND fact_key = ? AND is_current = 1
-                            ORDER BY effective_at DESC, created_at DESC
-                            LIMIT 1
-                        """, (project_uuid, scalar_key))
-                        scalar_fact = cursor.fetchone()
                         
-                        if scalar_fact:
-                            # Legacy scalar fact found - migrate to ranked entry at rank 1
-                            legacy_value = scalar_fact[1] if len(scalar_fact) > 1 else ""
-                            legacy_message_uuid = scalar_fact[2] if len(scalar_fact) > 2 else None
-                            legacy_created_at = scalar_fact[3] if len(scalar_fact) > 3 else None
-                            
-                            if legacy_value:
-                                # Create ranked entry at rank 1 from legacy scalar
-                                legacy_rank_key = canonical_rank_key(canonical_topic, 1)
-                                
-                                logger.info(
-                                    f"[FACTS-APPLY] Migrating legacy scalar fact: {scalar_key} = {legacy_value} "
-                                    f"→ ranked entry at {legacy_rank_key}"
-                                )
-                                
-                                # Store as ranked entry within the same transaction
-                                # Use the same connection for atomicity
-                                legacy_fact_id = str(uuid.uuid4())
-                                legacy_created_at_dt = legacy_created_at if legacy_created_at else datetime.now()
-                                
-                                # Mark scalar as not current
-                                cursor.execute("""
-                                    UPDATE project_facts
-                                    SET is_current = 0
-                                    WHERE project_id = ? AND fact_key = ? AND is_current = 1
-                                """, (project_uuid, scalar_key))
-                                
-                                # Insert ranked entry
-                                cursor.execute("""
-                                    INSERT INTO project_facts (
-                                        fact_id, project_id, fact_key, value_text, value_type,
-                                        confidence, source_message_uuid, created_at, effective_at,
-                                        supersedes_fact_id, is_current
-                                    )
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                                """, (
-                                    legacy_fact_id, project_uuid, legacy_rank_key, legacy_value, "string",
-                                    1.0, legacy_message_uuid or message_uuid, legacy_created_at_dt, legacy_created_at_dt,
-                                    None
-                                ))
-                    except Exception as e:
-                        logger.warning(f"[FACTS-APPLY] Failed to check/migrate legacy scalar facts: {e}")
-                        # Continue with normal ranked_list_set processing
-                
-                    # Value already normalized above for duplicate checking
-                    # Just check for warnings (normalization already done)
-                    _, warning = normalize_fact_value(op.value, is_ranked_list=True)
-                    if warning:
-                        result.warnings.append(f"Operation {idx}: {warning}")
-                    
-                    # Store fact atomically within the transaction
-                    fact_id = str(uuid.uuid4())
-                    created_at = datetime.now()
-                    effective_at = created_at
-                    
-                    # Check if fact_key already exists
-                    cursor.execute("""
-                        SELECT fact_id, value_text FROM project_facts
-                        WHERE project_id = ? AND fact_key = ? AND is_current = 1
-                        ORDER BY effective_at DESC, created_at DESC
-                        LIMIT 1
-                    """, (project_uuid, fact_key))
-                    previous_fact = cursor.fetchone()
-                    supersedes_fact_id = previous_fact[0] if previous_fact else None
-                    
-                    # Determine action type
-                    action_type = "store"
-                    if previous_fact:
-                        previous_value = previous_fact[1] if len(previous_fact) > 1 else None
-                        if previous_value and previous_value != normalized_value:
-                            action_type = "update"
-                    
-                    # Mark previous facts as not current
-                    if previous_fact:
+                        # Normalize value for storage
+                        normalized_value, warning = normalize_fact_value(op.value, is_ranked_list=True)
+                        if warning:
+                            result.warnings.append(f"Operation {idx}: {warning}")
+                        
+                        # Mark previous facts with same fact_key as not current (before inserting new one)
                         cursor.execute("""
                             UPDATE project_facts
                             SET is_current = 0
                             WHERE project_id = ? AND fact_key = ? AND is_current = 1
                         """, (project_uuid, fact_key))
-                    
-                    # Insert new fact
-                    cursor.execute("""
-                        INSERT INTO project_facts (
-                            fact_id, project_id, fact_key, value_text, value_type,
-                            confidence, source_message_uuid, created_at, effective_at,
-                            supersedes_fact_id, is_current
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                    """, (
-                        fact_id, project_uuid, fact_key, normalized_value, "string",
-                        op.confidence or 1.0, message_uuid, created_at, effective_at,
-                        supersedes_fact_id
-                    ))
-                    
-                    # Count based on action type
-                    if action_type == "store":
+                        
+                        # Insert new fact with assigned rank
+                        fact_id = str(uuid.uuid4())
+                        created_at = datetime.now()
+                        cursor.execute("""
+                            INSERT INTO project_facts (
+                                fact_id, project_id, fact_key, value_text, value_type,
+                                confidence, source_message_uuid, created_at, effective_at,
+                                supersedes_fact_id, is_current
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                        """, (
+                            fact_id, project_uuid, fact_key, normalized_value, "string",
+                            op.confidence or 1.0, message_uuid, created_at, created_at, None
+                        ))
+                        
+                        # Track rank assignment source
+                        result.rank_assignment_source[fact_key] = rank_assignment_source
+                        
+                        # Count as store (new fact)
                         result.store_count += 1
-                        logger.debug(f"[FACTS-APPLY] ✅ STORE op {idx}: {fact_key} = {normalized_value}")
-                    elif action_type == "update":
-                        result.update_count += 1
-                        logger.debug(f"[FACTS-APPLY] ✅ UPDATE op {idx}: {fact_key} = {normalized_value}")
-                    
-                    result.stored_fact_keys.append(fact_key)
+                        result.stored_fact_keys.append(fact_key)
+                        logger.debug(
+                            f"[FACTS-APPLY] ✅ APPEND op {idx}: '{op.value}' at rank {assigned_rank} "
+                            f"(topic={canonical_topic})"
+                        )
+                    else:
+                        # Explicit rank provided: use ranked mutation logic (MOVE, INSERT, or NO-OP)
+                        desired_rank = op.rank
+                        rank_assignment_source = "explicit"
+                        
+                        logger.info(
+                            f"[FACTS-E2E] RANK-MUTATION: topic={canonical_topic!r} desired_rank={desired_rank} "
+                            f"value={op.value!r} list_key={list_key_for_check!r}"
+                        )
+                        
+                        # Normalize value for storage (already normalized above for duplicate checking)
+                        normalized_value, warning = normalize_fact_value(op.value, is_ranked_list=True)
+                        if warning:
+                            result.warnings.append(f"Operation {idx}: {warning}")
+                        
+                        # Apply ranked mutation (MOVE, INSERT, or NO-OP)
+                        mutation_result = _apply_ranked_mutation(
+                            conn=conn,
+                            cursor=cursor,
+                            project_uuid=project_uuid,
+                            canonical_topic=canonical_topic,
+                            list_key=list_key_for_check,
+                            desired_rank=desired_rank,
+                            value=op.value,  # Raw value for logging/comparison
+                            message_uuid=message_uuid,
+                            normalized_value=normalized_value  # Normalized value for storage
+                        )
+                        
+                        # Handle mutation result
+                        fact_key = canonical_rank_key(canonical_topic, mutation_result["new_rank"])
+                        result.rank_assignment_source[fact_key] = rank_assignment_source
+                        
+                        # Store mutation info for UI messaging
+                        result.rank_mutations[fact_key] = {
+                            "action": mutation_result["action"],
+                            "old_rank": mutation_result.get("old_rank"),
+                            "new_rank": mutation_result["new_rank"],
+                            "value": op.value,
+                            "topic": canonical_topic
+                        }
+                        
+                        if mutation_result["action"] == "noop":
+                            # Value already at desired rank: NO-OP
+                            logger.info(
+                                f"[FACTS-APPLY] Rank mutation NO-OP: '{op.value}' already at rank {desired_rank} "
+                                f"for topic={canonical_topic}"
+                            )
+                            # Don't increment store_count or update_count for NO-OP
+                        else:
+                            # MOVE, INSERT, or APPEND: fact was created
+                            # Count shifted items as updates
+                            result.update_count += len(mutation_result["shifted_items"])
+                            
+                            # Count the main operation
+                            if mutation_result["action"] == "move":
+                                result.update_count += 1  # MOVE is an update
+                                logger.debug(
+                                    f"[FACTS-APPLY] ✅ MOVE op {idx}: '{op.value}' from rank {mutation_result['old_rank']} "
+                                    f"to {mutation_result['new_rank']} (topic={canonical_topic})"
+                                )
+                            elif mutation_result["action"] == "insert":
+                                result.store_count += 1  # INSERT is a new store
+                                logger.debug(
+                                    f"[FACTS-APPLY] ✅ INSERT op {idx}: '{op.value}' at rank {mutation_result['new_rank']} "
+                                    f"(topic={canonical_topic})"
+                                )
+                            elif mutation_result["action"] == "append":
+                                result.store_count += 1  # APPEND is a new store
+                                logger.debug(
+                                    f"[FACTS-APPLY] ✅ APPEND op {idx}: '{op.value}' at rank {mutation_result['new_rank']} "
+                                    f"(topic={canonical_topic})"
+                                )
+                            
+                            result.stored_fact_keys.append(fact_key)
+                            
+                            # Add shifted fact keys to stored_fact_keys
+                            for old_rank, new_rank, shifted_value in mutation_result["shifted_items"]:
+                                shifted_fact_key = canonical_rank_key(canonical_topic, new_rank)
+                                result.stored_fact_keys.append(shifted_fact_key)
                 
                 elif op.op == "set":
                     # Validate required fields

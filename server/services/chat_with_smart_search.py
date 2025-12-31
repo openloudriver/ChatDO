@@ -842,6 +842,7 @@ async def chat_with_smart_search(
             canonicalization_result = persist_result.canonicalization_result
             rank_assignment_source = persist_result.rank_assignment_source
             duplicate_blocked = persist_result.duplicate_blocked
+            rank_mutations = persist_result.rank_mutations
             
             # Check for Facts LLM failure (negative counts indicate error)
             if store_count < 0 or update_count < 0:
@@ -1043,6 +1044,28 @@ async def chat_with_smart_search(
                             topic = info.get("topic", "item")
                             duplicate_messages.append(f"{value} is already in your favorites at #{existing_rank}.")
                     
+                    # Handle rank mutation messages (MOVE, INSERT, NO-OP, APPEND)
+                    mutation_messages = []
+                    if rank_mutations:
+                        for fact_key, mutation_info in rank_mutations.items():
+                            action = mutation_info.get("action")
+                            value = mutation_info.get("value", "")
+                            new_rank = mutation_info.get("new_rank")
+                            old_rank = mutation_info.get("old_rank")
+                            topic = mutation_info.get("topic", "item")
+                            
+                            if action == "move":
+                                if old_rank is not None:
+                                    mutation_messages.append(f"Moved {value} to #{new_rank} (was #{old_rank}).")
+                                else:
+                                    mutation_messages.append(f"Moved {value} to #{new_rank}.")
+                            elif action == "insert":
+                                mutation_messages.append(f"Inserted {value} at #{new_rank}.")
+                            elif action == "noop":
+                                mutation_messages.append(f"{value} is already your #{new_rank} favorite {topic}.")
+                            elif action == "append":
+                                mutation_messages.append(f"Added {value} as #{new_rank}.")
+                    
                     # Format ranked lists
                     for topic, items in ranked_lists.items():
                         items.sort(key=lambda x: x[0])  # Sort by rank
@@ -1060,7 +1083,14 @@ async def chat_with_smart_search(
                             confirmation_parts.append(f"{key_name}")
                     
                     # Build confirmation message
-                    if confirmation_parts:
+                    # Priority: rank mutations > regular confirmations > duplicates
+                    if mutation_messages:
+                        # Rank mutations take precedence - they're more specific
+                        confirmation_text = " ".join(mutation_messages)
+                        # Append duplicates if any
+                        if duplicate_messages:
+                            confirmation_text += " " + " ".join(duplicate_messages)
+                    elif confirmation_parts:
                         confirmation_text = "Saved: " + ", ".join(confirmation_parts)
                         # If we have duplicates, append them
                         if duplicate_messages:
@@ -1168,6 +1198,7 @@ async def chat_with_smart_search(
                             "alias_source": canonicalization_result.source if canonicalization_result else None,
                             "rank_assignment_source": rank_assignment_source,  # Dict: fact_key -> "explicit" | "atomic_append"
                             "duplicate_blocked": duplicate_blocked,  # Dict: value -> {"value": str, "existing_rank": int, "topic": str, "list_key": str}
+                            "rank_mutations": rank_mutations,  # Dict: fact_key -> {"action": str, "old_rank": int|None, "new_rank": int, "value": str, "topic": str}
                             "nano_routing_plan": {
                                 "content_plane": routing_plan.content_plane if routing_plan else None,
                                 "operation": routing_plan.operation if routing_plan else None,
