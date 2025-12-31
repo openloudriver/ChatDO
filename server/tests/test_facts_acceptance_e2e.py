@@ -1205,3 +1205,467 @@ async def test_acceptance_k_out_of_range_no_fallback(test_db_setup, test_thread_
         assert "only" in content or "3" in content or "no #" in content, \
             f"Expected deterministic out-of-range message, got: {content[:300]}"
 
+
+@pytest.mark.asyncio
+async def test_acceptance_out_of_range_rank_no_fallback_when_empty(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: Out-of-range rank read (#99) returns deterministic Facts response when list is empty.
+    
+    UI Failure B1: Asking "#99 favorite <topic>" before any writes still routes to Index-P/GPT.
+    
+    Scenario:
+    - NO writes (empty list)
+    - "What is my #99 favorite breakfast food?"
+    - Assert returns deterministic response: "I don't have any favorite ... stored yet, so there's no #99 favorite."
+    - Assert NO fallback to Index-P → GPT-5 (model trace should be Facts-R only)
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # NO seed - list is empty
+    
+    # Ask out-of-range query on empty list
+    read_message = "What is my #99 favorite breakfast food?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # Assert deterministic empty list message
+        content = response.get("content", "").lower()
+        assert ("don't have any" in content or "no favorite" in content) and ("#99" in content or "no #99" in content), \
+            f"Expected empty list message mentioning '#99', got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        # Either fastPath should indicate Facts retrieval, OR usedFacts should be True
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_out_of_range_rank_no_fallback_when_nonempty(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: Out-of-range rank read (#99) returns deterministic Facts response when list has items.
+    
+    UI Failure B1: Asking "#99 favorite <topic>" after writes still routes to Index-P/GPT.
+    
+    Scenario:
+    - Write 3 favorites
+    - "What is my #99 favorite breakfast food?"
+    - Assert returns deterministic response: "I only have 3 favorites stored, so there's no #99 favorite."
+    - Assert NO fallback to Index-P → GPT-5
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # Step 1: Seed initial list (3 items)
+    seed_message = "My favorite breakfast foods are pancakes, oatmeal, eggs."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value=["pancakes", "oatmeal", "eggs"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Assert we have 3 items
+    items = _assert_ranked_list_invariants(project_id, "breakfast foods", expected_count=3)
+    
+    # Step 2: Out-of-range read (#99)
+    read_message = "What is my #99 favorite breakfast food?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # Assert deterministic out-of-range message
+        content = response.get("content", "").lower()
+        assert "only have 3" in content or ("only" in content and "3" in content and "#99" in content), \
+            f"Expected out-of-range message mentioning 'only have 3' and '#99', got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5"
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_last_favorite_returns_max_rank_no_crash(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: "last favorite" query returns max-rank item deterministically without Pydantic crash.
+    
+    UI Failure F1: "last favorite" either falls back or throws: FactsQueryPlan limit Input should be a valid integer ... input_value=None.
+    
+    Scenario:
+    - Write 5 favorites
+    - "What is my last favorite breakfast food?"
+    - Assert returns rank 5 item (max rank)
+    - Assert NO fallback to Index-P → GPT-5
+    - Assert NO Pydantic validation error (limit must be int, not None)
+    - Assert NO clarification prompts
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # Step 1: Seed initial list (5 items)
+    seed_message = "My favorite breakfast foods are pancakes, oatmeal, eggs, bacon, toast."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value=["pancakes", "oatmeal", "eggs", "bacon", "toast"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Assert we have 5 items
+    items = _assert_ranked_list_invariants(project_id, "breakfast foods", expected_count=5)
+    
+    # Verify toast is at rank 5 (max rank)
+    values_by_rank = {item["rank"]: item["value_text"].lower() for item in items}
+    assert "toast" in values_by_rank[5] or any("toast" in v.lower() for v in [values_by_rank[5]]), \
+        f"Expected 'toast' at rank 5 (max rank), got: {values_by_rank}"
+    
+    # Step 2: "last favorite" query
+    read_message = "What is my last favorite breakfast food?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        # This should NOT crash with Pydantic validation error
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # Assert response contains "toast" (the max-rank item, rank 5)
+        content = response.get("content", "").lower()
+        assert "toast" in content, \
+            f"Expected 'toast' (max-rank item at rank 5) in response, got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5"
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        
+        # Assert NO clarification request (should be deterministic, not asking to clarify "last")
+        assert "clarify" not in content and ("which" not in content.lower() or ("which" in content.lower() and "toast" in content)), \
+            f"Expected deterministic response (no clarification), got: {content[:300]}"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_out_of_range_rank_no_fallback_ui_shape(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: Out-of-range rank read (#99) returns deterministic Facts response (no Index-P/GPT fallback).
+    
+    UI Failure B3: "#99 favorite ..." falls back to Index-P/GPT instead of returning deterministic out-of-range message.
+    
+    Scenario:
+    - Seed: "My favorite breakfast foods are pancakes, oatmeal, eggs." then "My #2 favorite breakfast food is bacon."
+    - "What is my #99 favorite breakfast food?"
+    - Assert returns deterministic out-of-range message: "I only have N favorites stored, so there's no #99 favorite breakfast food."
+    - Assert NO fallback to Index-P → GPT-5 (model trace should be Facts-R only)
+    - Assert facts_empty_valid flag is set or fastPath indicates Facts retrieval
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # Step 1: Seed initial list
+    seed_message = "My favorite breakfast foods are pancakes, oatmeal, eggs."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value=["pancakes", "oatmeal", "eggs"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Step 2: Add #2 favorite (bacon)
+    add_message = "My #2 favorite breakfast food is bacon."
+    mock_add_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value="bacon",
+            rank_ordered=False,
+            rank=2
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_add_plan
+        
+        await chat_with_smart_search(
+            user_message=add_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Assert we have 4 items now
+    items = _assert_ranked_list_invariants(project_id, "breakfast foods", expected_count=4)
+    
+    # Step 3: Out-of-range read (#99)
+    # NOTE: We do NOT mock the router to return Facts read - we want to test the pre-router enforcement
+    # The enforcement should detect "#99 favorite" and force Facts read routing
+    read_message = "What is my #99 favorite breakfast food?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # Assert deterministic out-of-range message
+        content = response.get("content", "").lower()
+        assert "only" in content or "4" in content or "no #99" in content or "no # 99" in content, \
+            f"Expected out-of-range message mentioning 'only have 4' or 'no #99', got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        # The response should come from Facts-R, even if empty/out-of-range
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        # Either fastPath should indicate Facts retrieval, OR usedFacts should be True
+        # (The enforcement ensures Facts read always returns a Facts response, never falls through)
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        
+        # Verify the response content is deterministic (mentions the out-of-range condition)
+        assert "only" in content or "4" in content or "no #99" in content or "no # 99" in content, \
+            f"Expected deterministic out-of-range message, got: {content[:300]}"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_last_favorite_returns_max_rank(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: "last favorite" query returns max-rank item deterministically (no Index-P/GPT fallback).
+    
+    UI Failure F1: "last favorite ..." falls back/asks to clarify even though ranked list exists.
+    
+    Scenario:
+    - Seed: "My favorite breakfast foods are pancakes, oatmeal, eggs." then "My #2 favorite breakfast food is bacon."
+    - "What is my last favorite breakfast food?"
+    - Assert returns the max-rank item (rank 4, which is "eggs" after the insert)
+    - Assert NO fallback to Index-P → GPT-5 (model trace should be Facts-R only)
+    - Assert deterministic response (no clarification request)
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # Step 1: Seed initial list
+    seed_message = "My favorite breakfast foods are pancakes, oatmeal, eggs."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value=["pancakes", "oatmeal", "eggs"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Step 2: Add #2 favorite (bacon) - this will shift oatmeal to #3, eggs to #4
+    add_message = "My #2 favorite breakfast food is bacon."
+    mock_add_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="breakfast foods",
+            value="bacon",
+            rank_ordered=False,
+            rank=2
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_add_plan
+        
+        await chat_with_smart_search(
+            user_message=add_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Assert we have 4 items now
+    items = _assert_ranked_list_invariants(project_id, "breakfast foods", expected_count=4)
+    
+    # Verify eggs is at rank 4 (max rank)
+    values_by_rank = {item["rank"]: item["value_text"].lower() for item in items}
+    assert "eggs" in values_by_rank[4] or any("eggs" in v.lower() for v in [values_by_rank[4]]), \
+        f"Expected 'eggs' at rank 4 (max rank), got: {values_by_rank}"
+    
+    # Step 3: "last favorite" query
+    # NOTE: We do NOT mock the router to return Facts read - we want to test the pre-router enforcement
+    # The enforcement should detect "last favorite" and force Facts read routing
+    read_message = "What is my last favorite breakfast food?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # Assert response contains "eggs" (the max-rank item, rank 4)
+        content = response.get("content", "").lower()
+        assert "eggs" in content, \
+            f"Expected 'eggs' (max-rank item at rank 4) in response, got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        # Either fastPath should indicate Facts retrieval, OR usedFacts should be True
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        
+        # Assert NO clarification request (should be deterministic, not asking to clarify "last")
+        assert "clarify" not in content and "which" not in content.lower() or "which" in content.lower() and "eggs" in content, \
+            f"Expected deterministic response (no clarification), got: {content[:300]}"
+

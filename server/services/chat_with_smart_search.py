@@ -18,6 +18,96 @@ from . import librarian
 
 logger = logging.getLogger(__name__)
 
+
+def smart_title_case(text: str) -> str:
+    """
+    Convert text to title case for display, preserving proper capitalization.
+    
+    This is for UI display only - does NOT affect storage/uniqueness.
+    Simple implementation: capitalize first letter of each word.
+    For more sophisticated handling, could preserve small words like "to", "of", "and".
+    
+    Args:
+        text: Lowercase or mixed-case text (e.g., "ticket to ride")
+        
+    Returns:
+        Title-cased text (e.g., "Ticket To Ride")
+    """
+    if not text:
+        return text
+    
+    # Split on whitespace and capitalize each word
+    words = text.split()
+    return ' '.join(word.capitalize() for word in words)
+
+
+def detect_strong_facts_read_intent(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Detect strong Facts read intent patterns that MUST route to Facts read.
+    
+    Patterns detected:
+    - "what is my #N favorite <topic>?" (rank query, including out-of-range like #99)
+    - "what is my no. N favorite <topic>?" (alternative rank form)
+    - "what is my Nth favorite <topic>?" (ordinal word like "second", "third", "99th", etc.)
+    - "what is my last favorite <topic>?" (max-rank query)
+    - "what is my least favorite <topic>?" (max-rank query)
+    - "what is my bottom favorite <topic>?" (max-rank query)
+    
+    Returns:
+        Dict with keys: topic, rank (int or None), last_rank (bool), or None if no match
+    """
+    text_lower = text.lower().strip()
+    
+    # Pattern 1: "#N favorite" or "# N favorite" or "no. N favorite" (e.g., "#99 favorite breakfast food")
+    # Must start with "what is my" to be a read query (not write like "my #2 favorite is bacon")
+    rank_pattern = r'what\s+is\s+my\s+(?:#|no\.?\s*)\s*(\d+)\s+(favorite|favorites)\s+(.+?)(?:\?|$)'
+    match = re.search(rank_pattern, text_lower)
+    if match:
+        rank_num = int(match.group(1))
+        topic = match.group(3).strip()
+        # Strip trailing punctuation
+        topic = re.sub(r'[?.!]+$', '', topic).strip()
+        if topic:
+            return {"topic": topic, "rank": rank_num, "last_rank": False}
+    
+    # Pattern 2: Ordinal words (first, second, third, etc.) and numeric ordinals (1st, 2nd, 99th, etc.)
+    # but NOT "last" (handled separately)
+    ordinal_words = {
+        "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5,
+        "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9, "tenth": 10
+    }
+    ordinal_pattern = r'what\s+is\s+my\s+(' + '|'.join(ordinal_words.keys()) + r')\s+(favorite|favorites)\s+(.+?)(?:\?|$)'
+    match = re.search(ordinal_pattern, text_lower)
+    if match:
+        ordinal_word = match.group(1)
+        topic = match.group(3).strip()
+        topic = re.sub(r'[?.!]+$', '', topic).strip()
+        if topic:
+            rank_num = ordinal_words[ordinal_word]
+            return {"topic": topic, "rank": rank_num, "last_rank": False}
+    
+    # Pattern 2b: Numeric ordinals (1st, 2nd, 3rd, 99th, etc.)
+    numeric_ordinal_pattern = r'what\s+is\s+my\s+(\d+)(?:st|nd|rd|th)\s+(favorite|favorites)\s+(.+?)(?:\?|$)'
+    match = re.search(numeric_ordinal_pattern, text_lower)
+    if match:
+        rank_num = int(match.group(1))
+        topic = match.group(3).strip()
+        topic = re.sub(r'[?.!]+$', '', topic).strip()
+        if topic:
+            return {"topic": topic, "rank": rank_num, "last_rank": False}
+    
+    # Pattern 3: "last favorite", "least favorite", "bottom favorite" (max-rank query)
+    last_pattern = r'what\s+is\s+my\s+(last|least|bottom)\s+(favorite|favorites)\s+(.+?)(?:\?|$)'
+    match = re.search(last_pattern, text_lower)
+    if match:
+        topic = match.group(3).strip()
+        topic = re.sub(r'[?.!]+$', '', topic).strip()
+        if topic:
+            return {"topic": topic, "rank": None, "last_rank": True}
+    
+    return None
+
+
 def build_filetree_guidance(project_id: Optional[str] = None) -> str:
     """
     Build FileTree guidance with automatically injected available sources.
@@ -574,13 +664,64 @@ async def chat_with_smart_search(
         else:
             conversation_history = []
     
+    # ============================================================================
+    # PRE-ROUTER ENFORCEMENT: Strong Facts Read Patterns
+    # ============================================================================
+    # Detect high-confidence Facts read patterns BEFORE router to ensure deterministic routing
+    # This fixes UI failures where router doesn't consistently select Facts read for:
+    # - "#99 favorite ..." (out-of-range rank queries)
+    # - "last favorite ..." (max-rank queries)
+    # Check for strong Facts read intent BEFORE router
+    strong_facts_read_candidate = detect_strong_facts_read_intent(user_message)
+    if strong_facts_read_candidate:
+        logger.info(
+            f"[FACTS-R-ENFORCE] Detected strong Facts read pattern: "
+            f"topic={strong_facts_read_candidate['topic']}, "
+            f"rank={strong_facts_read_candidate['rank']}, "
+            f"last_rank={strong_facts_read_candidate['last_rank']}"
+        )
+    
     # Call Nano router - MANDATORY FIRST STEP
     routing_plan = None
     nano_router_used = False
     try:
         from server.services.nano_router import route_with_nano, NanoRouterError
-        from server.contracts.routing_plan import RoutingPlan
+        from server.contracts.routing_plan import RoutingPlan, FactsReadCandidate
         routing_plan = await route_with_nano(user_message, conversation_history)
+        
+        # Override routing plan if strong Facts read pattern detected
+        if strong_facts_read_candidate:
+            # Force Facts read routing
+            routing_plan.content_plane = "facts"
+            routing_plan.operation = "read"
+            routing_plan.reasoning_required = False
+            routing_plan.confidence = 1.0
+            routing_plan.why = f"Pre-router enforcement: strong Facts read pattern detected (topic={strong_facts_read_candidate['topic']})"
+            
+            # Create or override FactsReadCandidate
+            if strong_facts_read_candidate['last_rank']:
+                # For "last rank", we'll handle it specially in execution (no rank set)
+                routing_plan.facts_read_candidate = FactsReadCandidate(
+                    topic=strong_facts_read_candidate['topic'],
+                    query=user_message,
+                    rank=None,  # Will be handled as max-rank in execution
+                    top_n_slice=None
+                )
+            else:
+                # For rank queries, set the rank (even if out-of-range like #99)
+                routing_plan.facts_read_candidate = FactsReadCandidate(
+                    topic=strong_facts_read_candidate['topic'],
+                    query=user_message,
+                    rank=strong_facts_read_candidate['rank'],
+                    top_n_slice=None
+                )
+            
+            logger.info(
+                f"[FACTS-R-ENFORCE] Overrode routing plan to Facts read: "
+                f"content_plane={routing_plan.content_plane}, "
+                f"operation={routing_plan.operation}, "
+                f"facts_read_candidate={routing_plan.facts_read_candidate}"
+            )
         nano_router_used = True
         logger.info(
             f"[NANO-ROUTER] ✅ Routing plan: content_plane={routing_plan.content_plane}, "
@@ -589,16 +730,48 @@ async def chat_with_smart_search(
         )
     except Exception as e:
         logger.error(f"[NANO-ROUTER] ❌ Failed to route with Nano: {e}", exc_info=True)
-        # If Nano router fails, we must fail hard - no fallback
-        # Create a minimal routing plan for error handling
-        from server.contracts.routing_plan import RoutingPlan
-        routing_plan = RoutingPlan(
-            content_plane="chat",
-            operation="none",
-            reasoning_required=True,
-            confidence=0.0,
-            why=f"Nano router failed: {e}"
-        )
+        # If Nano router fails but we have strong Facts read pattern, still force Facts read
+        if strong_facts_read_candidate:
+            from server.contracts.routing_plan import RoutingPlan, FactsReadCandidate
+            # Force Facts read routing even when router fails
+            if strong_facts_read_candidate['last_rank']:
+                facts_read_candidate = FactsReadCandidate(
+                    topic=strong_facts_read_candidate['topic'],
+                    query=user_message,
+                    rank=None,
+                    top_n_slice=None
+                )
+            else:
+                facts_read_candidate = FactsReadCandidate(
+                    topic=strong_facts_read_candidate['topic'],
+                    query=user_message,
+                    rank=strong_facts_read_candidate['rank'],
+                    top_n_slice=None
+                )
+            routing_plan = RoutingPlan(
+                content_plane="facts",
+                operation="read",
+                reasoning_required=False,
+                confidence=1.0,
+                why=f"Pre-router enforcement (router failed): strong Facts read pattern detected (topic={strong_facts_read_candidate['topic']})",
+                facts_read_candidate=facts_read_candidate
+            )
+            logger.info(
+                f"[FACTS-R-ENFORCE] Router failed but forcing Facts read: "
+                f"content_plane={routing_plan.content_plane}, "
+                f"operation={routing_plan.operation}"
+            )
+        else:
+            # If Nano router fails, we must fail hard - no fallback
+            # Create a minimal routing plan for error handling
+            from server.contracts.routing_plan import RoutingPlan
+            routing_plan = RoutingPlan(
+                content_plane="chat",
+                operation="none",
+                reasoning_required=True,
+                confidence=0.0,
+                why=f"Nano router failed: {e}"
+            )
     
     # Initialize action tracking at the very beginning
     facts_actions = {"S": 0, "U": 0, "R": 0, "F": False}  # Store, Update, Retrieve, Failure
@@ -1623,6 +1796,15 @@ async def chat_with_smart_search(
                 list_key = canonical_list_key(canonical_topic)
                 
                 # Build query plan: slice request (top N) vs singleton request (rank N)
+                # For out-of-range ranks (e.g., #99), use strong_facts_read_candidate rank if available
+                # (FactsReadCandidate.rank has max=10, so we can't set rank=99 there)
+                effective_rank = router_rank
+                if strong_facts_read_candidate and strong_facts_read_candidate.get('rank') is not None:
+                    # Use the rank from strong_facts_read_candidate (may be >10, e.g., #99)
+                    effective_rank = strong_facts_read_candidate['rank']
+                    if effective_rank != router_rank:
+                        logger.info(f"[FACTS-R] Using strong_facts_read_candidate rank={effective_rank} (router_rank={router_rank})")
+                
                 if is_slice_request:
                     # "top N" slice request: limit=N, rank=None (returns ranks 1..N)
                     query_plan = FactsQueryPlan(
@@ -1636,15 +1818,16 @@ async def chat_with_smart_search(
                     logger.info(f"[FACTS-R] Query plan created with top_n_slice={router_top_n_slice} (slice request, ranks 1..{router_top_n_slice})")
                 else:
                     # Singleton rank request: limit=1, rank=N (returns only rank N)
+                    # Use effective_rank which may be >10 for out-of-range queries
                     query_plan = FactsQueryPlan(
                         intent="facts_get_ranked_list",
                         list_key=list_key,
                         topic=canonical_topic,
-                        limit=1 if router_rank else 25,  # Limit to 1 for ordinal queries, 25 for full list
+                        limit=1 if effective_rank else 25,  # Limit to 1 for ordinal queries, 25 for full list
                         include_ranks=True,
-                        rank=router_rank  # CRITICAL: Pass rank from router
+                        rank=effective_rank  # CRITICAL: Use effective_rank (may be >10 for out-of-range)
                     )
-                    logger.info(f"[FACTS-R] Query plan created with rank={router_rank} (ordinal_parse_source={ordinal_parse_source})")
+                    logger.info(f"[FACTS-R] Query plan created with rank={effective_rank} (ordinal_parse_source={ordinal_parse_source})")
             else:
                 # Fallback to query planner (should be rare)
                 if not query_plan:
@@ -1680,14 +1863,79 @@ async def chat_with_smart_search(
                     f"computed_list_key={computed_list_key}"
                 )
                 
-                # Execute plan deterministically
-                # Pass ordinal_parse_source for telemetry
-                facts_answer = execute_facts_plan(
-                    project_uuid=project_id,
-                    plan=query_plan,
-                    exclude_message_uuid=current_message_uuid,
-                    ordinal_parse_source=ordinal_parse_source
+                # Handle "last rank" queries: if strong_facts_read_candidate indicates last_rank=True,
+                # we need to query all facts and return the max rank item
+                is_last_rank_query = (
+                    strong_facts_read_candidate is not None and 
+                    strong_facts_read_candidate.get('last_rank', False) and
+                    query_plan.rank is None  # Not already set to a specific rank
                 )
+                
+                if is_last_rank_query:
+                    # For "last rank" queries, we need to query all facts first to find max rank
+                    # Build a temporary query plan to get all facts
+                    # CRITICAL: limit must be an int, not None (Pydantic validation)
+                    from server.services.facts_normalize import canonical_list_key
+                    temp_canonical_topic = canonical_topic if canonicalization_result else query_plan.topic
+                    temp_list_key = canonical_list_key(temp_canonical_topic)
+                    temp_query_plan = FactsQueryPlan(
+                        intent="facts_get_ranked_list",
+                        list_key=temp_list_key,
+                        topic=temp_canonical_topic,
+                        limit=1000,  # Use max limit to get all facts (storage is unbounded, retrieval is paginated)
+                        include_ranks=True,
+                        rank=None  # No rank filter - get all
+                    )
+                    # Execute to get all facts
+                    temp_facts_answer = execute_facts_plan(
+                        project_uuid=project_id,
+                        plan=temp_query_plan,
+                        exclude_message_uuid=current_message_uuid,
+                        ordinal_parse_source=ordinal_parse_source
+                    )
+                    # Find max rank
+                    if temp_facts_answer.facts and temp_facts_answer.max_available_rank:
+                        max_rank = temp_facts_answer.max_available_rank
+                        # Filter to only max rank item
+                        max_rank_facts = [f for f in temp_facts_answer.facts if f.get("rank") == max_rank]
+                        # Update query_plan to use max rank for consistent handling
+                        query_plan.rank = max_rank
+                        query_plan.limit = 1
+                        # Create a new FactsAnswer with only the max rank item
+                        from server.services.facts_retrieval import FactsAnswer
+                        facts_answer = FactsAnswer(
+                            facts=max_rank_facts,
+                            count=len(max_rank_facts),
+                            canonical_keys=temp_facts_answer.canonical_keys,
+                            rank_applied=True,
+                            rank_result_found=len(max_rank_facts) > 0,
+                            ordinal_parse_source=ordinal_parse_source,
+                            max_available_rank=max_rank
+                        )
+                        logger.info(f"[FACTS-R] Last rank query: found max_rank={max_rank}, returning {len(max_rank_facts)} item(s)")
+                    else:
+                        # No facts found - create empty FactsAnswer with max_available_rank=None
+                        # This will be handled by the empty response path below
+                        from server.services.facts_retrieval import FactsAnswer
+                        facts_answer = FactsAnswer(
+                            facts=[],
+                            count=0,
+                            canonical_keys=[],
+                            rank_applied=False,
+                            rank_result_found=False,
+                            ordinal_parse_source=ordinal_parse_source,
+                            max_available_rank=None
+                        )
+                        logger.info(f"[FACTS-R] Last rank query: no facts found for topic={temp_canonical_topic}")
+                else:
+                    # Execute plan deterministically
+                    # Pass ordinal_parse_source for telemetry
+                    facts_answer = execute_facts_plan(
+                        project_uuid=project_id,
+                        plan=query_plan,
+                        exclude_message_uuid=current_message_uuid,
+                        ordinal_parse_source=ordinal_parse_source
+                    )
                 
                 # Count distinct canonical keys for Facts-R
                 facts_actions["R"] = len(facts_answer.canonical_keys)
@@ -1701,14 +1949,17 @@ async def chat_with_smart_search(
                     if query_plan.rank is not None:
                         # Ordinal query (singleton): return just the single fact at the requested rank
                         fact = facts_answer.facts[0]  # Should only be one fact when rank is specified
-                        list_items = fact.get("value_text", "")
+                        raw_value = fact.get("value_text", "")
+                        # Apply title case for display (UI-only, doesn't affect storage)
+                        list_items = smart_title_case(raw_value)
                         sorted_facts = [fact]  # Single fact for sources building
                         logger.info(f"[FACTS-R] Ordinal query response: rank={query_plan.rank}, value={list_items}")
                     else:
                         # Slice request ("top N") or full list query: return facts in ranked order as a list
                         sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
                         # Always format as numbered list for slice requests and full list queries
-                        list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in sorted_facts])
+                        # Apply title case for display (UI-only, doesn't affect storage)
+                        list_items = "\n".join([f"{f.get('rank', 0)}) {smart_title_case(f.get('value_text', ''))}" for f in sorted_facts])
                         if query_plan.limit and query_plan.limit < 100:  # Likely a slice request
                             logger.info(f"[FACTS-R] Slice query response: top {query_plan.limit}, returned {len(sorted_facts)} items")
                         else:
@@ -1866,11 +2117,30 @@ async def chat_with_smart_search(
                     
                     # ORDINAL BOUNDS MESSAGING: If this is an ordinal query and we have max_available_rank,
                     # provide a more informative message
-                    response_text = "I don't have that stored yet."
-                    if query_plan.rank is not None and facts_answer.max_available_rank is not None:
+                    # Also handle empty lists (max_available_rank is None when list is empty)
+                    if facts_answer.max_available_rank is None:
+                        # Empty list - no favorites stored yet
+                        if query_plan.rank is not None:
+                            # Rank query on empty list
+                            response_text = f"I don't have any favorite{'s' if query_plan.topic else ''} stored yet, so there's no #{query_plan.rank} favorite."
+                        elif strong_facts_read_candidate and strong_facts_read_candidate.get('last_rank', False):
+                            # Last rank query on empty list
+                            topic_display = query_plan.topic if query_plan else "items"
+                            response_text = f"I don't have any favorite {topic_display} stored yet, so there's no \"last\" favorite."
+                        else:
+                            # Generic empty list
+                            response_text = "I don't have that stored yet."
+                    elif query_plan.rank is not None:
+                        # Rank query on non-empty list
                         if query_plan.rank > facts_answer.max_available_rank:
                             response_text = f"I only have {facts_answer.max_available_rank} favorite{'s' if facts_answer.max_available_rank != 1 else ''} stored, so there's no #{query_plan.rank} favorite."
                             logger.info(f"[FACTS-R] Ordinal bounds check: requested rank={query_plan.rank}, max_available={facts_answer.max_available_rank}")
+                        else:
+                            # Rank is in range but not found (shouldn't happen, but handle gracefully)
+                            response_text = f"I don't have a #{query_plan.rank} favorite stored."
+                    else:
+                        # Generic empty response
+                        response_text = "I don't have that stored yet."
                     
                     # HIGH-SIGNAL LOGGING: Log empty retrieval response path
                     logger.info(
@@ -2094,6 +2364,56 @@ async def chat_with_smart_search(
                     f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "
                     f"reason=query_plan_failed_for_retrieval_heuristic"
                 )
+            
+            # CRITICAL GUARD: If router selected Facts read, we MUST return a Facts response (no fallback)
+            # This ensures that even if query_plan was None or execution had issues, we don't fall through to Index/GPT
+            if routing_plan.content_plane == "facts" and routing_plan.operation == "read":
+                # Router selected Facts read - ensure we return a Facts response
+                # If we got here, it means we didn't return from the try block above
+                # This should only happen if query_plan was None or execution failed silently
+                logger.warning(
+                    f"[FACTS-R] Router selected Facts read but no return occurred. "
+                    f"Returning deterministic Facts response (no Index/GPT fallback). "
+                    f"message_uuid={current_message_uuid} project_id={project_id}"
+                )
+                
+                response_text = "I don't have that stored yet."
+                canonicalizer_used_guard = canonicalization_result is not None if 'canonicalization_result' in locals() else False
+                teacher_invoked_guard = canonicalization_result.teacher_invoked if 'canonicalization_result' in locals() and canonicalization_result else False
+                model_label_guard = build_model_label(
+                    facts_actions=facts_actions,
+                    files_actions=files_actions,
+                    index_status=index_status,
+                    escalated=False,
+                    nano_router_used=nano_router_used,
+                    reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                    canonicalizer_used=canonicalizer_used_guard,
+                    teacher_invoked=teacher_invoked_guard
+                )
+                
+                return {
+                    "type": "assistant_message",
+                    "content": response_text,
+                    "meta": {
+                        "usedFacts": True,
+                        "factNotFound": True,
+                        "fastPath": "facts_retrieval_empty",
+                        "facts_actions": facts_actions,
+                        "files_actions": files_actions,
+                        "index_status": index_status,
+                        "facts_provider": facts_provider,
+                        "project_uuid": project_id,
+                        "thread_id": thread_id,
+                        "facts_gate_entered": facts_gate_entered,
+                        "facts_gate_reason": facts_gate_reason or "unknown",
+                        "write_intent_detected": is_write_intent,
+                        "facts_empty_valid": True  # Flag indicating valid Facts response (no fallback)
+                    },
+                    "model": model_label_guard,
+                    "model_label": f"Model: {model_label_guard}",
+                    "provider": "facts",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
         except Exception as e:
             logger.error(f"[FACTS-R] Exception during retrieval execution: {e}", exc_info=True)
             
