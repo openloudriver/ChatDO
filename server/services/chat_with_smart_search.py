@@ -699,6 +699,8 @@ async def chat_with_smart_search(
             routing_plan.why = f"Pre-router enforcement: strong Facts read pattern detected (topic={strong_facts_read_candidate['topic']})"
             
             # Create or override FactsReadCandidate
+            # CRITICAL: FactsReadCandidate.rank has constraint le=10, so for out-of-range ranks (>10),
+            # we must set rank=None and store the requested rank separately in strong_facts_read_candidate
             if strong_facts_read_candidate['last_rank']:
                 # For "last rank", we'll handle it specially in execution (no rank set)
                 routing_plan.facts_read_candidate = FactsReadCandidate(
@@ -708,13 +710,26 @@ async def chat_with_smart_search(
                     top_n_slice=None
                 )
             else:
-                # For rank queries, set the rank (even if out-of-range like #99)
-                routing_plan.facts_read_candidate = FactsReadCandidate(
-                    topic=strong_facts_read_candidate['topic'],
-                    query=user_message,
-                    rank=strong_facts_read_candidate['rank'],
-                    top_n_slice=None
-                )
+                # For rank queries, only set rank if it's within schema constraint (<=10)
+                # For out-of-range ranks (>10), set rank=None and use strong_facts_read_candidate['rank'] in query plan
+                requested_rank = strong_facts_read_candidate['rank']
+                if requested_rank is not None and requested_rank > 10:
+                    # Out-of-range rank: don't set it in FactsReadCandidate (would cause validation error)
+                    routing_plan.facts_read_candidate = FactsReadCandidate(
+                        topic=strong_facts_read_candidate['topic'],
+                        query=user_message,
+                        rank=None,  # Must be None to avoid validation error
+                        top_n_slice=None
+                    )
+                    logger.info(f"[FACTS-R-ENFORCE] Out-of-range rank {requested_rank} detected, setting FactsReadCandidate.rank=None (will use in query plan)")
+                else:
+                    # In-range rank (<=10): safe to set in FactsReadCandidate
+                    routing_plan.facts_read_candidate = FactsReadCandidate(
+                        topic=strong_facts_read_candidate['topic'],
+                        query=user_message,
+                        rank=requested_rank,
+                        top_n_slice=None
+                    )
             
             logger.info(
                 f"[FACTS-R-ENFORCE] Overrode routing plan to Facts read: "
@@ -734,6 +749,8 @@ async def chat_with_smart_search(
         if strong_facts_read_candidate:
             from server.contracts.routing_plan import RoutingPlan, FactsReadCandidate
             # Force Facts read routing even when router fails
+            # CRITICAL: FactsReadCandidate.rank has constraint le=10, so for out-of-range ranks (>10),
+            # we must set rank=None and store the requested rank separately
             if strong_facts_read_candidate['last_rank']:
                 facts_read_candidate = FactsReadCandidate(
                     topic=strong_facts_read_candidate['topic'],
@@ -742,12 +759,24 @@ async def chat_with_smart_search(
                     top_n_slice=None
                 )
             else:
-                facts_read_candidate = FactsReadCandidate(
-                    topic=strong_facts_read_candidate['topic'],
-                    query=user_message,
-                    rank=strong_facts_read_candidate['rank'],
-                    top_n_slice=None
-                )
+                # For rank queries, only set rank if it's within schema constraint (<=10)
+                requested_rank = strong_facts_read_candidate['rank']
+                if requested_rank is not None and requested_rank > 10:
+                    # Out-of-range rank: don't set it in FactsReadCandidate (would cause validation error)
+                    facts_read_candidate = FactsReadCandidate(
+                        topic=strong_facts_read_candidate['topic'],
+                        query=user_message,
+                        rank=None,  # Must be None to avoid validation error
+                        top_n_slice=None
+                    )
+                else:
+                    # In-range rank (<=10): safe to set in FactsReadCandidate
+                    facts_read_candidate = FactsReadCandidate(
+                        topic=strong_facts_read_candidate['topic'],
+                        query=user_message,
+                        rank=requested_rank,
+                        top_n_slice=None
+                    )
             routing_plan = RoutingPlan(
                 content_plane="facts",
                 operation="read",
@@ -1754,6 +1783,7 @@ async def chat_with_smart_search(
         # Facts-R is a read operation, so write_intent is False
         is_write_intent = False
         try:
+            # Wrap entire Facts read section to catch validation errors and return deterministic Facts response
             # NEW: Use routing plan candidate if available, otherwise call Facts query planner
             from server.services.facts_retrieval import execute_facts_plan
             from server.services.facts_llm.client import FactsLLMError
@@ -2419,13 +2449,45 @@ async def chat_with_smart_search(
             
             # GUARD: If router selected Facts read, return deterministic error response (no fallback)
             if routing_plan.content_plane == "facts" and routing_plan.operation == "read":
+                # Check if this is a Pydantic validation error (e.g., FactsReadCandidate rank > 10)
+                from pydantic import ValidationError
+                is_validation_error = isinstance(e, ValidationError) or "validation error" in str(e).lower() or "less_than_equal" in str(e).lower()
+                
+                # For validation errors, provide a more specific deterministic response
+                if is_validation_error and strong_facts_read_candidate:
+                    # This is likely an out-of-range rank query that triggered validation
+                    requested_rank = strong_facts_read_candidate.get('rank')
+                    topic_display = strong_facts_read_candidate.get('topic', 'items')
+                    
+                    # Try to get the actual list length to provide accurate message
+                    try:
+                        from server.services.librarian import search_facts_ranked_list
+                        from server.services.canonicalizer import canonicalize_topic
+                        canonical_result = canonicalize_topic(topic_display, invoke_teacher=False)
+                        facts = search_facts_ranked_list(
+                            project_id=project_id,
+                            topic_key=canonical_result.canonical_topic,
+                            limit=1000
+                        )
+                        max_rank = max(f.get("rank", 0) for f in facts) if facts else 0
+                        
+                        if max_rank == 0:
+                            response_text = f"I don't have any favorite {topic_display} stored yet, so there's no #{requested_rank} favorite."
+                        else:
+                            response_text = f"I only have {max_rank} favorite{'s' if max_rank != 1 else ''} stored, so there's no #{requested_rank} favorite."
+                    except Exception:
+                        # Fallback if we can't query the list
+                        response_text = f"I don't have a #{requested_rank} favorite {topic_display} stored."
+                else:
+                    # Generic error response (don't leak exception details to UI)
+                    response_text = "I don't have that stored yet."
+                
                 logger.warning(
                     f"[FACTS-R] Router selected Facts read but exception occurred. "
                     f"Returning deterministic Facts error response (no Index/GPT fallback). "
-                    f"message_uuid={current_message_uuid} project_id={project_id} error={str(e)[:100]}"
+                    f"message_uuid={current_message_uuid} project_id={project_id} error={str(e)[:100]} "
+                    f"is_validation_error={is_validation_error}"
                 )
-                
-                response_text = f"I encountered an error retrieving that information: {str(e)[:200]}"
                 model_label_error = build_model_label(
                     facts_actions=facts_actions,
                     files_actions=files_actions,

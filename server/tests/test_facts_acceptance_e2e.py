@@ -1669,3 +1669,108 @@ async def test_acceptance_last_favorite_returns_max_rank(test_db_setup, test_thr
         assert "clarify" not in content and "which" not in content.lower() or "which" in content.lower() and "eggs" in content, \
             f"Expected deterministic response (no clarification), got: {content[:300]}"
 
+
+@pytest.mark.asyncio
+async def test_acceptance_out_of_range_rank_no_validation_error(test_db_setup, test_thread_id):
+    """
+    Acceptance Test: Out-of-range rank read (#99) does NOT show Pydantic validation errors in UI.
+    
+    Regression test: Ensure FactsReadCandidate(rank=99) is never created, preventing validation errors.
+    
+    Scenario:
+    - Seed: "My favorite board games are Catan, Ticket to Ride, and Azul."
+    - "What is my #99 favorite board game?"
+    - Assert: NO validation error text in response
+    - Assert: Deterministic out-of-range message: "I only have 3 favorites stored, so there's no #99 favorite."
+    - Assert: NO fallback to Index-P → GPT-5
+    - Assert: facts_actions.R > 0 (Facts-R was attempted)
+    - Assert: Facts-F is false
+    """
+    project_id = test_db_setup["project_id"]
+    
+    # Step 1: Seed initial list (3 items)
+    seed_message = "My favorite board games are Catan, Ticket to Ride, and Azul."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="board games",
+            value=["Catan", "Ticket to Ride", "Azul"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+    
+    # Assert we have 3 items
+    items = _assert_ranked_list_invariants(project_id, "board games", expected_count=3)
+    
+    # Step 2: Out-of-range read (#99)
+    read_message = "What is my #99 favorite board game?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name="general"
+        )
+        
+        # CRITICAL: Assert NO validation error text in response
+        content = response.get("content", "")
+        assert "validation error" not in content.lower(), \
+            f"Validation error leaked to UI! Response contains validation error text: {content[:500]}"
+        assert "less_than_equal" not in content.lower(), \
+            f"Pydantic error leaked to UI! Response contains 'less_than_equal': {content[:500]}"
+        assert "FactsReadCandidate" not in content, \
+            f"Pydantic model name leaked to UI! Response contains 'FactsReadCandidate': {content[:500]}"
+        assert "Input should be" not in content, \
+            f"Pydantic error message leaked to UI! Response contains 'Input should be': {content[:500]}"
+        
+        # Assert deterministic out-of-range message
+        content_lower = content.lower()
+        assert ("only have 3" in content_lower or ("only" in content_lower and "3" in content_lower)) and ("#99" in content or "no #99" in content_lower), \
+            f"Expected out-of-range message mentioning 'only have 3' and '#99', got: {content[:300]}"
+        
+        # Assert deterministic Facts response (not fallback to Index-P/GPT)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        model_label = response.get("meta", {}).get("model_label", response.get("model_label", ""))
+        
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
+        
+        # Assert model label does NOT contain "Index-P" or "GPT-5"
+        model_label_lower = model_label.lower()
+        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
+            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        
+        # Assert Facts-R was attempted (facts_actions.R > 0)
+        facts_r_count = response.get("meta", {}).get("facts_actions", {}).get("R", 0)
+        assert facts_r_count > 0, \
+            f"Expected Facts-R count > 0, got: {response.get('meta', {}).get('facts_actions', {})}"
+        
+        # Assert Facts-F is false (no failure)
+        facts_f = response.get("meta", {}).get("facts_actions", {}).get("F", False)
+        assert facts_f is False, \
+            f"Expected Facts-F=False, got: {response.get('meta', {}).get('facts_actions', {})}"
+
