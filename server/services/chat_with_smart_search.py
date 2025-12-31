@@ -1594,12 +1594,18 @@ async def chat_with_smart_search(
             ordinal_parse_source = "none"
             if routing_plan.facts_read_candidate:
                 router_rank = routing_plan.facts_read_candidate.rank
+                router_top_n_slice = getattr(routing_plan.facts_read_candidate, 'top_n_slice', None)
+                
+                # Determine if this is a slice request ("top N") or singleton request (rank N)
+                is_slice_request = router_top_n_slice is not None
                 if router_rank:
                     ordinal_parse_source = "router"
+                elif is_slice_request:
+                    ordinal_parse_source = "router"  # Also track slice requests
                 
                 logger.info(
                     f"[FACTS-R] Using routing plan candidate (topic={routing_plan.facts_read_candidate.topic}, "
-                    f"rank={router_rank}), skipping query planner"
+                    f"rank={router_rank}, top_n_slice={router_top_n_slice}), skipping query planner"
                 )
                 # Canonicalize topic using Canonicalizer subsystem
                 canonicalization_result = canonicalize_topic(
@@ -1615,15 +1621,30 @@ async def chat_with_smart_search(
                 )
                 from server.services.facts_normalize import canonical_list_key
                 list_key = canonical_list_key(canonical_topic)
-                query_plan = FactsQueryPlan(
-                    intent="facts_get_ranked_list",
-                    list_key=list_key,
-                    topic=canonical_topic,
-                    limit=25 if router_rank is None else 1,  # Limit to 1 for ordinal queries
-                    include_ranks=True,
-                    rank=router_rank  # CRITICAL: Pass rank from router
-                )
-                logger.info(f"[FACTS-R] Query plan created with rank={router_rank} (ordinal_parse_source={ordinal_parse_source})")
+                
+                # Build query plan: slice request (top N) vs singleton request (rank N)
+                if is_slice_request:
+                    # "top N" slice request: limit=N, rank=None (returns ranks 1..N)
+                    query_plan = FactsQueryPlan(
+                        intent="facts_get_ranked_list",
+                        list_key=list_key,
+                        topic=canonical_topic,
+                        limit=router_top_n_slice,  # Slice of first N items
+                        include_ranks=True,
+                        rank=None  # No specific rank - this is a slice
+                    )
+                    logger.info(f"[FACTS-R] Query plan created with top_n_slice={router_top_n_slice} (slice request, ranks 1..{router_top_n_slice})")
+                else:
+                    # Singleton rank request: limit=1, rank=N (returns only rank N)
+                    query_plan = FactsQueryPlan(
+                        intent="facts_get_ranked_list",
+                        list_key=list_key,
+                        topic=canonical_topic,
+                        limit=1 if router_rank else 25,  # Limit to 1 for ordinal queries, 25 for full list
+                        include_ranks=True,
+                        rank=router_rank  # CRITICAL: Pass rank from router
+                    )
+                    logger.info(f"[FACTS-R] Query plan created with rank={router_rank} (ordinal_parse_source={ordinal_parse_source})")
             else:
                 # Fallback to query planner (should be rare)
                 if not query_plan:
@@ -1676,17 +1697,22 @@ async def chat_with_smart_search(
                 # Fast-path response for ranked list queries (no GPT-5)
                 # GPT-5 Nano determines if this is a list query via query plan intent
                 if query_plan is not None and query_plan.intent == "facts_get_ranked_list" and facts_answer.facts:
-                    # Check if this is an ordinal query (specific rank requested)
+                    # Check if this is an ordinal query (specific rank requested) vs slice request ("top N")
                     if query_plan.rank is not None:
-                        # Ordinal query: return just the single fact at the requested rank
+                        # Ordinal query (singleton): return just the single fact at the requested rank
                         fact = facts_answer.facts[0]  # Should only be one fact when rank is specified
                         list_items = fact.get("value_text", "")
                         sorted_facts = [fact]  # Single fact for sources building
                         logger.info(f"[FACTS-R] Ordinal query response: rank={query_plan.rank}, value={list_items}")
                     else:
-                        # Full list query: return all facts in ranked order
+                        # Slice request ("top N") or full list query: return facts in ranked order as a list
                         sorted_facts = sorted(facts_answer.facts, key=lambda f: f.get("rank", float('inf')))
+                        # Always format as numbered list for slice requests and full list queries
                         list_items = "\n".join([f"{f.get('rank', 0)}) {f.get('value_text', '')}" for f in sorted_facts])
+                        if query_plan.limit and query_plan.limit < 100:  # Likely a slice request
+                            logger.info(f"[FACTS-R] Slice query response: top {query_plan.limit}, returned {len(sorted_facts)} items")
+                        else:
+                            logger.info(f"[FACTS-R] Full list query response: returned {len(sorted_facts)} items")
                     
                     # Build sources array with source_message_uuid for deep linking
                     sources_by_uuid = {}
@@ -1983,6 +2009,7 @@ async def chat_with_smart_search(
                             "facts_gate_entered": facts_gate_entered,
                             "facts_gate_reason": facts_gate_reason or "unknown",
                             "write_intent_detected": is_write_intent,
+                            "facts_empty_valid": True,  # Flag indicating this is a valid empty Facts response (no fallback)
                             # Canonicalization telemetry
                             "canonical_topic": canonicalization_result.canonical_topic if canonicalization_result else None,
                             "canonical_confidence": canonicalization_result.confidence if canonicalization_result else None,
@@ -2002,8 +2029,59 @@ async def chat_with_smart_search(
                         "created_at": datetime.now(timezone.utc).isoformat()
                     }
             
-            # If query plan is None but heuristic says retrieval, log warning and continue
-            # (We'll fall through to Index/GPT, but this should be rare)
+            # GUARD: If router selected Facts read, we MUST return a Facts response (no fallback to Index/GPT)
+            # This ensures deterministic behavior even if query planning fails or results are empty
+            elif routing_plan.content_plane == "facts" and routing_plan.operation == "read":
+                # Router selected Facts read but query plan is None or execution failed
+                # Return deterministic "not found" response instead of falling through to Index/GPT
+                logger.warning(
+                    f"[FACTS-R] Router selected Facts read but query planning/execution failed. "
+                    f"Returning deterministic Facts response (no Index/GPT fallback). "
+                    f"message_uuid={current_message_uuid} project_id={project_id}"
+                )
+                
+                # Return deterministic response
+                response_text = "I don't have that stored yet."
+                canonicalizer_used_guard = canonicalization_result is not None if 'canonicalization_result' in locals() else False
+                teacher_invoked_guard = canonicalization_result.teacher_invoked if 'canonicalization_result' in locals() and canonicalization_result else False
+                model_label_guard = build_model_label(
+                    facts_actions=facts_actions,
+                    files_actions=files_actions,
+                    index_status=index_status,
+                    escalated=False,
+                    nano_router_used=nano_router_used,
+                    reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                    canonicalizer_used=canonicalizer_used_guard,
+                    teacher_invoked=teacher_invoked_guard
+                )
+                
+                return {
+                    "type": "assistant_message",
+                    "content": response_text,
+                    "meta": {
+                        "usedFacts": True,
+                        "factNotFound": True,
+                        "fastPath": "facts_retrieval_empty",
+                        "facts_actions": facts_actions,
+                        "files_actions": files_actions,
+                        "index_status": index_status,
+                        "facts_provider": facts_provider,
+                        "project_uuid": project_id,
+                        "thread_id": thread_id,
+                        "facts_gate_entered": facts_gate_entered,
+                        "facts_gate_reason": facts_gate_reason or "unknown",
+                        "write_intent_detected": is_write_intent,
+                        "facts_empty_valid": True,  # Flag indicating this is a valid empty Facts response (no fallback)
+                        "canonical_topic": canonicalization_result.canonical_topic if 'canonicalization_result' in locals() and canonicalization_result else None
+                    },
+                    "model": model_label_guard,
+                    "model_label": f"Model: {model_label_guard}",
+                    "provider": "facts",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            
+            # If query plan is None but heuristic says retrieval AND router didn't select Facts read,
+            # log warning and continue (will fall through to Index/GPT)
             elif is_retrieval_query_heuristic:
                 logger.warning(
                     f"[FACTS-R] Retrieval query detected (heuristic) but query planning failed. "
@@ -2018,7 +2096,52 @@ async def chat_with_smart_search(
                 )
         except Exception as e:
             logger.error(f"[FACTS-R] Exception during retrieval execution: {e}", exc_info=True)
-            # If retrieval fails, log and continue (will fall through to Index/GPT)
+            
+            # GUARD: If router selected Facts read, return deterministic error response (no fallback)
+            if routing_plan.content_plane == "facts" and routing_plan.operation == "read":
+                logger.warning(
+                    f"[FACTS-R] Router selected Facts read but exception occurred. "
+                    f"Returning deterministic Facts error response (no Index/GPT fallback). "
+                    f"message_uuid={current_message_uuid} project_id={project_id} error={str(e)[:100]}"
+                )
+                
+                response_text = f"I encountered an error retrieving that information: {str(e)[:200]}"
+                model_label_error = build_model_label(
+                    facts_actions=facts_actions,
+                    files_actions=files_actions,
+                    index_status=index_status,
+                    escalated=False,
+                    nano_router_used=nano_router_used,
+                    reasoning_required=routing_plan.reasoning_required if routing_plan else True,
+                    canonicalizer_used=False,
+                    teacher_invoked=False
+                )
+                
+                return {
+                    "type": "assistant_message",
+                    "content": response_text,
+                    "meta": {
+                        "usedFacts": True,
+                        "factNotFound": True,
+                        "fastPath": "facts_retrieval_error",
+                        "facts_actions": facts_actions,
+                        "files_actions": files_actions,
+                        "index_status": index_status,
+                        "facts_provider": facts_provider,
+                        "project_uuid": project_id,
+                        "thread_id": thread_id,
+                        "facts_gate_entered": facts_gate_entered,
+                        "facts_gate_reason": facts_gate_reason or "unknown",
+                        "write_intent_detected": is_write_intent,
+                        "facts_empty_valid": True  # Valid Facts response (no fallback)
+                    },
+                    "model": model_label_error,
+                    "model_label": f"Model: {model_label_error}",
+                    "provider": "facts",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+            
+            # If router didn't select Facts read, log and continue (will fall through to Index/GPT)
             logger.info(
                 f"[FACTS-RESPONSE] FACTS_RESPONSE_PATH=GPT5_FALLTHROUGH "
                 f"message_uuid={current_message_uuid} project_id={project_id} thread_id={thread_id} "

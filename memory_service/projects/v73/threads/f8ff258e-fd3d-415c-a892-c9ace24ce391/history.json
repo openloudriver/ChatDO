@@ -1,0 +1,302 @@
+[
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-0",
+    "role": "user",
+    "content": "My favorite outdoor activities are hiking, kayaking, and camping.",
+    "created_at": "2025-12-31T01:22:52.109870+00:00",
+    "uuid": "faeac2ca-fedb-4af2-95b3-45c623f5f8c4"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-1",
+    "role": "assistant",
+    "content": "Saved: favorite outdoor_activity = [hiking, kayaking, camping]",
+    "model": "GPT-5 Nano → Facts-S(3) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(3) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:22:52.109904+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-2",
+    "role": "user",
+    "content": "What are my favorite outdoor activities?",
+    "created_at": "2025-12-31T01:23:13.032269+00:00",
+    "uuid": "bccce22e-f1da-41ae-a1d0-fc0d79cb2657"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-3",
+    "role": "assistant",
+    "content": "1) hiking\n2) kayaking\n3) camping",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:23:13.032279+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-4",
+    "role": "user",
+    "content": "My favorite outdoor activities are fishing, cycling, and camping.",
+    "created_at": "2025-12-31T01:23:28.037190+00:00",
+    "uuid": "7a85be77-e5ef-4e9e-a097-4f5522a114ea"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-5",
+    "role": "assistant",
+    "content": "Saved: favorite outdoor_activity = [fishing, cycling] camping is already in your favorites at #3.",
+    "model": "GPT-5 Nano → Facts-S(2) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(2) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:23:28.037199+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-6",
+    "role": "user",
+    "content": "List my favorite outdoor activities.",
+    "created_at": "2025-12-31T01:24:03.474871+00:00",
+    "uuid": "fff4fe01-3632-4aad-93e3-7568d1f42378"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-7",
+    "role": "assistant",
+    "content": "1) hiking\n2) kayaking\n3) camping\n4) fishing\n5) cycling",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:24:03.474880+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-8",
+    "role": "user",
+    "content": "My favorite outdoor activity is Hiking.",
+    "created_at": "2025-12-31T01:24:29.976829+00:00",
+    "uuid": "56813226-0cb8-412a-8c6f-d412021f7e30"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-9",
+    "role": "assistant",
+    "content": "Hiking is already in your favorites at #1.",
+    "model": "GPT-5 Nano → Index-P",
+    "model_label": "Model: GPT-5 Nano → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:24:29.976839+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-10",
+    "role": "user",
+    "content": "My favorite outdoor activities are hiking, running, and kayaking.",
+    "created_at": "2025-12-31T01:24:48.515613+00:00",
+    "uuid": "458113cb-dce1-474b-9cbf-e46cda610656"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-11",
+    "role": "assistant",
+    "content": "Saved: favorite outdoor_activity = [running] hiking is already in your favorites at #1. kayaking is already in your favorites at #2.",
+    "model": "GPT-5 Nano → Facts-S(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:24:48.515620+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-12",
+    "role": "user",
+    "content": "What is my #6 favorite outdoor activity?",
+    "created_at": "2025-12-31T01:25:23.365413+00:00",
+    "uuid": "07cdc580-1e13-4385-a2e7-077f0c7a7bf9"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-13",
+    "role": "assistant",
+    "content": "running",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:25:23.365422+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-14",
+    "role": "user",
+    "content": "List my favorite outdoor activities.",
+    "created_at": "2025-12-31T01:25:40.857864+00:00",
+    "uuid": "c2312c7b-e83d-464f-b405-3358a8eed6f2"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-15",
+    "role": "assistant",
+    "content": "1) hiking\n2) kayaking\n3) camping\n4) fishing\n5) cycling\n6) running",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:25:40.857872+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-16",
+    "role": "user",
+    "content": "My #2 favorite outdoor activity is camping.",
+    "created_at": "2025-12-31T01:26:03.059859+00:00",
+    "uuid": "42ce4b34-7c91-4a18-befa-78716c505c07"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-17",
+    "role": "assistant",
+    "content": "Moved camping to #2 (was #3).",
+    "model": "GPT-5 Nano → Facts-U(2) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-U(2) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:26:03.059867+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-18",
+    "role": "user",
+    "content": "What are my top 3 favorite outdoor activities?",
+    "created_at": "2025-12-31T01:26:34.936063+00:00",
+    "uuid": "28e47204-b3d4-4257-ad99-a8a1f7a2b131"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-19",
+    "role": "assistant",
+    "content": "kayaking",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:26:34.936073+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-20",
+    "role": "user",
+    "content": "List my favorite outdoor activities.",
+    "created_at": "2025-12-31T01:30:11.441414+00:00",
+    "uuid": "023b4c24-fcca-4c96-88ea-75f35c8ad134"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-21",
+    "role": "assistant",
+    "content": "1) hiking\n2) camping\n3) kayaking\n4) fishing\n5) cycling\n6) running",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:30:11.441446+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-22",
+    "role": "user",
+    "content": "What are my top three favorite outdoor activities?",
+    "created_at": "2025-12-31T01:30:49.142917+00:00",
+    "uuid": "824b02f3-e27f-422c-9d14-fbe72eea0bee"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-23",
+    "role": "assistant",
+    "content": "1) hiking\n2) camping\n3) kayaking\n4) fishing\n5) cycling\n6) running",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:30:49.142927+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-24",
+    "role": "user",
+    "content": "My #1 favorite outdoor activity is trail running.",
+    "created_at": "2025-12-31T01:31:16.220055+00:00",
+    "uuid": "d662a414-3baa-40fe-9a8f-1df17b82f891"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-25",
+    "role": "assistant",
+    "content": "Inserted trail running at #1.",
+    "model": "GPT-5 Nano → Facts-S(1) → Facts-U(6) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(1) → Facts-U(6) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:31:16.220064+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-26",
+    "role": "user",
+    "content": "List my favorite outdoor activities.",
+    "created_at": "2025-12-31T01:31:49.595158+00:00",
+    "uuid": "f4d7a8d4-14db-4508-b0f0-6d01aabe1d13"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-27",
+    "role": "assistant",
+    "content": "1) trail running\n2) hiking\n3) camping\n4) kayaking\n5) fishing\n6) cycling\n7) running",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:31:49.595171+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-28",
+    "role": "user",
+    "content": "My #50 favorite outdoor activity is stargazing.",
+    "created_at": "2025-12-31T01:32:25.230656+00:00",
+    "uuid": "276817e0-5b71-4101-bb8e-e1fa76f90c8e"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-29",
+    "role": "assistant",
+    "content": "Inserted stargazing at #8.",
+    "model": "GPT-5 Nano → Facts-S(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Facts-S(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:32:25.230672+00:00"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-30",
+    "role": "user",
+    "content": "What is my last favorite outdoor activity?",
+    "created_at": "2025-12-31T01:32:59.123150+00:00",
+    "uuid": "b30b67fe-5901-4fc6-94db-ffb64f4e49bc"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-31",
+    "role": "assistant",
+    "content": "1) trail running\n2) hiking\n3) camping\n4) kayaking\n5) fishing\n6) cycling\n7) running\n8) stargazing",
+    "model": "GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "model_label": "Model: GPT-5 Nano → Canonicalizer → Facts-R(1) → Index-P",
+    "provider": "facts",
+    "created_at": "2025-12-31T01:32:59.123191+00:00",
+    "uuid": null
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-user-32",
+    "role": "user",
+    "content": "What is my #99 favorite outdoor activity?",
+    "created_at": "2025-12-31T01:33:38.301787+00:00",
+    "uuid": "e513c42d-3279-4f66-b644-d9125f711c89"
+  },
+  {
+    "id": "f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-33",
+    "role": "assistant",
+    "content": "I don’t know yet because I don’t have your ranked outdoor activities list in memory.\n\n## How I can get it 🔍\n- Paste your ranked list (or at least the portion around #99).\n- Or upload the file that contains your “favorite outdoor activities” ranking.\n- If it’s saved in a memory source, tell me where (name/location), and I’ll look it up.\n\n## Optional: create/store the list ✅\n- I can help you build a ranked list from scratch and store it so future questions like “what’s #99?” are instant.\n- If you recall a few items near #99, share them and I’ll reconstruct the ordering with you.",
+    "model": "GPT-5 Nano → Index-P → GPT-5",
+    "model_label": "GPT-5 Nano → Index-P → GPT-5",
+    "provider": "openai-gpt5",
+    "sources": null,
+    "meta": {
+      "usedWebSearch": false,
+      "usedMemory": false,
+      "facts_actions": {
+        "S": 0,
+        "U": 0,
+        "R": 0,
+        "F": false
+      },
+      "files_actions": {
+        "R": 0
+      },
+      "index_status": "P",
+      "index_job": {
+        "user_job_id": "f8ff258e-fd3d-415c-a892-c9ace24ce391:f8ff258e-fd3d-415c-a892-c9ace24ce391-user-0:1767144793957",
+        "assistant_job_id": "f8ff258e-fd3d-415c-a892-c9ace24ce391:f8ff258e-fd3d-415c-a892-c9ace24ce391-assistant-33:1767144818351"
+      }
+    },
+    "created_at": "2025-12-31T01:33:38.298334+00:00"
+  }
+]

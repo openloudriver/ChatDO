@@ -7,9 +7,79 @@ Uses pytest's tmp_path to create isolated SQLite databases per test.
 import pytest
 import uuid
 import os
+import warnings
 from pathlib import Path
+from collections import defaultdict
 from memory_service.memory_dashboard import db
 from memory_service import config
+
+# Allowlist of known warning signatures (warning_class, message_substring, file_pattern)
+ALLOWED_WARNINGS = [
+    # sqlite3 datetime adapter deprecation (Python 3.12+)
+    (
+        DeprecationWarning,
+        "The default datetime adapter is deprecated as of Python 3.12",
+        ("memory_service/memory_dashboard/db.py", "server/services/facts_apply.py")
+    ),
+]
+
+# Track unexpected warnings during test run
+_unexpected_warnings = defaultdict(list)
+
+
+def pytest_configure(config):
+    """Configure pytest to track warnings."""
+    # Register custom warning filter
+    warnings.filterwarnings("default", category=DeprecationWarning)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    """Track warnings during test execution."""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        yield
+        # Check each warning
+        for warning in w:
+            if not _is_allowed_warning(warning):
+                # Extract file info
+                filename = warning.filename if hasattr(warning, 'filename') else 'unknown'
+                lineno = warning.lineno if hasattr(warning, 'lineno') else 0
+                _unexpected_warnings[(warning.category.__name__, str(warning.message))].append(
+                    f"{filename}:{lineno}"
+                )
+
+
+def _is_allowed_warning(warning):
+    """Check if a warning is in the allowlist."""
+    warning_class = type(warning.message)
+    warning_message = str(warning.message)
+    warning_file = getattr(warning, 'filename', '')
+    
+    for allowed_class, allowed_message_substring, allowed_files in ALLOWED_WARNINGS:
+        if warning_class == allowed_class:
+            if allowed_message_substring in warning_message:
+                # Check if file matches pattern
+                if any(allowed_file in warning_file for allowed_file in allowed_files):
+                    return True
+    return False
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Check for unexpected warnings at end of test session."""
+    if _unexpected_warnings:
+        print("\n" + "=" * 80)
+        print("UNEXPECTED WARNINGS DETECTED")
+        print("=" * 80)
+        for (warning_class, message), locations in sorted(_unexpected_warnings.items()):
+            print(f"\n{warning_class}: {message}")
+            print(f"  Locations: {', '.join(set(locations))}")
+        print("\n" + "=" * 80)
+        print("If these warnings are expected, add them to ALLOWED_WARNINGS in conftest.py")
+        print("=" * 80)
+        # Don't fail the test run, just warn (we want to see new warnings but not break CI)
+        # If you want to fail on unexpected warnings, uncomment:
+        # session.exitstatus = 1
 
 
 @pytest.fixture(scope="function")

@@ -900,7 +900,17 @@ def search_facts_ranked_list(
         # STORAGE IS UNBOUNDED: Facts are stored without limits.
         # RETRIEVAL IS PAGINATED: Use limit for pagination (default 10000 for large lists, but storage has no cap).
         # This high limit (10000) supports large ranked lists while still being paginated (not truly unbounded).
-        search_limit = limit if limit is not None else 10000
+        # CRITICAL: For slice requests ("top N"), we need to retrieve all matching facts, sort by rank,
+        # then apply the limit. If we apply limit before filtering/sorting, we might get the wrong items.
+        # So we use a high limit (or None) for the DB search, then filter, sort, and apply limit after.
+        search_limit = None if limit is not None else 10000  # Use None for slice requests to get all facts
+        if limit is None:
+            search_limit = 10000  # Default for unbounded queries
+        else:
+            # For slice requests, retrieve more facts than needed to ensure we get all matches
+            # Then filter, sort, and apply limit after sorting
+            search_limit = max(limit * 10, 100)  # Retrieve at least 10x the requested limit or 100, whichever is larger
+        
         source_id = f"project-{project_id}"
         facts = db.search_current_facts(
             project_id=project_id,
@@ -942,12 +952,16 @@ def search_facts_ranked_list(
                             "schema_hint": fact.get("schema_hint")  # Include schema_hint
                         })
         
-        # Sort by rank
+        # Sort by rank (ascending: 1, 2, 3, ...)
         ranked_facts.sort(key=lambda f: f.get("rank", 0))
+        
+        # Apply limit AFTER filtering and sorting (for slice requests)
+        if limit is not None:
+            ranked_facts = ranked_facts[:limit]
         
         logger.info(
             f"[LIBRARIAN] Found {len(ranked_facts)} ranked facts for topic_key={topic_key} "
-            f"(normalized={normalized_topic_key})"
+            f"(normalized={normalized_topic_key}, limit={limit})"
         )
         
         return ranked_facts

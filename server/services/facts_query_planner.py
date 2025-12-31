@@ -94,22 +94,31 @@ Output JSON:"""
         
         plan_data = json.loads(json_text)
         
-        # Detect ordinal queries (second, third, etc.) and extract rank if not already set
+        # Detect ordinal queries (singleton rank) OR "top N" slice requests
         ordinal_parse_source = "none"
         if plan_data.get("intent") == "facts_get_ranked_list" and plan_data.get("rank") is None:
-            from server.services.ordinal_detection import detect_ordinal_rank
-            detected_rank = detect_ordinal_rank(query_text)
-            if detected_rank:
-                plan_data["rank"] = detected_rank
+            from server.services.ordinal_detection import detect_ordinal_or_slice
+            detected_ordinal_rank, detected_top_n_slice = detect_ordinal_or_slice(query_text)
+            
+            # Priority: "top N" slice takes precedence over ordinal rank
+            if detected_top_n_slice is not None:
+                # "top N" slice request: set limit=N, keep rank=None
+                plan_data["limit"] = detected_top_n_slice
+                plan_data["rank"] = None  # Ensure rank is None for slice requests
+                ordinal_parse_source = "planner"
+                logger.info(f"[FACTS-PLANNER] Detected 'top N' slice: {detected_top_n_slice} (ordinal_parse_source=planner)")
+            elif detected_ordinal_rank is not None:
+                # Singleton ordinal rank request: set rank=N, limit=1
+                plan_data["rank"] = detected_ordinal_rank
                 ordinal_parse_source = "planner"
                 # Update limit to 1 for ordinal queries
                 if plan_data.get("limit", 25) > 1:
                     plan_data["limit"] = 1
-                logger.info(f"[FACTS-PLANNER] Detected ordinal rank: {detected_rank} (ordinal_parse_source=planner)")
+                logger.info(f"[FACTS-PLANNER] Detected ordinal rank: {detected_ordinal_rank} (ordinal_parse_source=planner)")
         
         # Store ordinal_parse_source for telemetry (will be logged but not in schema)
         if ordinal_parse_source != "none":
-            logger.info(f"[FACTS-PLANNER] Ordinal query detected: rank={plan_data.get('rank')}, source={ordinal_parse_source}")
+            logger.info(f"[FACTS-PLANNER] Query detected: rank={plan_data.get('rank')}, limit={plan_data.get('limit')}, source={ordinal_parse_source}")
         
         plan = FactsQueryPlan(**plan_data)
         

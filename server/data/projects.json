@@ -1226,6 +1226,28 @@
     "default_target": "general",
     "sort_index": 111,
     "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-31T00:01:27.359188+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "eff22f0a-9ce3-45bd-bb76-9dda04a02c20",
+    "name": "v72",
+    "default_target": "general",
+    "sort_index": 112,
+    "memory_sources": [],
+    "trashed": true,
+    "trashed_at": "2025-12-31T01:19:06.714260+00:00",
+    "archived": false,
+    "archived_at": null
+  },
+  {
+    "id": "58840425-e8bb-417d-8ead-e5d2c7ff6a6e",
+    "name": "v73",
+    "default_target": "general",
+    "sort_index": 113,
+    "memory_sources": [],
     "trashed": false,
     "trashed_at": null,
     "archived": false,

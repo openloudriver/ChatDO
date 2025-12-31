@@ -59,9 +59,11 @@ ROUTING_PLAN_SCHEMA = {
             "type": "object",
             "properties": {
                 "topic": {"type": "string"},
-                "query": {"type": "string"}
+                "query": {"type": "string"},
+                "rank": {"type": "integer", "minimum": 1, "maximum": 10},
+                "top_n_slice": {"type": "integer", "minimum": 1, "maximum": 100}
             },
-            "required": ["topic", "query"],
+            "required": ["topic", "query"],  # rank and top_n_slice are optional
             "additionalProperties": False
         },
         "index_candidate": {
@@ -183,32 +185,43 @@ EXAMPLES FOR RULE 1:
 - "My favorite cryptos: 1. XMR, 2. BTC, 3. XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
 - "Argh! Sorry, that was wrong again. Here's the list of my favorite cryptos: 1) XMR, 2) BTC, and 3) XLM" → {{"content_plane":"facts","operation":"write","reasoning_required":false,"facts_write_candidate":{{"topic":"crypto","value":["XMR","BTC","XLM"],"rank_ordered":true}},"confidence":1.0,"why":"My favorite pattern detected: crypto = [XMR, BTC, XLM]"}}
 
-RULE 2: "List/Show/What is my favorite X" OR ordinal queries like "second favorite", "third favorite"
+RULE 2: "List/Show/What is my favorite X" OR ordinal queries like "second favorite", "third favorite" OR "top N" slice queries
 IF the message:
   a) Contains "list" (anywhere) + "my favorite" + topic, OR
   b) Starts with "List my favorite", "Show my favorite", "What is my favorite", "What are my favorite", OR
   c) Contains "list in order" + "my favorite" + topic, OR
-  d) Contains ordinal words (second, third, fourth, fifth, etc.) + "favorite" + topic:
+  d) Contains ordinal words (second, third, fourth, fifth, etc.) + "favorite" + topic, OR
+  e) Contains "top N" or "top <word-number>" + "favorite" + topic (e.g., "top 3", "top three"):
   → content_plane="facts"
   → operation="read"
   → reasoning_required=false
   → facts_read_candidate MUST be populated:
     - topic: extract the topic word
     - query: the original message
+    - rank: set ONLY for singleton ordinal queries (e.g., "#3", "third", "3rd") - NOT for "top N"
+    - top_n_slice: set ONLY for "top N" slice queries (e.g., "top 3", "top three") - NOT for singleton ordinals
   → confidence=1.0
-  → why="Facts read query for [topic]" (or "Facts ordinal query: [ordinal] favorite [topic]")
+  → why="Facts read query for [topic]" (or "Facts ordinal query: [ordinal] favorite [topic]" or "Facts slice query: top N [topic]")
+  
+CRITICAL DISTINCTION:
+- "top 3" or "top three" = SLICE request (ranks 1..3) → set top_n_slice=3, rank=null
+- "#3" or "third" or "3rd" = SINGLETON request (only rank 3) → set rank=3, top_n_slice=null
+- "What are my top 3 favorite activities?" → slice (top_n_slice=3)
+- "What is my #3 favorite activity?" → singleton (rank=3)
   
 CRITICAL: "Please list my favorite X", "List my favorite X", "list in order my favorite X" all route to facts/read.
   
 EXAMPLES FOR RULE 2:
-- "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?","rank":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
-- "List my favorite cryptos" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"List my favorite cryptos","rank":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
-- "Please list my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list my favorite candy","rank":null}},"confidence":1.0,"why":"Facts read query for candy"}}
-- "Please list in order my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list in order my favorite candy","rank":null}},"confidence":1.0,"why":"Facts read query for candy"}}
-- "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
-- "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?","rank":3}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
-- "What's my #2 favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What's my #2 favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: #2 favorite crypto"}}
-- "What is my 2nd favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my 2nd favorite crypto?","rank":2}},"confidence":1.0,"why":"Facts ordinal query: 2nd favorite crypto"}}
+- "What are my favorite cryptos?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What are my favorite cryptos?","rank":null,"top_n_slice":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "List my favorite cryptos" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"List my favorite cryptos","rank":null,"top_n_slice":null}},"confidence":1.0,"why":"Facts read query for crypto"}}
+- "Please list my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list my favorite candy","rank":null,"top_n_slice":null}},"confidence":1.0,"why":"Facts read query for candy"}}
+- "Please list in order my favorite candy" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"candy","query":"Please list in order my favorite candy","rank":null,"top_n_slice":null}},"confidence":1.0,"why":"Facts read query for candy"}}
+- "What are my top 3 favorite activities?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"activities","query":"What are my top 3 favorite activities?","rank":null,"top_n_slice":3}},"confidence":1.0,"why":"Facts slice query: top 3 activities"}}
+- "What are my top three favorite activities?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"activities","query":"What are my top three favorite activities?","rank":null,"top_n_slice":3}},"confidence":1.0,"why":"Facts slice query: top three activities"}}
+- "What is my second favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my second favorite crypto?","rank":2,"top_n_slice":null}},"confidence":1.0,"why":"Facts ordinal query: second favorite crypto"}}
+- "What is my third favorite color?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"color","query":"What is my third favorite color?","rank":3,"top_n_slice":null}},"confidence":1.0,"why":"Facts ordinal query: third favorite color"}}
+- "What's my #2 favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What's my #2 favorite crypto?","rank":2,"top_n_slice":null}},"confidence":1.0,"why":"Facts ordinal query: #2 favorite crypto"}}
+- "What is my 2nd favorite crypto?" → {{"content_plane":"facts","operation":"read","reasoning_required":false,"facts_read_candidate":{{"topic":"crypto","query":"What is my 2nd favorite crypto?","rank":2,"top_n_slice":null}},"confidence":1.0,"why":"Facts ordinal query: 2nd favorite crypto"}}
 
 RULE 3: "What did we discuss" or "Search for X in my history"
 IF the message contains "What did we discuss" or "Search for X in my history":
@@ -354,15 +367,22 @@ Output ONLY valid JSON matching the RoutingPlan schema. No markdown, no explanat
             routing_data = json.loads(json_text)
             logger.info(f"[NANO-ROUTER] Parsed JSON: {json.dumps(routing_data, indent=2)}")
             
-            # Detect and set rank for ordinal queries if not already set by router
+            # Detect and set rank for ordinal queries OR top_n_slice for "top N" queries
             if routing_data.get("content_plane") == "facts" and routing_data.get("operation") == "read":
                 facts_read = routing_data.get("facts_read_candidate")
-                if facts_read and facts_read.get("rank") is None:
-                    from server.services.ordinal_detection import detect_ordinal_rank
-                    detected_rank = detect_ordinal_rank(user_message)
-                    if detected_rank:
-                        facts_read["rank"] = detected_rank
-                        logger.info(f"[NANO-ROUTER] Detected ordinal rank: {detected_rank} (ordinal_parse_source=router_post_parse)")
+                if facts_read:
+                    from server.services.ordinal_detection import detect_ordinal_or_slice
+                    ordinal_rank, top_n_slice = detect_ordinal_or_slice(user_message)
+                    
+                    # Priority: "top N" takes precedence (slice request)
+                    if top_n_slice is not None:
+                        facts_read["top_n_slice"] = top_n_slice
+                        facts_read["rank"] = None  # Ensure rank is None for slice requests
+                        logger.info(f"[NANO-ROUTER] Detected 'top N' slice: {top_n_slice} (ordinal_parse_source=router_post_parse)")
+                    elif ordinal_rank is not None and facts_read.get("rank") is None:
+                        facts_read["rank"] = ordinal_rank
+                        facts_read["top_n_slice"] = None  # Ensure top_n_slice is None for singleton requests
+                        logger.info(f"[NANO-ROUTER] Detected ordinal rank: {ordinal_rank} (ordinal_parse_source=router_post_parse)")
             
             routing_plan = RoutingPlan(**routing_data)
             

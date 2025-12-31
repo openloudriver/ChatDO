@@ -32,7 +32,13 @@ class FactsReadCandidate(BaseModel):
         None,
         ge=1,
         le=10,
-        description="Specific rank to retrieve (1-based) for ordinal queries like 'second favorite' (e.g., 2 for 'second', 3 for 'third'). None for full list queries."
+        description="Specific rank to retrieve (1-based) for ordinal queries like 'second favorite' (e.g., 2 for 'second', 3 for 'third'). None for full list queries or 'top N' slice requests."
+    )
+    top_n_slice: Optional[int] = Field(
+        None,
+        ge=1,
+        le=100,
+        description="Number of items to return for 'top N' slice requests (e.g., 3 for 'top 3' or 'top three'). When set, rank should be None and this indicates a slice of ranks 1..N."
     )
 
 
