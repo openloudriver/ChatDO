@@ -52,7 +52,7 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       "brave-pro": "Brave-Pro AI",
     };
     
-    // Always include GPT-5 and GPT-5 Nano, even if they have $0 spend
+    // Always include GPT-5, GPT-5 Nano, and Brave Pro AI, even if they have $0 spend
     // Only show providers that have been used
     const providers: Array<{ id: string; label: string; usd: number }> = [];
     
@@ -70,11 +70,18 @@ app.get("/v1/ai/spend/monthly", async (_req, res) => {
       usd: current.providers["openai-gpt5-nano"] || 0,
     });
     
+    // Add Brave Pro AI (always show)
+    providers.push({
+      id: "brave-pro",
+      label: labelMap["brave-pro"] || "Brave-Pro AI",
+      usd: current.providers["brave-pro"] || 0,
+    });
+    
     // Add any other providers that have been used
     // Filter out deprecated providers (e.g., openai-whisper-1, openai-gpt5-mini)
     const deprecatedProviders = new Set(["openai-whisper-1", "openai-gpt5-mini"]);
     for (const [id, usd] of Object.entries(current.providers)) {
-      if (id !== "openai-gpt5" && id !== "openai-gpt5-nano" && !deprecatedProviders.has(id)) {
+      if (id !== "openai-gpt5" && id !== "openai-gpt5-nano" && id !== "brave-pro" && !deprecatedProviders.has(id)) {
         providers.push({
           id,
           label: labelMap[id] || id,

@@ -666,14 +666,20 @@ async def persist_facts_synchronously(
                         
                         for op in ops_response.ops:
                             if op.op == "ranked_list_set" and op.list_key:
-                                # If user explicitly specified a rank (#2, #3, etc.), use it
+                                # CRITICAL: User text rank (#N) is the FINAL OVERRIDE - router/LLM can't break it
+                                # If user explicitly specified a rank (#2, #3, etc.), ALWAYS use it
                                 if detected_rank is not None:
                                     if op.rank != detected_rank:
-                                        logger.info(
-                                            f"[FACTS-PERSIST] LLM extracted rank={op.rank} but user specified rank={detected_rank}. "
-                                            f"Fixing to use user-specified rank."
+                                        logger.warning(
+                                            f"[FACTS-PERSIST] RANK OVERRIDE: LLM/router extracted rank={op.rank} "
+                                            f"but user text specifies rank={detected_rank}. "
+                                            f"OVERRIDING to user-specified rank (user text is source of truth)."
                                         )
                                         op.rank = detected_rank
+                                    else:
+                                        logger.debug(
+                                            f"[FACTS-PERSIST] Rank match: LLM/router and user text both specify rank={detected_rank}"
+                                        )
                                 # If LLM extracted rank=1 but user didn't explicitly specify rank=1, set rank=None
                                 elif op.rank == 1 and not has_explicit_rank_1:
                                     # This is likely an unranked write - set rank=None for atomic assignment

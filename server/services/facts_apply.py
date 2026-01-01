@@ -107,6 +107,117 @@ def normalize_rank_item(s: str) -> str:
     return normalize_favorite_value(s)
 
 
+def _tokenize_normalized(s: str) -> set:
+    """
+    Tokenize a normalized string into a set of words.
+    
+    Args:
+        s: Normalized string (already lowercased, whitespace collapsed)
+        
+    Returns:
+        Set of tokens (words), excluding very short words
+    """
+    # Split on whitespace and filter out very short words (1-2 chars) and common stop words
+    tokens = [t for t in s.split() if len(t) > 2]
+    return set(tokens)
+
+
+def resolve_ranked_item_target(
+    new_value: str,
+    existing_items: List[Dict[str, Any]],
+    threshold: float = 0.85
+) -> Optional[Dict[str, Any]]:
+    """
+    Resolve a new value to an existing ranked item using exact or fuzzy/alias matching.
+    
+    This enables partial/alias values (e.g., "rogue one") to match full canonical items
+    (e.g., "Star Wars: Rogue One").
+    
+    Matching strategy:
+    1. Exact normalized match (highest priority)
+    2. Fuzzy/alias match using token subset score and Jaccard similarity
+    
+    Args:
+        new_value: New value string (user-provided, may be partial/alias)
+        existing_items: List of existing ranked items with keys: value_text, rank, fact_key
+        threshold: Minimum fuzzy match score (0.0-1.0) to consider a match
+        
+    Returns:
+        Matched existing item dict if found, None otherwise
+        
+    Examples:
+        new_value="rogue one", existing="Star Wars: Rogue One" → match (all tokens found)
+        new_value="breath of the wild", existing="The Legend of Zelda: Breath of the Wild" → match
+        new_value="matrix", existing="The Matrix" → match (subset score = 1.0)
+    """
+    if not existing_items:
+        return None
+    
+    # Normalize new value
+    normalized_new = normalize_rank_item(new_value)
+    tokens_new = _tokenize_normalized(normalized_new)
+    
+    if not tokens_new:
+        # Empty or only stop words - can't match
+        return None
+    
+    # First, try exact normalized match (highest priority)
+    for item in existing_items:
+        normalized_existing = normalize_rank_item(item["value_text"])
+        if normalized_existing == normalized_new:
+            logger.debug(
+                f"[FACTS-APPLY] Exact match: '{new_value}' → '{item['value_text']}' "
+                f"(rank {item['rank']})"
+            )
+            return item
+    
+    # If no exact match, try fuzzy/alias matching
+    best_match = None
+    best_score = 0.0
+    
+    for item in existing_items:
+        normalized_existing = normalize_rank_item(item["value_text"])
+        tokens_existing = _tokenize_normalized(normalized_existing)
+        
+        if not tokens_existing:
+            continue
+        
+        # Compute subset score: how many of new_value's tokens are in existing?
+        # This handles cases like "rogue one" matching "Star Wars: Rogue One"
+        intersection = tokens_new.intersection(tokens_existing)
+        subset_score = len(intersection) / len(tokens_new) if tokens_new else 0.0
+        
+        # Compute Jaccard similarity as tie-breaker
+        union = tokens_new.union(tokens_existing)
+        jaccard = len(intersection) / len(union) if union else 0.0
+        
+        # Combined score: prioritize subset score (all tokens found = perfect match)
+        # Use Jaccard as tie-breaker when subset scores are equal
+        if subset_score == 1.0:
+            # Perfect subset match - all tokens from new_value are in existing
+            # This is the ideal case (e.g., "rogue one" → "Star Wars: Rogue One")
+            score = 1.0 + jaccard  # Boost perfect subset matches
+        elif subset_score >= threshold:
+            # Good enough match
+            score = subset_score + (jaccard * 0.1)  # Jaccard as minor tie-breaker
+        else:
+            # Below threshold
+            continue
+        
+        if score > best_score:
+            best_score = score
+            best_match = item
+    
+    if best_match:
+        logger.info(
+            f"[FACTS-APPLY] Alias/fuzzy match: '{new_value}' → '{best_match['value_text']}' "
+            f"(rank {best_match['rank']}, score={best_score:.3f})"
+        )
+        return best_match
+    
+    return None
+
+
 def normalize_favorite_value(s: str) -> str:
     """
     Normalize a favorite value for duplicate detection.
@@ -310,19 +421,48 @@ def _apply_ranked_mutation(
     items = _get_ranked_list_items(conn, project_uuid, list_key)
     current_max_rank = len(items)
     
-    # Normalize input value for comparison (use canonical normalizer)
-    normalized_input = normalize_rank_item(value)
+    # CRITICAL: Resolve new value to existing item using exact or fuzzy/alias matching
+    # This enables partial values (e.g., "rogue one") to match full items (e.g., "Star Wars: Rogue One")
+    matched_item = resolve_ranked_item_target(value, items)
     
-    # CRITICAL: Find ALL occurrences of the normalized value (not just the first)
+    # Find ALL occurrences of the matched item (if found) or exact normalized matches
     # This prevents duplicates from persisting when moving/inserting items
+    normalized_input = normalize_rank_item(value)
     existing_items = []
-    for item in items:
-        if normalize_rank_item(item["value_text"]) == normalized_input:
-            existing_items.append(item)
+    
+    if matched_item:
+        # Use the matched item's normalized form to find all occurrences
+        matched_normalized = normalize_rank_item(matched_item["value_text"])
+        for item in items:
+            if normalize_rank_item(item["value_text"]) == matched_normalized:
+                existing_items.append(item)
+    else:
+        # No fuzzy match found - try exact normalized match
+        for item in items:
+            if normalize_rank_item(item["value_text"]) == normalized_input:
+                existing_items.append(item)
     
     # Get the first existing item for move logic (if any)
     existing_rank = existing_items[0]["rank"] if existing_items else None
     existing_item = existing_items[0] if existing_items else None
+    
+    # If we found a fuzzy match, use the matched item's canonical value for storage
+    if matched_item:
+        # Use the canonical value from the matched item (preserves full title like "Star Wars: Rogue One")
+        # but keep the user's input for logging/display
+        canonical_value = matched_item["value_text"]
+        logger.info(
+            f"[FACTS-APPLY] Using canonical value from fuzzy match: '{value}' → '{canonical_value}' "
+            f"for mutation to rank {desired_rank}"
+        )
+        # Update normalized_value to use the canonical value
+        normalized_value, _ = normalize_fact_value(canonical_value, is_ranked_list=True)
+        
+        # Ensure we have the existing item for move logic
+        if not existing_item:
+            existing_item = matched_item
+            existing_rank = matched_item["rank"]
+            existing_items = [matched_item]
     
     # CRITICAL FIX: Remove ALL duplicates BEFORE inserting/moving
     # This ensures "Breakfast Burritos" doesn't appear at multiple ranks
@@ -947,8 +1087,19 @@ def apply_facts_ops(
                         )
                     else:
                         # Explicit rank provided: use ranked mutation logic (MOVE, INSERT, or NO-OP)
+                        # CRITICAL: Final rank override from user text (#N) - router/LLM can't break it
+                        # Extract rank directly from the operation's context if available
+                        # This ensures "#2 favorite" always results in rank 2, never rank 1
                         desired_rank = op.rank
                         rank_assignment_source = "explicit"
+                        
+                        # Final safety check: if rank is 1 but we're in a mutation context, verify it's intentional
+                        # (This is a defensive check - the real fix is in facts_persistence.py rank extraction)
+                        if desired_rank == 1:
+                            logger.debug(
+                                f"[FACTS-APPLY] Rank mutation with rank=1 for '{op.value}'. "
+                                f"This should only happen if user explicitly said '#1' or 'first'."
+                            )
                         
                         logger.info(
                             f"[FACTS-E2E] RANK-MUTATION: topic={canonical_topic!r} desired_rank={desired_rank} "

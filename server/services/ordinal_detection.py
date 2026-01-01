@@ -53,11 +53,25 @@ def detect_ordinal_rank(text: str) -> Optional[int]:
             return rank
     
     # Pattern 2: Hash notation (#1, #2, #3, etc.)
+    # CRITICAL: Match "#N favorite" pattern specifically to avoid false positives
+    # But also allow standalone #N if it's clearly a rank directive
     hash_match = re.search(r'#(\d+)', text)
     if hash_match:
         rank = int(hash_match.group(1))
-        if 1 <= rank <= 10:  # Reasonable bounds
-            return rank
+        # Remove the 10 limit - allow any rank (e.g., #99 for out-of-range queries)
+        # But still require reasonable bounds for writes (1-1000 should be enough)
+        if 1 <= rank <= 1000:  # Expanded bounds for ranked list mutations
+            # Verify this is in a "favorite" context to avoid false positives
+            # Look for "favorite" or "rank" nearby (within 20 chars before or after)
+            hash_pos = hash_match.start()
+            context_start = max(0, hash_pos - 20)
+            context_end = min(len(text), hash_pos + 20)
+            context = text[context_start:context_end].lower()
+            if 'favorite' in context or 'rank' in context or 'number' in context:
+                return rank
+            # Also allow if it's clearly a rank directive pattern: "my #N favorite" or "#N is"
+            if re.search(r'(?:my\s+)?#\d+\s+(?:favorite|is)', context, re.IGNORECASE):
+                return rank
     
     # Pattern 3: "number N" or "Nth" (already handled above, but check standalone numbers)
     # Match patterns like "number 2" or "2nd" (already handled) or just "2" in context
