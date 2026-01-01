@@ -92,14 +92,46 @@ def canonicalize_topic(raw: str) -> str:
     normalized = normalized.strip('_')
     
     # Step 8: Singularize deterministically
-    if normalized.endswith('ies'):
-        # candies → candy, cities → city
-        normalized = normalized[:-3] + 'y'
-    elif normalized.endswith('s') and not normalized.endswith('ss'):
-        # cryptos → crypto, colors → color (but keep "class", "pass", etc.)
-        # Only drop 's' if it's a plural marker (word is longer than 2 chars)
-        if len(normalized) > 2:
-            normalized = normalized[:-1]
+    # CRITICAL: Only apply singularization to the last word (after last underscore)
+    # This prevents "sci_fi_movies" from being incorrectly converted to "sci_fi_movy"
+    # Split by underscore to get words
+    words = normalized.split('_')
+    if words:
+        last_word = words[-1]
+        # Apply singularization to last word only
+        # Handle plurals: "movies" → "movie", "candies" → "candy", "cities" → "city"
+        # Strategy: For words ending in "ies", use a heuristic:
+        # - If stem (without "ies") is 4+ chars: apply "ies" → "y" (candies → candy, activities → activity)
+        # - If stem is 3 chars: apply "ies" → "y" UNLESS stem ends with "v" (movies → movie)
+        #   This handles "cities" → "city" (cit + y) vs "movies" → "movie" (mov + e)
+        if last_word.endswith('ies') and len(last_word) > 4:
+            stem = last_word[:-3]
+            if len(stem) >= 4:
+                # Long stem: apply "ies" → "y" (candies → candy, activities → activity)
+                words[-1] = stem + 'y'
+            elif len(stem) == 3:
+                # 3-char stem: check if it ends with "v" (movies → movie) or not (cities → city)
+                if stem[-1] == 'v':
+                    # "movies" → "movie" (es → e)
+                    words[-1] = last_word[:-2] + 'e'
+                else:
+                    # "cities" → "city" (ies → y)
+                    words[-1] = stem + 'y'
+            elif len(stem) >= 2:
+                # Very short stem: apply "es" → "e"
+                words[-1] = last_word[:-2] + 'e'
+        elif last_word.endswith('es') and len(last_word) > 3 and not last_word.endswith('ss'):
+            # Handle "es" → "e" for words like "houses" → "house"
+            # But NOT "candies" or "movies" (already handled above) or "classes" (keep as "class")
+            stem = last_word[:-2]
+            if len(stem) >= 2:
+                words[-1] = stem + 'e'
+        elif last_word.endswith('s') and not last_word.endswith('ss') and len(last_word) > 2:
+            # Regular plurals: cryptos → crypto, colors → color
+            # Only drop 's' if it's a plural marker
+            words[-1] = last_word[:-1]
+        # Rejoin words
+        normalized = '_'.join(words)
     
     # Step 9: Final cleanup - ensure it's not empty
     if not normalized:

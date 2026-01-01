@@ -170,16 +170,22 @@ def _convert_routing_candidate_to_ops(
         # ERROR HANDLING: Wrap in try/except for Facts-F diagnostics
         try:
             canonicalization_result = canonicalize_topic(candidate.topic, invoke_teacher=True)
-            canonical_topic = canonicalization_result.canonical_topic
+            canonical_topic_from_router = canonicalization_result.canonical_topic
         except Exception as e:
             logger.error(f"[FACTS-PERSIST] ❌ Canonicalization failed for topic '{candidate.topic}': {e}", exc_info=True)
             # Return empty ops with error indication
             return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to canonicalize topic: {e}"]), None
         
         try:
-            list_key = canonical_list_key(canonical_topic)
+            # CRITICAL: Use canonical_ranked_topic_key for list_key generation (single source of truth)
+            # This ensures "board games", "board_game", "board-game" all map to the same list_key
+            from server.services.facts_normalize import canonical_ranked_topic_key
+            list_key = canonical_ranked_topic_key(candidate.topic)  # Use original topic, not canonicalizer result
+            # Extract canonical topic from list_key for consistency
+            from server.services.facts_normalize import extract_topic_from_list_key
+            canonical_topic = extract_topic_from_list_key(list_key) or canonical_topic_from_router
         except Exception as e:
-            logger.error(f"[FACTS-PERSIST] ❌ Failed to build list_key for topic '{canonical_topic}': {e}", exc_info=True)
+            logger.error(f"[FACTS-PERSIST] ❌ Failed to build list_key for topic '{canonical_topic_from_router}': {e}", exc_info=True)
             return FactsOpsResponse(ops=[], needs_clarification=[f"Failed to build list key: {e}"]), canonicalization_result
         
         # Handle single value or list of values
@@ -197,8 +203,9 @@ def _convert_routing_candidate_to_ops(
             explicit_rank = candidate.rank
         elif user_message:
             # Fallback: detect rank from user message if router didn't extract it
-            from server.services.ordinal_detection import detect_ordinal_rank
-            detected_rank = detect_ordinal_rank(user_message)
+            # Use extract_rank_override_from_user_text for consistency
+            from server.services.rank_override import extract_rank_override_from_user_text
+            detected_rank = extract_rank_override_from_user_text(user_message)
             if detected_rank is not None:
                 explicit_rank = detected_rank
                 logger.info(
@@ -445,9 +452,16 @@ async def persist_facts_synchronously(
                 
                 # Canonicalize topic and create append ops
                 try:
+                    # CRITICAL: Use canonical_ranked_topic_key for list_key generation (single source of truth)
+                    # This ensures "weekend breakfasts" and "weekend breakfast" map to the same list_key
+                    from server.services.facts_normalize import canonical_ranked_topic_key
+                    list_key = canonical_ranked_topic_key(raw_topic)
+                    # Extract canonical topic from list_key for consistency
+                    from server.services.facts_normalize import extract_topic_from_list_key
+                    canonical_topic = extract_topic_from_list_key(list_key) or raw_topic
+                    
+                    # Still get canonicalization_result for telemetry (but don't use it for list_key)
                     canonicalization_result = canonicalize_topic(raw_topic, invoke_teacher=True)
-                    canonical_topic = canonicalization_result.canonical_topic
-                    list_key = canonical_list_key(canonical_topic)
                     
                     logger.info(
                         f"[FACTS-E2E] SAFETYNET: canonicalized topic={raw_topic!r} -> {canonical_topic!r} "
@@ -657,8 +671,8 @@ async def persist_facts_synchronously(
                     else:
                         # CRITICAL FIX: Detect explicit rank from user message (#2, #3, etc.) and use it
                         # This fixes cases where LLM doesn't extract the rank correctly
-                        from server.services.ordinal_detection import detect_ordinal_rank
-                        detected_rank = detect_ordinal_rank(message_content)
+                        from server.services.rank_override import extract_rank_override_from_user_text
+                        user_rank_override = extract_rank_override_from_user_text(message_content)
                         
                         # Check if user message explicitly mentions rank=1 (for unranked detection)
                         explicit_rank_1_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
@@ -666,19 +680,42 @@ async def persist_facts_synchronously(
                         
                         for op in ops_response.ops:
                             if op.op == "ranked_list_set" and op.list_key:
+                                # CRITICAL: Rebuild list_key from user message if compound topic detected
+                                # This prevents LLM from collapsing "weekend breakfast" → "breakfast"
+                                # Extract topic phrase from user message (e.g., "weekend breakfast", "sci-fi movies")
+                                topic_phrase_match = re.search(
+                                    r'(?:my\s+)?(?:#\d+\s+)?(?:favorite|favorites)\s+([^,\.\?]+?)(?:\s+is|\s+are|$)',
+                                    message_content.lower()
+                                )
+                                if topic_phrase_match:
+                                    extracted_topic_phrase = topic_phrase_match.group(1).strip()
+                                    # Remove trailing punctuation
+                                    extracted_topic_phrase = re.sub(r'[?.!]+$', '', extracted_topic_phrase).strip()
+                                    if extracted_topic_phrase and ' ' in extracted_topic_phrase:
+                                        # Compound topic detected (contains space) - rebuild list_key
+                                        from server.services.facts_normalize import canonical_ranked_topic_key
+                                        expected_list_key = canonical_ranked_topic_key(extracted_topic_phrase)
+                                        if expected_list_key != op.list_key:
+                                            logger.warning(
+                                                f"[FACTS-PERSIST] TOPIC OVERRIDE: LLM extracted list_key={op.list_key!r} "
+                                                f"but user message contains compound topic '{extracted_topic_phrase}'. "
+                                                f"OVERRIDING to {expected_list_key!r} (preserving compound topic)."
+                                            )
+                                            op.list_key = expected_list_key
+                                
                                 # CRITICAL: User text rank (#N) is the FINAL OVERRIDE - router/LLM can't break it
-                                # If user explicitly specified a rank (#2, #3, etc.), ALWAYS use it
-                                if detected_rank is not None:
-                                    if op.rank != detected_rank:
+                                if user_rank_override is not None:
+                                    # User explicitly specified a rank - ALWAYS override
+                                    if op.rank != user_rank_override:
                                         logger.warning(
                                             f"[FACTS-PERSIST] RANK OVERRIDE: LLM/router extracted rank={op.rank} "
-                                            f"but user text specifies rank={detected_rank}. "
+                                            f"but user text specifies rank={user_rank_override}. "
                                             f"OVERRIDING to user-specified rank (user text is source of truth)."
                                         )
-                                        op.rank = detected_rank
+                                        op.rank = user_rank_override
                                     else:
                                         logger.debug(
-                                            f"[FACTS-PERSIST] Rank match: LLM/router and user text both specify rank={detected_rank}"
+                                            f"[FACTS-PERSIST] Rank match: LLM/router and user text both specify rank={user_rank_override}"
                                         )
                                 # If LLM extracted rank=1 but user didn't explicitly specify rank=1, set rank=None
                                 elif op.rank == 1 and not has_explicit_rank_1:

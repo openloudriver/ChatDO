@@ -19,6 +19,38 @@ from . import librarian
 logger = logging.getLogger(__name__)
 
 
+def ensure_message_uuid_at_write(msg: Dict[str, Any], provided_uuid: Optional[str] = None) -> str:
+    """
+    Ensure a message has message_uuid before writing to history.
+    
+    This is the SINGLE SOURCE OF TRUTH for message_uuid generation at write time.
+    Since we're in dev/test mode and will wipe all messages, we can require
+    message_uuid to always be present (no legacy compatibility needed).
+    
+    Args:
+        msg: Message dict (may or may not have message_uuid)
+        provided_uuid: Optional UUID to use (e.g., from client_message_uuid or indexing)
+        
+    Returns:
+        message_uuid string (always non-empty)
+    """
+    # Use provided UUID if available
+    if provided_uuid:
+        return provided_uuid
+    
+    # Check if message already has message_uuid
+    if msg.get("message_uuid"):
+        return msg["message_uuid"]
+    
+    # Generate new UUID (should never happen in fresh DB, but safety net)
+    new_uuid = str(uuid4())
+    logger.warning(
+        f"[MESSAGE_UUID] Generated message_uuid for message without one: {new_uuid}. "
+        f"Message: role={msg.get('role')}, id={msg.get('id')}"
+    )
+    return new_uuid
+
+
 def smart_title_case(text: str) -> str:
     """
     Convert text to title case for display, preserving proper capitalization.
@@ -506,7 +538,8 @@ def build_model_label(
     nano_router_used: bool = False,
     reasoning_required: bool = True,
     canonicalizer_used: bool = False,
-    teacher_invoked: bool = False
+    teacher_invoked: bool = False,
+    index_search_used: bool = True  # Whether Index-P search was actually used (not just indexing for persistence)
 ) -> str:
     """
     Build model label with execution path using arrows (→).
@@ -518,6 +551,7 @@ def build_model_label(
     - "GPT-5 Nano → Canonicalizer → Facts-S(3)" (write, no reasoning, no teacher)
     - "GPT-5 Nano → Canonicalizer → Teacher → Facts-S(1)" (write with teacher)
     - "GPT-5 Nano → Canonicalizer → Facts-R(2) → GPT-5" (read with reasoning)
+    - "GPT-5 Nano → Canonicalizer → Facts-R(1)" (strong Facts-R enforcement, no Index-P search)
     - "GPT-5 Nano → GPT-5" (chat only, no canonicalizer)
     
     Args:
@@ -529,6 +563,7 @@ def build_model_label(
         reasoning_required: Whether GPT-5 reasoning is required
         canonicalizer_used: Whether canonicalizer was invoked
         teacher_invoked: Whether teacher model was invoked
+        index_search_used: Whether Index-P search was actually used (False for strong Facts-R enforcement paths)
     
     Returns:
         Model label string (e.g., "GPT-5 Nano → Canonicalizer → Teacher → Facts-S(3)")
@@ -567,8 +602,9 @@ def build_model_label(
         if files_r > 0:
             parts.append(f"Files({files_r})")
     
-    # 3. Index token (always shown)
-    parts.append(f"Index-{index_status}")
+    # 3. Index token (only shown if Index-P search was actually used, not just indexing for persistence)
+    if index_search_used:
+        parts.append(f"Index-{index_status}")
     
     # 4. GPT-5 reasoning (only if reasoning_required)
     if reasoning_required:
@@ -869,7 +905,14 @@ async def chat_with_smart_search(
     # can find the message they just sent
     # Phase 1: Synchronous Facts Persistence (does NOT depend on Memory Service)
     # Store facts immediately and deterministically, get actual counts from DB writes
-    current_message_uuid = client_message_uuid  # Initialize with client-provided UUID
+    # CRITICAL: Always ensure user messages have a UUID for stable rehydration
+    # Use client-provided UUID if available, otherwise generate one
+    current_message_uuid = client_message_uuid
+    if not current_message_uuid:
+        # Generate UUID for user message if client didn't provide one
+        # This ensures every user message has a stable UUID for rehydration
+        current_message_uuid = str(uuid4())
+        logger.debug(f"Generated UUID for user message: {current_message_uuid}")
     
     # Initialize query_plan early (before Facts persistence) so it can be used in ambiguity check
     # CRITICAL: Must be initialized at function scope before any conditional access
@@ -1325,13 +1368,16 @@ async def chat_with_smart_search(
                             # Add user message to history FIRST (before assistant message)
                             user_msg_created_at = datetime.now(timezone.utc).isoformat()
                             user_message_id = f"{thread_id}-user-{message_index}"
+                            # CRITICAL: Ensure message_uuid is always present (required, never null)
                             user_msg = {
                                 "id": user_message_id,
                                 "role": "user",
                                 "content": user_message,
                                 "created_at": user_msg_created_at,
-                                "uuid": current_message_uuid  # Include UUID for rehydration
+                                "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
                             }
+                            # Generate and set message_uuid (required)
+                            user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
                             history.append(user_msg)
                             
                             # Now add assistant message
@@ -1348,9 +1394,10 @@ async def chat_with_smart_search(
                                 nano_router_used=nano_router_used,
                                 reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                                 canonicalizer_used=canonicalizer_used_hist,
-                                teacher_invoked=teacher_invoked_hist
+                                teacher_invoked=teacher_invoked_hist,
+                                index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                             )
-                            history.append({
+                            assistant_msg = {
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": confirmation_text,
@@ -1358,7 +1405,10 @@ async def chat_with_smart_search(
                                 "model_label": f"Model: {model_label_hist}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
-                            })
+                            }
+                            # CRITICAL: Ensure assistant message also has message_uuid (required)
+                            assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                            history.append(assistant_msg)
                             memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
                             logger.warning(f"Failed to save Facts-S/U confirmation to history: {e}")
@@ -1434,18 +1484,21 @@ async def chat_with_smart_search(
                     confirmation_text = " ".join(duplicate_messages)
                     
                     # Save user message to history
-                    if thread_id and not any(m.get("uuid") == current_message_uuid for m in history):
+                    if thread_id and not any(m.get("message_uuid") == current_message_uuid for m in history):
                         history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
                         message_index = len(history)
                         user_msg_created_at = datetime.now(timezone.utc).isoformat()
                         user_message_id = f"{thread_id}-user-{message_index}"
+                        # CRITICAL: Ensure message_uuid is always present (required, never null)
                         user_msg = {
                             "id": user_message_id,
                             "role": "user",
                             "content": user_message,
                             "created_at": user_msg_created_at,
-                            "uuid": current_message_uuid
+                            "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
                         }
+                        # Generate and set message_uuid (required)
+                        user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
                         history.append(user_msg)
                         
                         assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
@@ -1462,7 +1515,7 @@ async def chat_with_smart_search(
                             canonicalizer_used=canonicalizer_used_hist,
                             teacher_invoked=teacher_invoked_hist
                         )
-                        history.append({
+                        assistant_msg = {
                             "id": assistant_message_id,
                             "role": "assistant",
                             "content": confirmation_text,
@@ -1470,7 +1523,10 @@ async def chat_with_smart_search(
                             "model_label": f"Model: {model_label_hist}",
                             "provider": "facts",
                             "created_at": assistant_msg_created_at
-                        })
+                        }
+                        # CRITICAL: Ensure assistant message also has message_uuid (required)
+                        assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                        history.append(assistant_msg)
                         memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                     
                     # Return duplicate confirmation
@@ -1968,9 +2024,12 @@ async def chat_with_smart_search(
                     )
                 
                 # Count distinct canonical keys for Facts-R
-                facts_actions["R"] = len(facts_answer.canonical_keys)
-                if facts_actions["R"] > 0:
-                    logger.info(f"[FACTS-R] Retrieved {facts_actions['R']} distinct canonical keys: {facts_answer.canonical_keys}")
+                # Set R=1 to indicate Facts-R was attempted, even if no facts were found (out-of-range, empty list, etc.)
+                facts_actions["R"] = 1 if query_plan is not None else 0
+                if facts_answer.canonical_keys:
+                    logger.info(f"[FACTS-R] Retrieved {len(facts_answer.canonical_keys)} distinct canonical keys: {facts_answer.canonical_keys}")
+                else:
+                    logger.info(f"[FACTS-R] Facts-R executed but no facts found (out-of-range, empty list, etc.)")
                 
                 # Fast-path response for ranked list queries (no GPT-5)
                 # GPT-5 Nano determines if this is a list query via query plan intent
@@ -2047,7 +2106,8 @@ async def chat_with_smart_search(
                         nano_router_used=nano_router_used,
                         reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                         canonicalizer_used=canonicalizer_used_read,
-                        teacher_invoked=teacher_invoked_read
+                        teacher_invoked=teacher_invoked_read,
+                        index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                     )
                     
                     # Save to history
@@ -2059,13 +2119,16 @@ async def chat_with_smart_search(
                             # Add user message to history FIRST (before assistant message)
                             user_msg_created_at = datetime.now(timezone.utc).isoformat()
                             user_message_id = f"{thread_id}-user-{message_index}"
+                            # CRITICAL: Ensure message_uuid is always present (required, never null)
                             user_msg = {
                                 "id": user_message_id,
                                 "role": "user",
                                 "content": user_message,
                                 "created_at": user_msg_created_at,
-                                "uuid": current_message_uuid  # Include UUID for rehydration
+                                "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
                             }
+                            # Generate and set message_uuid (required)
+                            user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
                             history.append(user_msg)
                             
                             # Now add assistant message
@@ -2082,18 +2145,21 @@ async def chat_with_smart_search(
                                 nano_router_used=nano_router_used,
                                 reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                                 canonicalizer_used=canonicalizer_used_hist,
-                                teacher_invoked=teacher_invoked_hist
+                                teacher_invoked=teacher_invoked_hist,
+                                index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                             )
-                            history.append({
+                            assistant_msg = {
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": list_items,
                                 "model": model_label_hist,
                                 "model_label": f"Model: {model_label_hist}",
                                 "provider": "facts",
-                                "created_at": assistant_msg_created_at,
-                                "uuid": None  # Assistant messages don't have message_uuid (they're not indexed separately)
-                            })
+                                "created_at": assistant_msg_created_at
+                            }
+                            # CRITICAL: Ensure assistant message also has message_uuid (required)
+                            assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                            history.append(assistant_msg)
                             memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
                             logger.warning(f"Failed to save list answer to history: {e}")
@@ -2187,9 +2253,27 @@ async def chat_with_smart_search(
                     if thread_id:
                         try:
                             history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
-                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
                             message_index = len(history)
-                            assistant_message_id = f"{thread_id}-assistant-{message_index}"
+                            
+                            # CRITICAL: Add user message to history FIRST (before assistant message)
+                            # This was missing in the empty Facts-R path, causing user messages to disappear on rehydration
+                            user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            user_message_id = f"{thread_id}-user-{message_index}"
+                            # CRITICAL: Ensure message_uuid is always present (required, never null)
+                            user_msg = {
+                                "id": user_message_id,
+                                "role": "user",
+                                "content": user_message,
+                                "created_at": user_msg_created_at,
+                                "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
+                            }
+                            # Generate and set message_uuid (required)
+                            user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
+                            history.append(user_msg)
+                            
+                            # Now add assistant message
+                            assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                            assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
                             # response_text is already set above with ordinal bounds messaging
                             # Extract canonicalization info for model label
                             canonicalizer_used_empty = canonicalization_result is not None
@@ -2202,9 +2286,10 @@ async def chat_with_smart_search(
                                 nano_router_used=nano_router_used,
                                 reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                                 canonicalizer_used=canonicalizer_used_empty,
-                                teacher_invoked=teacher_invoked_empty
+                                teacher_invoked=teacher_invoked_empty,
+                                index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                             )
-                            history.append({
+                            assistant_msg = {
                                 "id": assistant_message_id,
                                 "role": "assistant",
                                 "content": response_text,
@@ -2212,7 +2297,10 @@ async def chat_with_smart_search(
                                 "model_label": f"Model: {model_label_empty}",
                                 "provider": "facts",
                                 "created_at": assistant_msg_created_at
-                            })
+                            }
+                            # CRITICAL: Ensure assistant message also has message_uuid (required)
+                            assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                            history.append(assistant_msg)
                             memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
                         except Exception as e:
                             logger.warning(f"Failed to save 'not found' answer to history: {e}")
@@ -2290,7 +2378,8 @@ async def chat_with_smart_search(
                         nano_router_used=nano_router_used,
                         reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                         canonicalizer_used=canonicalizer_used_empty_resp,
-                        teacher_invoked=teacher_invoked_empty_resp
+                        teacher_invoked=teacher_invoked_empty_resp,
+                        index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                     )
                     # Use response_text (which may include ordinal bounds messaging)
                     return {
@@ -2352,8 +2441,49 @@ async def chat_with_smart_search(
                     nano_router_used=nano_router_used,
                     reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                     canonicalizer_used=canonicalizer_used_guard,
-                    teacher_invoked=teacher_invoked_guard
+                    teacher_invoked=teacher_invoked_guard,
+                    index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                 )
+                
+                # CRITICAL: Save user and assistant messages to history (was missing in guard path)
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                        message_index = len(history)
+                        
+                        # Add user message to history FIRST (before assistant message)
+                        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        user_message_id = f"{thread_id}-user-{message_index}"
+                        # CRITICAL: Ensure message_uuid is always present (required, never null)
+                        user_msg = {
+                            "id": user_message_id,
+                            "role": "user",
+                            "content": user_message,
+                            "created_at": user_msg_created_at,
+                            "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
+                        }
+                        # Generate and set message_uuid (required)
+                        user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
+                        history.append(user_msg)
+                        
+                        # Now add assistant message
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        assistant_msg = {
+                            "id": assistant_message_id,
+                            "role": "assistant",
+                            "content": response_text,
+                            "model": model_label_guard,
+                            "model_label": f"Model: {model_label_guard}",
+                            "provider": "facts",
+                            "created_at": assistant_msg_created_at
+                        }
+                        # CRITICAL: Ensure assistant message also has message_uuid (required)
+                        assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                        history.append(assistant_msg)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to save Facts guard response to history: {e}")
                 
                 return {
                     "type": "assistant_message",
@@ -2420,6 +2550,46 @@ async def chat_with_smart_search(
                     canonicalizer_used=canonicalizer_used_guard,
                     teacher_invoked=teacher_invoked_guard
                 )
+                
+                # CRITICAL: Save user and assistant messages to history (was missing in guard path)
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                        message_index = len(history)
+                        
+                        # Add user message to history FIRST (before assistant message)
+                        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        user_message_id = f"{thread_id}-user-{message_index}"
+                        # CRITICAL: Ensure message_uuid is always present (required, never null)
+                        user_msg = {
+                            "id": user_message_id,
+                            "role": "user",
+                            "content": user_message,
+                            "created_at": user_msg_created_at,
+                            "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
+                        }
+                        # Generate and set message_uuid (required)
+                        user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
+                        history.append(user_msg)
+                        
+                        # Now add assistant message
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        assistant_msg = {
+                            "id": assistant_message_id,
+                            "role": "assistant",
+                            "content": response_text,
+                            "model": model_label_guard,
+                            "model_label": f"Model: {model_label_guard}",
+                            "provider": "facts",
+                            "created_at": assistant_msg_created_at
+                        }
+                        # CRITICAL: Ensure assistant message also has message_uuid (required)
+                        assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                        history.append(assistant_msg)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to save Facts guard response to history: {e}")
                 
                 return {
                     "type": "assistant_message",
@@ -2496,8 +2666,49 @@ async def chat_with_smart_search(
                     nano_router_used=nano_router_used,
                     reasoning_required=routing_plan.reasoning_required if routing_plan else True,
                     canonicalizer_used=False,
-                    teacher_invoked=False
+                    teacher_invoked=False,
+                    index_search_used=False  # Strong Facts-R enforcement, no Index-P search
                 )
+                
+                # CRITICAL: Save user and assistant messages to history (was missing in exception handler path)
+                if thread_id:
+                    try:
+                        history = memory_store.load_thread_history(target_name, thread_id, project_id=project_id)
+                        message_index = len(history)
+                        
+                        # Add user message to history FIRST (before assistant message)
+                        user_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        user_message_id = f"{thread_id}-user-{message_index}"
+                        # CRITICAL: Ensure message_uuid is always present (required, never null)
+                        user_msg = {
+                            "id": user_message_id,
+                            "role": "user",
+                            "content": user_message,
+                            "created_at": user_msg_created_at,
+                            "client_message_uuid": client_message_uuid if client_message_uuid else None  # Optional client UUID for reconciliation
+                        }
+                        # Generate and set message_uuid (required)
+                        user_msg["message_uuid"] = ensure_message_uuid_at_write(user_msg, provided_uuid=current_message_uuid)
+                        history.append(user_msg)
+                        
+                        # Now add assistant message
+                        assistant_msg_created_at = datetime.now(timezone.utc).isoformat()
+                        assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
+                        assistant_msg = {
+                            "id": assistant_message_id,
+                            "role": "assistant",
+                            "content": response_text,
+                            "model": model_label_error,
+                            "model_label": f"Model: {model_label_error}",
+                            "provider": "facts",
+                            "created_at": assistant_msg_created_at
+                        }
+                        # CRITICAL: Ensure assistant message also has message_uuid (required)
+                        assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                        history.append(assistant_msg)
+                        memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
+                    except Exception as save_error:
+                        logger.warning(f"Failed to save Facts exception response to history: {save_error}")
                 
                 return {
                     "type": "assistant_message",
@@ -2789,12 +3000,17 @@ async def chat_with_smart_search(
                 user_msg_created_at = datetime.now(timezone.utc).isoformat()
                 # Use constructed message_id to match indexing (enables UUID lookup)
                 user_message_id = f"{thread_id}-user-{message_index}"
+                # CRITICAL: Ensure UUID is always present for stable rehydration
+                user_message_uuid = current_message_uuid
+                if not user_message_uuid:
+                    user_message_uuid = str(uuid4())
+                    logger.warning(f"User message missing UUID at save point 3, generated: {user_message_uuid}")
                 user_msg = {
                     "id": user_message_id,  # Use constructed ID to match indexing
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at,
-                    "uuid": current_message_uuid  # Include UUID for rehydration
+                    "message_uuid": user_message_uuid  # Canonical message identifier (required)
                 }
                 # NOTE: Ranked lists are now stored in facts DB, not thread metadata
                 history.append(user_msg)
@@ -2854,7 +3070,7 @@ async def chat_with_smart_search(
                 # Add assistant message with timestamp and model_label (after enqueueing so job_id is available)
                 # Use constructed message_id to match indexing (enables UUID lookup)
                 assistant_message_id = f"{thread_id}-assistant-{message_index + 1}"
-                history.append({
+                assistant_msg = {
                     "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
@@ -2874,7 +3090,10 @@ async def chat_with_smart_search(
                         } if (('user_index_job_id' in locals() and user_index_job_id) or assistant_index_job_id) else None
                     },
                     "created_at": assistant_msg_created_at
-                })
+                }
+                # CRITICAL: Ensure assistant message also has message_uuid (required)
+                assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                history.append(assistant_msg)
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             except Exception as e:
                 logger.warning(f"Failed to save conversation history: {e}")
@@ -2898,7 +3117,9 @@ async def chat_with_smart_search(
                     "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
                     "confidence": routing_plan.confidence if routing_plan else None
                 },
-                "nano_router_used": nano_router_used
+                "nano_router_used": nano_router_used,
+                "message_uuid": current_message_uuid if current_message_uuid else None,  # Echo back persisted user message UUID for reconciliation
+                "client_message_uuid": client_message_uuid if client_message_uuid else None  # Echo back client UUID for reconciliation
             },
             "model": model_display,
             "model_label": model_label,
@@ -2968,9 +3189,9 @@ async def chat_with_smart_search(
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at,
-                    "uuid": current_message_uuid  # Include UUID for rehydration
+                    "message_uuid": current_message_uuid  # Canonical message identifier (required)
                 })
-                history.append({
+                assistant_msg = {
                     "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
@@ -2980,7 +3201,10 @@ async def chat_with_smart_search(
                     "sources": sources if sources else None,
                     "meta": {"usedWebSearch": False, "webSearchError": str(e)},
                     "created_at": assistant_msg_created_at
-                })
+                }
+                # CRITICAL: Ensure assistant message also has message_uuid (required)
+                assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                history.append(assistant_msg)
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             except Exception as e2:
                 logger.warning(f"Failed to save conversation history: {e2}")
@@ -3035,9 +3259,9 @@ async def chat_with_smart_search(
                     "role": "user",
                     "content": user_message,
                     "created_at": user_msg_created_at,
-                    "uuid": current_message_uuid  # Include UUID for rehydration
+                    "message_uuid": current_message_uuid  # Canonical message identifier (required)
                 })
-                history.append({
+                assistant_msg = {
                     "id": assistant_message_id,  # Use constructed ID to match indexing
                     "role": "assistant",
                     "content": content,
@@ -3047,7 +3271,10 @@ async def chat_with_smart_search(
                     "sources": sources if sources else None,
                     "meta": {"usedWebSearch": False, "webSearchEmpty": True},
                     "created_at": assistant_msg_created_at
-                })
+                }
+                # CRITICAL: Ensure assistant message also has message_uuid (required)
+                assistant_msg["message_uuid"] = ensure_message_uuid_at_write(assistant_msg)
+                history.append(assistant_msg)
                 memory_store.save_thread_history(target_name, thread_id, history, project_id=project_id)
             except Exception as e:
                 logger.warning(f"Failed to save conversation history: {e}")
@@ -3071,7 +3298,9 @@ async def chat_with_smart_search(
                     "reasoning_required": routing_plan.reasoning_required if routing_plan else None,
                     "confidence": routing_plan.confidence if routing_plan else None
                 },
-                "nano_router_used": nano_router_used
+                "nano_router_used": nano_router_used,
+                "message_uuid": current_message_uuid if current_message_uuid else None,  # Echo back persisted user message UUID for reconciliation
+                "client_message_uuid": client_message_uuid if client_message_uuid else None  # Echo back client UUID for reconciliation
             },
             "model": model_display,
             "model_label": model_label,
@@ -3169,7 +3398,6 @@ async def chat_with_smart_search(
             message_index = len(history)
             
             # Add user message with timestamp
-            from uuid import uuid4
             user_msg_created_at = datetime.now(timezone.utc).isoformat()
             # Use constructed message_id to match indexing (enables UUID lookup)
             user_message_id = f"{thread_id}-user-{message_index}"
@@ -3178,7 +3406,7 @@ async def chat_with_smart_search(
                 "role": "user",
                 "content": user_message,
                 "created_at": user_msg_created_at,
-                "uuid": current_message_uuid  # Include UUID for rehydration
+                "message_uuid": current_message_uuid  # Canonical message identifier (required)
             }
             # NOTE: Ranked lists are now stored in facts DB, not thread metadata
             history.append(user_msg)
@@ -3367,7 +3595,8 @@ async def chat_with_smart_search(
             "facts_gate_entered": facts_gate_entered,
             "facts_gate_reason": facts_gate_reason or "unknown",
             "write_intent_detected": is_write_intent,
-            "message_uuid": current_message_uuid,  # Echo back user message UUID for reconciliation
+            "message_uuid": current_message_uuid,  # Echo back persisted user message UUID for reconciliation
+            "client_message_uuid": client_message_uuid if client_message_uuid else None,  # Echo back client UUID for reconciliation
             "nano_routing_plan": {
                 "content_plane": routing_plan.content_plane if routing_plan else None,
                 "operation": routing_plan.operation if routing_plan else None,

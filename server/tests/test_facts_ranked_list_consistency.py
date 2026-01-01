@@ -7,8 +7,7 @@ import pytest
 from datetime import datetime, timezone
 from server.services.facts_persistence import persist_facts_synchronously
 from server.services.facts_apply import validate_ranked_list_invariants, _get_ranked_list_items, normalize_rank_item
-from server.services.facts_normalize import canonical_list_key
-from server.services.canonicalizer import canonicalize_topic
+from server.services.facts_normalize import canonical_ranked_topic_key
 from server.services.librarian import search_facts_ranked_list
 from memory_service.memory_dashboard import db
 
@@ -49,8 +48,10 @@ async def test_breakfast_burritos_duplicate_prevention(test_db_setup, test_threa
     assert seed_result.store_count == 5, f"Expected 5 items stored, got {seed_result.store_count}"
     
     # Verify initial state
-    canonical_topic = canonicalize_topic("weekend breakfasts", invoke_teacher=False).canonical_topic
-    list_key = canonical_list_key(canonical_topic)
+    # CRITICAL: Use canonical_ranked_topic_key (single source of truth) for consistency
+    # This ensures "weekend breakfasts" and "weekend breakfast" map to the same list_key
+    from server.services.facts_normalize import canonical_ranked_topic_key
+    list_key = canonical_ranked_topic_key("weekend breakfasts")
     conn = db.get_db_connection(source_id, project_id=project_id)
     initial_items = _get_ranked_list_items(conn, project_id, list_key)
     conn.close()
@@ -62,7 +63,20 @@ async def test_breakfast_burritos_duplicate_prevention(test_db_setup, test_threa
     assert burritos_initial["rank"] == 5, f"Breakfast Burritos should be at rank 5 initially, got {burritos_initial['rank']}"
     
     # Step 2: Move Breakfast Burritos to rank 2 (using lowercase to test normalization)
+    # CRITICAL: Use "weekend breakfast" (singular) to test that it resolves to the same list_key
     mutation_message = "My #2 favorite weekend breakfast is breakfast burritos."
+    
+    # Verify both phrasings resolve to the same canonical list key
+    mutation_list_key = canonical_ranked_topic_key("weekend breakfast")  # Singular
+    seed_list_key = canonical_ranked_topic_key("weekend breakfasts")  # Plural
+    assert mutation_list_key == seed_list_key, \
+        f"Topic canonicalization drift detected! " \
+        f"'weekend breakfast' -> {mutation_list_key!r}, " \
+        f"'weekend breakfasts' -> {seed_list_key!r}. " \
+        f"They must resolve to the same list_key."
+    assert mutation_list_key == list_key, \
+        f"Mutation list_key {mutation_list_key!r} must match seed list_key {list_key!r}"
+    
     mutation_result = await persist_facts_synchronously(
         project_id=project_id,
         message_content=mutation_message,
@@ -78,7 +92,7 @@ async def test_breakfast_burritos_duplicate_prevention(test_db_setup, test_threa
     # Step 3: Verify mutation result
     assert mutation_result.update_count >= 1, "Should have at least 1 update (Breakfast Burritos moved)"
     
-    # Step 4: Verify final list state
+    # Step 4: Verify final list state (use the same list_key as seed)
     conn = db.get_db_connection(source_id, project_id=project_id)
     final_items = _get_ranked_list_items(conn, project_id, list_key)
     conn.close()
@@ -119,6 +133,9 @@ async def test_breakfast_burritos_duplicate_prevention(test_db_setup, test_threa
     assert is_valid, f"Ranked list invariants violated: {error_msg}"
     
     # Step 6: Verify via Facts-R retrieval (defensive deduplication should also work)
+    # Extract canonical topic from list_key for retrieval
+    from server.services.facts_normalize import extract_topic_from_list_key
+    canonical_topic = extract_topic_from_list_key(list_key) or "weekend_breakfast"
     retrieved_facts = search_facts_ranked_list(
         project_id=project_id,
         topic_key=canonical_topic,
@@ -188,8 +205,9 @@ async def test_rank_directive_respects_user_request(test_db_setup, test_thread_i
     )
     
     # Step 3: Verify final list state
-    canonical_topic = canonicalize_topic("weekend breakfasts", invoke_teacher=False).canonical_topic
-    list_key = canonical_list_key(canonical_topic)
+    # Use canonical_ranked_topic_key (single source of truth) for consistency
+    from server.services.facts_normalize import canonical_ranked_topic_key
+    list_key = canonical_ranked_topic_key("weekend breakfasts")
     conn = db.get_db_connection(source_id, project_id=project_id)
     final_items = _get_ranked_list_items(conn, project_id, list_key)
     conn.close()

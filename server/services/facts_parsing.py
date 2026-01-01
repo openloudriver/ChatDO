@@ -97,8 +97,10 @@ def is_bulk_preference_without_rank(text: str) -> bool:
     text_lower = text.lower().strip()
     
     # Check for explicit rank indicators - if present, this is NOT a bulk preference
+    # Pattern: #N favorite OR ordinal word/number favorite (e.g., "#2 favorite", "second favorite", "2nd favorite")
+    # Note: \b doesn't work with "#", so we use a more flexible pattern
     explicit_rank_pattern = re.compile(
-        r'\b(?:#\d+|(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(?:st|nd|rd|th))\s+favorite)',
+        r'(?:#\d+\s+|(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(?:st|nd|rd|th))\s+)favorite',
         re.IGNORECASE
     )
     if explicit_rank_pattern.search(text):

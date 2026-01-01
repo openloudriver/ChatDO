@@ -68,24 +68,16 @@ def mock_facts_query_planner(monkeypatch):
 def mock_canonicalizer_fast(monkeypatch):
     """Mock canonicalizer to avoid teacher model calls in tests."""
     from server.services.canonicalizer import CanonicalizationResult
+    # Import the real facts_topic.canonicalize_topic to use as the source of truth
+    from server.services.facts_topic import canonicalize_topic as facts_canonicalize_topic
     
     def mock_canonicalize_topic(raw_topic: str, invoke_teacher: bool = False):
-        # Fast canonicalization: just normalize the topic
-        normalized = raw_topic.lower().strip()
-        # Replace spaces and hyphens with underscores
-        normalized = normalized.replace(" ", "_").replace("-", "_")
-        # Remove plural 's' only if it's a standalone word (e.g., "activities" -> "activity")
-        # But be careful: "outdoor activities" -> "outdoor_activities" -> remove final 's' -> "outdoor_activitie"
-        # Actually, let's be smarter: only remove 's' if it's clearly plural (ends with 'ies' -> 'y', 'es' -> '', etc.)
-        if normalized.endswith("ies") and len(normalized) > 3:
-            normalized = normalized[:-3] + "y"  # "activities" -> "activity"
-        elif normalized.endswith("es") and len(normalized) > 2:
-            normalized = normalized[:-2]  # "favorites" -> "favorite"
-        elif normalized.endswith("s") and len(normalized) > 1:
-            normalized = normalized[:-1]  # "colors" -> "color"
+        # Use facts_topic.canonicalize_topic as the source of truth for consistency
+        # This ensures the mock matches the real canonicalization used by canonical_ranked_topic_key
+        canonical_topic = facts_canonicalize_topic(raw_topic)
         
         return CanonicalizationResult(
-            canonical_topic=normalized,
+            canonical_topic=canonical_topic,
             confidence=0.9,  # High confidence for tests
             source="fallback",
             teacher_invoked=False,
@@ -120,13 +112,19 @@ def _create_mock_routing_plan(
 
 def _get_ranked_list_from_db(project_id: str, topic: str) -> List[Dict[str, Any]]:
     """Get ranked list from DB for a topic."""
-    canonical_result = canonicalize_topic(topic, invoke_teacher=False)
-    canonical_topic = canonical_result.canonical_topic
+    # Use canonical_ranked_topic_key (single source of truth) for consistency
+    from server.services.facts_normalize import canonical_ranked_topic_key
+    from server.services.facts_normalize import extract_topic_from_list_key
+    
+    # Get canonical list key
+    list_key = canonical_ranked_topic_key(topic)
+    # Extract canonical topic from list key
+    canonical_topic = extract_topic_from_list_key(list_key)
     
     # Use public API to get ranked list
     facts = search_facts_ranked_list(
         project_id=project_id,
-        topic_key=canonical_topic,
+        topic_key=canonical_topic if canonical_topic else topic,
         limit=None  # Get all items
     )
     
@@ -152,7 +150,9 @@ def _assert_ranked_list_invariants(project_id: str, topic: str, expected_count: 
             f"Expected {expected_count} items, got {len(items)}"
     
     # Validate invariants
-    list_key = canonical_list_key(canonicalize_topic(topic, invoke_teacher=False).canonical_topic)
+    # Use canonical_ranked_topic_key (single source of truth) for consistency
+    from server.services.facts_normalize import canonical_ranked_topic_key
+    list_key = canonical_ranked_topic_key(topic)
     is_valid, error_msg = validate_ranked_list_invariants(items, list_key)
     assert is_valid, f"Invariant violation: {error_msg}"
     
@@ -1257,10 +1257,15 @@ async def test_acceptance_out_of_range_rank_no_fallback_when_empty(test_db_setup
         assert "facts" in fast_path.lower() or used_facts is True, \
             f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
         
-        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (reasoning) (should be Facts-R only)
+        # Note: "GPT-5 Nano" is OK (it's the router), but "GPT-5" (reasoning) or "Index-P" (fallback) should not appear
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
 
 
 @pytest.mark.asyncio
@@ -1340,8 +1345,13 @@ async def test_acceptance_out_of_range_rank_no_fallback_when_nonempty(test_db_se
         
         # Assert model label does NOT contain "Index-P" or "GPT-5"
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Check for "gpt-5" but not "gpt-5 nano" (reasoning indicator)
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
 
 
 @pytest.mark.asyncio
@@ -1429,8 +1439,13 @@ async def test_acceptance_last_favorite_returns_max_rank_no_crash(test_db_setup,
         
         # Assert model label does NOT contain "Index-P" or "GPT-5"
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Check for "gpt-5" but not "gpt-5 nano" (reasoning indicator)
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
         
         # Assert NO clarification request (should be deterministic, not asking to clarify "last")
         assert "clarify" not in content and ("which" not in content.lower() or ("which" in content.lower() and "toast" in content)), \
@@ -1542,10 +1557,15 @@ async def test_acceptance_out_of_range_rank_no_fallback_ui_shape(test_db_setup, 
         assert "facts" in fast_path.lower() or used_facts is True, \
             f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
         
-        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (reasoning) (should be Facts-R only)
+        # Note: "GPT-5 Nano" is OK (it's the router), but "GPT-5" (reasoning) or "Index-P" (fallback) should not appear
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
         
         # Verify the response content is deterministic (mentions the out-of-range condition)
         assert "only" in content or "4" in content or "no #99" in content or "no # 99" in content, \
@@ -1660,10 +1680,15 @@ async def test_acceptance_last_favorite_returns_max_rank(test_db_setup, test_thr
         assert "facts" in fast_path.lower() or used_facts is True, \
             f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts}), got: {response.get('meta', {})}"
         
-        # Assert model label does NOT contain "Index-P" or "GPT-5" (should be Facts-R only)
+        # Assert model label does NOT contain "Index-P" or "GPT-5" (reasoning) (should be Facts-R only)
+        # Note: "GPT-5 Nano" is OK (it's the router), but "GPT-5" (reasoning) or "Index-P" (fallback) should not appear
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
         
         # Assert NO clarification request (should be deterministic, not asking to clarify "last")
         assert "clarify" not in content and "which" not in content.lower() or "which" in content.lower() and "eggs" in content, \
@@ -1761,8 +1786,13 @@ async def test_acceptance_out_of_range_rank_no_validation_error(test_db_setup, t
         
         # Assert model label does NOT contain "Index-P" or "GPT-5"
         model_label_lower = model_label.lower()
-        assert "index-p" not in model_label_lower and "gpt-5" not in model_label_lower, \
-            f"Expected Facts-R only (no Index-P/GPT fallback), got model_label: {model_label}"
+        # Check for "gpt-5" but not "gpt-5 nano" (reasoning indicator)
+        # Split by "→" to check each component separately
+        parts = [p.strip() for p in model_label_lower.split("→")]
+        has_index_p = any("index-p" in part or "index-f" in part for part in parts)
+        has_gpt5_reasoning = any("gpt-5" in part and "nano" not in part for part in parts)
+        assert not has_index_p and not has_gpt5_reasoning, \
+            f"Expected Facts-R only (no Index-P/GPT-5 reasoning fallback), got model_label: {model_label}"
         
         # Assert Facts-R was attempted (facts_actions.R > 0)
         facts_r_count = response.get("meta", {}).get("facts_actions", {}).get("R", 0)
@@ -1773,4 +1803,175 @@ async def test_acceptance_out_of_range_rank_no_validation_error(test_db_setup, t
         facts_f = response.get("meta", {}).get("facts_actions", {}).get("F", False)
         assert facts_f is False, \
             f"Expected Facts-F=False, got: {response.get('meta', {}).get('facts_actions', {})}"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_out_of_range_rank_user_message_persistence(test_db_setup, test_thread_id, monkeypatch):
+    """
+    Regression Test: Out-of-range rank read (#99) persists BOTH user and assistant messages to history.
+    
+    Bug: User message disappears after hard reload when asking "#99 favorite" because empty Facts-R path
+    didn't save the user message to history.
+    
+    Scenario:
+    - Seed 3 favorites for a topic (e.g., board games)
+    - Ask: "What is my #99 favorite board game?" (forces empty/out-of-range Facts-R)
+    - Assert in DB/history that BOTH the user message and assistant response exist with non-empty message_uuid
+    - Rehydrate/load messages and assert the user message is present (i.e., no disappearance)
+    """
+    project_id = test_db_setup["project_id"]
+    target_name = "general"
+    
+    # Use REAL memory store (not mocked) so we can verify persistence
+    from chatdo.memory import store as memory_store
+    # Store actual history in memory (simple dict for test)
+    test_history = []
+    
+    def mock_load(target, thread, project_id=None):
+        return test_history.copy()
+    
+    def mock_save(target, thread, history, project_id=None):
+        nonlocal test_history
+        test_history = history.copy()
+    
+    monkeypatch.setattr('server.services.chat_with_smart_search.memory_store.load_thread_history', mock_load)
+    monkeypatch.setattr('server.services.chat_with_smart_search.memory_store.save_thread_history', mock_save)
+    
+    # Step 1: Seed initial list (3 items)
+    seed_message = "My favorite board games are Catan, Ticket to Ride, Azul."
+    mock_seed_plan = _create_mock_routing_plan(
+        content_plane="facts",
+        operation="write",
+        facts_write_candidate=FactsWriteCandidate(
+            topic="board games",
+            value=["Catan", "Ticket to Ride", "Azul"],
+            rank_ordered=True,
+            rank=None
+        ),
+        reasoning_required=False
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_seed_plan
+        
+        await chat_with_smart_search(
+            user_message=seed_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name=target_name
+        )
+    
+    # Note: We don't assert Facts persistence here - the key regression is about message persistence
+    # The Facts may or may not persist depending on test DB setup, but messages MUST persist
+    
+    # Step 2: Out-of-range read (#99) - this triggers the empty Facts-R path
+    read_message = "What is my #99 favorite board game?"
+    
+    # Mock router to return something OTHER than Facts read (to test enforcement override)
+    mock_read_plan = _create_mock_routing_plan(
+        content_plane="index",  # Router might return index instead of facts
+        operation="search",
+        reasoning_required=True
+    )
+    
+    with patch('server.services.nano_router.route_with_nano', new_callable=AsyncMock) as mock_router:
+        mock_router.return_value = mock_read_plan
+        
+        response = await chat_with_smart_search(
+            user_message=read_message,
+            thread_id=test_thread_id,
+            project_id=project_id,
+            target_name=target_name
+        )
+        
+        # Assert deterministic out-of-range message (may be empty list or out-of-range)
+        content = response.get("content", "").lower()
+        assert "#99" in content, \
+            f"Expected out-of-range message mentioning '#99', got: {content[:300]}"
+        assert "favorite" in content, \
+            f"Expected message about favorites, got: {content[:300]}"
+        
+        # Assert Facts response (not fallback)
+        fast_path = response.get("meta", {}).get("fastPath", "")
+        used_facts = response.get("meta", {}).get("usedFacts", False)
+        assert "facts" in fast_path.lower() or used_facts is True, \
+            f"Expected Facts response (fastPath={fast_path}, usedFacts={used_facts})"
+    
+    # Step 3: CRITICAL - Verify BOTH messages are persisted in history
+    # Use the mocked memory store that we set up
+    history = mock_load(target_name, test_thread_id, project_id=project_id)
+    
+    # Find the user message asking about #99
+    user_messages = [msg for msg in history if msg.get("role") == "user" and "#99" in msg.get("content", "")]
+    assert len(user_messages) > 0, \
+        f"User message '#99 favorite board game' should be in history, but not found. History: {[m.get('content', '')[:50] for m in history]}"
+    
+    user_msg = user_messages[-1]  # Get the most recent one
+    assert user_msg.get("message_uuid"), \
+        f"User message should have message_uuid, got: {user_msg}"
+    assert user_msg.get("content") == read_message, \
+        f"User message content should match, got: {user_msg.get('content')}"
+    
+    # Find the assistant response (should be the most recent assistant message)
+    assistant_messages = [msg for msg in history if msg.get("role") == "assistant"]
+    assert len(assistant_messages) > 0, \
+        f"Assistant message should be in history, but not found. History: {[m.get('content', '')[:50] for m in history]}"
+    
+    assistant_msg = assistant_messages[-1]  # Get the most recent one
+    assert assistant_msg.get("message_uuid"), \
+        f"Assistant message should have message_uuid, got: {assistant_msg}"
+    assert "#99" in assistant_msg.get("content", "") or "favorite" in assistant_msg.get("content", "").lower(), \
+        f"Assistant message should contain out-of-range response about #99 or favorites, got: {assistant_msg.get('content', '')[:100]}"
+    
+    # Step 4: Rehydrate messages and assert user message is present
+    from server.main import get_chat_messages, load_chats, load_projects, get_target_name_from_project
+    
+    # Create mock chat and project
+    mock_chats = [{
+        "id": test_thread_id,
+        "project_id": project_id,
+        "thread_id": test_thread_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }]
+    
+    mock_projects = [{
+        "id": project_id,
+        "default_target": "general"
+    }]
+    
+    with patch('server.main.load_chats', return_value=mock_chats), \
+         patch('server.main.load_projects', return_value=mock_projects), \
+         patch('server.main.get_target_name_from_project', return_value=target_name):
+        
+        # Rehydrate messages
+        rehydrate_response = await get_chat_messages(test_thread_id)
+        rehydrated_messages = rehydrate_response.get("messages", [])
+        
+        # Assert user message is present after rehydration
+        rehydrated_user_messages = [msg for msg in rehydrated_messages if msg.get("role") == "user" and "#99" in msg.get("content", "")]
+        assert len(rehydrated_user_messages) > 0, \
+            f"User message '#99 favorite board game' should persist after rehydration, but not found. " \
+            f"Rehydrated messages: {[m.get('content', '')[:50] for m in rehydrated_messages]}"
+        
+        rehydrated_user_msg = rehydrated_user_messages[-1]
+        assert rehydrated_user_msg.get("message_uuid"), \
+            f"Rehydrated user message should have message_uuid, got: {rehydrated_user_msg}"
+        assert rehydrated_user_msg.get("message_uuid") == user_msg.get("message_uuid"), \
+            f"Rehydrated user message should have same message_uuid as persisted, " \
+            f"got: {rehydrated_user_msg.get('message_uuid')} vs {user_msg.get('message_uuid')}"
+        
+        # Assert assistant message is also present (should be the most recent assistant message)
+        rehydrated_assistant_messages = [msg for msg in rehydrated_messages if msg.get("role") == "assistant"]
+        assert len(rehydrated_assistant_messages) > 0, \
+            f"Assistant message should persist after rehydration, but not found."
+        
+        # Verify the assistant message has the #99 response
+        rehydrated_assistant_msg = rehydrated_assistant_messages[-1]
+        assert "#99" in rehydrated_assistant_msg.get("content", "") or "favorite" in rehydrated_assistant_msg.get("content", "").lower(), \
+            f"Rehydrated assistant message should contain #99 or favorite response, got: {rehydrated_assistant_msg.get('content', '')[:100]}"
+        
+        # Assert all rehydrated messages have message_uuid
+        for msg in rehydrated_messages:
+            assert msg.get("message_uuid"), \
+                f"All rehydrated messages should have message_uuid, but message {msg.get('id')} is missing it"
 

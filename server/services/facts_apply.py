@@ -421,9 +421,53 @@ def _apply_ranked_mutation(
     items = _get_ranked_list_items(conn, project_uuid, list_key)
     current_max_rank = len(items)
     
+    # RUNTIME GUARDRAIL (dev/test only): Detect topic canonicalization drift
+    # If target list is empty but a very similar list exists (same tokens except plural/singular), log a WARNING
+    if len(items) == 0:
+        # Check for similar lists (same topic but different singular/plural form)
+        from server.services.facts_normalize import extract_topic_from_list_key
+        from server.services.facts_topic import canonicalize_topic
+        current_topic = extract_topic_from_list_key(list_key)
+        if current_topic:
+            # Try to find similar topics by checking if singular/plural variants exist
+            # Extract base topic (remove trailing 's' if present)
+            base_topic = current_topic.rstrip('s') if current_topic.endswith('s') else current_topic
+            # Check for plural variant
+            plural_variant_key = f"user.favorites.{base_topic}s" if not current_topic.endswith('s') else None
+            # Check for singular variant
+            singular_variant_key = f"user.favorites.{base_topic}" if current_topic.endswith('s') else None
+            
+            # Check if variant lists exist
+            variant_keys_to_check = [k for k in [plural_variant_key, singular_variant_key] if k and k != list_key]
+            for variant_key in variant_keys_to_check:
+                variant_items = _get_ranked_list_items(conn, project_uuid, variant_key)
+                if len(variant_items) > 0:
+                    logger.warning(
+                        f"[FACTS-APPLY] TOPIC DRIFT DETECTED: Target list {list_key!r} is empty, "
+                        f"but similar list {variant_key!r} exists with {len(variant_items)} items. "
+                        f"This may indicate topic canonicalization drift (singular/plural mismatch). "
+                        f"Current topic: {current_topic!r}, Variant topic: {extract_topic_from_list_key(variant_key)!r}. "
+                        f"DO NOT auto-merge; this is a warning only."
+                    )
+                    break
+    
+    # DEBUG LOGGING: Log before state
+    logger.info(
+        f"[FACTS-APPLY] Ranked mutation START: topic={canonical_topic!r}, "
+        f"desired_rank={desired_rank}, value='{value}', "
+        f"normalized_value='{normalized_value}', "
+        f"before_list_length={len(items)}, "
+        f"before_items={[(item['rank'], item['value_text']) for item in sorted(items, key=lambda x: x['rank'])]}"
+    )
+    
     # CRITICAL: Resolve new value to existing item using exact or fuzzy/alias matching
     # This enables partial values (e.g., "rogue one") to match full items (e.g., "Star Wars: Rogue One")
+    # MUST happen BEFORE deciding insert vs move
     matched_item = resolve_ranked_item_target(value, items)
+    logger.info(
+        f"[FACTS-APPLY] Alias resolution: value='{value}' -> matched_item={matched_item['value_text'] if matched_item else None} "
+        f"at rank={matched_item['rank'] if matched_item else None}"
+    )
     
     # Find ALL occurrences of the matched item (if found) or exact normalized matches
     # This prevents duplicates from persisting when moving/inserting items
@@ -464,25 +508,82 @@ def _apply_ranked_mutation(
             existing_rank = matched_item["rank"]
             existing_items = [matched_item]
     
-    # CRITICAL FIX: Remove ALL duplicates BEFORE inserting/moving
-    # This ensures "Breakfast Burritos" doesn't appear at multiple ranks
+    # CRITICAL FIX: Remove duplicates BEFORE inserting/moving, but preserve the item we're moving
+    # Strategy:
+    # 1. If this is a MOVE (existing_rank != None and existing_rank != desired_rank):
+    #    - Remove all duplicates EXCEPT the one at existing_rank (we'll move that one)
+    # 2. If this is an INSERT (existing_rank == None):
+    #    - Remove all duplicates (they're all unwanted)
+    # 3. If this is a NO-OP (existing_rank == desired_rank):
+    #    - Remove all duplicates EXCEPT the one at desired_rank
+    
+    removed_duplicate_indices = []
     if existing_items:
-        logger.info(
-            f"[FACTS-APPLY] Found {len(existing_items)} duplicate(s) of '{value}' "
-            f"(normalized: '{normalized_input}') at ranks: {[item['rank'] for item in existing_items]}. "
-            f"Removing all duplicates before mutation."
-        )
-        for dup_item in existing_items:
-            old_fact_key = dup_item["fact_key"]
-            cursor.execute("""
-                UPDATE project_facts
-                SET is_current = 0
-                WHERE project_id = ? AND fact_key = ? AND is_current = 1
-            """, (project_uuid, old_fact_key))
-            logger.debug(
-                f"[FACTS-APPLY] Marked duplicate as not current: rank={dup_item['rank']}, "
-                f"value='{dup_item['value_text']}', fact_key={old_fact_key}"
+        # Determine which item to preserve (if any)
+        preserve_rank = None
+        if existing_rank is not None:
+            # MOVE or NO-OP: preserve the item at existing_rank
+            preserve_rank = existing_rank
+        elif matched_item:
+            # If we have a matched item, preserve it (might be a move)
+            preserve_rank = matched_item["rank"]
+        
+        # Remove duplicates, but preserve the item we're moving/keeping
+        duplicates_to_remove = [
+            item for item in existing_items
+            if item["rank"] != preserve_rank
+        ]
+        
+        if duplicates_to_remove:
+            logger.info(
+                f"[FACTS-APPLY] Found {len(existing_items)} occurrence(s) of '{value}' "
+                f"(normalized: '{normalized_input}') at ranks: {[item['rank'] for item in existing_items]}. "
+                f"Removing {len(duplicates_to_remove)} duplicate(s) (preserving rank {preserve_rank if preserve_rank else 'N/A'})."
             )
+            for dup_item in duplicates_to_remove:
+                old_fact_key = dup_item["fact_key"]
+                removed_duplicate_indices.append(dup_item["rank"])
+                cursor.execute("""
+                    UPDATE project_facts
+                    SET is_current = 0
+                    WHERE project_id = ? AND fact_key = ? AND is_current = 1
+                """, (project_uuid, old_fact_key))
+                logger.debug(
+                    f"[FACTS-APPLY] Marked duplicate as not current: rank={dup_item['rank']}, "
+                    f"value='{dup_item['value_text']}', fact_key={old_fact_key}"
+                )
+        
+        # After removing duplicates, recalculate items and existing_rank
+        items_after_removal = _get_ranked_list_items(conn, project_uuid, list_key)
+        current_max_rank = len(items_after_removal)
+        
+        # Recalculate existing_rank after duplicate removal
+        if preserve_rank is not None:
+            # Find the preserved item
+            for item in items_after_removal:
+                if item["rank"] == preserve_rank:
+                    existing_rank = item["rank"]
+                    existing_item = item
+                    break
+            else:
+                # Preserved item not found (shouldn't happen)
+                logger.warning(
+                    f"[FACTS-APPLY] Preserved item at rank {preserve_rank} not found after removal. "
+                    f"This may indicate a bug in duplicate removal logic."
+                )
+                existing_rank = None
+                existing_item = None
+        else:
+            # No item to preserve - this is an INSERT
+            existing_rank = None
+            existing_item = None
+            # items_after_removal is already set above
+    else:
+        # No existing items - this is an INSERT
+        items_after_removal = items
+        current_max_rank = len(items_after_removal)
+        existing_rank = None
+        existing_item = None
     
     # Handle rank beyond length: append to end
     if desired_rank > current_max_rank + 1:
@@ -512,15 +613,26 @@ def _apply_ranked_mutation(
             return result
         
         # MOVE: Value exists at different rank, move to desired_rank
-        # Note: All duplicates have already been removed above
+        # Note: Duplicates have been removed, but the item at existing_rank was preserved
         result["action"] = "move"
         result["old_rank"] = existing_rank
         
-        # Old fact has already been marked as not current in the duplicate removal step above
-        # No need to mark it again here
+        # Mark the preserved item as not current (we'll insert it at the new rank)
+        if existing_item:
+            old_fact_key = existing_item["fact_key"]
+            cursor.execute("""
+                UPDATE project_facts
+                SET is_current = 0
+                WHERE project_id = ? AND fact_key = ? AND is_current = 1
+            """, (project_uuid, old_fact_key))
+            logger.debug(
+                f"[FACTS-APPLY] Marked preserved item as not current: rank={existing_rank}, "
+                f"value='{existing_item['value_text']}', fact_key={old_fact_key}"
+            )
         
         # Determine shift direction and range
         # Note: Lower rank number = earlier in list (rank 1 is first)
+        # CRITICAL: Use items_after_removal for shift calculation (not original items)
         if existing_rank > desired_rank:
             # Moving earlier in list (e.g., rank 6 -> rank 2): shift items at desired_rank..(existing_rank-1) down by 1
             # Example: moving from 6 to 2, shift items at ranks 2-5 down to ranks 3-6
@@ -534,14 +646,15 @@ def _apply_ranked_mutation(
             shift_end = desired_rank
             shift_delta = -1
         
-        # Shift intervening items (exclude the item being moved AND any duplicates we just removed)
+        # Shift intervening items (exclude the item being moved)
         # IMPORTANT: Shift in the correct order to avoid overwriting items that haven't been shifted yet
         # When moving down (existing_rank > desired_rank): shift from end backwards (high to low)
         # When moving up (existing_rank < desired_rank): shift from start forwards (low to high)
-        existing_ranks = {item["rank"] for item in existing_items}  # All ranks that were duplicates
+        # CRITICAL: Use items_after_removal (not original items) for shift calculation
+        # Exclude the item being moved (existing_rank)
         items_to_shift = [
-            item for item in items
-            if item["rank"] not in existing_ranks and shift_start <= item["rank"] <= shift_end
+            item for item in items_after_removal
+            if shift_start <= item["rank"] <= shift_end and item["rank"] != existing_rank
         ]
         
         if existing_rank > desired_rank:
@@ -610,8 +723,8 @@ def _apply_ranked_mutation(
         
         logger.info(
             f"[FACTS-APPLY] Rank mutation MOVE: '{value}' from rank {existing_rank} to {desired_rank} "
-            f"for topic={canonical_topic}, removed {len(existing_items)} duplicate(s), "
-            f"shifted {len(result['shifted_items'])} items"
+            f"for topic={canonical_topic}, removed {len(removed_duplicate_indices)} duplicate(s) "
+            f"at ranks {removed_duplicate_indices}, shifted {len(result['shifted_items'])} items"
         )
         logger.debug(
             f"[FACTS-APPLY] Inserted moved value '{value}' at rank {desired_rank} "
@@ -622,15 +735,22 @@ def _apply_ranked_mutation(
         # INSERT: Value doesn't exist, insert at desired_rank
         result["action"] = "insert"
         
+        # Calculate insertion index: desired_rank - 1 (0-indexed)
+        insertion_index = desired_rank - 1
+        
         # Shift items at desired_rank..end down by 1
-        # IMPORTANT: Exclude any duplicates we just removed (they're already marked as not current)
-        # IMPORTANT: Shift from end backwards to avoid overwriting items that haven't been shifted yet
-        existing_ranks = {item["rank"] for item in existing_items}  # All ranks that were duplicates
+        # CRITICAL: Use items_after_removal (not original items) for accurate shift calculation
+        # After duplicate removal, items_after_removal has the correct state
         items_to_shift = [
-            item for item in items 
-            if item["rank"] >= desired_rank and item["rank"] not in existing_ranks
+            item for item in items_after_removal
+            if item["rank"] >= desired_rank
         ]
         items_to_shift.sort(key=lambda x: x["rank"], reverse=True)  # Shift from end backwards
+        
+        logger.info(
+            f"[FACTS-APPLY] INSERT: shifting {len(items_to_shift)} items at ranks >= {desired_rank} "
+            f"to make room for insertion at rank {desired_rank}"
+        )
         
         for item in items_to_shift:
             item_rank = item["rank"]
@@ -666,6 +786,14 @@ def _apply_ranked_mutation(
                 f"value='{item['value_text']}'"
             )
         
+        # Mark any existing fact at desired_rank as not current (shouldn't happen after shift, but be safe)
+        # CRITICAL: Do this BEFORE inserting to avoid duplicate ranks
+        cursor.execute("""
+            UPDATE project_facts
+            SET is_current = 0
+            WHERE project_id = ? AND fact_key = ? AND is_current = 1
+        """, (project_uuid, canonical_rank_key(canonical_topic, desired_rank)))
+        
         # Insert new value at desired_rank
         new_fact_key = canonical_rank_key(canonical_topic, desired_rank)
         fact_id = str(uuid.uuid4())
@@ -684,17 +812,29 @@ def _apply_ranked_mutation(
         
         logger.info(
             f"[FACTS-APPLY] Rank mutation INSERT: '{value}' at rank {desired_rank} "
-            f"for topic={canonical_topic}, removed {len(existing_items)} duplicate(s), "
-            f"shifted {len(result['shifted_items'])} items"
+            f"(insertion_index={insertion_index}) "
+            f"for topic={canonical_topic}, removed {len(removed_duplicate_indices)} duplicate(s) "
+            f"at ranks {removed_duplicate_indices}, shifted {len(result['shifted_items'])} items"
         )
     
     # DEBUG LOGGING: Log after state
     final_items = _get_ranked_list_items(conn, project_uuid, list_key)
     logger.info(
         f"[FACTS-APPLY] Ranked mutation END: action={result['action']}, "
+        f"original_index={existing_rank}, desired_rank={desired_rank}, "
+        f"computed_insertion_index={desired_rank - 1}, "
+        f"removed_duplicate_indices={removed_duplicate_indices}, "
         f"final_list_length={len(final_items)}, "
-        f"final_items={[(item['rank'], item['value_text']) for item in final_items]}"
+        f"final_items={[(item['rank'], item['value_text']) for item in sorted(final_items, key=lambda x: x['rank'])]}"
     )
+    
+    # CRITICAL ASSERTION: Final rank must equal desired_rank exactly
+    if result["action"] in ("move", "insert", "append"):
+        final_item = next((item for item in final_items if normalize_rank_item(item["value_text"]) == normalize_rank_item(normalized_value)), None)
+        if final_item:
+            assert final_item["rank"] == desired_rank, \
+                f"Rank mismatch: desired_rank={desired_rank}, final_rank={final_item['rank']}, " \
+                f"action={result['action']}, value='{value}'"
     
     return result
 
@@ -1285,13 +1425,12 @@ def apply_facts_ops(
         # Collect all list_keys that were modified
         for op in ops_response.ops:
             if op.op == "ranked_list_set" and op.list_key:
+                # Use the list_key directly for validation (it's already canonical from facts_persistence)
+                # All list_keys are generated using canonical_ranked_topic_key, so they're consistent
+                list_key_for_validation = op.list_key
                 topic = extract_topic_from_list_key(op.list_key)
                 if topic:
-                    from server.services.canonicalizer import canonicalize_topic
-                    canonicalization_result = canonicalize_topic(topic, invoke_teacher=False)
-                    canonical_topic = canonicalization_result.canonical_topic
-                    list_key_for_validation = canonical_list_key(canonical_topic)
-                    ranked_lists_to_validate[list_key_for_validation] = canonical_topic
+                    ranked_lists_to_validate[list_key_for_validation] = topic
         
         # Validate each ranked list
         for list_key_to_validate, canonical_topic in ranked_lists_to_validate.items():
