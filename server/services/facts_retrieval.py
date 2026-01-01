@@ -121,6 +121,35 @@ def execute_facts_plan(
                 if ranked_facts:
                     max_available_rank = max(f.get("rank", 0) for f in ranked_facts)
                 
+                # DEFENSIVE DEDUPLICATION: Remove duplicates by normalized value (safety net)
+                # This prevents duplicates from appearing in retrieval even if they somehow exist in DB
+                # Keep the earliest occurrence (lowest rank) for each normalized value
+                from server.services.facts_apply import normalize_rank_item
+                seen_normalized = {}  # normalized_value -> fact (keep first occurrence)
+                deduplicated_facts = []
+                for fact in ranked_facts:
+                    normalized_value = normalize_rank_item(fact.get("value_text", ""))
+                    if normalized_value not in seen_normalized:
+                        seen_normalized[normalized_value] = fact
+                        deduplicated_facts.append(fact)
+                    else:
+                        # Duplicate found - log warning but keep first occurrence
+                        existing_rank = seen_normalized[normalized_value].get("rank")
+                        duplicate_rank = fact.get("rank")
+                        logger.warning(
+                            f"[FACTS-RETRIEVAL] Duplicate detected in retrieval: "
+                            f"value='{fact.get('value_text')}' (normalized: '{normalized_value}') "
+                            f"at ranks {existing_rank} and {duplicate_rank}. "
+                            f"Keeping rank {existing_rank} (earliest occurrence)."
+                        )
+                
+                if len(deduplicated_facts) < len(ranked_facts):
+                    logger.info(
+                        f"[FACTS-RETRIEVAL] Deduplication removed {len(ranked_facts) - len(deduplicated_facts)} "
+                        f"duplicate(s) from ranked list for topic={plan.topic}"
+                    )
+                    ranked_facts = deduplicated_facts
+                
                 # Convert to answer format
                 # If rank is specified (ordinal query), filter to only that rank FIRST
                 rank_applied = plan.rank is not None

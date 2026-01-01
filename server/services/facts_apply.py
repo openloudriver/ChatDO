@@ -77,9 +77,42 @@ def _get_max_rank_atomic(
     return max_rank
 
 
+def normalize_rank_item(s: str) -> str:
+    """
+    Canonical normalizer for ranked-list items (shared by write + apply).
+    
+    This is the SINGLE SOURCE OF TRUTH for ranked item normalization.
+    Used for duplicate detection and matching across all ranked list operations.
+    
+    Normalization steps:
+    1. Unicode normalization (NFKC) - handles composed/decomposed characters
+    2. Map smart quotes to ASCII equivalents (' → ', " → ")
+    3. Strip leading/trailing whitespace
+    4. Collapse internal whitespace to single spaces
+    5. Strip trailing punctuation: .,!?;:
+    6. Lowercase (for comparison only - original value is preserved)
+    
+    Args:
+        s: Raw value string
+        
+    Returns:
+        Normalized string for comparison (lowercased)
+        
+    Examples:
+        "Breakfast Burritos" → "breakfast burritos"
+        "breakfast burritos." → "breakfast burritos"
+        "  Breakfast  Burritos  " → "breakfast burritos"
+        "Breakfast's Burritos" (smart quote) → "breakfast's burritos"
+    """
+    return normalize_favorite_value(s)
+
+
 def normalize_favorite_value(s: str) -> str:
     """
     Normalize a favorite value for duplicate detection.
+    
+    DEPRECATED: Use normalize_rank_item() instead for consistency.
+    This function is kept for backward compatibility.
     
     This is the SINGLE SOURCE OF TRUTH for favorite value normalization.
     All duplicate checks for favorites must use this function to ensure
@@ -277,17 +310,39 @@ def _apply_ranked_mutation(
     items = _get_ranked_list_items(conn, project_uuid, list_key)
     current_max_rank = len(items)
     
-    # Normalize input value for comparison
-    normalized_input = normalize_favorite_value(value)
+    # Normalize input value for comparison (use canonical normalizer)
+    normalized_input = normalize_rank_item(value)
     
-    # Find if value already exists and at what rank
-    existing_rank = None
-    existing_item = None
+    # CRITICAL: Find ALL occurrences of the normalized value (not just the first)
+    # This prevents duplicates from persisting when moving/inserting items
+    existing_items = []
     for item in items:
-        if normalize_favorite_value(item["value_text"]) == normalized_input:
-            existing_rank = item["rank"]
-            existing_item = item
-            break
+        if normalize_rank_item(item["value_text"]) == normalized_input:
+            existing_items.append(item)
+    
+    # Get the first existing item for move logic (if any)
+    existing_rank = existing_items[0]["rank"] if existing_items else None
+    existing_item = existing_items[0] if existing_items else None
+    
+    # CRITICAL FIX: Remove ALL duplicates BEFORE inserting/moving
+    # This ensures "Breakfast Burritos" doesn't appear at multiple ranks
+    if existing_items:
+        logger.info(
+            f"[FACTS-APPLY] Found {len(existing_items)} duplicate(s) of '{value}' "
+            f"(normalized: '{normalized_input}') at ranks: {[item['rank'] for item in existing_items]}. "
+            f"Removing all duplicates before mutation."
+        )
+        for dup_item in existing_items:
+            old_fact_key = dup_item["fact_key"]
+            cursor.execute("""
+                UPDATE project_facts
+                SET is_current = 0
+                WHERE project_id = ? AND fact_key = ? AND is_current = 1
+            """, (project_uuid, old_fact_key))
+            logger.debug(
+                f"[FACTS-APPLY] Marked duplicate as not current: rank={dup_item['rank']}, "
+                f"value='{dup_item['value_text']}', fact_key={old_fact_key}"
+            )
     
     # Handle rank beyond length: append to end
     if desired_rank > current_max_rank + 1:
@@ -317,16 +372,12 @@ def _apply_ranked_mutation(
             return result
         
         # MOVE: Value exists at different rank, move to desired_rank
+        # Note: All duplicates have already been removed above
         result["action"] = "move"
         result["old_rank"] = existing_rank
         
-        # Mark old fact as not current
-        old_fact_key = existing_item["fact_key"]
-        cursor.execute("""
-            UPDATE project_facts
-            SET is_current = 0
-            WHERE project_id = ? AND fact_key = ? AND is_current = 1
-        """, (project_uuid, old_fact_key))
+        # Old fact has already been marked as not current in the duplicate removal step above
+        # No need to mark it again here
         
         # Determine shift direction and range
         # Note: Lower rank number = earlier in list (rank 1 is first)
@@ -343,13 +394,14 @@ def _apply_ranked_mutation(
             shift_end = desired_rank
             shift_delta = -1
         
-        # Shift intervening items (exclude the item being moved)
+        # Shift intervening items (exclude the item being moved AND any duplicates we just removed)
         # IMPORTANT: Shift in the correct order to avoid overwriting items that haven't been shifted yet
         # When moving down (existing_rank > desired_rank): shift from end backwards (high to low)
         # When moving up (existing_rank < desired_rank): shift from start forwards (low to high)
+        existing_ranks = {item["rank"] for item in existing_items}  # All ranks that were duplicates
         items_to_shift = [
             item for item in items
-            if item["rank"] != existing_rank and shift_start <= item["rank"] <= shift_end
+            if item["rank"] not in existing_ranks and shift_start <= item["rank"] <= shift_end
         ]
         
         if existing_rank > desired_rank:
@@ -418,7 +470,8 @@ def _apply_ranked_mutation(
         
         logger.info(
             f"[FACTS-APPLY] Rank mutation MOVE: '{value}' from rank {existing_rank} to {desired_rank} "
-            f"for topic={canonical_topic}, shifted {len(result['shifted_items'])} items"
+            f"for topic={canonical_topic}, removed {len(existing_items)} duplicate(s), "
+            f"shifted {len(result['shifted_items'])} items"
         )
         logger.debug(
             f"[FACTS-APPLY] Inserted moved value '{value}' at rank {desired_rank} "
@@ -430,8 +483,13 @@ def _apply_ranked_mutation(
         result["action"] = "insert"
         
         # Shift items at desired_rank..end down by 1
+        # IMPORTANT: Exclude any duplicates we just removed (they're already marked as not current)
         # IMPORTANT: Shift from end backwards to avoid overwriting items that haven't been shifted yet
-        items_to_shift = [item for item in items if item["rank"] >= desired_rank]
+        existing_ranks = {item["rank"] for item in existing_items}  # All ranks that were duplicates
+        items_to_shift = [
+            item for item in items 
+            if item["rank"] >= desired_rank and item["rank"] not in existing_ranks
+        ]
         items_to_shift.sort(key=lambda x: x["rank"], reverse=True)  # Shift from end backwards
         
         for item in items_to_shift:
@@ -486,8 +544,17 @@ def _apply_ranked_mutation(
         
         logger.info(
             f"[FACTS-APPLY] Rank mutation INSERT: '{value}' at rank {desired_rank} "
-            f"for topic={canonical_topic}, shifted {len(result['shifted_items'])} items"
+            f"for topic={canonical_topic}, removed {len(existing_items)} duplicate(s), "
+            f"shifted {len(result['shifted_items'])} items"
         )
+    
+    # DEBUG LOGGING: Log after state
+    final_items = _get_ranked_list_items(conn, project_uuid, list_key)
+    logger.info(
+        f"[FACTS-APPLY] Ranked mutation END: action={result['action']}, "
+        f"final_list_length={len(final_items)}, "
+        f"final_items={[(item['rank'], item['value_text']) for item in final_items]}"
+    )
     
     return result
 

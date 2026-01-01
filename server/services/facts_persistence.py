@@ -637,10 +637,10 @@ async def persist_facts_synchronously(
                     f"message_uuid={message_uuid}"
                 )
                 
-                # POST-PROCESS: Detect unranked writes and set rank=None for atomic assignment
-                # If Facts LLM extracted rank=1 but user didn't explicitly specify a rank,
-                # set rank=None so apply_facts_ops() can assign it atomically
-                # Also: If this is a bulk preference statement, convert to append-many
+                # POST-PROCESS: Detect and fix rank extraction issues
+                # 1. If user explicitly specified a rank (#2, #3, etc.) but LLM didn't extract it, fix it
+                # 2. If Facts LLM extracted rank=1 but user didn't explicitly specify a rank, set rank=None for atomic assignment
+                # 3. If this is a bulk preference statement, convert to append-many
                 if ops_response and ops_response.ops:
                     # Check if this is a bulk preference statement
                     is_bulk = is_bulk_preference_without_rank(message_content)
@@ -655,18 +655,33 @@ async def persist_facts_synchronously(
                             if op.op == "ranked_list_set" and op.list_key:
                                 op.rank = None
                     else:
-                        # Check if user message explicitly mentions a rank (#1, first, 1st, etc.)
-                        explicit_rank_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
-                        has_explicit_rank = bool(explicit_rank_pattern.search(message_content))
+                        # CRITICAL FIX: Detect explicit rank from user message (#2, #3, etc.) and use it
+                        # This fixes cases where LLM doesn't extract the rank correctly
+                        from server.services.ordinal_detection import detect_ordinal_rank
+                        detected_rank = detect_ordinal_rank(message_content)
+                        
+                        # Check if user message explicitly mentions rank=1 (for unranked detection)
+                        explicit_rank_1_pattern = re.compile(r'\b(#1|first|1st|rank\s*1|number\s*1)\b', re.IGNORECASE)
+                        has_explicit_rank_1 = bool(explicit_rank_1_pattern.search(message_content))
                         
                         for op in ops_response.ops:
-                            if op.op == "ranked_list_set" and op.rank == 1 and op.list_key and not has_explicit_rank:
-                                # This is likely an unranked write - set rank=None for atomic assignment
-                                op.rank = None
-                                logger.info(
-                                    f"[FACTS-PERSIST] Detected unranked write: set rank=None for atomic assignment "
-                                    f"(topic from list_key={op.list_key})"
-                                )
+                            if op.op == "ranked_list_set" and op.list_key:
+                                # If user explicitly specified a rank (#2, #3, etc.), use it
+                                if detected_rank is not None:
+                                    if op.rank != detected_rank:
+                                        logger.info(
+                                            f"[FACTS-PERSIST] LLM extracted rank={op.rank} but user specified rank={detected_rank}. "
+                                            f"Fixing to use user-specified rank."
+                                        )
+                                        op.rank = detected_rank
+                                # If LLM extracted rank=1 but user didn't explicitly specify rank=1, set rank=None
+                                elif op.rank == 1 and not has_explicit_rank_1:
+                                    # This is likely an unranked write - set rank=None for atomic assignment
+                                    op.rank = None
+                                    logger.info(
+                                        f"[FACTS-PERSIST] Detected unranked write: set rank=None for atomic assignment "
+                                        f"(topic from list_key={op.list_key})"
+                                    )
                 
             except json.JSONDecodeError as e:
                 logger.error(f"[FACTS-PERSIST] ❌ Failed to parse Facts LLM JSON response: {e}")
