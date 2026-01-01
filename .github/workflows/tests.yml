@@ -23,6 +23,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f server/requirements.txt ]; then pip install -r server/requirements.txt; fi
+        if [ -f memory_service/requirements.txt ]; then pip install -r memory_service/requirements.txt; fi
         # pytest and pytest-asyncio should be in server/requirements.txt, but ensure they're installed
         pip install pytest pytest-asyncio || true
     
